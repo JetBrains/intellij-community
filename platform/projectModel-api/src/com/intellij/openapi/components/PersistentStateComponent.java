@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * for detailed description.
  * <p>
  * <strong>DO NOT</strong> use for sensitive data
- * (see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_sensitive_data.html">Persisting Sensitive Data</a>).
+ * (see <a href="https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html">Persisting Sensitive Data</a>).
  * <p>
  * In general, an implementation should be thread-safe, because "loadState" is called from the same thread where component is initialized.
  * If a component is used only from one thread (e.g. EDT), thread-safe implementation is not required.

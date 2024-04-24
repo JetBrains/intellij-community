@@ -685,7 +685,7 @@ public final class PyCallExpressionHelper {
                 }
               }
               PsiElement possible_class = firstArgRef.getReference().resolve();
-              if (possible_class instanceof PyClass first_class && ((PyClass)possible_class).isNewStyleClass(context)) {
+              if (possible_class instanceof PyClass first_class && first_class.isNewStyleClass(context)) {
                 return new Maybe<>(getSuperCallTypeForArguments(context, first_class, args[1]));
               }
             }

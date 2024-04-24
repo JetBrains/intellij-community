@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
@@ -61,8 +61,7 @@ public final class TreeViewUtil {
     return false;
   }
 
-  @NotNull
-  public static String calcAbbreviatedPackageFQName(@NotNull PsiPackage aPackage) {
+  public static @NotNull String calcAbbreviatedPackageFQName(@NotNull PsiPackage aPackage) {
     final StringBuilder name = new StringBuilder(aPackage.getName());
     for (PsiPackage parentPackage = aPackage.getParentPackage(); parentPackage != null; parentPackage = parentPackage.getParentPackage()) {
       final String packageName = parentPackage.getName();

@@ -2,10 +2,11 @@
 package org.jetbrains.intellij.build
 
 /**
- * If artifact is publicly available then maven coordinates ([groupId], [artifactId] and [version]) and [mavenRepositoryUrl] (for example https://repo1.maven.org/maven2) should be specified.
+ * If artifact is publicly available then maven coordinates ([groupId], [artifactId] and [version])
+ * and [mavenRepositoryUrl] (for example, https://repo1.maven.org/maven2) should be specified.
  * If only source code of an artifact is available then [sourceCodeUrl] (for example GitHub repository url) and [revision] (Git commit hash) should be specified.
  */
-internal class LibraryUpstream(
+class LibraryUpstream(
   val mavenRepositoryUrl: String?,
   val sourceCodeUrl: String?,
   val groupId: String,

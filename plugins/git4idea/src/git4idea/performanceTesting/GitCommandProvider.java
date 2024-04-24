@@ -17,7 +17,9 @@ public final class GitCommandProvider implements CommandProvider {
       Map.entry(FilterVcsLogTabCommand.PREFIX, FilterVcsLogTabCommand::new),
       Map.entry(GitShowVcsWidgetCommand.PREFIX, GitShowVcsWidgetCommand::new),
       Map.entry(ShowFileAnnotationCommand.PREFIX, ShowFileAnnotationCommand::new),
-      Map.entry(CheckGitLogIndexedCommand.PREFIX, CheckGitLogIndexedCommand::new)
+      Map.entry(CheckGitLogIndexedCommand.PREFIX, CheckGitLogIndexedCommand::new),
+      Map.entry(WaitVcsLogIndexingCommand.PREFIX, WaitVcsLogIndexingCommand::new),
+      Map.entry(WaitForVcsLogUpdateCommand.PREFIX, WaitForVcsLogUpdateCommand::new)
     );
   }
 }

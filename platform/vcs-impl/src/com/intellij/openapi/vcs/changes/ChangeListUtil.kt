@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ChangeListUtil")
 
 package com.intellij.openapi.vcs.changes
@@ -25,13 +25,13 @@ private fun getOriginalName(shelvedName: String): String {
 }
 
 fun getPredefinedChangeList(shelvedList: ShelvedChangeList, changeListManager: ChangeListManager): LocalChangeList? {
-  val defaultName = shelvedList.DESCRIPTION
+  val defaultName = shelvedList.description
   return changeListManager.findChangeList(defaultName)
          ?: if (shelvedList.isMarkedToDelete) changeListManager.findChangeList(getOriginalName(defaultName)) else null
 }
 
 fun getChangeListNameForUnshelve(shelvedList: ShelvedChangeList): String {
-  val defaultName = shelvedList.DESCRIPTION
+  val defaultName = shelvedList.description
   return if (shelvedList.isMarkedToDelete) getOriginalName(defaultName) else defaultName
 }
 

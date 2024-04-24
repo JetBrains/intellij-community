@@ -5,10 +5,9 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuiltinModulesFileData
-import org.jetbrains.intellij.build.ProductInfoLayoutItem
-import org.jetbrains.intellij.build.ProductInfoLayoutItemKind
+import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
+import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
@@ -70,6 +69,23 @@ internal fun writeProductInfoJson(targetFile: Path, json: String, context: Build
   Files.writeString(targetFile, json)
   Files.setLastModifiedTime(targetFile, FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
 }
+
+internal fun generateJetBrainsClientLaunchData(
+  ideContext: BuildContext,
+  arch: JvmArchitecture,
+  os: OsFamily,
+  vmOptionsFilePath: (BuildContext) -> String
+): CustomCommandLaunchData? =
+  createJetBrainsClientContextForLaunchers(ideContext)?.let { clientContext ->
+    CustomCommandLaunchData(
+      commands = listOf("thinClient", "thinClient-headless"),
+      vmOptionsFilePath = vmOptionsFilePath(clientContext),
+      bootClassPathJarNames = clientContext.bootClassPathJarNames,
+      additionalJvmArguments = clientContext.getAdditionalJvmArguments(os, arch) + ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS,
+      mainClass = clientContext.ideMainClassName,
+      dataDirectoryName = clientContext.systemSelector,
+    )
+  }
 
 /**
  * Describes the format of JSON file containing meta-information about a product installation.

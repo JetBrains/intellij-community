@@ -315,13 +315,16 @@ f:com.intellij.platform.ml.embeddings.services.LocalArtifactsManager$Companion
 - f:getInstance():com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 f:com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 - sf:Companion:com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider$Companion
-- <init>():V
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- f:cleanup():V
 - f:getService(Z,kotlin.coroutines.Continuation):java.lang.Object
 - bs:getService$default(com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - f:getServiceBlocking(Z):com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
 - bs:getServiceBlocking$default(com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider,Z,I,java.lang.Object):com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
+- f:scheduleCleanup():V
 f:com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider$Companion
 - f:getInstance():com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
+- f:getServiceCleanupTimeout-UwyO8pc():J
 - f:getTestDataPath():java.nio.file.Path
 f:com.intellij.platform.ml.embeddings.utils.IndexingUtilsKt
 - sf:convertNameToNaturalLanguage(java.lang.String):java.lang.String
@@ -332,4 +335,5 @@ f:com.intellij.platform.ml.embeddings.utils.IndexingUtilsKt
 - sf:generateEmbeddings(java.util.List,Z,kotlin.coroutines.Continuation):java.lang.Object
 - bs:generateEmbeddings$default(java.util.List,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - sf:normalized(ai.grazie.emb.FloatTextEmbedding):ai.grazie.emb.FloatTextEmbedding
-- sf:splitIdentifierIntoTokens(java.lang.String):java.util.List
+- sf:splitIdentifierIntoTokens(java.lang.String,Z):java.lang.String
+- bs:splitIdentifierIntoTokens$default(java.lang.String,Z,I,java.lang.Object):java.lang.String

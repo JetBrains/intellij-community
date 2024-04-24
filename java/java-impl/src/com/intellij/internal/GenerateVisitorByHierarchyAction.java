@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
@@ -81,7 +81,7 @@ final class GenerateVisitorByHierarchyAction extends AnAction {
         labeledComponent.setComponent(nameField);
         nameField.getDocument().addDocumentListener(new DocumentAdapter() {
           @Override
-          protected void textChanged(@NotNull final DocumentEvent e) {
+          protected void textChanged(final @NotNull DocumentEvent e) {
             visitorNameRef.set(nameField.getText());
           }
         });
@@ -98,7 +98,7 @@ final class GenerateVisitorByHierarchyAction extends AnAction {
         labeledComponent.setComponent(editorTextField);
         editorTextField.addDocumentListener(new DocumentListener() {
           @Override
-          public void documentChanged(@NotNull final com.intellij.openapi.editor.event.DocumentEvent e) {
+          public void documentChanged(final @NotNull com.intellij.openapi.editor.event.DocumentEvent e) {
             parentClassRef.set(null);
             try {
               final PsiType psiType = codeFragment.getType();
@@ -153,7 +153,7 @@ final class GenerateVisitorByHierarchyAction extends AnAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(e.getProject() != null);
   }
 
@@ -222,8 +222,7 @@ final class GenerateVisitorByHierarchyAction extends AnAction {
     }
   }
 
-  @NotNull
-  private static String detectClassPrefix(Collection<PsiClass> classes) {
+  private static @NotNull String detectClassPrefix(Collection<PsiClass> classes) {
     String detectedPrefix = "";
     List<TextRange> range = new SmartList<>();
     for (PsiClass aClass : classes) {

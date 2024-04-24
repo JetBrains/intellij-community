@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
-import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.collaboration.ui.codereview.issues.processIssueIdsHtml
@@ -12,14 +11,12 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
-import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHelper
@@ -68,14 +65,6 @@ internal class GHPRDetailsViewModelImpl(
     }
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  private val commitsLoadingModel = GHCompletableFutureLoadingModel<List<GHCommit>>(cs.nestedDisposable())
-
-  init {
-    dataProvider.changesData.loadCommitsFromApi(cs.nestedDisposable()) {
-      commitsLoadingModel.future = it
-    }
-  }
-
   override val isUpdating = MutableStateFlow(false)
 
   override val securityService: GHPRSecurityService = dataContext.securityService
@@ -85,7 +74,7 @@ internal class GHPRDetailsViewModelImpl(
   private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider)
   override val changesVm = GHPRChangesViewModelImpl(cs, project, dataContext, dataProvider)
 
-  override val statusVm = GHPRStatusViewModelImpl(cs, project, detailsState, dataProvider.stateData)
+  override val statusVm = GHPRStatusViewModelImpl(cs, project, dataProvider.detailsData, detailsState)
 
   override val reviewFlowVm =
     GHPRReviewFlowViewModelImpl(cs,
@@ -95,7 +84,6 @@ internal class GHPRDetailsViewModelImpl(
                                 dataContext.securityService,
                                 dataContext.avatarIconsProvider,
                                 dataProvider.detailsData,
-                                dataProvider.stateData,
                                 dataProvider.changesData,
                                 reviewVmHelper)
 

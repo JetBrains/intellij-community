@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
 import com.intellij.lang.jvm.actions.CreateConstructorRequest
 import com.intellij.psi.JvmPsiConversionHelper
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.ConstructorInfo
@@ -13,7 +14,6 @@ import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 

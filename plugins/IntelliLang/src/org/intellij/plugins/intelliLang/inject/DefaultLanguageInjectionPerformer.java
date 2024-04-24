@@ -21,7 +21,7 @@ final class DefaultLanguageInjectionPerformer implements FallbackInjectionPerfor
   public boolean performInjection(@NotNull MultiHostRegistrar registrar,
                                   @NotNull Injection injection,
                                   @NotNull PsiElement context) {
-    if (!(context instanceof PsiLanguageInjectionHost host) || !((PsiLanguageInjectionHost)context).isValidHost()) {
+    if (!(context instanceof PsiLanguageInjectionHost host) || !host.isValidHost()) {
       return false;
     }
 

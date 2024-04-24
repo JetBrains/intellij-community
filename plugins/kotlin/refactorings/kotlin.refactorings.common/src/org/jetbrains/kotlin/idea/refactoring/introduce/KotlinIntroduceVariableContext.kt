@@ -3,10 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.introduce
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import com.intellij.util.containers.addIfNotNull
@@ -15,7 +12,8 @@ import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isLambdaOutsideParentheses
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.jetbrains.kotlin.utils.checkWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment

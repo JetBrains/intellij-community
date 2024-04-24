@@ -25,7 +25,7 @@ public class NumberValueConverter<T extends Number> extends ResolvingConverter<T
   }
 
   @Override
-  public T fromString(final @Nullable @NonNls String s, final ConvertContext context) {
+  public T fromString(final @Nullable @NonNls String s, final @NotNull ConvertContext context) {
     if (s == null) return null;
 
     if (myAllowEmpty && s.trim().length() == 0) {
@@ -37,12 +37,12 @@ public class NumberValueConverter<T extends Number> extends ResolvingConverter<T
   }
 
   @Override
-  public String toString(final @Nullable T value, final ConvertContext context) {
+  public String toString(final @Nullable T value, final @NotNull ConvertContext context) {
     return value == null ? null : parseText(value, myNumberClass);
   }
 
   @Override
-  public String getErrorMessage(final @Nullable String s, final ConvertContext context) {
+  public String getErrorMessage(final @Nullable String s, final @NotNull ConvertContext context) {
     if (s == null) return super.getErrorMessage(null, context);
 
     final boolean isEmpty = s.trim().length() == 0;
@@ -54,7 +54,7 @@ public class NumberValueConverter<T extends Number> extends ResolvingConverter<T
   }
 
   @Override
-  public @NotNull Collection<? extends T> getVariants(ConvertContext context) {
+  public @NotNull Collection<? extends T> getVariants(@NotNull ConvertContext context) {
     return Collections.emptySet();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.model.ErrorInfo;
@@ -793,7 +793,7 @@ public abstract class PropertyTable extends JBTable {
     try {
       oldValue[0] = getValue(property);
       isNewValue = !Comparing.equal(oldValue[0], newValue);
-      if (newValue == null && oldValue[0] instanceof String && ((String)oldValue[0]).length() == 0) {
+      if (newValue == null && oldValue[0] instanceof String && ((String)oldValue[0]).isEmpty()) {
         isNewValue = false;
       }
     }
@@ -831,7 +831,7 @@ public abstract class PropertyTable extends JBTable {
     Throwable cause = e.getCause();
     String message = cause == null ? e.getMessage() : cause.getMessage();
 
-    if (message == null || message.length() == 0) {
+    if (message == null || message.isEmpty()) {
       message = IdeBundle.message("dialog.message.no.message");
     }
 

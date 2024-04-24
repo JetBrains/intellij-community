@@ -40,7 +40,7 @@ public class ShIncludeCommandReference extends PsiReferenceBase<PsiElement> {
       if (!(parent instanceof ShIncludeCommandImpl includeCommand)) return null;
       List<ShSimpleCommandElement> commandList = includeCommand.getSimpleCommandElementList();
       if (commandList.size() <= 0 || commandList.get(0) != myElement) return null;
-      return ((ShIncludeCommandImpl)parent).getReferencingFile(myElement);
+      return includeCommand.getReferencingFile(myElement);
     }
   }
 }

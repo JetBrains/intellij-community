@@ -2,11 +2,13 @@
 package com.intellij.util.indexing.dependencies
 
 import com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint.FingerprintImpl
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 
+@ApiStatus.Internal
 class AppIndexingDependenciesStorage(private val storage: FileChannel, storagePath: Path) :
   IndexingDependenciesStorageBase(storage, storagePath, CURRENT_STORAGE_VERSION) {
 

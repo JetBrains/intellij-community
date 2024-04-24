@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ReplaceInheritanceWithDelegationFix;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -40,14 +39,12 @@ public final class ExtendsConcreteCollectionInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ClassExtendsConcreteCollection";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiClass superClass = (PsiClass)infos[0];
     final PsiClass aClass = (PsiClass)infos[1];
     if (aClass instanceof PsiAnonymousClass) {

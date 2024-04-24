@@ -9,7 +9,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -71,10 +70,9 @@ class GHPRSearchPanelViewModel internal constructor(
     }
   }
 
-  suspend fun getAuthors(): List<GHUser> = repositoryDataService.collaborators.asDeferred().await()
-
-  suspend fun getAssignees(): List<GHUser> = repositoryDataService.issuesAssignees.asDeferred().await()
-  suspend fun getLabels(): List<GHLabel> = repositoryDataService.labels.asDeferred().await()
+  suspend fun getAuthors(): List<GHUser> = repositoryDataService.loadCollaborators()
+  suspend fun getAssignees(): List<GHUser> = repositoryDataService.loadIssuesAssignees()
+  suspend fun getLabels(): List<GHLabel> = repositoryDataService.loadLabels()
 }
 
 @ApiStatus.Experimental

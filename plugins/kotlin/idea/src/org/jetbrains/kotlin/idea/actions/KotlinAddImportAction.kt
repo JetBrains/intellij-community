@@ -136,10 +136,12 @@ internal fun createGroupedImportsAction(
 class KotlinAddImportAction internal constructor(
     private val project: Project,
     private val editor: Editor,
-    private val element: KtElement,
+    element: KtElement,
     private val variants: Sequence<VariantWithPriority>
 ) : QuestionAction {
     private var singleImportVariant: DescriptorBasedAutoImportVariant? = null
+
+    private val elementPointer = element.createSmartPointer()
 
     private fun variantsList(): List<DescriptorBasedAutoImportVariant> {
         if (singleImportVariant != null && !isUnitTestMode()) return listOf(singleImportVariant!!)
@@ -159,6 +161,7 @@ class KotlinAddImportAction internal constructor(
     }
 
     fun showHint(): Boolean {
+        val element = elementPointer.element ?: return false
         val iterator = variants.iterator()
         if (!iterator.hasNext()) return false
 
@@ -190,6 +193,7 @@ class KotlinAddImportAction internal constructor(
     }
 
     override fun execute(): Boolean {
+        val element = elementPointer.element ?: return false
         PsiDocumentManager.getInstance(project).commitAllDocuments()
         if (!element.isValid) return false
 
@@ -210,6 +214,7 @@ class KotlinAddImportAction internal constructor(
 
     private fun addImport(variant: AutoImportVariant) {
         require(variant is DescriptorBasedAutoImportVariant)
+        val element = elementPointer.element ?: return
 
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
         psiDocumentManager.commitAllDocuments()

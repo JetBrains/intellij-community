@@ -71,6 +71,10 @@
                                  hostElementClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral"
                                  targetClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectSymbol"
                                  implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectReferenceProvider"/>
+    <psi.symbolReferenceProvider hostLanguage="Groovy"
+                                 hostElementClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral"
+                                 targetClass="org.jetbrains.plugins.gradle.service.resolve.GradlePluginSymbol"
+                                 implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradlePluginReferenceProvider"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.gradle.service.resolve.GradleManagedPropertySetterReferenceSearcher"/>
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectUsageSearcher"/>

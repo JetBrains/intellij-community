@@ -368,9 +368,9 @@ object ActionUtil {
     val from = ActionManager.getInstance().getAction(actionId)
     if (from != null) {
       action.copyFrom(from)
-      action.copySourceActionId = actionId
     }
     ActionsCollector.getInstance().onActionConfiguredByActionId(action, actionId)
+    ActionCopiedShortcutsTracker.getInstance().onActionCopiedFromId(action, actionId)
     return action
   }
 

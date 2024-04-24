@@ -17,4 +17,6 @@ public class UnnecessaryLocalVariableInspectionTest extends LightJavaInspectionT
   public void testTree() { doTest(); }
 
   public void testSwitchExpression() { doTest(); }
+
+  public void testEffectivelyFinalVariableInGuard() { doTest(); }
 }

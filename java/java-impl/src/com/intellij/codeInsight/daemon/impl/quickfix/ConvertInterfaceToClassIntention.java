@@ -64,9 +64,8 @@ public final class ConvertInterfaceToClassIntention extends PsiBasedModCommandAc
       .andThen(psiUpdate(anInterface, (writableInterface, updater) -> convertInterfaceToClass(writableInterface, inheritors, updater)));
   }
 
-  @NotNull
-  private static Map<PsiElement, ModShowConflicts.Conflict> getConflicts(@NotNull PsiClass anInterface,
-                                                                         @NotNull Collection<PsiClass> inheritors) {
+  private static @NotNull Map<PsiElement, ModShowConflicts.Conflict> getConflicts(@NotNull PsiClass anInterface,
+                                                                                  @NotNull Collection<PsiClass> inheritors) {
     final Map<PsiElement, ModShowConflicts.Conflict> conflicts = new HashMap<>();
     inheritors.forEach(aClass -> {
       if (aClass.isEnum() || aClass.isRecord() || aClass.isInterface()) {

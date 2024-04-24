@@ -53,7 +53,7 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
   }
 
   @Override
-  public String fromString(final @Nullable @NonNls String stringValue, final ConvertContext context) {
+  public String fromString(final @Nullable @NonNls String stringValue, final @NotNull ConvertContext context) {
     if (stringValue != null && ((myAllowEmpty && stringValue.trim().length() == 0) || Arrays.binarySearch(getAllValues(), stringValue) >= 0)) {
       return stringValue;
     }
@@ -61,17 +61,17 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
   }
 
   @Override
-  public String toString(final @Nullable String s, final ConvertContext context) {
+  public String toString(final @Nullable String s, final @NotNull ConvertContext context) {
     return s;
   }
 
   @Override
-  public @NotNull Collection<String> getVariants(final ConvertContext context) {
+  public @NotNull Collection<String> getVariants(final @NotNull ConvertContext context) {
     return Arrays.asList(VARIANTS);
   }
 
   @Override
-  public String getErrorMessage(final @Nullable String s, final ConvertContext context) {
+  public String getErrorMessage(final @Nullable String s, final @NotNull ConvertContext context) {
     return XmlDomBundle.message("dom.converter.format.exception", s, BOOLEAN);
   }
 }

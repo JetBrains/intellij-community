@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -37,15 +37,13 @@ public class JavaPackageAccessibilityStatementElementType extends JavaStubElemen
     return new PsiPackageAccessibilityStatementImpl(node);
   }
 
-  @NotNull
   @Override
-  public ASTNode createCompositeNode() {
+  public @NotNull ASTNode createCompositeNode() {
     return new PackageAccessibilityStatementElement(this);
   }
 
-  @NotNull
   @Override
-  public PsiPackageAccessibilityStatementStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
+  public @NotNull PsiPackageAccessibilityStatementStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     String refText = null;
     List<String> to = new SmartList<>();
 
@@ -64,9 +62,8 @@ public class JavaPackageAccessibilityStatementElementType extends JavaStubElemen
     dataStream.writeUTFFast(StringUtil.join(stub.getTargets(), "/"));
   }
 
-  @NotNull
   @Override
-  public PsiPackageAccessibilityStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PsiPackageAccessibilityStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     String packageName = dataStream.readNameString();
     List<String> targets = StringUtil.split(dataStream.readUTFFast(), "/");
     return new PsiPackageAccessibilityStatementStubImpl(parentStub, this, packageName, targets);
@@ -75,8 +72,7 @@ public class JavaPackageAccessibilityStatementElementType extends JavaStubElemen
   @Override
   public void indexStub(@NotNull PsiPackageAccessibilityStatementStub stub, @NotNull IndexSink sink) { }
 
-  @NotNull
-  public static PsiPackageAccessibilityStatement.Role typeToRole(@NotNull IElementType type) {
+  public static @NotNull PsiPackageAccessibilityStatement.Role typeToRole(@NotNull IElementType type) {
     if (type == JavaElementType.EXPORTS_STATEMENT) return PsiPackageAccessibilityStatement.Role.EXPORTS;
     if (type == JavaElementType.OPENS_STATEMENT) return PsiPackageAccessibilityStatement.Role.OPENS;
     throw new IllegalArgumentException("Unknown type: " + type);

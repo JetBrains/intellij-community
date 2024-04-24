@@ -73,7 +73,7 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   }
 
   @Override
-  public T fromString(final String s, final ConvertContext context) {
+  public T fromString(final String s, final @NotNull ConvertContext context) {
     if (s == null) return null;
     return (T) myResolveCache.get(getResolvingScope(context)).getValue().get(s);
   }
@@ -86,7 +86,7 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   }
 
   @Override
-  public boolean isReferenceTo(@NotNull PsiElement element, String stringValue, @Nullable T resolveResult, ConvertContext context) {
+  public boolean isReferenceTo(@NotNull PsiElement element, String stringValue, @Nullable T resolveResult, @NotNull ConvertContext context) {
     return resolveResult != null && element.getManager().areElementsEquivalent(element, resolveResult.getXmlElement());
   }
 
@@ -96,26 +96,26 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   }
 
   @Override
-  public String getErrorMessage(final String s, final ConvertContext context) {
+  public String getErrorMessage(final String s, final @NotNull ConvertContext context) {
 
     return CodeInsightBundle.message("error.cannot.resolve.0.1", TypePresentationService.getService().getTypePresentableName(myClass), s);
   }
 
   @Override
-  public String toString(final T t, final ConvertContext context) {
+  public String toString(final T t, final @NotNull ConvertContext context) {
     if (t == null) return null;
     return ElementPresentationManager.getElementName(t);
   }
 
   @Override
-  public @NotNull Collection<? extends T> getVariants(final ConvertContext context) {
+  public @NotNull Collection<? extends T> getVariants(final @NotNull ConvertContext context) {
     final DomElement reference = context.getInvocationElement();
     final DomElement scope = reference.getManager().getResolvingScope((GenericDomValue)reference);
     return (Collection<T>)myResolveCache.get(scope).getValue().values();
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
+  public LocalQuickFix[] getQuickFixes(final @NotNull ConvertContext context) {
     final DomElement element = context.getInvocationElement();
     final GenericDomValue value = element.createStableCopy();
     final String newName = value.getStringValue();

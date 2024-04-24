@@ -946,6 +946,7 @@ c:com.intellij.ide.util.treeView.NodeOptions$Immutable
 - isShowLibraryContents():Z
 com.intellij.ide.util.treeView.PathElementIdProvider
 - a:getPathElementId():java.lang.String
+- getPathElementType():java.lang.String
 a:com.intellij.ide.util.treeView.PresentableNodeDescriptor
 - com.intellij.ide.util.treeView.NodeDescriptor
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.NodeDescriptor):V

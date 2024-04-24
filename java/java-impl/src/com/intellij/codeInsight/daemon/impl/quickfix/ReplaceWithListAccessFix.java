@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -18,9 +18,8 @@ public class ReplaceWithListAccessFix extends PsiUpdateModCommandAction<PsiArray
     super(arrayAccessExpression);
   }
   
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("replace.with.list.access.text");
   }
 
@@ -45,8 +44,7 @@ public class ReplaceWithListAccessFix extends PsiUpdateModCommandAction<PsiArray
     return Presentation.of(getFamilyName()).withFixAllOption(this);
   }
 
-  @Nullable
-  private static PsiType createUtilListType(@NotNull Project project, @NotNull PsiArrayAccessExpression arrayAccess) {
+  private static @Nullable PsiType createUtilListType(@NotNull Project project, @NotNull PsiArrayAccessExpression arrayAccess) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final PsiClass listClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_LIST, arrayAccess.getResolveScope());
 

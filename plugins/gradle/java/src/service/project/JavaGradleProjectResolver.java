@@ -507,7 +507,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   }
 
   private static @Nullable Sdk lookupSdkByName(@NotNull String sdkName) {
-    return SdkLookupUtil.lookupSdk(builder -> builder
+    return SdkLookupUtil.lookupSdkBlocking(builder -> builder
       .withSdkName(sdkName)
       .withSdkType(ExternalSystemJdkUtil.getJavaSdkType())
       .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP)

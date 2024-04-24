@@ -9,12 +9,13 @@ import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform
 import com.intellij.platform.ml.impl.model.MLModel
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
-import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachListeners.Companion.monitoredBy
+import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachToListener.Companion.monitoredBy
 import com.intellij.platform.ml.impl.session.AnalysedTierScheme
 import com.intellij.platform.ml.impl.session.analysis.AnalysisLogger
 import com.intellij.platform.ml.impl.session.analysis.SessionAnalyserProvider
 import com.intellij.platform.ml.impl.session.analysis.StructureAnalyser
 import com.intellij.platform.ml.impl.session.analysis.createJoinedAnalyser
+import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -22,32 +23,32 @@ import org.jetbrains.annotations.ApiStatus
  * The event will be logged automatically.
  *
  * You could consider two logging schemes:
- *  - The one, that is putting entire sessions to one event [com.intellij.platform.ml.impl.logs.EntireSessionLoggingScheme]
- *  - The one, that is splitting ML sessions into multiple events [com.intellij.platform.ml.impl.logs.SessionAsMultipleEventsLoggingScheme]
+ *  - The one, that is putting entire sessions to one event [com.intellij.platform.ml.impl.logs.EntireSessionLoggingStrategy]
+ *  - The one, that is splitting ML sessions into multiple events [com.intellij.platform.ml.impl.logs.SessionAsMultipleEventsLoggingStrategy]
+ *
+ * The attached listener will stop listening at the application's disposal
  *
  * @param eventName Event's name in the event group
  * @param task Task whose finish will be recorded
- * @param sessionScheme Chosen scheme for the session structure
+ * @param loggingStrategy Chosen scheme for the session structure
  * @param analysisMethods All analyzers that will contribute their analytics to the ML logs
  * @param apiPlatform Platform that will be used to build event validators: it should include desired analysis and description features.
- *
- * @return Controller, that could disable event's logging by calling [MLApiPlatform.ExtensionController.removeExtension]
  */
 @ApiStatus.Internal
-fun <M : MLModel<P>, P : Any> EventLogGroup.registerEventSessionFinished(
+fun <M : MLModel<P>, P : Any> EventLogGroup.registerMLTaskLogging(
   eventName: String,
   task: MLTask<P>,
-  sessionScheme: MLSessionScheme<P>,
+  loggingStrategy: MLSessionLoggingStrategy<P>,
   analysisMethods: AnalysisMethods<M, P> = AnalysisMethods.none(),
   apiPlatform: MLApiPlatform = ReplaceableIJPlatform
-): MLApiPlatform.ExtensionController {
+) {
   val approachBuilder = findMlTaskApproach(task, apiPlatform)
   val levelsScheme = approachBuilder.buildApproachSessionDeclaration(apiPlatform)
 
   val sessionAnalyser = analysisMethods.sessionAnalysers.createJoinedAnalyser()
   val structureAnalyser = analysisMethods.structureAnalysers.createJoinedAnalyser()
 
-  val mlSessionLoggerBuilder = sessionScheme.configureLogger(
+  val mlSessionLoggerBuilder = loggingStrategy.configureLogger(
     sessionAnalysisDeclaration = sessionAnalyser.declaration,
     sessionStructureAnalysisDeclaration = buildAnalysedLevelsScheme(levelsScheme, structureAnalyser),
     eventLogGroup = this,
@@ -56,10 +57,11 @@ fun <M : MLModel<P>, P : Any> EventLogGroup.registerEventSessionFinished(
   val analysisLogger = AnalysisLogger(sessionAnalyser, structureAnalyser, mlSessionLoggerBuilder)
   return apiPlatform.addTaskListener(
     object : MLTaskGroupListener {
-      override val approachListeners: Collection<MLTaskGroupListener.ApproachListeners<*, *>> = listOf(
+      override val approachListeners: Collection<MLTaskGroupListener.ApproachToListener<*, *>> = listOf(
         approachBuilder.javaClass monitoredBy analysisLogger
       )
-    }
+    },
+    application
   )
 }
 

@@ -3,37 +3,25 @@ package com.intellij.settingsSync
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
-import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
-import com.intellij.settingsSync.notification.NotificationService
-import com.intellij.settingsSync.notification.NotificationServiceImpl
-import com.intellij.testFramework.replaceService
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Ignore
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
-import org.mockito.Mockito
-import org.mockito.Mockito.verify
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import java.nio.charset.Charset
 import java.time.Instant
-import java.util.*
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
-@RunWith(JUnit4::class)
 internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @Test
@@ -142,7 +130,8 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     }
   }
 
-  @Test fun `disabled categories should be ignored when copying settings on initialization`() {
+  @Test
+  fun `disabled categories should be ignored when copying settings on initialization`() {
     GeneralSettings.getInstance().initModifyAndSave {
       autoSaveFiles = false
     }
@@ -162,11 +151,11 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
-    assertTrue("Settings from enabled category was not copied", (settingsSyncStorage / "options" / "editor.xml").exists())
-    assertFalse("Settings from disabled category was copied", (settingsSyncStorage / "options" / "ide.general.xml").exists())
+    Assertions.assertTrue((settingsSyncStorage / "options" / "editor.xml").exists(), "Settings from enabled category was not copied")
+    Assertions.assertFalse((settingsSyncStorage / "options" / "ide.general.xml").exists(), "Settings from disabled category was copied")
     //assertFalse("Settings from disabled subcategory was copied", (settingsSyncStorage / "options" / "editor-font.xml").exists())
-    assertFalse("Settings from disabled category was copied", (settingsSyncStorage / "options" / os / "keymap.xml").exists())
-    assertFalse("Schema from disabled category was copied", (settingsSyncStorage / "keymaps" / "${keymap.name}.xml").exists())
+    Assertions.assertFalse((settingsSyncStorage / "options" / os / "keymap.xml").exists(), "Settings from disabled category was copied")
+    Assertions.assertFalse((settingsSyncStorage / "keymaps" / "${keymap.name}.xml").exists(), "Schema from disabled category was copied")
     remoteCommunicator.getVersionOnServer()!!.assertSettingsSnapshot {
       fileState {
         EditorSettingsExternalizable().withState {
@@ -190,7 +179,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     waitForSettingsToBeApplied(generalSettings) {
       fireSettingsChanged()
     }
-    assertFalse(generalSettings.isSaveOnFrameDeactivation)
+    Assertions.assertFalse(generalSettings.isSaveOnFrameDeactivation)
   }
 
   @Test
@@ -204,8 +193,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     }
     val editorXmlContent = (configDir / "options" / "editor.xml").readText()
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
-    assertFalse("editor.xml should not be synced if the Code category is disabled",
-                (settingsSyncStorage / "options" / "editor.xml").exists())
+    Assertions.assertFalse((settingsSyncStorage / "options" / "editor.xml").exists(), "editor.xml should not be synced if the Code category is disabled")
     assertServerSnapshot {
       fileState {
         GeneralSettings().withState {
@@ -218,8 +206,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.LogCurrentSettings)
     bridge.waitForAllExecuted()
 
-    assertTrue("editor.xml should be synced after enabling the Code category",
-               (settingsSyncStorage / "options" / "editor.xml").exists())
+    Assertions.assertTrue((settingsSyncStorage / "options" / "editor.xml").exists(), "editor.xml should be synced after enabling the Code category")
     assertFileWithContent(editorXmlContent, (settingsSyncStorage / "options" / "editor.xml"))
     assertServerSnapshot {
       fileState {
@@ -260,10 +247,10 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     val fileExists = settingsSyncStorage.resolve("options").resolve(file).exists()
     val assertMessage = "File $file of ${component::class.simpleName} should ${if (!expectedToBeSynced) "not " else ""}exist"
     if (expectedToBeSynced) {
-      assertTrue(assertMessage, fileExists)
+      Assertions.assertTrue(fileExists, assertMessage)
     }
     else {
-      assertFalse(assertMessage, fileExists)
+      Assertions.assertFalse(fileExists, assertMessage)
     }
   }
 
@@ -297,7 +284,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
-  @Ignore // TODO investigate
+  @Disabled // TODO investigate
   fun `local and remote changes in different files are both applied`() {
     val generalSettings = GeneralSettings.getInstance().init()
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
@@ -336,8 +323,8 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
         }
       }
     }
-    assertFalse(generalSettings.isSaveOnFrameDeactivation)
-    assertFalse(EditorSettingsExternalizable.getInstance().isShowIntentionBulb)
+    Assertions.assertFalse(generalSettings.isSaveOnFrameDeactivation)
+    Assertions.assertFalse(EditorSettingsExternalizable.getInstance().isShowIntentionBulb)
   }
 
 /*

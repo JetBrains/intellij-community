@@ -4,13 +4,19 @@ package com.intellij.ui.treeStructure;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.SmoothAutoScroller;
+import com.intellij.ide.util.treeView.CachedTreePresentation;
+import com.intellij.ide.util.treeView.CachedTreePresentationSupport;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.paint.RectanglePainter2D;
@@ -24,7 +30,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.Timer;
 import javax.swing.*;
@@ -39,8 +44,10 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.util.Collections.emptyList;
+
 public class Tree extends JTree implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>, Queryable,
-                                           ComponentWithFileColors, TreePathBackgroundSupplier {
+                                           ComponentWithFileColors, TreePathBackgroundSupplier, CachedTreePresentationSupport {
   /**
    * Force the following strategy for selection on the right click:
    * <ul>
@@ -436,7 +443,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   protected void processMouseEvent(MouseEvent e) {
     MouseEvent e2 = e;
 
-    if (SystemInfo.isMac) {
+    if (ClientSystemInfo.isMac()) {
       e2 = MacUIUtil.fixMacContextMenuIssue(e);
     }
 
@@ -455,6 +462,20 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   public TreePath getPath(@NotNull PresentableNodeDescriptor node) {
     return null; // TODO not implemented
+  }
+
+  @Nullable CachingTreePath getPath(@Nullable TreeModelEvent event) {
+    if (event == null) return null;
+    var path = event.getTreePath();
+    var model = getModel();
+    // mimic sun.swing.SwingUtilities2.getTreePath
+    if ((path == null) && (model != null)) {
+      Object root = model.getRoot();
+      if (root != null) {
+        return new CachingTreePath(root);
+      }
+    }
+    return CachingTreePath.ensureCaching(path);
   }
 
   public void expandPaths(@NotNull Iterable<@NotNull TreePath> paths) {
@@ -567,10 +588,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
     var model = treeModel;
-    if (expandImpl != null && model != null && TREE_MODEL_PROPERTY.equals(propertyName)) {
-      Object treeRoot = model.getRoot();
-      if (treeRoot != null && !model.isLeaf(treeRoot)) {
-        expandImpl.markPathExpanded(new CachingTreePath(treeRoot));
+    if (TREE_MODEL_PROPERTY.equals(propertyName)) {
+      if (oldValue instanceof CachedTreePresentationSupport cps) {
+        cps.setCachedPresentation(null);
+      }
+      if (expandImpl != null && model != null) {
+        Object treeRoot = model.getRoot();
+        if (treeRoot != null && !model.isLeaf(treeRoot)) {
+          expandImpl.markPathExpanded(new CachingTreePath(treeRoot));
+        }
+      }
+      if (newValue instanceof CachedTreePresentationSupport cps && expandImpl != null) {
+        cps.setCachedPresentation(expandImpl.getCachedPresentation());
       }
     }
     super.firePropertyChange(propertyName, oldValue, newValue);
@@ -1220,12 +1249,78 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
   }
 
-  private class ExpandImpl {
+  private @Nullable CachedTreePresentation getCachedPresentation() {
+    return expandImpl != null ? expandImpl.getCachedPresentation() : null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void setCachedPresentation(@Nullable CachedTreePresentation presentation) {
+    if (expandImpl != null) {
+      expandImpl.setCachedPresentation(presentation);
+    }
+  }
+
+  private class CachedPresentationImpl {
+    private final @NotNull CachedTreePresentation cachedTree;
+
+    CachedPresentationImpl(@NotNull CachedTreePresentation cachedTree) {
+      this.cachedTree = cachedTree;
+    }
+
+    void setExpanded(@NotNull TreePath path, boolean isExpanded) {
+      cachedTree.setExpanded(path, isExpanded);
+    }
+
+    void updateExpandedNodes(@NotNull TreePath parent) {
+      expandPaths(collectCachedExpandedPaths(parent));
+    }
+
+    private @NotNull Iterable<TreePath> collectCachedExpandedPaths(@NotNull TreePath parent) {
+      var model = getModel();
+      if (model == null) return emptyList();
+      return cachedTree.getExpandedDescendants(model, parent);
+    }
+  }
+
+  private class ExpandImpl implements CachedTreePresentationSupport {
 
     private final Map<TreePath, Boolean> expandedState = new HashMap<>();
 
+    private @Nullable CachedPresentationImpl cachedPresentation;
+
+    @Nullable CachedTreePresentation getCachedPresentation() {
+      return cachedPresentation != null ? cachedPresentation.cachedTree : null;
+    }
+
+    @Override
+    public void setCachedPresentation(@Nullable CachedTreePresentation presentation) {
+      cachedPresentation = presentation == null ? null : new CachedPresentationImpl(presentation);
+      if (cachedPresentation != null) {
+        var rootPath = getRootPath();
+        if (rootPath != null) {
+          cachedPresentation.updateExpandedNodes(rootPath);
+        }
+      }
+      // The order is important here because the model may immediately fire an event
+      // that must be handled by expandImpl, so the model has to be updated last.
+      if (getModel() instanceof CachedTreePresentationSupport cps) {
+        cps.setCachedPresentation(presentation);
+      }
+    }
+
     void markPathExpanded(@NotNull TreePath path) {
       expandedState.put(path, Boolean.TRUE);
+      if (cachedPresentation != null) {
+        cachedPresentation.setExpanded(path, true);
+      }
+    }
+
+    void markPathCollapsed(TreePath path) {
+      expandedState.put(path, Boolean.FALSE);
+      if (cachedPresentation != null) {
+        cachedPresentation.setExpanded(path, false);
+      }
     }
 
     @NotNull Set<TreePath> getExpandedPaths() {
@@ -1316,7 +1411,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         suspendExpandCollapseAccessibilityAnnouncements();
         for (TreePath path : toExpand) {
           if (isNotLeaf(path)) {
-            expandedState.put(path, Boolean.TRUE);
+            markPathExpanded(path);
             fireTreeExpanded(path);
             var parent = path.getParentPath();
             if (parent == null || !toExpand.contains(parent)) {
@@ -1411,12 +1506,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         fireBulkCollapseStarted();
         suspendExpandCollapseAccessibilityAnnouncements();
         for (TreePath path : toExpand) {
-          expandedState.put(path, Boolean.TRUE);
+          markPathExpanded(path);
           fireTreeExpanded(path);
         }
         for (TreePath path : toCollapseList) {
           if (isNotLeaf(path)) {
-            expandedState.put(path, Boolean.FALSE);
+            markPathCollapsed(path);
             fireTreeCollapsed(path);
             if (removeDescendantSelectedPaths(path, false) && !isPathSelected(path)) {
               addSelectionPath(path);
@@ -1538,7 +1633,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           } catch (ExpandVetoException eve) {
             return false;
           }
-          expandedState.put(parentPath, Boolean.TRUE);
+          markPathExpanded(parentPath);
           fireTreeExpanded(parentPath);
           if (accessibleContext != null) {
             ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
@@ -1558,7 +1653,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       catch (ExpandVetoException eve) {
         return;
       }
-      expandedState.put(path, Boolean.TRUE);
+      markPathExpanded(path);
       fireTreeExpanded(path);
       if (accessibleContext != null) {
         ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
@@ -1575,7 +1670,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       catch (ExpandVetoException eve) {
         return;
       }
-      expandedState.put(path, Boolean.FALSE);
+      markPathCollapsed(path);
       fireTreeCollapsed(path);
       if (removeDescendantSelectedPaths(path, false) && !isPathSelected(path)) {
         addSelectionPath(path);
@@ -1626,14 +1721,24 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       public void treeNodesChanged(TreeModelEvent e) { }
 
       @Override
-      public void treeNodesInserted(TreeModelEvent e) { }
+      public void treeNodesInserted(TreeModelEvent e) {
+        var model = getModel();
+        var path = getPath(e);
+        if (model == null || path == null) return;
+        var parent = path.getLastPathComponent();
+        if (cachedPresentation != null) {
+          for (int i : e.getChildIndices()) {
+            cachedPresentation.updateExpandedNodes(path.pathByAddingChild(model.getChild(parent, i)));
+          }
+        }
+      }
 
       @Override
       public void treeStructureChanged(TreeModelEvent e) {
         if (e == null) {
           return;
         }
-        TreePath parent = SwingUtilities2.getTreePath(e, getModel());
+        TreePath parent = getPath(e);
         if (parent == null) {
           return;
         }
@@ -1655,11 +1760,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
               collapsePath(parent);
             }
             else {
-              expandedState.put(parent, Boolean.TRUE);
+              markPathExpanded(parent);
             }
           }
         }
         Tree.this.removeDescendantSelectedPaths(parent, false);
+        if (cachedPresentation != null) {
+          cachedPresentation.updateExpandedNodes(parent);
+        }
       }
 
       @Override
@@ -1667,9 +1775,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         if (e == null) {
           return;
         }
-        TreePath parent = SwingUtilities2.getTreePath(e, getModel());
+        TreePath parent = getPath(e);
         Object[] children = e.getChildren();
-        if (children == null) {
+        if (children == null || parent == null) {
           return;
         }
         TreePath path;
@@ -1691,10 +1799,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
 
       private void removeDescendantSelectedPaths(TreeModelEvent e) {
-        TreePath pPath = SwingUtilities2.getTreePath(e, getModel());
+        TreePath pPath = getPath(e);
+        if (pPath == null) return;
         Object[] oldChildren = e.getChildren();
         TreeSelectionModel sm = getSelectionModel();
-        if (sm != null && pPath != null && oldChildren != null && oldChildren.length > 0) {
+        if (sm != null && oldChildren != null && oldChildren.length > 0) {
           for (int counter = oldChildren.length - 1; counter >= 0; counter--) {
             Tree.this.removeDescendantSelectedPaths(pPath.pathByAddingChild(oldChildren[counter]), true);
           }

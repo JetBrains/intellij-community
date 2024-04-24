@@ -41,8 +41,7 @@ public final class ReplaceConcatenationWithStringBufferIntention extends MCInten
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new SimpleStringConcatenationPredicate(true);
   }
 
@@ -55,7 +54,7 @@ public final class ReplaceConcatenationWithStringBufferIntention extends MCInten
       parent = expression.getParent();
     }
     CommentTracker commentTracker = new CommentTracker();
-    @NonNls final StringBuilder newExpression = new StringBuilder();
+    final @NonNls StringBuilder newExpression = new StringBuilder();
     if (isPartOfStringBufferAppend(expression)) {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent.getParent();
       assert methodCallExpression != null;
@@ -100,7 +99,7 @@ public final class ReplaceConcatenationWithStringBufferIntention extends MCInten
     if (!CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) && !CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(className)) {
       return false;
     }
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     return "append".equals(methodName);
   }
 

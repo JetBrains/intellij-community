@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.psi.impl.cache.TypeInfo;
@@ -139,8 +139,7 @@ public final class SignatureParsing {
     }
   }
 
-  @NotNull
-  static TypeParametersDeclaration parseTypeParametersDeclaration(CharIterator signature, TypeInfoProvider mapping) throws ClsFormatException {
+  static @NotNull TypeParametersDeclaration parseTypeParametersDeclaration(CharIterator signature, TypeInfoProvider mapping) throws ClsFormatException {
     if (signature.current() != '<') {
       return TypeParametersDeclaration.EMPTY;
     }
@@ -176,8 +175,7 @@ public final class SignatureParsing {
     return new TypeParameterDeclaration(parameterName, bounds.toArray(TypeInfo.EMPTY_ARRAY));
   }
 
-  @Nullable
-  static TypeInfo parseTopLevelClassRefSignatureToTypeInfo(CharIterator signature, TypeInfoProvider mapping) throws ClsFormatException {
+  static @Nullable TypeInfo parseTopLevelClassRefSignatureToTypeInfo(CharIterator signature, TypeInfoProvider mapping) throws ClsFormatException {
     switch (signature.current()) {
       case 'L':
         return parseParameterizedClassRefSignatureToTypeInfo(signature, mapping);
@@ -330,8 +328,7 @@ public final class SignatureParsing {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
-  @NotNull
-  public static String parseTypeString(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+  public static @NotNull String parseTypeString(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
     StringBuilder sb = new StringBuilder();
     int pos = signature.getIndex();
     while(true) {
@@ -367,8 +364,7 @@ public final class SignatureParsing {
     return type;
   }
 
-  @Nullable
-  private static TypeInfo parseTypeWithoutVarianceToTypeInfo(CharIterator signature, TypeInfoProvider mapping) throws ClsFormatException {
+  private static @Nullable TypeInfo parseTypeWithoutVarianceToTypeInfo(CharIterator signature, TypeInfoProvider mapping) throws ClsFormatException {
     switch (signature.current()) {
       case 'L':
         return parseParameterizedClassRefSignatureToTypeInfo(signature, mapping);

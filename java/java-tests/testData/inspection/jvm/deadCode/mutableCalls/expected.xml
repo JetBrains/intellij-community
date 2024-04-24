@@ -9,6 +9,13 @@
 
   <problem>
     <file>C.kt</file>
+    <line>1</line>
+    <entry_point TYPE="class" FQNAME="C" />
+    <description>No class references has been found. Class static initializer is not reachable.</description>
+  </problem>
+
+  <problem>
+    <file>C.kt</file>
     <line>6</line>
     <problem_class>unused declaration</problem_class>
     <description>Method has usage(s) but they all belong to calls chain that has no members reachable from entry points.</description>
@@ -20,6 +27,13 @@
     <entry_point TYPE="method" FQNAME="C void xxx()" />
     <problem_class>unused declaration</problem_class>
     <description>Method has usage(s) but they all belong to calls chain that has no members reachable from entry points.</description>
+  </problem>
+
+  <problem>
+    <file>A.java</file>
+    <line>1</line>
+    <entry_point TYPE="class" FQNAME="A" />
+    <description>No class references has been found. Class static initializer is not reachable.</description>
   </problem>
 
   <problem>

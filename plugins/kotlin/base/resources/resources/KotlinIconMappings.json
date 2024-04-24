@@ -42,7 +42,8 @@
                             "lambda.svg": "org/jetbrains/kotlin/idea/icons/lambda.svg",
                             "objectKotlin.svg": "org/jetbrains/kotlin/idea/icons/objectKotlin.svg",
                             "typeAlias.svg": "org/jetbrains/kotlin/idea/icons/typeAlias.svg",
-                            "value.svg": "org/jetbrains/kotlin/idea/icons/value.svg"
+                            "value.svg": "org/jetbrains/kotlin/idea/icons/value.svg",
+                            "suspendCall@14x14.svg": "org/jetbrains/kotlin/idea/icons/suspendCall.svg"
                         }
                     }
                 }

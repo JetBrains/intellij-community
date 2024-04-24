@@ -6,7 +6,6 @@ import com.intellij.util.text.NameUtilCore;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -72,15 +71,5 @@ public class NameUtilTest {
   private static void assertSplitEquals(String[] expected, String name) {
     final String[] result = NameUtil.splitNameIntoWords(name);
     assertEquals(Arrays.asList(expected).toString(), Arrays.asList(result).toString());
-  }
-  
-  @Test
-  public void testUniqName() {
-    assertEquals("best", NameUtilCore.uniqName("best", Set.of("test", "test1")::contains));
-    assertEquals("test1", NameUtilCore.uniqName("test", Set.of("test")::contains));
-    assertEquals("test2", NameUtilCore.uniqName("test", Set.of("test", "test1")::contains));
-    assertEquals("test3", NameUtilCore.uniqName("test", Set.of("test", "test1", "test2")::contains));
-    assertEquals("test3", NameUtilCore.uniqName("test1", Set.of("test", "test1", "test2")::contains));
-    assertEquals("test3", NameUtilCore.uniqName("test2", Set.of("test", "test1", "test2")::contains));
   }
 }

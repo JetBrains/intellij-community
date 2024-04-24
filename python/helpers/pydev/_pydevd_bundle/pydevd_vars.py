@@ -582,6 +582,9 @@ def array_to_xml(array, name, roffset, coffset, rows, cols, format):
     return xml
 
 
+def tensorflow_to_xml(tensor, name, roffset, coffset, rows, cols, format):
+    return array_to_xml(tensor.numpy(), name, roffset, coffset, rows, cols, format)
+
 class ExceedingArrayDimensionsException(Exception):
     pass
 
@@ -804,7 +807,10 @@ TYPE_TO_XML_CONVERTERS = {
     "DataFrame": dataframe_to_xml,
     "Series": dataframe_to_xml,
     "GeoDataFrame": dataframe_to_xml,
-    "GeoSeries": dataframe_to_xml
+    "GeoSeries": dataframe_to_xml,
+    "EagerTensor": tensorflow_to_xml,
+    "ResourceVariable": tensorflow_to_xml,
+    "Tensor": tensorflow_to_xml
 }
 
 

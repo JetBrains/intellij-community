@@ -117,7 +117,7 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
 
     @Test
     fun testAddKotlinReflect() = runBlocking {
-        doTestAndWaitForMavenImport("Add 'kotlin-reflect.jar' to the classpath")
+        doTest("Add 'kotlin-reflect.jar' to the classpath")
     }
 
     private suspend fun doTest(intentionName: String) {
@@ -131,28 +131,6 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
             codeInsightTestFixture.configureFromExistingVirtualFile(sourceVFile)
             (codeInsightTestFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
             codeInsightTestFixture.launchAction(codeInsightTestFixture.findSingleIntention(intentionName))
-            FileDocumentManager.getInstance().saveAllDocuments()
-            checkResult(pomVFile)
-        }
-    }
-
-    private suspend fun doTestAndWaitForMavenImport(intentionName: String) {
-        val pomVFile = createProjectSubFile("pom.xml", File(getTestDataPath(), "pom.xml").readText())
-        val sourceVFile = createProjectSubFile("src/main/kotlin/src.kt", File(getTestDataPath(), "src.kt").readText())
-        projectPom = pomVFile
-        addPom(projectPom)
-        importProjectAsync()
-        withContext(Dispatchers.EDT) {
-            assertTrue(ModuleRootManager.getInstance(testFixture.module).fileIndex.isInSourceContent(sourceVFile))
-        }
-        codeInsightTestFixture.configureFromExistingVirtualFile(sourceVFile)
-        val intentionAction = codeInsightTestFixture.findSingleIntention(intentionName)
-        waitForImportWithinTimeout {
-            withContext(Dispatchers.EDT) {
-                intentionAction.invoke(project, codeInsightTestFixture.editor, codeInsightTestFixture.file)
-            }
-        }
-        withContext(Dispatchers.EDT) {
             FileDocumentManager.getInstance().saveAllDocuments()
             checkResult(pomVFile)
         }

@@ -2,51 +2,47 @@
 package com.intellij.platform.ml.embeddings.services
 
 import com.fasterxml.jackson.core.JsonProcessingException
-import com.github.benmanes.caffeine.cache.Cache
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingServiceLoader
+import com.intellij.platform.util.coroutines.namedChildScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 
 /**
  * Thread-safe wrapper around [LocalEmbeddingServiceLoader] that caches [LocalEmbeddingService]
  * so that when the available heap memory is low, the neural network model is unloaded.
  */
 @Service
-class LocalEmbeddingServiceProvider {
-  // Allow garbage collector to free memory if the available heap size is low
-  private val serviceCache: Cache<Unit, LocalEmbeddingService> =
-    Caffeine.newBuilder().expireAfterAccess(30.seconds.toJavaDuration()).build()
+class LocalEmbeddingServiceProvider(cs: CoroutineScope) {
+  private val providerScope = cs.namedChildScope("Local embedding service provider scope")
 
+  // Allow garbage collector to free memory if the available heap size is low
+  private var localServiceRef: AtomicReference<LocalEmbeddingService?> = AtomicReference(null)
   private val mutex = Mutex()
 
   suspend fun getService(downloadArtifacts: Boolean = false): LocalEmbeddingService? {
-    return coroutineToIndicator { getServiceBlocking(downloadArtifacts) }
-  }
-
-  fun getServiceBlocking(downloadArtifacts: Boolean = false): LocalEmbeddingService? = serviceCache.get(Unit) {
-    runBlockingCancellable {
-      mutex.withLock {
-        serviceCache.getIfPresent(Unit) ?: if (ApplicationManager.getApplication().isUnitTestMode) {
+    return mutex.withLock {
+      var service = localServiceRef.get()
+      if (service == null) {
+        service = if (ApplicationManager.getApplication().isUnitTestMode) {
           LocalEmbeddingServiceLoader().load(CustomRootDataLoader(testDataPath))
         }
         else {
           val artifactsManager = LocalArtifactsManager.getInstance()
           if (!artifactsManager.checkArtifactsPresent()) {
-            if (!downloadArtifacts) return@runBlockingCancellable null
+            if (!downloadArtifacts) return null
             logger.debug("Downloading model artifacts because requested embedding calculation")
             artifactsManager.downloadArtifactsIfNecessary()
           }
@@ -63,8 +59,26 @@ class LocalEmbeddingServiceProvider {
             null
           }
         }
+        localServiceRef.set(service)
       }
+      service
     }
+  }
+
+  fun cleanup() {
+    localServiceRef.set(null)
+  }
+
+  fun scheduleCleanup() {
+    providerScope.coroutineContext.cancelChildren()
+    providerScope.launch(providerScope.coroutineContext) {
+      delay(serviceCleanupTimeout)
+      cleanup()
+    }
+  }
+
+  fun getServiceBlocking(downloadArtifacts: Boolean = false): LocalEmbeddingService? = runBlockingCancellable {
+    getService(downloadArtifacts)
   }
 
   companion object {
@@ -75,5 +89,7 @@ class LocalEmbeddingServiceProvider {
     val testDataPath: Path by lazy {
       File(PathManager.getCommunityHomePath()).resolve("platform/ml-embeddings/tests/testResources").toPath()
     }
+
+    val serviceCleanupTimeout = 10.seconds
   }
 }

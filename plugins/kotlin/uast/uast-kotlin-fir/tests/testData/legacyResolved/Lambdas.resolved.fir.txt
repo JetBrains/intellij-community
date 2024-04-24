@@ -9,7 +9,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = St
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Method: empty
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Stream) -> Decompiled_Class: Stream
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = empty) -> Decompiled_Method: empty
-    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> null: null
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = filter) -> Decompiled_Method: filter
         UReturnExpression -> UQualifiedReferenceExpression -> Decompiled_Method: isEmpty
         UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = it) -> Kotlin_Light_Value_Parameter: it

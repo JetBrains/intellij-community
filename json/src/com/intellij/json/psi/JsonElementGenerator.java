@@ -50,6 +50,17 @@ public class JsonElementGenerator {
     return (JsonObject) file.getFirstChild();
   }
 
+  public @NotNull JsonArray createEmptyArray() {
+    final PsiFile file = createDummyFile("[]");
+    return (JsonArray) file.getFirstChild();
+  }
+
+  public @NotNull JsonValue createArrayItemValue(@NotNull String content) {
+    final PsiFile file = createDummyFile("[" + content + "]");
+    JsonArray array = (JsonArray)file.getFirstChild();
+    return array.getValueList().get(0);
+  }
+
   /**
    * Create JSON string literal from supplied <em>unescaped</em> content.
    *

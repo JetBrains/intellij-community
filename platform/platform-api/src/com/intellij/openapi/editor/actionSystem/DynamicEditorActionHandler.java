@@ -141,6 +141,11 @@ final class DynamicEditorActionHandler extends EditorActionHandler {
       chain.add(handler);
     }
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Updated DynamicEditorActionHandler chain for " + myAction.getClass() + ": " + chain,
+                LOG.isTraceEnabled() ? new Throwable() : null);
+    }
+
     // We want to avoid deadlock with ActionManagerImpl, so 'clearCache' method isn't synchronized.
     // That's why we may cache the result only if ActionManagerImpl hasn't invalidated registered handlers
     // while we were calculating it.
@@ -167,5 +172,13 @@ final class DynamicEditorActionHandler extends EditorActionHandler {
 
   void clearCache() {
     myCachedChain.set(null);
+  }
+
+  @Override
+  public String toString() {
+    return "DynamicEditorActionHandler{" +
+           "myAction=" + myAction.getClass() +
+           ", myBaseHandler=" + myBaseHandler +
+           '}';
   }
 }

@@ -12,7 +12,7 @@ import org.jetbrains.terminal.completion.ShellCommand
 import org.jetbrains.terminal.completion.ShellOption
 import org.jetbrains.terminal.completion.ShellSuggestion
 
-class CommandSpecCompletionWeigher : CompletionWeigher() {
+internal class CommandSpecCompletionWeigher : CompletionWeigher() {
   override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<Nothing>? {
     val suggestion = element.`object` as? BaseSuggestion ?: return null
     return when (suggestion) {

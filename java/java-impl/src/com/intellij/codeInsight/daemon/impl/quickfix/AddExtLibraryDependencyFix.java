@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class AddExtLibraryDependencyFix extends OrderEntryFix {
+final class AddExtLibraryDependencyFix extends OrderEntryFix {
   private final @NotNull Module myCurrentModule;
   private final @NotNull ExternalLibraryDescriptor myLibraryDescriptor;
   private final @NotNull DependencyScope myScope;
@@ -42,17 +42,13 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
     myQualifiedClassName = qName;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
+  public @Nls @NotNull String getText() {
     return QuickFixBundle.message("add.0.to.classpath", myLibraryDescriptor.getPresentableName());
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return getText();
   }
 

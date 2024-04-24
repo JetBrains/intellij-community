@@ -38,8 +38,7 @@ public final class CharToStringIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new CharToStringPredicate();
   }
 

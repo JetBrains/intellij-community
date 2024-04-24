@@ -8,6 +8,7 @@ com/jediterm/terminal/DefaultTerminalCopyPasteHandler
 com/jediterm/terminal/ProcessTtyConnector
 com/jediterm/terminal/SubstringFinder$FindResult
 com/jediterm/terminal/Terminal
+com/jediterm/terminal/TerminalColor
 com/jediterm/terminal/TerminalCopyPasteHandler
 com/jediterm/terminal/TerminalDataStream
 com/jediterm/terminal/TerminalExecutorServiceManager

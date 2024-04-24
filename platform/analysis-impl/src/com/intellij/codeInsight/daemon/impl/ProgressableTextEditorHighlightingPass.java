@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -51,6 +52,9 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
       if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
         throw new IllegalArgumentException("File '" + file +"' ("+file.getClass()+") is an injected fragment but expected top-level");
       }
+    }
+    if (document instanceof DocumentWindow) {
+      throw new IllegalArgumentException("Document '" + document +" is an injected fragment but expected top-level");
     }
     if (editor != null) {
       PsiUtilBase.assertEditorAndProjectConsistent(project, editor);

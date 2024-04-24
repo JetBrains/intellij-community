@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlo
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.NotClosedProperlyRecoverer;
 import com.intellij.testFramework.TemporaryDirectory;
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;

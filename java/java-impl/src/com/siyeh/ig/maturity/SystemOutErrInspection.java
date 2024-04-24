@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -82,14 +82,12 @@ public final class SystemOutErrInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "UseOfSystemOutOrSystemErr";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "use.system.out.err.problem.descriptor");
   }

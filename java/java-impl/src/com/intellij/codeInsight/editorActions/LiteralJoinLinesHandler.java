@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.Document;
@@ -16,7 +16,7 @@ public final class LiteralJoinLinesHandler implements JoinLinesHandlerDelegate {
   private static final int STATE_AFTER_PLUS = 2;
 
   @Override
-  public int tryJoinLines(@NotNull final Document doc, @NotNull final PsiFile psiFile, final int offsetNear, final int end) {
+  public int tryJoinLines(final @NotNull Document doc, final @NotNull PsiFile psiFile, final int offsetNear, final int end) {
     CharSequence text = doc.getCharsSequence();
 
     int start = offsetNear;

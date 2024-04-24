@@ -49,8 +49,7 @@ public final class InstanceVariableUninitializedUseInspection extends BaseInspec
   /**
    * @noinspection PublicField
    */
-  @NonNls
-  public String annotationNamesString = "";
+  public @NonNls String annotationNamesString = "";
 
   public InstanceVariableUninitializedUseInspection() {
     parseString(this.annotationNamesString, this.annotationNames);
@@ -66,14 +65,12 @@ public final class InstanceVariableUninitializedUseInspection extends BaseInspec
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "InstanceVariableUsedBeforeInitialized";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("instance.variable.used.before.initialized.problem.descriptor");
   }
 

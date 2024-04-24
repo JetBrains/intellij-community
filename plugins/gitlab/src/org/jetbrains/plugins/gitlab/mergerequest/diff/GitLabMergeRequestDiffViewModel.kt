@@ -55,7 +55,7 @@ internal class GitLabMergeRequestDiffViewModelImpl(
   private val changesSorter = project.service<GitLabMergeRequestsPreferences>().changesGroupingState
     .map { RefComparisonChangesSorter.Grouping(project, it) }
   private val helper = CodeReviewDiffViewModelComputer(
-    mergeRequest.changes.mapScoped { async { it.loadRevisionsAndParseChanges() } }, changesSorter
+    mergeRequest.changes.mapScoped(true) { async { it.loadRevisionsAndParseChanges() } }, changesSorter
   ) { changesBundle, change ->
     val changeContext: Map<Key<*>, Any> = change.buildChangeContext()
     val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project), changeContext)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.codeInspection.SuppressionUtilCore;
@@ -107,8 +107,7 @@ public final class JavadocManagerImpl implements JavadocManager {
   }
 
   @Override
-  @Nullable
-  public JavadocTagInfo getTagInfo(String name) {
+  public @Nullable JavadocTagInfo getTagInfo(String name) {
     for (JavadocTagInfo info : myInfos) {
       if (info.getName().equals(name)) {
         return info;

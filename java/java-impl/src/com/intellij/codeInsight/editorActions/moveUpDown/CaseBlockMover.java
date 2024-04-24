@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -72,8 +72,7 @@ public final class CaseBlockMover extends LineMover {
   }
 
   // returns PsiSwitchLabelStatement starting this case block
-  @NotNull
-  private static PsiSwitchLabelStatement getThisCaseBlockStart(PsiSwitchLabelStatement element) {
+  private static @NotNull PsiSwitchLabelStatement getThisCaseBlockStart(PsiSwitchLabelStatement element) {
     PsiElement tmp;
     while ((tmp = PsiTreeUtil.skipWhitespacesBackward(element)) instanceof PsiSwitchLabelStatement) {
       element = (PsiSwitchLabelStatement)tmp;
@@ -82,8 +81,7 @@ public final class CaseBlockMover extends LineMover {
   }
 
   // returns PsiSwitchLabelStatement starting next case block, or switch block's closing brace, if there is no next case block
-  @NotNull
-  private static PsiElement getNextCaseBlockStart(PsiSwitchLabelStatement element) {
+  private static @NotNull PsiElement getNextCaseBlockStart(PsiSwitchLabelStatement element) {
     PsiElement result = element;
     PsiElement tmp;
     while ((tmp = PsiTreeUtil.skipWhitespacesForward(result)) instanceof PsiSwitchLabelStatement) {
@@ -93,8 +91,7 @@ public final class CaseBlockMover extends LineMover {
     return tmp == null ? result.getParent().getLastChild() : tmp;
   }
 
-  @Nullable
-  private static LineRange createRange(@NotNull Document document, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+  private static @Nullable LineRange createRange(@NotNull Document document, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     CharSequence text = document.getImmutableCharSequence();
     int startOffset = startElement.getTextRange().getStartOffset();
     int startLine = document.getLineNumber(startOffset);

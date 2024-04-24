@@ -109,6 +109,9 @@ class Impl : M(), I {
     }
 }
 
+//FunctionBreakpoint!
+@Deprecated("foo bar") fun withAnnotation() = 3
+
 fun main() {
     A()
     B()
@@ -140,4 +143,6 @@ fun main() {
     impl.f2()
     impl.f3()
     impl.f4()
+
+    withAnnotation()
 }

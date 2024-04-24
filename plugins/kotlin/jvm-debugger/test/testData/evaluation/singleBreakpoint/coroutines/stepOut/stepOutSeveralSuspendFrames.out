@@ -1,12 +1,13 @@
-LineBreakpoint created at stepOutSeveralSuspendFrames.kt:9
+LineBreakpoint created at stepOutSeveralSuspendFrames.kt:10
 Run Java
 Connected to the target VM
-stepOutSeveralSuspendFrames.kt:9
-stepOutSeveralSuspendFrames.kt:14
-stepOutSeveralSuspendFrames.kt:20
-stepOutSeveralSuspendFrames.kt:27
-stepOutSeveralSuspendFrames.kt:33
-stepOutSeveralSuspendFrames.kt:40
+stepOutSeveralSuspendFrames.kt:10
+stepOutSeveralSuspendFrames.kt:17
+stepOutSeveralSuspendFrames.kt:23
+stepOutSeveralSuspendFrames.kt:30
+stepOutSeveralSuspendFrames.kt:38
+stepOutSeveralSuspendFrames.kt:45
+Compile bytecode for i
 Disconnected from the target VM
 
 Process finished with exit code 0

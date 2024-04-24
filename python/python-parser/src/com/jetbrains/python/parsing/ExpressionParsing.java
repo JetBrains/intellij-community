@@ -1189,12 +1189,7 @@ public class ExpressionParsing extends Parsing {
         expr.done(PyElementTypes.PREFIX_EXPRESSION);
       }
       else {
-        if (isTargetExpression) {
-          expr.error(message("can.t.assign.to.await.expression"));
-        }
-        else {
-          expr.done(PyElementTypes.PREFIX_EXPRESSION);
-        }
+        expr.done(PyElementTypes.PREFIX_EXPRESSION);
       }
 
       return true;

@@ -56,7 +56,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   }
 
   @Override
-  public PsiMember fromString(final String s, final ConvertContext context) {
+  public PsiMember fromString(final String s, final @NotNull ConvertContext context) {
     if (s == null) return null;
     final PsiClass psiClass = getTargetClass(context);
     if (psiClass == null) return null;
@@ -73,12 +73,12 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
 
 
   @Override
-  public String toString(final PsiMember t, final ConvertContext context) {
+  public String toString(final PsiMember t, final @NotNull ConvertContext context) {
     return t == null? null : getPropertyName(t.getName(), context);
   }
 
   @Override
-  public String getErrorMessage(final String s, final ConvertContext context) {
+  public String getErrorMessage(final String s, final @NotNull ConvertContext context) {
     final DomElement parent = context.getInvocationElement().getParent();
     assert parent != null;
     return CodeInsightBundle.message("error.cannot.resolve.0.1", TypePresentationService.getService().getTypeName(parent), s);
@@ -86,7 +86,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
 
   @Override
   @NotNull
-  public Collection<? extends PsiMember> getVariants(final ConvertContext context) {
+  public Collection<? extends PsiMember> getVariants(final @NotNull ConvertContext context) {
     final PsiClass psiClass = getTargetClass(context);
     if (psiClass == null) return Collections.emptyList();
 
@@ -113,7 +113,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
+  public LocalQuickFix[] getQuickFixes(final @NotNull ConvertContext context) {
     final String targetName = ((GenericValue<?>)context.getInvocationElement()).getStringValue();
     if (!PsiNameHelper.getInstance(context.getProject()).isIdentifier(targetName)) return super.getQuickFixes(context);
     final PsiClass targetClass = getTargetClass(context);

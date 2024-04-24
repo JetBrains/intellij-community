@@ -10,15 +10,6 @@
   </problem>
 
   <problem>
-    <file>MyServiceExt.java</file>
-    <line>4</line>
-    <package>my.ext</package>
-    <entry_point TYPE="class" FQNAME="my.ext.MyServiceExt" />
-    <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">unused declaration</problem_class>
-    <description>Class has one instantiation but it is not reachable from entry points.</description>
-  </problem>
-
-  <problem>
     <file>MyService.java</file>
     <line>1</line>
     <package>my.api</package>

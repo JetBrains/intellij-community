@@ -4,6 +4,7 @@ package com.intellij.openapi.diff.impl.dir.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.util.SystemInfo;
@@ -14,6 +15,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public class RefreshDirDiffAction extends DirDiffAction {
+  /**
+   * @deprecated Use {@link #getShortcut()} instead
+   */
+  @Deprecated(forRemoval = true)
   public static final CustomShortcutSet REFRESH_SHORTCUT = CustomShortcutSet.fromString(SystemInfo.isMac ? "meta R" : "F5");
 
   public RefreshDirDiffAction(DirDiffTableModel model) {
@@ -34,7 +39,7 @@ public class RefreshDirDiffAction extends DirDiffAction {
 
   @Override
   public ShortcutSet getShortcut() {
-    return REFRESH_SHORTCUT;
+    return CustomShortcutSet.fromString(ClientSystemInfo.isMac() ? "meta R" : "F5");
   }
 
   @Override

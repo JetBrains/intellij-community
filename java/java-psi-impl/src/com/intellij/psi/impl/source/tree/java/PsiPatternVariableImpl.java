@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -11,7 +11,6 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +30,7 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
   }
 
   @Override
-  @NotNull
-  public PsiIdentifier getNameIdentifier() {
+  public @NotNull PsiIdentifier getNameIdentifier() {
     PsiIdentifier identifier = PsiTreeUtil.getChildOfType(this, PsiIdentifier.class);
     if (identifier == null) {
       PsiFile file = getContainingFile();
@@ -51,9 +49,8 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
     }
   }
 
-  @NotNull
   @Override
-  public PsiPattern getPattern() {
+  public @NotNull PsiPattern getPattern() {
     return (PsiPattern)getParent();
   }
 
@@ -61,21 +58,18 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
   public void normalizeDeclaration() throws IncorrectOperationException {
   }
 
-  @Nullable
   @Override
-  public Object computeConstantValue() {
+  public @Nullable Object computeConstantValue() {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return JavaSharedImplUtil.getType(getTypeElement(), getNameIdentifier());
   }
 
-  @NotNull
   @Override
-  public PsiElement getDeclarationScope() {
+  public @NotNull PsiElement getDeclarationScope() {
     return JavaSharedImplUtil.getPatternVariableDeclarationScope(this);
   }
 
@@ -84,15 +78,13 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
     return false;
   }
 
-  @NotNull
   @Override
-  public PsiTypeElement getTypeElement() {
+  public @NotNull PsiTypeElement getTypeElement() {
     return Objects.requireNonNull(PsiTreeUtil.getChildOfType(this, PsiTypeElement.class));
   }
 
-  @Nullable
   @Override
-  public PsiExpression getInitializer() {
+  public @Nullable PsiExpression getInitializer() {
     return null;
   }
 
@@ -101,9 +93,8 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
     return false;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     PsiIdentifier identifier = getNameIdentifier();
     return identifier.getText();
   }
@@ -113,9 +104,8 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
     return getNameIdentifier().getTextOffset();
   }
 
-  @Nullable
   @Override
-  public PsiModifierList getModifierList() {
+  public @Nullable PsiModifierList getModifierList() {
     return (PsiModifierList)findPsiChildByType(JavaElementType.MODIFIER_LIST);
   }
 
@@ -125,9 +115,8 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
     return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return new LocalSearchScope(getDeclarationScope());
   }
 

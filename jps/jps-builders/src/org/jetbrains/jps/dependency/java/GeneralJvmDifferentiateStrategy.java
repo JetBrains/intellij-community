@@ -1,19 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
-import org.jetbrains.jps.dependency.DifferentiateContext;
-import org.jetbrains.jps.dependency.DifferentiateStrategy;
-import org.jetbrains.jps.dependency.Graph;
-import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
 
+import java.util.Collections;
 import java.util.ServiceLoader;
+import java.util.Set;
+import java.util.function.Predicate;
 
-import static org.jetbrains.jps.javac.Iterators.collect;
+import static org.jetbrains.jps.javac.Iterators.*;
 
 public final class GeneralJvmDifferentiateStrategy implements DifferentiateStrategy {
-  
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy");
+
   private static final Iterable<JvmDifferentiateStrategy> ourExtensions = collect(
     ServiceLoader.load(JvmDifferentiateStrategy.class, GeneralJvmDifferentiateStrategy.class.getClassLoader()),
     new SmartList<>()
@@ -30,9 +32,51 @@ public final class GeneralJvmDifferentiateStrategy implements DifferentiateStrat
   }
 
   @Override
-  public boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter) {
+  public boolean
+  differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter) {
     Utils future = new Utils(context, true);
     Utils present = new Utils(context, false);
+
+    Delta delta = context.getDelta();
+    if (delta.isSourceOnly()) {
+      new Object() {
+        private final Predicate<? super NodeSource> inCurrentChunk = context.getParams().belongsToCurrentCompilationChunk();
+        private final Set<NodeSource> baseSources = delta.getBaseSources();
+
+        private boolean isMarked(NodeSource src) {
+          return isMarked(Collections.singleton(src));
+        }
+
+        private boolean isMarked(Iterable<NodeSource> sources) {
+          return find(sources, baseSources::contains) != null;
+        }
+
+        boolean traverse(JvmClass cl, boolean isRoot) {
+          boolean parentsMarked = false;
+          for (JvmClass superCl : present.allDirectSupertypes(cl)) {
+            parentsMarked |= traverse(superCl, false);
+          }
+          if (isRoot) {
+            return true;
+          }
+          Iterable<NodeSource> nodeSources = present.getNodeSources(cl.getReferenceID());
+          if (parentsMarked) {
+            for (NodeSource source : filter(nodeSources, s -> !isMarked(s) && inCurrentChunk.test(s))) {
+              LOG.debug("Intermediate class in a class hierarchy is not marked for compilation, while one of its subclasses and superclasses are going to be recompiled. Affecting  " + source.toString());
+              context.affectNodeSource(source);
+            }
+          }
+          return parentsMarked || isMarked(nodeSources);
+        }
+
+        void markSources() {
+          Graph graph = context.getGraph();
+          for (JvmClass cls : flat(map(baseSources, s -> graph.getNodes(s, JvmClass.class)))) {
+            traverse(cls, true);
+          }
+        }
+      }.markSources();
+    }
 
     Difference.Specifier<JvmClass, JvmClass.Diff> classesDiff = Difference.deepDiff(
       Graph.getNodesOfType(nodesBefore, JvmClass.class), Graph.getNodesOfType(nodesAfter, JvmClass.class)

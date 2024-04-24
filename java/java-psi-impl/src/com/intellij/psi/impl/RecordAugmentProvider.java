@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,8 +38,7 @@ public final class RecordAugmentProvider extends PsiAugmentProvider {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static <Psi extends PsiElement> List<Psi> getAccessorsAugments(PsiExtensibleClass aClass) {
+  private static @NotNull <Psi extends PsiElement> List<Psi> getAccessorsAugments(PsiExtensibleClass aClass) {
     PsiRecordHeader header = aClass.getRecordHeader();
     if (header == null) return Collections.emptyList();
     PsiRecordComponent[] components = aClass.getRecordComponents();
@@ -62,10 +61,9 @@ public final class RecordAugmentProvider extends PsiAugmentProvider {
     return methods;
   }
 
-  @Nullable
-  private static PsiMethod getCanonicalConstructor(PsiExtensibleClass aClass,
-                                                   List<PsiMethod> ownMethods,
-                                                   @NotNull PsiRecordHeader recordHeader) {
+  private static @Nullable PsiMethod getCanonicalConstructor(PsiExtensibleClass aClass,
+                                                             List<PsiMethod> ownMethods,
+                                                             @NotNull PsiRecordHeader recordHeader) {
     String className = aClass.getName();
     if (className == null) return null;
     for (PsiMethod method : ownMethods) {
@@ -96,8 +94,7 @@ public final class RecordAugmentProvider extends PsiAugmentProvider {
     return true;
   }
 
-  @NotNull
-  public static <Psi extends PsiElement> List<Psi> getFieldAugments(PsiClass aClass) {
+  public static @NotNull <Psi extends PsiElement> List<Psi> getFieldAugments(PsiClass aClass) {
     PsiRecordComponent[] components = aClass.getRecordComponents();
     PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
     ArrayList<Psi> fields = new ArrayList<>(components.length);
@@ -111,8 +108,7 @@ public final class RecordAugmentProvider extends PsiAugmentProvider {
     return fields;
   }
 
-  @Nullable
-  private static PsiField createRecordField(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
+  private static @Nullable PsiField createRecordField(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
     String name = component.getName();
     if (hasForbiddenType(component)) return null;
     String typeText = getTypeText(component);
@@ -126,8 +122,7 @@ public final class RecordAugmentProvider extends PsiAugmentProvider {
     }
   }
 
-  @Nullable
-  private static PsiMethod createRecordMethod(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
+  private static @Nullable PsiMethod createRecordMethod(@NotNull PsiRecordComponent component, @NotNull PsiElementFactory factory) {
     String name = component.getName();
     if (hasForbiddenType(component)) return null;
     String typeText = getTypeText(component);
@@ -146,8 +141,7 @@ public final class RecordAugmentProvider extends PsiAugmentProvider {
     return typeElement == null || typeElement.getText().equals(PsiKeyword.RECORD);
   }
 
-  @Nullable
-  private static String getTypeText(@NotNull PsiRecordComponent component) {
+  private static @Nullable String getTypeText(@NotNull PsiRecordComponent component) {
     PsiTypeElement typeElement = component.getTypeElement();
     if (typeElement == null) return null;
     String typeText = typeElement.getText();

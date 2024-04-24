@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.lang.parameterInfo.*;
@@ -15,7 +15,7 @@ import java.util.Arrays;
 public final class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiReferenceParameterList,PsiTypeParameter> {
 
   @Override
-  public PsiReferenceParameterList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
+  public PsiReferenceParameterList findElementForParameterInfo(final @NotNull CreateParameterInfoContext context) {
     final PsiReferenceParameterList referenceParameterList =
       ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiReferenceParameterList.class);
 
@@ -35,17 +35,17 @@ public final class ReferenceParameterInfoHandler implements ParameterInfoHandler
   }
 
   @Override
-  public void showParameterInfo(@NotNull final PsiReferenceParameterList element, @NotNull final CreateParameterInfoContext context) {
+  public void showParameterInfo(final @NotNull PsiReferenceParameterList element, final @NotNull CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
   @Override
-  public PsiReferenceParameterList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
+  public PsiReferenceParameterList findElementForUpdatingParameterInfo(final @NotNull UpdateParameterInfoContext context) {
     return ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiReferenceParameterList.class);
   }
 
   @Override
-  public void updateParameterInfo(@NotNull final PsiReferenceParameterList parameterOwner, @NotNull final UpdateParameterInfoContext context) {
+  public void updateParameterInfo(final @NotNull PsiReferenceParameterList parameterOwner, final @NotNull UpdateParameterInfoContext context) {
     int index = ParameterInfoUtils.getCurrentParameterIndex(parameterOwner.getNode(), context.getOffset(), JavaTokenType.COMMA);
     context.setCurrentParameter(index);
     final Object[] objectsToView = context.getObjectsToView();

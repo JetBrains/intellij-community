@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
@@ -35,44 +35,38 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     super(id);
   }
 
-  @NotNull
   @Override
-  public JavaModuleBuilder createModuleBuilder() {
+  public @NotNull JavaModuleBuilder createModuleBuilder() {
     return new JavaModuleBuilder();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return getModuleName();
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return JavaBundle.message("module.type.java.description");
   }
 
   @Override
-  @NotNull
-  public Icon getNodeIcon(boolean isOpened) {
+  public @NotNull Icon getNodeIcon(boolean isOpened) {
     return getJavaModuleNodeIconClosed();
   }
 
-  @Nullable
   @Override
-  public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep, @NotNull final ModuleBuilder moduleBuilder) {
+  public @Nullable ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep, final @NotNull ModuleBuilder moduleBuilder) {
     return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder,
                                                                          moduleBuilder::isSuitableSdkType);
   }
 
-  @NotNull
-  private static Icon getJavaModuleNodeIconClosed() {
+  private static @NotNull Icon getJavaModuleNodeIconClosed() {
     return AllIcons.Nodes.Module;
   }
 
   @Override
-  public boolean isValidSdk(@NotNull final Module module, final Sdk projectSdk) {
+  public boolean isValidSdk(final @NotNull Module module, final Sdk projectSdk) {
     return isValidJavaSdk(module);
   }
 

@@ -43,7 +43,7 @@ internal class KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider :
         val calledSymbol = functionCall?.partiallyAppliedSymbol?.symbol
 
         if (calledSymbol !is KtNamedSymbol) return
-        val hasAnnotation = calledSymbol.hasAnnotation(requiresBlockingContextAnnotationId)
+        val hasAnnotation = calledSymbol.hasAnnotation(RequiresBlockingContextAnnotationId)
 
         if (!hasAnnotation) {
           if (calledSymbol is KtFunctionSymbol && calledSymbol.isInline) {
@@ -65,13 +65,22 @@ internal class KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider :
 }
 
 private class AnnotateFix(
-  element: PsiElement, callingMethod: KtNamedFunction
+  element: PsiElement,
+  callingMethod: KtNamedFunction,
 ) : QuickFixWithReferenceToElement<KtNamedFunction>(element, callingMethod) {
+
   override fun getFamilyName(): String = DevKitBundle.message("inspections.calling.method.should.be.rbc.annotated.annotate.fix")
 
   override fun getText(): String = familyName
 
-  override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-    referencedElement.element!!.addAnnotation(requiresBlockingContextAnnotation)
+  override fun invoke(
+    project: Project,
+    file: PsiFile,
+    editor: Editor?,
+    startElement: PsiElement,
+    endElement: PsiElement,
+  ) {
+    referencedElement.element!!
+      .addAnnotation(RequiresBlockingContextAnnotation)
   }
 }

@@ -1,4 +1,4 @@
-expect class <!LINE_MARKER("descr='Has actuals in [jvm, js] modules'; targets=[(text=jvm); (text=js)]")!>JvmJs<!> : Number {
+expect class <!LINE_MARKER("descr='Has actuals in [js, jvm] modules'; targets=[(text=js); (text=jvm)]")!>JvmJs<!> : Number {
     override fun <!LINE_MARKER("descr='Press ... to navigate'")!>toDouble<!>(): Double
     override fun <!LINE_MARKER("descr='Press ... to navigate'")!>toFloat<!>(): Float
     override fun <!LINE_MARKER("descr='Press ... to navigate'")!>toLong<!>(): Long

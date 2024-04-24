@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -56,9 +56,8 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
     super("switch", "switch(expr)", JavaPostfixTemplatesUtils.JAVA_PSI_INFO, selectorTopmost(SWITCH_TYPE));
   }
 
-  @NotNull
   @Override
-  protected Surrounder getSurrounder() {
+  protected @NotNull Surrounder getSurrounder() {
     return new JavaExpressionSurrounder() {
       @Override
       public boolean isApplicable(PsiExpression expr) {
@@ -83,12 +82,11 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
         return TextRange.from(editor.getCaretModel().getOffset(), 0);
       }
 
-      @NotNull
-      private static TextRange postprocessSwitch(Editor editor,
-                                                 PsiExpression expr,
-                                                 CodeStyleManager codeStyleManager,
-                                                 PsiElement toReplace,
-                                                 PsiSwitchBlock switchBlock) {
+      private static @NotNull TextRange postprocessSwitch(Editor editor,
+                                                          PsiExpression expr,
+                                                          CodeStyleManager codeStyleManager,
+                                                          PsiElement toReplace,
+                                                          PsiSwitchBlock switchBlock) {
 
         switchBlock = (PsiSwitchBlock)codeStyleManager.reformat(switchBlock);
         PsiExpression selectorExpression = switchBlock.getExpression();
@@ -145,9 +143,8 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
         return and(super.getFilters(offset), getPsiErrorFilter());
       }
 
-      @NotNull
       @Override
-      public Function<PsiElement, String> getRenderer() {
+      public @NotNull Function<PsiElement, String> getRenderer() {
         return JavaPostfixTemplatesUtils.getRenderer();
       }
 

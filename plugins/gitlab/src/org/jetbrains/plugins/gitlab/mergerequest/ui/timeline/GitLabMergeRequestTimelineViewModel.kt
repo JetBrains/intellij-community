@@ -50,10 +50,10 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
   override val number: String = "!${mergeRequest.iid}"
   override val author: GitLabUserDTO = mergeRequest.author
   override val title: SharedFlow<String> = mergeRequest.details.map { it.title }.map { title ->
-    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, title)
+    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, title)
   }.modelFlow(cs, LOG)
   override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map { description ->
-    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, description)
+    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, description)
   }.modelFlow(cs, LOG)
   override val url: String = mergeRequest.url
 

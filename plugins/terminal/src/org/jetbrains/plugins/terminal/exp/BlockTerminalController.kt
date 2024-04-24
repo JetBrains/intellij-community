@@ -16,11 +16,12 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSearchSession.Companion.isSearchInBlock
 import org.jetbrains.plugins.terminal.exp.TerminalOutputModel.TerminalOutputListener
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptController
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import java.util.concurrent.CopyOnWriteArrayList
 
-class BlockTerminalController(
+internal class BlockTerminalController(
   private val project: Project,
   private val session: BlockTerminalSession,
   private val outputController: TerminalOutputController,
@@ -50,7 +51,7 @@ class BlockTerminalController(
   @RequiresEdt
   fun startCommandExecution(command: String) {
     if (command.isBlank()) {
-      promptController.reset()
+      promptController.model.reset()
       outputController.insertEmptyLine()
     }
     else {
@@ -65,7 +66,7 @@ class BlockTerminalController(
 
   @RequiresEdt(generateAssertion = false)
   private fun startCommandBlock(command: String) {
-    outputController.startCommandBlock(command, promptController.promptRenderingInfo)
+    outputController.startCommandBlock(command, promptController.model.promptRenderingInfo)
     // Hide the prompt only when the new block is created, so it will look like the prompt is replaced with a block atomically.
     // If the command is finished very fast, the prompt will be shown back before repainting.
     // So it will look like it was not hidden at all.
@@ -106,7 +107,7 @@ class BlockTerminalController(
     model.isCommandRunning = false
 
     invokeLater(getDisposed(), ModalityState.any()) {
-      promptController.reset()
+      promptController.model.reset()
       promptController.promptIsVisible = true
     }
   }

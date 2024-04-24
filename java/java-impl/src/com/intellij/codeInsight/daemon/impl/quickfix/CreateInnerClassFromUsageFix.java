@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -70,7 +70,7 @@ public final class CreateInnerClassFromUsageFix extends CreateClassFromUsageBase
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
     return super.isAvailable(project, editor, file) && getPossibleTargets(getRefElement()).length > 0;
   }
 

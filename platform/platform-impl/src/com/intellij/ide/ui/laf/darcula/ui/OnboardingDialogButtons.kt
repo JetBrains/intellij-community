@@ -32,6 +32,7 @@ object OnboardingDialogButtons {
     val btn = JButton()
 
     btn.putClientProperty("ActionToolbar.smallVariant", true)
+    btn.putClientProperty(DarculaButtonUI.AVOID_EXTENDING_BORDER_GRAPHICS, true)
     btn.setHorizontalTextPosition(SwingConstants.LEFT)
     btn.setContentAreaFilled(false)
     btn.setForeground(JBUI.CurrentTheme.Link.Foreground.ENABLED)

@@ -319,7 +319,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
   private class IncludeAction extends ExcludeIncludeActionBase {
     IncludeAction() {
       super(JavaRefactoringBundle.message("type.migration.include.action.text"));
-      registerCustomShortcutSet(CommonShortcuts.INSERT, myRootsTree);
+      registerCustomShortcutSet(CommonShortcuts.getInsert(), myRootsTree);
     }
 
     @Override

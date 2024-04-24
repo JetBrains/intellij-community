@@ -196,6 +196,16 @@ object VcsLogFilterObject {
   }
 
   @JvmStatic
+  fun noMerges(): VcsLogParentFilter {
+    return fromParentCount(maxParents = 1)
+  }
+
+  @JvmStatic
+  fun fromParentCount(minParents: Int? = null, maxParents: Int? = null): VcsLogParentFilter {
+    return VcsLogParentFilterImpl(minParents ?: 0, maxParents ?: Int.MAX_VALUE)
+  }
+
+  @JvmStatic
   fun collection(vararg filters: VcsLogFilter?): VcsLogFilterCollection {
     val filterSet = createFilterSet()
     for (f in filters) {
@@ -242,12 +252,12 @@ fun VcsLogFilterCollection.matches(filterKeys: Set<FilterKey<*>>): Boolean {
 }
 
 @Nls
-fun VcsLogFilterCollection.getPresentation(): String {
+fun VcsLogFilterCollection.getPresentation(withPrefix: Boolean = false): String {
   if (get(HASH_FILTER) != null) {
     return get(HASH_FILTER)!!.displayText
   }
   return StringUtil.join(filters, { filter: VcsLogFilter ->
-    if (filters.size != 1) {
+    if (filters.size != 1 || withPrefix) {
       filter.withPrefix()
     }
     else filter.displayText

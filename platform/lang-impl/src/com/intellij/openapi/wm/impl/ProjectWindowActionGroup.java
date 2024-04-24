@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.IdeDependentActionGroup;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -16,11 +17,7 @@ import com.intellij.platform.ModuleAttachProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Bas Leijdekkers
@@ -118,7 +115,7 @@ public final class ProjectWindowActionGroup extends IdeDependentActionGroup impl
     if (projectLocation == null) {
       return null;
     }
-    final AnAction[] children = getChildren(null);
+    final AnAction[] children = getChildren(ActionManager.getInstance());
     for (AnAction child : children) {
       if (!(child instanceof ProjectWindowAction windowAction)) {
         continue;
@@ -132,7 +129,7 @@ public final class ProjectWindowActionGroup extends IdeDependentActionGroup impl
 
   private List<ProjectWindowAction> findWindowActionsWithProjectName(String projectName) {
     List<ProjectWindowAction> result = null;
-    final AnAction[] children = getChildren(null);
+    final AnAction[] children = getChildren(ActionManager.getInstance());
     for (AnAction child : children) {
       if (!(child instanceof ProjectWindowAction windowAction)) {
         continue;

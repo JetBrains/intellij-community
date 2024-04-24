@@ -27,7 +27,7 @@ You will likely need to set up a project locally to modify its code.
 The detailed setup instructions are available in the [README](README.md).
 
 To learn how to write plugins for IntelliJ IDEA, please refer to the 
-[IntelliJ Platform SDK DevGuide](https://jetbrains.org/intellij/sdk/docs/intro/welcome.html).
+[IntelliJ Platform SDK DevGuide](https://plugins.jetbrains.com/docs/intellij/).
 The portal contains a lot of useful information and explains how the IDE works under the hood.
 
 There's also a [#kontributors](https://kotlinlang.slack.com/archives/C0BUHC9HD) channel in the [public Slack](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up). 
@@ -67,7 +67,7 @@ We have several requirements for the Pull Requests:
 ### 4.1. IntelliJ IDEA
 
 You can find necessary information about how to write inspections, intentions and quick fixes 
-in the [Code Inspections](https://jetbrains.org/intellij/sdk/docs/tutorials/code_inspections.html) tutorial.
+in the [Code Inspections](https://plugins.jetbrains.com/docs/intellij/code-inspections.html) tutorial.
 
 It's essential to know 
 about [PSI](https://plugins.jetbrains.com/docs/intellij/psi.html), the source code model used in IntelliJ IDEA.

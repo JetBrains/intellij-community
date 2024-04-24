@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,8 +50,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     return controller != null && controller.isHintShown(false);
   }
 
-  @Nullable
-  private static PsiElement getExpressionList(@NotNull Editor editor, int offset, @NotNull Project project) {
+  private static @Nullable PsiElement getExpressionList(@NotNull Editor editor, int offset, @NotNull Project project) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     return file != null ? ParameterInfoControllerBase.findArgumentList(file, offset, -1) : null;
   }
@@ -66,7 +64,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     }
   }
 
-  private void doSwitch(@NotNull final Editor editor, @NotNull Caret caret, @NotNull Project project) {
+  private void doSwitch(final @NotNull Editor editor, @NotNull Caret caret, @NotNull Project project) {
     if (editor.isViewer() || !EditorModificationUtil.requestWriting(editor)) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -129,7 +127,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     controller.showHint(false, false);
   }
 
-  private static void updateParameterValues(@NotNull final Editor editor, @NotNull Caret caret, @NotNull PsiMethod targetMethod,
+  private static void updateParameterValues(final @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiMethod targetMethod,
                                             @NotNull PsiElement exprList, int lbraceOffset, @NotNull Map<String, String> enteredParameters,
                                             boolean virtualComma) {
     PsiParameterList parameterList = targetMethod.getParameterList();

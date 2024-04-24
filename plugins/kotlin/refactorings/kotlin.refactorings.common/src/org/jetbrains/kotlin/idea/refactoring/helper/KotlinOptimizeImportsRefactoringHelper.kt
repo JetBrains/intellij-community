@@ -14,6 +14,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.usageView.UsageInfo
@@ -23,7 +24,6 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 // Based on com.intellij.refactoring.OptimizeImportsRefactoringHelper
 class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {

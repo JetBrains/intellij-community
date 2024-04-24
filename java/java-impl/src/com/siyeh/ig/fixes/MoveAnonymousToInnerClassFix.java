@@ -37,15 +37,13 @@ public class MoveAnonymousToInnerClassFix extends RefactoringInspectionGadgetsFi
     name = InspectionGadgetsBundle.message("move.anonymous.to.inner.quickfix");
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return name;
   }
 
-  @NotNull
   @Override
-  public RefactoringActionHandler getHandler() {
+  public @NotNull RefactoringActionHandler getHandler() {
     return JavaRefactoringActionHandlerFactory.getInstance().createAnonymousToInnerHandler();
   }
 

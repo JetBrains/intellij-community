@@ -2,15 +2,14 @@
 
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiSuperMethodUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.changeSignature.CallerUsageInfo
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -26,19 +25,23 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 
@@ -67,11 +70,21 @@ internal class KotlinFunctionCallUsage(
                 functionCall.argumentMapping.forEach { (expr, variableSymbol) ->
                     map[oldIdxMap[variableSymbol.symbol]!!] = expr.createSmartPointer()
                 }
-                if (receiverOffset > 0) {
-                    val receiver = ((partiallyAppliedSymbol.extensionReceiver ?: partiallyAppliedSymbol.dispatchReceiver) as? KtExplicitReceiverValue)?.expression
-                    if (receiver != null) {
-                        map[0] = receiver.createSmartPointer()
+                val receiver = ((partiallyAppliedSymbol.extensionReceiver
+                    ?: partiallyAppliedSymbol.dispatchReceiver) as? KtExplicitReceiverValue)?.expression
+                if (receiver != null) {
+                    val receiverPointer = receiver.createSmartPointer()
+                    if (receiverOffset > 0) map[0] = receiverPointer
+                    map[Int.MAX_VALUE] = receiverPointer
+                } else {
+                    val symbol = ((partiallyAppliedSymbol.extensionReceiver
+                        ?: partiallyAppliedSymbol.dispatchReceiver) as? KtImplicitReceiverValue)?.symbol
+                    val thisText = if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
+                        "this@" + symbol.name!!.asString()
+                    } else {
+                        "this"
                     }
+                    map[Int.MAX_VALUE] = KtPsiFactory.contextual(callee).createExpression(thisText).createSmartPointer()
                 }
                 return@allowAnalysisOnEdt map
             }
@@ -184,7 +197,11 @@ internal class KotlinFunctionCallUsage(
         val defaultValueForCall = parameter.defaultValueForCall
         val argValue = when {
             isInsideOfCallerBody -> psiFactory.createExpression(parameter.name)
-            defaultValueForCall != null -> defaultValueForCall
+            defaultValueForCall != null -> substituteReferences(
+                defaultValueForCall,
+                parameter.defaultValueParameterReferences,
+                psiFactory,
+            )
 
             else -> null
         }
@@ -349,6 +366,97 @@ internal class KotlinFunctionCallUsage(
             identifier.replace(KtPsiFactory(project).createIdentifier(newName))
         }
     }
+
+    @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
+    private fun substituteReferences(
+        expression: KtExpression,
+        referenceMap: MutableMap<PsiReference, Int>,
+        psiFactory: KtPsiFactory
+    ): KtExpression {
+        if (referenceMap.isEmpty()) return expression
+
+        var newExpression = expression.copy() as KtExpression
+
+        fun createNameCounterpartMap(from: KtElement, to: KtElement): Map<KtSimpleNameExpression, KtSimpleNameExpression> {
+            return from.collectDescendantsOfType<KtSimpleNameExpression>().zip(to.collectDescendantsOfType<KtSimpleNameExpression>()).toMap()
+        }
+
+        val nameCounterpartMap = createNameCounterpartMap(expression, newExpression)
+
+
+        fun needSeparateVariable(element: PsiElement): Boolean {
+            return when {
+                element is KtConstantExpression || element is KtThisExpression || element is KtSimpleNameExpression -> false
+                element is KtBinaryExpression && OperatorConventions.ASSIGNMENT_OPERATIONS.contains(element.operationToken) -> true
+                element is KtUnaryExpression && OperatorConventions.INCREMENT_OPERATIONS.contains(element.operationToken) -> true
+                element is KtCallExpression -> true
+                else -> element.children.any { needSeparateVariable(it) }
+            }
+        }
+
+        val replacements = ArrayList<Pair<KtExpression, KtExpression>>()
+        loop@ for ((ref, paramIdx) in referenceMap.entries) {
+            var addReceiver: Boolean = paramIdx == Int.MAX_VALUE
+            var argumentExpression = indexToExpMap?.get(paramIdx)?.element ?: continue
+
+            if (needSeparateVariable(argumentExpression)
+                && PsiTreeUtil.getNonStrictParentOfType(
+                    element,
+                    KtConstructorDelegationCall::class.java,
+                    KtSuperTypeListEntry::class.java,
+                    KtParameter::class.java
+                ) == null
+            ) {
+
+                allowAnalysisFromWriteAction {
+                    allowAnalysisOnEdt {
+                        K2IntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
+                            project, null, argumentExpression,
+                            isVar = false,
+                            occurrencesToReplace = listOf(argumentExpression),
+                            onNonInteractiveFinish = {
+                                argumentExpression = psiFactory.createExpression(it.name!!)
+                            })
+                    }
+                }
+            }
+
+            var expressionToReplace: KtExpression = nameCounterpartMap[ref.element] ?: continue
+            val parent = expressionToReplace.parent
+
+            if (parent is KtThisExpression) {
+                expressionToReplace = parent
+            }
+
+            if (addReceiver && expressionToReplace !is KtThisExpression) {
+                val callExpression = expressionToReplace.getParentOfTypeAndBranch<KtCallExpression>(true) { calleeExpression }
+                when {
+                    callExpression != null -> expressionToReplace = callExpression
+                    parent is KtOperationExpression && parent.operationReference == expressionToReplace -> continue@loop
+                }
+
+                val replacement = psiFactory.createExpression("${argumentExpression.text}.${expressionToReplace.text}")
+                replacements.add(expressionToReplace to replacement)
+            } else {
+                replacements.add(expressionToReplace to argumentExpression)
+            }
+        }
+
+        // Sort by descending offset so that call arguments are replaced before call itself
+        ContainerUtil.sort(replacements, Comparator<Pair<KtElement, KtElement>> { p1, p2 ->
+            PsiUtil.compareElementsByPosition(p2.first, p1.first)
+        })
+
+        for ((expressionToReplace, replacingExpression) in replacements) {
+            val replaced = expressionToReplace.replaced(replacingExpression)
+            if (expressionToReplace == newExpression) {
+                newExpression = replaced
+            }
+        }
+
+        return newExpression
+    }
+
 }
 
 @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)

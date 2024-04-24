@@ -24,9 +24,11 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -125,7 +127,47 @@ public class InvokeIntention extends ActionOnFile {
     String textBefore = changedDocument == null ? null : changedDocument.getText();
     Long stampBefore = changedDocument == null ? null : changedDocument.getModificationStamp();
 
-    Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor);
+    var r = new Runnable() {
+      boolean actionSuppressed = false;
+      
+      @Override
+      public void run() {
+        ModCommandAction action = intention.asModCommandAction();
+        if (action == null) {
+          CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor);
+          return;
+        }
+        ActionContext context = ActionContext.from(editor, file);
+        Presentation presentation = action.getPresentation(context);
+        if (presentation == null) {
+          throw new IllegalStateException("Unexpectedly no presentation for " + action.getFamilyName());
+        }
+        ModCommand command = action.perform(context);
+        String validationMessage = validateCommand(command);
+        if (validationMessage != null) {
+          LOG.warn("Skip command: " + presentation.name() + " (" + validationMessage + ")");
+          actionSuppressed = true;
+        } else {
+          CommandProcessor.getInstance().executeCommand(
+            project, () -> ModCommandExecutor.getInstance().executeInteractively(context, command, editor), null, null);
+        }
+      }
+
+      private static @Nullable String validateCommand(ModCommand command) {
+        List<ModCommand> commands = command.unpack();
+        // TODO: debug commands that do nothing. This should not be generally the case
+        if (commands.isEmpty()) return "Does nothing";
+        for (ModCommand modCommand : commands) {
+          if (modCommand instanceof ModDisplayMessage message && message.kind() == ModDisplayMessage.MessageKind.ERROR) {
+            return "Error: " + message.messageText();
+          }
+          if (modCommand instanceof ModUpdateSystemOptions option) {
+            return "Updates "+option.options().stream().map(opt -> opt.bindId()).collect(Collectors.joining("; "));
+          }
+        }
+        return null;
+      }
+    };
 
     Disposable disposable = Disposer.newDisposable();
     try {
@@ -152,7 +194,8 @@ public class InvokeIntention extends ActionOnFile {
           PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(changedDocument)) {
         throw new AssertionError("Document is left blocked by PSI");
       }
-      if (!hasErrors && stampBefore != null && stampBefore.equals(changedDocument.getModificationStamp())) {
+      if (!hasErrors && !r.actionSuppressed && stampBefore != null &&
+          stampBefore.equals(changedDocument.getModificationStamp())) {
         String message = "No change was performed in the document";
         if (intention.startInWriteAction()) {
           message += ".\nIf it's by design that " + intentionString + " doesn't change source files, " +

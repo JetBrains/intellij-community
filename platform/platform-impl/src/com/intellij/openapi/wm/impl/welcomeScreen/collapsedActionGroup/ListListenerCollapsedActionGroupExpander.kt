@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -32,7 +33,7 @@ class ListListenerCollapsedActionGroupExpander private constructor(
     val selectedIndex = list.selectedIndex
     val group = list.selectedValue as? CollapsedActionGroup ?: return
     model.remove(selectedIndex)
-    model.addAll(selectedIndex, group.getChildren(null).asList())
+    model.addAll(selectedIndex, group.getChildren(ActionManager.getInstance()).asList())
     list.removeListSelectionListener(this)
   }
 }

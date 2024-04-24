@@ -3,6 +3,10 @@
     <action id="ShowKotlinBytecode" class="org.jetbrains.kotlin.idea.actions.bytecode.ShowKotlinBytecodeAction">
       <add-to-group group-id="KotlinToolsGroup"/>
     </action>
+
+    <action id="ConfigureKotlinInProject" class="org.jetbrains.kotlin.idea.actions.ConfigureKotlinJavaInProjectAction">
+      <add-to-group group-id="KotlinToolsGroup"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -11,5 +15,8 @@
             description="URL of a JSON file with Kotlin versions"
             defaultValue="https://search.maven.org/solrsearch/select?q=g:%22org.jetbrains.kotlin%22+AND+a:%22kotlin-stdlib%22&amp;core=gav&amp;rows=20&amp;wt=json"
             restartRequired="false"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <newFileHook implementation="org.jetbrains.kotlin.idea.configuration.NewKotlinFileConfigurationHook"/>
   </extensions>
 </idea-plugin>

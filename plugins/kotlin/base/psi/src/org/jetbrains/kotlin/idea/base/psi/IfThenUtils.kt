@@ -32,4 +32,4 @@ fun KtBinaryExpression.expressionComparedToNull(): KtExpression? {
     return if (leftIsNull) right else left
 }
 
-private fun KtExpression?.isNullExpression(): Boolean = this?.unwrapBlockOrParenthesis()?.node?.elementType == KtNodeTypes.NULL
+fun KtExpression?.isNullExpression(): Boolean = this?.unwrapBlockOrParenthesis()?.node?.elementType == KtNodeTypes.NULL

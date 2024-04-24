@@ -7,15 +7,11 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.ide.util.EditorHelper
-import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
@@ -28,7 +24,6 @@ import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 /**
@@ -54,11 +49,11 @@ internal class CreateKotlinCallablePsiEditor(
     private val pointerToContainer: SmartPsiElementPointer<*>,
     private val callableInfo: NewCallableInfo,
 ) {
-    fun execute(anchor: PsiElement, request: CreateMethodRequest) {
+    fun execute(anchor: PsiElement, isExtension: Boolean, targetClass: PsiElement?) {
         val factory = KtPsiFactory(project)
         var function = factory.createFunction(callableInfo.definitionAsString)
         val passedContainerElement = pointerToContainer.element ?: return
-        val shouldComputeContainerFromAnchor = if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && (request as? CreateMethodFromKotlinUsageRequest)?.isExtension != true
+        val shouldComputeContainerFromAnchor = if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension
             else passedContainerElement.getContainer() == anchor.getContainer()
         val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
             (anchor.getExtractionContainers().firstOrNull() ?: return)
@@ -70,12 +65,11 @@ internal class CreateKotlinCallablePsiEditor(
             if (insertContainer is KtClass) {
                 insertContainer.getOrCreateCompanionObject()
             } else {
-                val targetClass = (request as? CreateMethodFromKotlinUsageRequest)?.targetClass
                 val ktClass = targetClass as? KtClass
                 if (ktClass != null) {
                     val hasCompanionObject = ktClass.companionObjects.isNotEmpty()
                     val companion = ktClass.getOrCreateCompanionObject()
-                    if (!hasCompanionObject && request.isExtension) {
+                    if (!hasCompanionObject && isExtension) {
                         companion.body?.delete()
                     }
                 }

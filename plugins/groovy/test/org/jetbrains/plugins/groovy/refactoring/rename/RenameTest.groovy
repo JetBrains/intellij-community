@@ -1,7 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.rename
 
-import com.intellij.openapi.command.WriteCommandAction
+
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -555,9 +556,10 @@ class Test {
   private def doInplaceRenameTest() {
     String prefix = "/${testName.capitalize()}"
     fixture.configureByFile prefix + ".groovy"
-    WriteCommandAction.runWriteCommandAction project, {
-      CodeInsightTestUtil.doInlineRename(new GrVariableInplaceRenameHandler(), "foo", fixture)
-    }
+    CommandProcessor.instance.executeCommand(
+      project,
+      { CodeInsightTestUtil.doInlineRename(new GrVariableInplaceRenameHandler(), "foo", fixture) },
+      "Rename", null)
     fixture.checkResultByFile prefix + "_after.groovy"
   }
 

@@ -50,8 +50,7 @@ public final class SplitDeclarationAndInitializationIntention extends MCIntentio
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new SplitDeclarationAndInitializationPredicate();
   }
 
@@ -111,7 +110,7 @@ public final class SplitDeclarationAndInitializationIntention extends MCIntentio
       containingClass.addAfter(whitespace, field);
     }
     final PsiCodeBlock body = classInitializer.getBody();
-    @NonNls final String initializationStatementText = field.getName() + " = " + initializerText + ';';
+    final @NonNls String initializationStatementText = field.getName() + " = " + initializerText + ';';
     final PsiExpressionStatement statement = (PsiExpressionStatement)elementFactory.createStatementFromText(initializationStatementText, body);
     final PsiElement addedElement = body.addAfter(statement, null);
     if (fieldIsStatic) {

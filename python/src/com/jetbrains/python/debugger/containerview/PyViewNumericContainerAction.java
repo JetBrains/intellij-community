@@ -64,7 +64,7 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
     }
 
     String nodeType = debugValue.getType();
-    if ("ndarray".equals(nodeType)) {
+    if ("ndarray".equals(nodeType) || "EagerTensor".equals(nodeType) || "ResourceVariable".equals(nodeType) || "Tensor".equals(nodeType)) {
       e.getPresentation().setText(PyBundle.message("debugger.numeric.view.as.array"));
       e.getPresentation().setVisible(true);
     }

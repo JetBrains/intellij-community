@@ -35,7 +35,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Context, Result};
 use log::{debug, LevelFilter, warn};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[cfg(target_os = "windows")]
 use {
@@ -170,7 +170,7 @@ macro_rules! jvm_property {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ProductInfo {
     pub productCode: String,
     pub productVendor: String,
@@ -179,7 +179,7 @@ pub struct ProductInfo {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ProductInfoLaunchField {
     pub vmOptionsFilePath: String,
     pub bootClassPathJarNames: Vec<String>,
@@ -189,7 +189,7 @@ pub struct ProductInfoLaunchField {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ProductInfoCustomCommandField {
     pub commands: Vec<String>,
     pub vmOptionsFilePath: Option<String>,
@@ -368,25 +368,23 @@ fn get_user_home() -> Result<PathBuf> {
     env::home_dir().context("Cannot detect a user home directory")
 }
 
-pub fn get_path_from_env_var(env_var_name: &str, expecting_dir: Option<bool>) -> Result<PathBuf> {
+pub fn get_path_from_env_var(env_var_name: &str, expecting_dir: bool) -> Result<PathBuf> {
     let env_var = env::var(env_var_name);
     debug!("${env_var_name} = {env_var:?}");
     get_path_from_user_config(&env_var?, expecting_dir)
 }
 
-pub fn get_path_from_user_config(config_raw: &str, expecting_dir: Option<bool>) -> Result<PathBuf> {
+pub fn get_path_from_user_config(config_raw: &str, expecting_dir: bool) -> Result<PathBuf> {
     let config_value = config_raw.trim();
     if config_value.is_empty() {
         bail!("Empty path");
     }
 
     let path = PathBuf::from(config_value);
-    if let Some(expecting_dir) = expecting_dir {
-        if expecting_dir && !path.is_dir() {
-            bail!("Not a directory: {:?}", path);
-        } else if !expecting_dir && !path.is_file() {
-            bail!("Not a file: {:?}", path);
-        }
+    if expecting_dir && !path.is_dir() {
+        bail!("Not a directory: {:?}", path);
+    } else if !expecting_dir && !path.is_file() {
+        bail!("Not a file: {:?}", path);
     }
 
     Ok(path)

@@ -7,7 +7,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalOutputModel.TerminalOutputList
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
-class TerminalSelectionModel(outputModel: TerminalOutputModel) {
+internal class TerminalSelectionModel(outputModel: TerminalOutputModel) {
   /** Expected, that last element in the list is primary selection */
   var selectedBlocks: List<CommandBlock> by Delegates.observable(emptyList()) { _, oldValue, newValue ->
     if (newValue != oldValue) {

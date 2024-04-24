@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.java.JavaBundle;
@@ -33,16 +33,15 @@ public final class ExtendsClassChecker extends DomCustomAnnotationChecker<Extend
   private static final GenericValueReferenceProvider ourProvider = new GenericValueReferenceProvider();
 
   @Override
-  @NotNull
-  public Class<ExtendClass> getAnnotationClass() {
+  public @NotNull Class<ExtendClass> getAnnotationClass() {
     return ExtendClass.class;
   }
 
   @Override
-  public List<DomElementProblemDescriptor> checkForProblems(@NotNull final ExtendClass extend,
-                                                            @NotNull final DomElement _element,
-                                                            @NotNull final DomElementAnnotationHolder holder,
-                                                            @NotNull final DomHighlightingHelper helper) {
+  public List<DomElementProblemDescriptor> checkForProblems(final @NotNull ExtendClass extend,
+                                                            final @NotNull DomElement _element,
+                                                            final @NotNull DomElementAnnotationHolder holder,
+                                                            final @NotNull DomHighlightingHelper helper) {
     if (!(_element instanceof GenericDomValue element)) return Collections.emptyList();
 
     if (!isPsiClassType(element)) return Collections.emptyList();
@@ -65,17 +64,16 @@ public final class ExtendsClassChecker extends DomCustomAnnotationChecker<Extend
     return Collections.emptyList();
   }
 
-  @NotNull
-  public static List<DomElementProblemDescriptor> checkExtendClass(final GenericDomValue element,
-                                                                   final PsiClass value,
-                                                                   final String[] names,
-                                                                   final boolean instantiatable,
-                                                                   final boolean canBeDecorator,
-                                                                   final boolean allowInterface,
-                                                                   final boolean allowNonPublic,
-                                                                   final boolean allowAbstract,
-                                                                   final boolean allowEnum,
-                                                                   final DomElementAnnotationHolder holder) {
+  public static @NotNull List<DomElementProblemDescriptor> checkExtendClass(final GenericDomValue element,
+                                                                            final PsiClass value,
+                                                                            final String[] names,
+                                                                            final boolean instantiatable,
+                                                                            final boolean canBeDecorator,
+                                                                            final boolean allowInterface,
+                                                                            final boolean allowNonPublic,
+                                                                            final boolean allowAbstract,
+                                                                            final boolean allowEnum,
+                                                                            final DomElementAnnotationHolder holder) {
     final Project project = element.getManager().getProject();
     Set<PsiClass> toExtend =
       Arrays.stream(names)

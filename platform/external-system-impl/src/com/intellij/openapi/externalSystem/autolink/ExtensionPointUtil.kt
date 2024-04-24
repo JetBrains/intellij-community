@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
-internal suspend fun <Extension : Any> ExtensionPointName<Extension>.forEachExtensionSafeAsync(
+suspend fun <Extension : Any> ExtensionPointName<Extension>.forEachExtensionSafeAsync(
   action: suspend (Extension) -> Unit
 ) {
   for (extension in extensionList) {

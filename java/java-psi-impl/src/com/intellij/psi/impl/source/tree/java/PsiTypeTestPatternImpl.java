@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
@@ -15,9 +15,8 @@ public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTy
     super(TYPE_TEST_PATTERN);
   }
 
-  @NotNull
   @Override
-  public PsiTypeElement getCheckType() {
+  public @NotNull PsiTypeElement getCheckType() {
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiTypeElement) return (PsiTypeElement)child;
       if (child instanceof PsiPatternVariable) return ((PsiPatternVariable)child).getTypeElement();
@@ -25,9 +24,8 @@ public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTy
     throw new IllegalStateException(this.getText());
   }
 
-  @Nullable
   @Override
-  public PsiPatternVariable getPatternVariable() {
+  public @Nullable PsiPatternVariable getPatternVariable() {
     return PsiTreeUtil.getChildOfType(this, PsiPatternVariable.class);
   }
 

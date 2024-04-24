@@ -31,7 +31,8 @@ class WrapLayoutStrategy(private val myAdjustTheSameSize: Boolean): ToolbarLayou
     if (component.width == 0) return fallbackDelegate.calcPreferredSize(toolbar)
 
     val bounds = doCalculateBounds(Dimension(component.width, Int.MAX_VALUE), toolbar)
-    val dimension = bounds.reduce { acc, rect -> acc.union(rect) }.size
+    val dimension = if (bounds.isEmpty()) Dimension(0, 0)
+                    else bounds.reduce { acc, rect -> acc.union(rect) }.size
     JBInsets.addTo(dimension, toolbar.component.insets)
 
     return dimension

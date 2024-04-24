@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.core.JavaPsiBundle;
@@ -17,7 +17,7 @@ public final class JavaCommentContextType extends TemplateContextType {
   }
 
   @Override
-  public boolean isInContext(@NotNull final PsiFile file, final int offset) {
+  public boolean isInContext(final @NotNull PsiFile file, final int offset) {
     if (PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(JavaLanguage.INSTANCE)) {
       PsiElement element = file.findElementAt(offset);
       if (element instanceof PsiWhiteSpace && offset > 0) {

@@ -16,10 +16,7 @@ import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.diff.DiffColors
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -44,7 +41,6 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractException
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
-import com.intellij.refactoring.suggested.range
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.SmartList
@@ -280,11 +276,11 @@ object InplaceExtractUtils {
   fun addPreview(preview: EditorCodePreview, editor: Editor, lines: IntRange, navigatableOffset: Int){
     val navigatableMarker = createGreedyRangeMarker(editor.document, TextRange(navigatableOffset, navigatableOffset))
     Disposer.register(preview) { navigatableMarker.dispose() }
-    preview.addPreview(lines, onClickAction = { navigateToEditorOffset(editor, navigatableMarker.range?.endOffset) })
+    preview.addPreview(lines, onClickAction = { navigateToEditorOffset(editor, navigatableMarker.asTextRange?.endOffset) })
   }
 
   inline fun <reified T: PsiElement> findElementAt(file: PsiFile, range: RangeMarker?): T? {
-    val offset = range?.range?.startOffset ?: return null
+    val offset = range?.asTextRange?.startOffset ?: return null
     return PsiTreeUtil.findElementOfClassAtOffset(file, offset, T::class.java, false)
   }
 

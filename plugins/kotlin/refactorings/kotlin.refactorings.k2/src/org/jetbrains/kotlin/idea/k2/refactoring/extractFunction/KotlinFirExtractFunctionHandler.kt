@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
-import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptor
@@ -34,6 +33,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.Analysis
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractableCodeDescriptor
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionEngine
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processDuplicates
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -53,7 +53,7 @@ class KotlinFirExtractFunctionHandler(
             onFinish: (ExtractionResult) -> Unit
         ) {
             fun afterFinish(extraction: ExtractionResult) {
-                // TODO duplicates are not supported yet https://youtrack.jetbrains.com/issue/KTIJ-29165
+                processDuplicates(extraction.duplicateReplacers, project, editor)
                 onFinish(extraction)
             }
             allowAnalysisOnEdt {
@@ -68,12 +68,6 @@ class KotlinFirExtractFunctionHandler(
                                                                           AbstractInplaceExtractionHelper<KtType, ExtractionResult, ExtractableCodeDescriptorWithConflicts> {
         override fun createRestartHandler(): AbstractExtractKotlinFunctionHandler =
             KotlinFirExtractFunctionHandler(acceptAllScopes, InteractiveExtractionHelper)
-
-        override fun extractDuplicates(
-            duplicateReplacers: Map<KotlinPsiRange, () -> Unit>, project: Project, editor: Editor
-        ) {
-            // TODO duplicates are not supported yet https://youtrack.jetbrains.com/issue/KTIJ-29165
-        }
 
         override fun doRefactor(
             descriptor: IExtractableCodeDescriptor<KtType>, onFinish: (ExtractionResult) -> Unit

@@ -9,37 +9,33 @@
   <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.java-capable</depends>
 
-  <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="refactorings.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="indices.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="language.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="formatter.xml" xpointer ="xpointer(/idea-plugin/*)"/>
-  <xi:include href="jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="searching-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="statistics.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="kotlin.highlighting.shared.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="codeInsights.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="lowLevelApiFir.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="light-classes.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="light-classes-fir.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="parcelize.k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="jvm-debugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="jvm-debugger-k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="scripting-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="native.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="native-k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="facets-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="jvm.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/analysis-api/analysis-api-fir.xml"/> <!-- comes from the Kotlin compiler -->
 
-  <xi:include href="extensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="navigation.xml"/>
+  <xi:include href="refactorings.xml"/>
+  <xi:include href="indices.xml"/>
+  <xi:include href="file-types.xml"/>
+  <xi:include href="language.xml"/>
+  <xi:include href="formatter.xml"/>
+  <xi:include href="jps.xml"/>
+  <xi:include href="caches.xml"/>
+  <xi:include href="kotlin-core.xml"/>
+  <xi:include href="searching-base.xml"/>
+  <xi:include href="statistics.xml"/>
+  <xi:include href="kotlin.highlighting.shared.xml"/>
+  <xi:include href="codeInsights.xml"/>
+  <xi:include href="light-classes.xml"/>
+  <xi:include href="parcelize.k2.xml"/>
+  <xi:include href="jvm-debugger.xml"/>
+  <xi:include href="jvm-debugger-k2.xml"/>
+  <xi:include href="dep-spellchecker.xml"/>
+  <xi:include href="scripting-base-k2.xml"/>
+  <xi:include href="native.xml"/>
+  <xi:include href="native-k2.xml"/>
+  <xi:include href="facets-base.xml"/>
+  <xi:include href="jvm.xml"/>
 
-  <extensionPoints>
-    <xi:include href="extensions/compiler.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
-  </extensionPoints>
+  <xi:include href="extensions.xml"/>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirJvmIdePlatformKindTooling"/>
@@ -73,15 +69,10 @@
                         serviceImplementation="org.jetbrains.kotlin.idea.fir.plugin.K2KotlinPluginModeProvider"/>
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility"
                         serviceImplementation="org.jetbrains.kotlin.idea.core.overrideImplement.OverrideImplementFacilityImpl"/>
-    <projectService serviceInterface="org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider"
-                    serviceImplementation="org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSessionProvider"/>
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"
-                        serviceImplementation="org.jetbrains.kotlin.idea.references.KotlinFirReferenceContributor"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService"
             serviceImplementation="org.jetbrains.kotlin.idea.fir.FirLibrarySourceScopeService"/>
     <statusBarWidgetFactory id="kotlin.fir.ide" implementation="org.jetbrains.kotlin.idea.fir.FirStatusBarWidgetFactory"/>
-    <projectService serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService"/>
 
     <applicationService serviceInterface="org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService"
                         serviceImplementation="org.jetbrains.uast.kotlin.internal.FirIdeaKotlinUastResolveProviderService"/>
@@ -166,10 +157,6 @@
 
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.psi.KotlinReferenceProvidersService"
-            serviceImplementation="org.jetbrains.kotlin.analysis.api.impl.base.references.HLApiReferenceProviderService"/>
-
     <iconProvider implementation="org.jetbrains.kotlin.idea.FirKotlinIconProvider"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.IdePackageOracleFactory"/>
@@ -192,9 +179,6 @@
     <targetElementEvaluator language="kotlin"
                             implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
     <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
-
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
-                    serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsFirImpl"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
                     serviceImplementation="org.jetbrains.kotlin.idea.util.FirPluginOracleServiceFirImpl"/>

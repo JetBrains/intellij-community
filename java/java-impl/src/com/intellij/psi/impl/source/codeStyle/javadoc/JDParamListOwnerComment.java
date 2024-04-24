@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
@@ -34,8 +34,7 @@ public class JDParamListOwnerComment extends JDComment {
     }
   }
 
-  @Nullable
-  public TagDescription getParameter(@Nullable String name) {
+  public @Nullable TagDescription getParameter(@Nullable String name) {
     return getNameDesc(name, myParamsList);
   }
 
@@ -46,8 +45,7 @@ public class JDParamListOwnerComment extends JDComment {
     myParamsList.add(new TagDescription(name, description));
   }
 
-  @Nullable
-  private static TagDescription getNameDesc(@Nullable String name, @Nullable List<TagDescription> list) {
+  private static @Nullable TagDescription getNameDesc(@Nullable String name, @Nullable List<TagDescription> list) {
     if (list == null) return null;
     for (TagDescription aList : list) {
       if (aList.name().equals(name)) {
@@ -61,7 +59,7 @@ public class JDParamListOwnerComment extends JDComment {
    * Generates parameters or exceptions
    *
    */
-  protected void generateList(@NotNull final String prefix,
+  protected void generateList(final @NotNull String prefix,
                               @NotNull StringBuilder sb,
                               @NotNull List<? extends TagDescription> tagBlocks,
                               @NotNull String tag,

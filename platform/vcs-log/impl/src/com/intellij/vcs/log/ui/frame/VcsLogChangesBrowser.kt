@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.ValueTag
@@ -75,7 +74,6 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   private var isShowOnlyAffectedSelected = false
 
   private var affectedPaths: Collection<FilePath>? = null
-  private val editorDiffPreviewController: VcsLogEditorDiffPreview?
 
   init {
     val propertiesChangeListener = object : PropertiesChangeListener {
@@ -99,7 +97,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
     init()
 
-    editorDiffPreviewController = if (isWithEditorDiffPreview) VcsLogEditorDiffPreview(this) else null
+    showDiffActionPreview = if (isWithEditorDiffPreview) VcsLogEditorDiffPreview(this) else null
 
     hideViewerBorder()
     setup(viewerScrollPane, Side.TOP)
@@ -337,10 +335,6 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     VcsLogTreeChangeProcessorTracker(this, processor, handler, !isInEditor).track()
     processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CombinedDiffToggle.DEFAULT)
     return processor
-  }
-
-  override fun getShowDiffActionPreview(): DiffPreview? {
-    return editorDiffPreviewController
   }
 
   fun selectChange(userObject: Any, tag: ChangesBrowserNode.Tag?) {

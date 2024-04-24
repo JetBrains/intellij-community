@@ -26,7 +26,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <debugger.asyncStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
+    <debugger.creationStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
 
     <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
 

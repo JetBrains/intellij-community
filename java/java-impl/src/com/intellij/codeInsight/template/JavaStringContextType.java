@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.core.JavaPsiBundle;
@@ -17,7 +17,7 @@ public final class JavaStringContextType extends TemplateContextType {
   }
 
   @Override
-  public boolean isInContext(@NotNull final PsiFile file, final int offset) {
+  public boolean isInContext(final @NotNull PsiFile file, final int offset) {
     if (PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(JavaLanguage.INSTANCE)) {
       return isStringLiteral(file.findElementAt(offset));
     }

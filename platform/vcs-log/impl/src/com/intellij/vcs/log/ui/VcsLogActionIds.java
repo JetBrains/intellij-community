@@ -9,7 +9,6 @@ public final @NonNls class VcsLogActionIds {
   public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar.Internal";
   public static final String TOOLBAR_RIGHT_CORNER_ACTION_GROUP = "Vcs.Log.Toolbar.RightCorner";
   public static final String TEXT_FILTER_SETTINGS_ACTION_GROUP = "Vcs.Log.TextFilterSettings";
-  public static final String GRAPH_OPTIONS_GROUP = "Vcs.Log.GraphOptionsGroup";
   public static final String BRANCH_ACTIONS_GROUP = "Vcs.Log.BranchActionsGroup";
   public static final String FILE_HISTORY_TOOLBAR_ACTION_GROUP = "Vcs.FileHistory.Toolbar";
   public static final String FILE_HISTORY_TOOLBAR_RIGHT_CORNER_ACTION_GROUP = "Vcs.FileHistory.Toolbar.RightCorner";

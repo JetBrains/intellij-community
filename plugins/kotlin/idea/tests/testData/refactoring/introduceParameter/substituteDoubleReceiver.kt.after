@@ -18,3 +18,5 @@ fun test() {
         foo(a + a1.a)
     }
 }
+
+// IGNORE_K2

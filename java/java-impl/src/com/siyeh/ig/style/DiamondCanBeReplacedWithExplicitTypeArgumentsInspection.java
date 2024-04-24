@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -22,9 +22,8 @@ import java.util.List;
 
 public final class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return getDisplayName();
   }
 
@@ -33,9 +32,8 @@ public final class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection exten
     return new DiamondTypeVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new DiamondTypeFix();
   }
 
@@ -64,10 +62,8 @@ public final class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection exten
   }
 
   private static class DiamondTypeFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("diamond.can.be.replaced.with.explicit.type.arguments.quickfix");
     }
 

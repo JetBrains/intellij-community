@@ -75,9 +75,7 @@ public final class ElementFactory {
     return ce;
   }
 
-  @NotNull
-  @Nls
-  private static String getAnonymousClassName(@Nls String name) {
+  private static @NotNull @Nls String getAnonymousClassName(@Nls String name) {
     return name != null ? JavaPsiBundle.message("java.terms.anonymous.class.base.ref", name)
                         : JavaElementKind.ANONYMOUS_CLASS.subject();
   }

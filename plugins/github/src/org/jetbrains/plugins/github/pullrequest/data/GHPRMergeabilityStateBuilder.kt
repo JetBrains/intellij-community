@@ -12,20 +12,25 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableS
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState.ChecksState
 import kotlin.collections.buildList
 
-class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val prHtmlUrl: String,
-                                   private val mergeabilityData: GHPullRequestMergeabilityData) {
+internal class GHPRMergeabilityStateBuilder(
+  private val mergeabilityData: GHPullRequestMergeabilityData,
+  currentUserIsAdmin: Boolean
+) {
 
   private var canOverrideAsAdmin = false
   private var requiredContexts = emptyList<String>()
   private var isRestricted = false
   private var requiredApprovingReviewsCount = 0
 
-  fun withRestrictions(currentUserIsAdmin: Boolean, refUpdateRule: GHRefUpdateRule) {
-    // TODO: load via PullRequest.viewerCanMergeAsAdmin when we update the min version
-    canOverrideAsAdmin = /*baseBranchProtectionRules.enforceAdmins?.enabled == false &&*/currentUserIsAdmin
-    requiredContexts = refUpdateRule.requiredStatusCheckContexts.filterNotNull()
-    isRestricted = !refUpdateRule.viewerCanPush
-    requiredApprovingReviewsCount = refUpdateRule.requiredApprovingReviewCount ?: 0
+  init {
+    val baseRefUpdateRule = mergeabilityData.baseRefUpdateRule
+    if(baseRefUpdateRule != null) {
+      // TODO: load via PullRequest.viewerCanMergeAsAdmin when we update the min version
+      canOverrideAsAdmin = /*baseBranchProtectionRules.enforceAdmins?.enabled == false &&*/currentUserIsAdmin
+      requiredContexts = baseRefUpdateRule.requiredStatusCheckContexts.filterNotNull()
+      isRestricted = !baseRefUpdateRule.viewerCanPush
+      requiredApprovingReviewsCount = baseRefUpdateRule.requiredApprovingReviewCount ?: 0
+    }
   }
 
   fun build(): GHPRMergeabilityState {
@@ -80,8 +85,7 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
         requiredApprovingReviewsCount
       else 0
 
-    return GHPRMergeabilityState(headRefOid, prHtmlUrl,
-                                 hasConflicts,
+    return GHPRMergeabilityState(hasConflicts,
                                  ciJobs,
                                  canBeMerged, mergeabilityData.canBeRebased,
                                  isRestricted, actualRequiredApprovingReviewsCount)

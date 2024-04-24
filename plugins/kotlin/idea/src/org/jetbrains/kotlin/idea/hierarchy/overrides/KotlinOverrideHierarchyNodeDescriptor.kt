@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
+import com.intellij.psi.createSmartPointer
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.RowIcon
 import org.jetbrains.kotlin.descriptors.*
@@ -21,7 +22,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.util.getTypeSubstitution
 import org.jetbrains.kotlin.idea.util.substitute
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.parents
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
@@ -135,6 +135,7 @@ class KotlinOverrideHierarchyNodeDescriptor(
                             addText("()", classNameAttributes)
                         }
                     }
+
                     is PackageFragmentDescriptor -> {
                         @NlsSafe val parentDescriptorAsString = parentDescriptor.fqName.asString()
                         addText("  ($parentDescriptorAsString)", getPackageNameAttributes())

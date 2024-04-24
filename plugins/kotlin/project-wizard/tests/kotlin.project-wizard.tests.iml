@@ -49,5 +49,6 @@
     <orderEntry type="module" module-name="intellij.maven" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.tests" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.project-configuration" scope="TEST" />
   </component>
 </module>

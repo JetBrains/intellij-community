@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -26,17 +26,13 @@ public class WrapWithMutableCollectionFix extends PsiUpdateModCommandQuickFix {
     myCollectionName = collectionName;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
     return JavaBundle.message("quickfix.text.wrap.0.with.1", myVariableName, StringUtil.getShortName(myCollectionName));
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JavaBundle.message("quickfix.family.wrap.with.mutable.collection");
   }
 
@@ -68,8 +64,7 @@ public class WrapWithMutableCollectionFix extends PsiUpdateModCommandQuickFix {
     updater.highlight(replacement);
   }
 
-  @Nullable
-  public static WrapWithMutableCollectionFix createFix(@NotNull PsiElement anchor) {
+  public static @Nullable WrapWithMutableCollectionFix createFix(@NotNull PsiElement anchor) {
     PsiLocalVariable variable = getVariable(anchor);
     if (variable == null) return null;
     PsiExpression initializer = variable.getInitializer();
@@ -82,8 +77,7 @@ public class WrapWithMutableCollectionFix extends PsiUpdateModCommandQuickFix {
     return new WrapWithMutableCollectionFix(variable.getName(), wrapper);
   }
 
-  @Nullable
-  private static PsiLocalVariable getVariable(@NotNull PsiElement anchor) {
+  private static @Nullable PsiLocalVariable getVariable(@NotNull PsiElement anchor) {
     if (anchor.getParent() instanceof PsiReferenceExpression && anchor.getParent().getParent() instanceof PsiCallExpression) {
       anchor = ((PsiReferenceExpression)anchor.getParent()).getQualifierExpression();
     }
@@ -92,8 +86,7 @@ public class WrapWithMutableCollectionFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Contract("null -> null")
-  @Nullable
-  private static String getWrapperByType(PsiType type) {
+  private static @Nullable String getWrapperByType(PsiType type) {
     if(!(type instanceof PsiClassType)) return null;
     PsiClass aClass = ((PsiClassType)type).resolve();
     if (aClass == null) return null;

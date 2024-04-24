@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.util.containers.toArray
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.getDefaultMessageWithFactor
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixService
+import org.jetbrains.kotlin.idea.core.script.scriptConfigurationMissingForK2
 import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
 import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
@@ -62,6 +64,8 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
     }
 
     private fun analyzeFile(file: KtFile): MutableMap<TextRange, MutableList<HighlightInfo.Builder>> {
+        if (scriptConfigurationMissingForK2(file)) return mutableMapOf()
+
         analyze(file) {
             val analysis = file.collectDiagnosticsForFile(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             val diagnostics = analysis
@@ -87,7 +91,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         } else null
 
         val message = diagnostic.getMessageToRender()
-        val htmlMessage = XmlStringUtil.escapeString(message).replace("\n", "<br>")
+        val htmlMessage = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message).replace("\n", "<br>"))
         val infoBuilder = HighlightInfo.newHighlightInfo(diagnostic.getHighlightInfoType())
             .escapedToolTip(htmlMessage)
             .description(message)

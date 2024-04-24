@@ -892,7 +892,7 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
                                                       ExecutionBundle.message("add.new.run.configuration.action2.name"),
                                                       AllIcons.General.Add), AnActionButtonRunnable {
     init {
-      registerCustomShortcutSet(CommonShortcuts.INSERT, tree)
+      registerCustomShortcutSet(CommonShortcuts.getInsert(), tree)
     }
 
     override fun actionPerformed(e: AnActionEvent) {

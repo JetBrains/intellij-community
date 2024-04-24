@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -339,15 +338,13 @@ public class FileSystemTreeImpl implements FileSystemTree {
 
   public static VirtualFile getVirtualFile(TreePath path) {
     Object component = path.getLastPathComponent();
-    if (component instanceof DefaultMutableTreeNode) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;
+    if (component instanceof DefaultMutableTreeNode node) {
       Object userObject = node.getUserObject();
       if (userObject instanceof FileNodeDescriptor descriptor) {
         return descriptor.getElement().getFile();
       }
     }
-    if (component instanceof FileNode) {
-      FileNode node = (FileNode)component;
+    if (component instanceof FileNode node) {
       return node.getFile();
     }
     return null;
@@ -362,7 +359,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   @Override
   public boolean isUnderRoots(@NotNull VirtualFile file) {
     final List<VirtualFile> roots = myDescriptor.getRoots();
-    if (roots.size() == 0) return true;
+    if (roots.isEmpty()) return true;
 
     for (VirtualFile root : roots) {
       if (root != null && VfsUtilCore.isAncestor(root, file, false)) {
@@ -391,7 +388,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   }
 
   private void processSelectionChange() {
-    if (myListeners.size() == 0) return;
+    if (myListeners.isEmpty()) return;
     List<VirtualFile> selection = new ArrayList<>();
 
     final TreePath[] paths = myTree.getSelectionPaths();

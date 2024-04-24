@@ -23,7 +23,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,14 +36,12 @@ public final class ExceptionNameDoesntEndWithExceptionInspection
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ExceptionClassNameDoesntEndWithException";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "exception.name.doesnt.end.with.exception.problem.descriptor");
   }
@@ -72,7 +69,7 @@ public final class ExceptionNameDoesntEndWithExceptionInspection
       if (className == null) {
         return;
       }
-      @NonNls final String exception = "Exception";
+      final @NonNls String exception = "Exception";
       if (className.endsWith(exception)) {
         return;
       }

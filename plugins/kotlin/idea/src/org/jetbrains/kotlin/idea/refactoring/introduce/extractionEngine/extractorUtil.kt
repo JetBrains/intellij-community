@@ -45,58 +45,8 @@ fun createNameCounterpartMap(from: KtElement, to: KtElement): Map<KtSimpleNameEx
     return from.collectDescendantsOfType<KtSimpleNameExpression>().zip(to.collectDescendantsOfType<KtSimpleNameExpression>()).toMap()
 }
 
-
-
 fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo<KotlinType>> {
-    fun processWeakMatch(match: WeakSuccess<*>, newControlFlow: ControlFlow<KotlinType>): Boolean {
-        val valueCount = controlFlow.outputValues.size
-
-        val weakMatches = HashMap(match.weakMatches)
-        val currentValuesToNew = HashMap<OutputValue<KotlinType>, OutputValue<KotlinType>>()
-
-        fun matchValues(currentValue: OutputValue<KotlinType>, newValue: OutputValue<KotlinType>): Boolean {
-            if ((currentValue is Jump) != (newValue is Jump)) return false
-            if (currentValue.originalExpressions.zip(newValue.originalExpressions).all { weakMatches[it.first] == it.second }) {
-                currentValuesToNew[currentValue] = newValue
-                weakMatches.keys.removeAll(currentValue.originalExpressions)
-                return true
-            }
-            return false
-        }
-
-        if (valueCount == 1) {
-            matchValues(controlFlow.outputValues.first(), newControlFlow.outputValues.first())
-        } else {
-            outer@
-            for (currentValue in controlFlow.outputValues)
-                for (newValue in newControlFlow.outputValues) {
-                    if ((currentValue is ExpressionValue) != (newValue is ExpressionValue)) continue
-                    if (matchValues(currentValue, newValue)) continue@outer
-                }
-        }
-
-        return currentValuesToNew.size == valueCount && weakMatches.isEmpty()
-    }
-
-    fun getControlFlowIfMatched(match: KotlinPsiUnificationResult.Success<*>): ControlFlow<KotlinType>? {
-        val analysisResult = extractionData.copy(originalRange = match.range).performAnalysis()
-        if (analysisResult.status != AnalysisResult.Status.SUCCESS) return null
-
-        val newControlFlow = analysisResult.descriptor!!.controlFlow
-        if (newControlFlow.outputValues.isEmpty()) return newControlFlow
-        if (controlFlow.outputValues.size != newControlFlow.outputValues.size) return null
-
-        val matched = when (match) {
-            is StrictSuccess -> true
-            is WeakSuccess -> processWeakMatch(match, newControlFlow)
-            else -> throw AssertionError("Unexpected unification result: $match")
-        }
-
-        return if (matched) newControlFlow else null
-    }
-
     val unifierParameters = parameters.map { UnifierParameter(it.originalDescriptor, it.parameterType) }
-
     val unifier = KotlinPsiUnifier(unifierParameters, true)
 
     val scopeElement = getOccurrenceContainer() ?: return Collections.emptyList()
@@ -107,7 +57,7 @@ fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo<KotlinType>> 
         .asSequence()
         .filter { !(it.range.getPhysicalTextRange().intersects(originalTextRange)) }
         .mapNotNull { match ->
-            val controlFlow = getControlFlowIfMatched(match)
+            val controlFlow = getControlFlowIfMatched(match, extractionData.copy(originalRange = match.range).performAnalysis())
             val range = with(match.range) {
                 (elements.singleOrNull() as? KtStringTemplateEntryWithExpression)?.expression?.toRange() ?: this
             }

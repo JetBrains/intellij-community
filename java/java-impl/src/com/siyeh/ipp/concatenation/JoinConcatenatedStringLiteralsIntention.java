@@ -41,8 +41,7 @@ public final class JoinConcatenatedStringLiteralsIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new StringConcatPredicate();
   }
 

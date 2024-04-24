@@ -21,7 +21,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 
 internal class DiffUsagesCollector : ApplicationUsagesCollector() {
 
-  private val GROUP = EventLogGroup("vcs.diff", 7)
+  private val GROUP = EventLogGroup("vcs.diff", 8)
   private val places = listOf(DiffPlaces.DEFAULT,
                               DiffPlaces.CHANGES_VIEW,
                               DiffPlaces.VCS_LOG_VIEW,
@@ -50,6 +50,7 @@ internal class DiffUsagesCollector : ApplicationUsagesCollector() {
   private val BREADCRUMBS_PLACEMENT_VALUE = EventFields.Enum("value", BreadcrumbsPlacement::class.java)
   private val SHOW_BREADCRUMBS = GROUP.registerVarargEvent("show.breadcrumbs", DIFF_PLACE, BREADCRUMBS_PLACEMENT_VALUE)
   private val MERGE_APPLY_NOT_CONFLICTED = GROUP.registerVarargEvent("merge.apply.non.conflicted", DIFF_PLACE, EventFields.Enabled)
+  private val MERGE_AUTO_RESOLVE_IMPORT_CONFLICTS = GROUP.registerVarargEvent("merge.resolve.import.conflicts", DIFF_PLACE, EventFields.Enabled)
   private val MERGE_ENABLE_LST_MARKERS = GROUP.registerVarargEvent("merge.enable.lst.markers", DIFF_PLACE, EventFields.Enabled)
   private val USE_UNIFIED_DIFF = GROUP.registerVarargEvent("use.unified.diff", DIFF_PLACE, EventFields.Enabled)
   private val ITERATE_NEXT_FILE = GROUP.registerVarargEvent("iterate.next.file", DIFF_PLACE, EventFields.Enabled)
@@ -86,6 +87,7 @@ internal class DiffUsagesCollector : ApplicationUsagesCollector() {
                    data)
       addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isAutoApplyNonConflictedChanges }, MERGE_APPLY_NOT_CONFLICTED, data)
       addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isEnableLstGutterMarkersInMerge }, MERGE_ENABLE_LST_MARKERS, data)
+      addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isAutoApplyNonConflictedChanges }, MERGE_AUTO_RESOLVE_IMPORT_CONFLICTS, data)
       addBoolIfDiffers(set, diffSettings, defaultDiffSettings, { isUnifiedToolDefault(it) }, USE_UNIFIED_DIFF, data)
     }
 

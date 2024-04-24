@@ -94,7 +94,7 @@ public final class JavaStylePropertiesUtil {
     }
 
     if (!GroovyNamesUtil.isValidReference(GroovyPropertyUtils.getPropertyNameBySetterName(method.getName()),
-                                          ((GrReferenceExpression)expr).getQualifier() != null,
+                                          refExpr.getQualifier() != null,
                                           call.getProject())) {
       return false;
     }

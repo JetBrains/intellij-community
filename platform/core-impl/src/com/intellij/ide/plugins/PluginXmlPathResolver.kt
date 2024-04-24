@@ -148,7 +148,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, pluginJarFiles=${pluginJarFiles.joinToString(separator = "\n  ")})")
     }
 
-    return readModuleDescriptor(
+    val descriptor = readModuleDescriptor(
       input = input,
       readContext = readContext,
       pathResolver = this,
@@ -157,6 +157,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val 
       readInto = readInto,
       locationSource = null,
     )
+    return descriptor
   }
 
   private fun findInJarFiles(

@@ -18,6 +18,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
 
+@Deprecated("Please migrate to coroutines")
 abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
   : ClearableLazyValue<CompletableFuture<T>>() {
 
@@ -27,8 +28,6 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
   private var computationId: UUID? = null
 
   private var overriddenFuture: CompletableFuture<T>? = null
-
-  var lastLoadedValue: T? = null
 
   override fun compute(): CompletableFuture<T> {
     val overriddenFuture = overriddenFuture
@@ -63,10 +62,7 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
     // avoid dropping the same value twice
     val currentComputationId = UUID.randomUUID()
     computationId = currentComputationId
-    return future.successOnEdt {
-      lastLoadedValue = it
-      it
-    }.cancellationOnEdt {
+    return future.cancellationOnEdt {
       if (computationId == currentComputationId) drop()
     }
   }
@@ -79,23 +75,6 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
 
   abstract fun compute(indicator: ProgressIndicator): CompletableFuture<T>
 
-  fun overrideProcess(future: CompletableFuture<T>) {
-    overriddenFuture = future
-    super.drop()
-    computationId = null
-    progressIndicator.cancel()
-    dropEventDispatcher.multicaster.eventOccurred()
-  }
-
-  fun <U> combineResult(anotherFuture: CompletableFuture<U>, combiner: (T, U) -> T) {
-    val convertedCombiner = BiFunction<T, U, T> { t, u ->
-      combiner.invoke(t, u)
-    }
-    overriddenFuture = value.thenCombineAsync(anotherFuture, convertedCombiner, ProcessIOExecutorService.INSTANCE)
-    super.drop()
-    dropEventDispatcher.multicaster.eventOccurred()
-  }
-
   override fun drop() {
     overriddenFuture = null
     super.drop()
@@ -103,12 +82,6 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
     progressIndicator.cancel()
     dropEventDispatcher.multicaster.eventOccurred()
   }
-
-  fun addDropEventListener(disposable: Disposable, listener: () -> Unit) =
-    SimpleEventListener.addDisposableListener(dropEventDispatcher, disposable, listener)
-
-  fun addDropEventListener(listener: () -> Unit) =
-    SimpleEventListener.addListener(dropEventDispatcher, listener)
 
   companion object {
     fun <T> create(progressManager: ProgressManager, computer: (ProgressIndicator) -> T) =

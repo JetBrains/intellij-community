@@ -55,16 +55,10 @@ public class SpockLineMarkersTest extends LightGroovyTestCase {
         <caret>def 'method with spaces ok'() { expect: 1 == 1 }
       }
       """);
-    LinkedHashMap<String, Boolean> map = new LinkedHashMap<>(4);
-    map.put("cleanup", false);
-    map.put("methodWithoutLabels", false);
-    map.put("methodWithAnotherLabel", false);
-    map.put("method with spaces ok", true);
     GrTypeDefinition spec = DefaultGroovyMethods.first(file.getTypeDefinitions());
     DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
       for (GrMethod method : spec.getCodeMethods()) {
-        String name = method.getName();
-        Assertions.assertEquals(map.get(name), TestFrameworks.getInstance().isTestMethod(method));
+        Assertions.assertFalse(TestFrameworks.getInstance().isTestMethod(method));
       }
     });
   }

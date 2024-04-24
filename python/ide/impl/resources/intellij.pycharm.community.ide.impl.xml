@@ -2,7 +2,6 @@
   <!--Customization code for both Community and Pro PyCharms-->
   <dependencies>
     <module name="intellij.python.community.impl"/>
-    <plugin id="com.intellij.modules.platform"/>
   </dependencies>
 
   <projectListeners>
@@ -78,9 +77,7 @@
     <defaultToolWindowLayout implementation="com.intellij.pycharm.community.ide.impl.PyToolWindowLayoutProvider" order="last"/>
     <newUIConfigurable implementation="com.intellij.pycharm.community.ide.impl.configuration.PyExperimentalUIConfigurable"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.ui.OnboardingBackgroundImageProvider"
-                        serviceImplementation="com.intellij.pycharm.community.ide.impl.PyCharmOnboardingBackgroundImageProvider"
-                        overrides="true"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

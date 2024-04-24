@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.openapi.Disposable;
@@ -108,7 +108,7 @@ final class TextComponentCaretModel implements CaretModel {
 
   @Override
   public void setCaretsAndSelections(@NotNull List<? extends CaretState> caretStates) {
-    if (caretStates.size() < 1) throw new IllegalArgumentException("Empty list");
+    if (caretStates.isEmpty()) throw new IllegalArgumentException("Empty list");
     CaretState state = caretStates.get(0);
     if (state != null) {
       if (state.getCaretPosition() != null) moveToLogicalPosition(state.getCaretPosition());

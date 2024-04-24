@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.annotation;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddAnnotationAttributeNameFix;
@@ -18,9 +18,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public final class SingleElementAnnotationInspection extends BaseInspection {
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return getDisplayName();
   }
 
@@ -29,24 +28,19 @@ public final class SingleElementAnnotationInspection extends BaseInspection {
     return new ExpandAnnotationVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new ExpandAnnotationFix();
   }
 
   private static class ExpandAnnotationFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return InspectionGadgetsBundle.message("single.element.annotation.quickfix");
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("single.element.annotation.family.quickfix");
     }
 

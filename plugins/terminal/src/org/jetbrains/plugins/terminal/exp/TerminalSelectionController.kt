@@ -16,7 +16,7 @@ import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 import kotlin.math.min
 
-class TerminalSelectionController(
+internal class TerminalSelectionController(
   private val focusModel: TerminalFocusModel,
   private val selectionModel: TerminalSelectionModel,
   private val outputModel: TerminalOutputModel

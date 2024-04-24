@@ -17,7 +17,8 @@ class KotlinChangeInfo(
     override var aNewVisibility: Visibility = methodDescriptor.visibility,
     receiver: KotlinParameterInfo? = methodDescriptor.receiver,
     private var name: String = methodDescriptor.name,
-    var newReturnTypeInfo: KotlinTypeInfo = KotlinTypeInfo(methodDescriptor.oldReturnType, methodDescriptor.method)
+    var newReturnTypeInfo: KotlinTypeInfo = KotlinTypeInfo(methodDescriptor.oldReturnType, methodDescriptor.method),
+    var checkUsedParameters: Boolean = true
 ) : KotlinChangeInfoBase, KotlinModifiableChangeInfo<KotlinParameterInfo>, UserDataHolderBase() {
 
     private val oldName = methodDescriptor.name

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -29,9 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class ReplaceConstructorWithFactoryAction implements ModCommandAction {
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaRefactoringBundle.message("replace.constructor.with.factory.method");
   }
 
@@ -75,8 +74,9 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     performRefactoring(constructorOrClass, cls, usages, updater);
   }
 
-  private static @PsiModifier.ModifierConstant String getMinimalAccessLevel(@NotNull PsiMember member,
-                                                                            @NotNull List<@NotNull PsiElement> places) {
+  @PsiModifier.ModifierConstant
+  private static String getMinimalAccessLevel(@NotNull PsiMember member,
+                                              @NotNull List<@NotNull PsiElement> places) {
     String[] levels = {PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED};
     PsiClass containingClass = member.getContainingClass();
     for (String level : levels) {
@@ -226,8 +226,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     return JavaRefactoringBundle.message("replace.constructor.with.factory.method.title");
   }
 
-  @Nullable
-  private static PsiMember getConstructorOrClass(@Nullable PsiElement element) {
+  private static @Nullable PsiMember getConstructorOrClass(@Nullable PsiElement element) {
     if (element == null) return null;
     PsiMethod method = MethodUtils.getJavaMethodFromHeader(element);
     if (method != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInsight.daemon.impl.analysis.PsiMethodReferenceHighlightingUtil;
@@ -214,8 +214,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     }
   }
 
-  @Nullable
-  private PsiType getMethodReferenceType(PsiElement completion) {
+  private @Nullable PsiType getMethodReferenceType(PsiElement completion) {
     PsiElement parent = myElement.getParent();
     if (completion instanceof PsiMethod && parent instanceof PsiMethodReferenceExpression) {
       PsiType matchingType = ContainerUtil.find(myExpectedGroundTypes.getValue(), candidate ->
@@ -244,8 +243,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     return copy;
   }
 
-  @NotNull
-  private String getCallQualifierText(@NotNull PsiElement element) {
+  private @NotNull String getCallQualifierText(@NotNull PsiElement element) {
     if (element instanceof PsiMethod method && myFinishedScopesMethodNames.contains(method.getName())) {
       String className = myDeclarationHolder instanceof PsiClass psiClass ? psiClass.getName() : null;
       if (className != null) {
@@ -300,12 +298,11 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     myQualifierType = qualifierType;
   }
 
-  @Nullable
-  public PsiType getQualifierType() {
+  public @Nullable PsiType getQualifierType() {
     return myQualifierType;
   }
 
-  public boolean isAccessible(@Nullable final PsiElement element) {
+  public boolean isAccessible(final @Nullable PsiElement element) {
     // if checkAccess is false, we only show inaccessible source elements because their access modifiers can be changed later by the user.
     // compiled element can't be changed, so we don't pollute the completion with them. In Javadoc, everything is allowed.
     if (!myOptions.checkAccess && myInJavaDoc) return true;
@@ -334,8 +331,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     return true;
   }
 
-  @NotNull
-  private PsiResolveHelper getResolveHelper() {
+  private @NotNull PsiResolveHelper getResolveHelper() {
     return JavaPsiFacade.getInstance(myElement.getProject()).getResolveHelper();
   }
 

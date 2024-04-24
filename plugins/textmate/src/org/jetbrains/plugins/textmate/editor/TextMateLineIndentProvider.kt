@@ -3,6 +3,7 @@ package org.jetbrains.plugins.textmate.editor
 import com.intellij.application.options.CodeStyle
 import com.intellij.formatting.IndentInfo
 import com.intellij.lang.Language
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
@@ -64,26 +65,43 @@ class TextMateLineIndentProvider : LineIndentProvider {
                               onEnterRules: List<OnEnterRule>): Int? {
 
 
-    for (onEnterRule in onEnterRules){
+    for (onEnterRule in onEnterRules) {
       val beforeTextPatter = onEnterRule.beforeText.text
-      if (prevLineText.contains(Regex(beforeTextPatter))) {
-        when (onEnterRule.action.indent) {
-          IndentAction.INDENT -> return 1
-          IndentAction.NONE -> return null
-          else -> {}
+      try {
+        if (prevLineText.contains(Regex(beforeTextPatter))) {
+          when (onEnterRule.action.indent) {
+            IndentAction.INDENT -> return 1
+            IndentAction.NONE -> return null
+            else -> {}
+          }
         }
+      }
+      catch (e: Exception) {
+        thisLogger().error("Using regex onEnterRule.beforeText failed", e)
       }
     }
 
     val increasePattern = indentationRules.increaseIndentPattern
-    if (increasePattern != null && prevLineText.matches(Regex(increasePattern))) {
-      return 1
+    try {
+      if (increasePattern != null && prevLineText.matches(Regex(increasePattern))) {
+        return 1
+      }
+    }
+    catch (e: Exception) {
+      thisLogger().error("Using regex indentationRules.increaseIndentPattern failed", e)
     }
 
+
     val decreasePattern = indentationRules.decreaseIndentPattern
-    if (decreasePattern != null && prevLineText.matches(Regex(decreasePattern))) {
-      return -1
+    try {
+      if (decreasePattern != null && prevLineText.matches(Regex(decreasePattern))) {
+        return -1
+      }
     }
+    catch (e: Exception) {
+      thisLogger().error("Using regex indentationRules.decreaseIndentPattern failed", e)
+    }
+
     return null
   }
 }

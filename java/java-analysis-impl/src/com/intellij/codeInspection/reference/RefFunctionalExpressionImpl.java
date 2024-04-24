@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class RefFunctionalExpressionImpl extends RefJavaElementImpl implements RefFunctionalExpression {
+public final class RefFunctionalExpressionImpl extends RefJavaElementImpl implements RefFunctionalExpression {
 
   RefFunctionalExpressionImpl(@NotNull UExpression expr, @NotNull PsiElement psi, @NotNull RefManager manager) {
     super(expr, psi, manager);

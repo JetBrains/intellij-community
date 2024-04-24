@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.DurableDataEnumerator
+import com.intellij.util.io.Unmappable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -37,12 +38,19 @@ class PersistentTimestampsEnumeratorTest {
   @Before
   fun setup() {
     val dir = temp.newDirectory("persistentTimestampsEnumerator").toPath()
-    enumerator = DurableTimestampsEnumerator(dir.resolve("enumerator"))
+    enumerator = createTimestampsEnumerator(dir.resolve("enumerator"))
   }
 
   @After
   fun tearDown() {
-    enumerator.close()
+    val enumerator = enumerator
+    if (enumerator is Unmappable) {
+      //otherwise test fail on Win since TempDirectory can't clean the folder while files are still mmapped
+      enumerator.closeAndUnsafelyUnmap()
+    }
+    else {
+      enumerator.close()
+    }
   }
 
   @Test

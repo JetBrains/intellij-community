@@ -129,7 +129,7 @@ public final class RunContentBuilder extends RunTab {
     CustomActionsListener.subscribe(this, () -> {
       DefaultActionGroup updatedToolbar = createActionToolbar(restartActions, consoleActionsToMerge, additionalActionsToMerge);
       toolbar.removeAll();
-      toolbar.addAll(updatedToolbar.getChildren(null));
+      toolbar.addAll(updatedToolbar.getChildren(ActionManager.getInstance()));
     });
 
     if (profile instanceof RunConfigurationBase) {
@@ -235,6 +235,7 @@ public final class RunContentBuilder extends RunTab {
   }
 
   private @NotNull DefaultActionGroup createActionToolbar(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions, AnAction @NotNull [] additionalActions) {
+    ActionManager actionManager = ActionManager.getInstance();
     boolean isNewLayout = UIExperiment.isNewDebuggerUIEnabled();
 
     String mainGroupId = isNewLayout ? RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP : RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP;
@@ -257,7 +258,7 @@ public final class RunContentBuilder extends RunTab {
       addAvoidingDuplicates(moreGroup, moreActionGroup.getChildren(null), mainChildren);
     }
 
-    addActionsWithConstraints(afterRunActions.getChildren(null), new Constraints(AFTER, IdeActions.ACTION_RERUN), actionGroup, moreGroup);
+    addActionsWithConstraints(afterRunActions.getChildren(actionManager), new Constraints(AFTER, IdeActions.ACTION_RERUN), actionGroup, moreGroup);
 
     DefaultActionGroup afterStopActions = new DefaultActionGroup(myExecutionResult.getActions());
     if (consoleActions.length > 0) {
@@ -275,7 +276,7 @@ public final class RunContentBuilder extends RunTab {
         }
       }
 
-      addActionsWithConstraints(afterStopActions.getChildren(null), new Constraints(AFTER, IdeActions.ACTION_STOP_PROGRAM),
+      addActionsWithConstraints(afterStopActions.getChildren(actionManager), new Constraints(AFTER, IdeActions.ACTION_STOP_PROGRAM),
                                 actionGroup, null);
 
       actionGroup.addSeparator();
@@ -286,7 +287,7 @@ public final class RunContentBuilder extends RunTab {
     else {
       afterStopActions.addSeparator();
       afterStopActions.addAll(myRunnerActions);
-      addActionsWithConstraints(afterStopActions.getChildren(null), new Constraints(AFTER, IdeActions.ACTION_STOP_PROGRAM),
+      addActionsWithConstraints(afterStopActions.getChildren(actionManager), new Constraints(AFTER, IdeActions.ACTION_STOP_PROGRAM),
                                 actionGroup, moreGroup);
       moreGroup.addSeparator();
 

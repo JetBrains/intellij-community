@@ -477,9 +477,9 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       index++;
     }
 
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isTraceEnabled()) {
       boolean changed = !Arrays.equals(orderEntries, newOrder);
-      LOG.debug(String.format("rearrange status (%s): %s", modifiableRootModel.getModule(), changed ? "modified" : "not modified"));
+      LOG.trace(String.format("rearrange status (%s): %s", modifiableRootModel.getModule(), changed ? "modified" : "not modified"));
     }
     modifiableRootModel.rearrangeOrderEntries(newOrder);
   }

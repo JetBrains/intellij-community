@@ -37,7 +37,7 @@ public final class JavaFxColorProvider implements ElementColorProvider {
     if (!(element instanceof PsiIdentifier)) return null;
     PsiElement parent = element.getParent();
     PsiElement gp = parent == null ? null : parent.getParent();
-    if (gp instanceof PsiNewExpression newExpression && ((PsiNewExpression)gp).getClassReference() == parent) {
+    if (gp instanceof PsiNewExpression newExpression && newExpression.getClassReference() == parent) {
       if (isColorClass(PsiTypesUtil.getPsiClass(newExpression.getType()))) {
         PsiExpressionList argumentList = newExpression.getArgumentList();
         if (argumentList != null) {
@@ -53,7 +53,7 @@ public final class JavaFxColorProvider implements ElementColorProvider {
       parent = parent.getParent();
       gp = parent.getParent();
     }
-    if (gp instanceof PsiMethodCallExpression methodCall && ((PsiMethodCallExpression)gp).getMethodExpression().getReferenceNameElement() == element) {
+    if (gp instanceof PsiMethodCallExpression methodCall && methodCall.getMethodExpression().getReferenceNameElement() == element) {
       PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
       String methodName = methodExpression.getReferenceName();
       if (FACTORY_METHODS.contains(methodName)) {

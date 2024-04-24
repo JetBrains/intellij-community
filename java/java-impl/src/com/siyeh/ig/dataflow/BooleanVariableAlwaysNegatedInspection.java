@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -20,9 +20,8 @@ public final class BooleanVariableAlwaysNegatedInspection extends BaseInspection
     return new InvertBooleanFix(InspectionGadgetsBundle.message("invert.quickfix", variable.getName()));
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiVariable variable = (PsiVariable)infos[0];
     if (variable instanceof PsiField) {
       return InspectionGadgetsBundle.message(

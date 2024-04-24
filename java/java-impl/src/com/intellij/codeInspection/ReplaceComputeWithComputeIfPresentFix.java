@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -20,8 +20,7 @@ public class ReplaceComputeWithComputeIfPresentFix extends PsiUpdateModCommandQu
     parameterTypes("K", CommonClassNames.JAVA_UTIL_FUNCTION_BI_FUNCTION);
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("inspection.data.flow.use.computeifpresent.quickfix");
   }
 

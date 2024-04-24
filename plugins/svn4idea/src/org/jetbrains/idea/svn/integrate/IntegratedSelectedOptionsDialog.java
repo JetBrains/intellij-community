@@ -102,7 +102,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     final String addText = message("action.Subversion.integrate.changes.dialog.add.wc.text");
     final AnAction addAction = new DumbAwareAction(addText, addText, IconUtil.getAddIcon()) {
       {
-        registerCustomShortcutSet(CommonShortcuts.INSERT, myWorkingCopiesList);
+        registerCustomShortcutSet(CommonShortcuts.getInsert(), myWorkingCopiesList);
       }
 
       @Override

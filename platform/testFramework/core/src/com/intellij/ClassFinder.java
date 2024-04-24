@@ -11,12 +11,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class ClassFinder {
@@ -29,7 +28,12 @@ public class ClassFinder {
     this.classPathRoot = classPathRoot;
     this.includeUnconventionallyNamedTests = includeUnconventionallyNamedTests;
     String directoryOffset = rootPackage.replace(".", classPathRoot.getFileSystem().getSeparator());
-    classNameList = findAndStoreTestClasses(classPathRoot.resolve(directoryOffset));
+    if (Files.isRegularFile(classPathRoot)) {
+      classNameList = findAndStoreTestClassesFromJar(directoryOffset);
+    }
+    else {
+      classNameList = findAndStoreTestClasses(directoryOffset);
+    }
   }
 
   /**
@@ -41,13 +45,13 @@ public class ClassFinder {
   }
 
   @Nullable
-  private String computeClassName(final @NotNull Path path) {
+  private String computeClassName(final @NotNull Path path, final @NotNull Path root) {
     Path absPath = path.toAbsolutePath();
     String fileName = absPath.getFileName().toString();
     if (!includeUnconventionallyNamedTests) {
       // It's faster and easier to check for `endsWith` rather than `extensionEquals` (see below) which does `endsWith`
       if (fileName.endsWith("Test.class")) {
-        return getClassFQN(absPath);
+        return getClassFQN(absPath, root);
       }
       return null;
     }
@@ -55,7 +59,7 @@ public class ClassFinder {
       return null;
     }
     if (isSuitableTestClassName(FileUtilRt.getNameWithoutExtension(fileName), includeUnconventionallyNamedTests)) {
-      return getClassFQN(absPath);
+      return getClassFQN(absPath, root);
     }
     return null;
   }
@@ -84,27 +88,54 @@ public class ClassFinder {
   }
 
   @Nullable
-  private String getClassFQN(final @NotNull Path path) {
+  private static String getClassFQN(final @NotNull Path path, final @NotNull Path root) {
     String fqn = StringUtil
-      .trimEnd(classPathRoot.relativize(path).toString(), ".class")
+      .trimEnd(root.relativize(path).toString(), ".class")
       .replace(path.getFileSystem().getSeparator(), ".");
     return IGNORED_CLASS_NAMES.contains(fqn) ? null : fqn;
   }
 
-  private List<String> findAndStoreTestClasses(@NotNull Path current) {
+  private List<String> findAndStoreTestClasses(@NotNull String directoryOffset) {
+    final Path current = classPathRoot.resolve(directoryOffset);
     if (!Files.exists(current)) {
       return Collections.emptyList();
     }
     try (Stream<Path> walk = Files.walk(current)) {
       return walk
         .filter(path -> Files.isRegularFile(path))
-        .map(path -> computeClassName(path))
+        .map(path -> computeClassName(path, classPathRoot))
         .filter(name -> name != null)
         .toList();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private List<String> findAndStoreTestClassesFromJar(@NotNull String directoryOffset) {
+    if (!Files.exists(classPathRoot)) {
+      return Collections.emptyList();
+    }
+    final List<String> result = new ArrayList<>();
+    try (FileSystem fs = FileSystems.newFileSystem(classPathRoot)) {
+      for (Path root : fs.getRootDirectories()) {
+        Path offset = root.resolve(directoryOffset);
+        if (!Files.exists(offset)) {
+          continue;
+        }
+        try (Stream<Path> walk = Files.walk(offset)) {
+          result.addAll(walk
+                          .filter(path -> Files.isRegularFile(path))
+                          .map(it -> computeClassName(it, root))
+                          .filter(name -> name != null)
+                          .toList());
+        }
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return result;
   }
 
   public Collection<String> getClasses() {

@@ -16,7 +16,7 @@ architectures:
 
 apps:
   $NAME$:
-    command: $SCRIPT$
+    command: $LAUNCHER$
 
 parts:
   common:

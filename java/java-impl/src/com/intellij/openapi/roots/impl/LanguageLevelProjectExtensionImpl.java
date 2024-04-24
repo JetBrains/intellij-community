@@ -78,13 +78,11 @@ public final class LanguageLevelProjectExtensionImpl extends LanguageLevelProjec
   }
 
   @Override
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
+  public @NotNull LanguageLevel getLanguageLevel() {
     return getLanguageLevelOrDefault();
   }
 
-  @NotNull
-  private LanguageLevel getLanguageLevelOrDefault() {
+  private @NotNull LanguageLevel getLanguageLevelOrDefault() {
     return ObjectUtils.chooseNotNull(myLanguageLevel, LanguageLevel.HIGHEST);
   }
 

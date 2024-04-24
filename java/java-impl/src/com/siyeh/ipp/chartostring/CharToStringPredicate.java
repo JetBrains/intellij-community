@@ -87,7 +87,7 @@ class CharToStringPredicate implements PsiElementPredicate {
       final String className = type.getCanonicalText();
       if (CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(className) ||
           CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(className)) {
-        @NonNls final String methodName =
+        final @NonNls String methodName =
           methodExpression.getReferenceName();
         if (!"append".equals(methodName) &&
             !"insert".equals(methodName)) {
@@ -97,7 +97,7 @@ class CharToStringPredicate implements PsiElementPredicate {
         return method != null;
       }
       else if (JAVA_LANG_STRING.equals(className)) {
-        @NonNls final String methodName =
+        final @NonNls String methodName =
           methodExpression.getReferenceName();
         if (!"indexOf".equals(methodName) &&
             !"lastIndexOf".equals(methodName) &&

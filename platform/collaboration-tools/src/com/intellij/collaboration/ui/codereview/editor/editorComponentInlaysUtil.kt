@@ -43,7 +43,7 @@ fun <VM : EditorMapped> EditorEx.controlInlaysIn(
   val editor = this
   val controllersByVmKey: MutableMap<Any, Job> = ConcurrentHashMap()
 
-  return cs.launchNow(Dispatchers.Default + CoroutineName("Editor component inlays for $this")) {
+  return cs.launchNow(Dispatchers.Main + CoroutineName("Editor component inlays for $this")) {
     vmsFlow.collect { vms ->
       val vmsByKey = mutableMapOf<Any, VM>()
 

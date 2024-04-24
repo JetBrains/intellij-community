@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -39,9 +25,8 @@ public class JavaRequiresStatementElementType extends JavaStubElementType<PsiReq
     super("REQUIRES_STATEMENT", BasicJavaElementType.BASIC_REQUIRES_STATEMENT);
   }
 
-  @NotNull
   @Override
-  public ASTNode createCompositeNode() {
+  public @NotNull ASTNode createCompositeNode() {
     return new CompositeElement(this);
   }
 
@@ -55,9 +40,8 @@ public class JavaRequiresStatementElementType extends JavaStubElementType<PsiReq
     return new PsiRequiresStatementImpl(node);
   }
 
-  @NotNull
   @Override
-  public PsiRequiresStatementStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
+  public @NotNull PsiRequiresStatementStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, node, JavaElementType.MODULE_REFERENCE);
     String refText = ref != null ? JavaSourceUtil.getReferenceText(tree, ref) : null;
     return new PsiRequiresStatementStubImpl(parentStub, refText);
@@ -68,9 +52,8 @@ public class JavaRequiresStatementElementType extends JavaStubElementType<PsiReq
     dataStream.writeName(stub.getModuleName());
   }
 
-  @NotNull
   @Override
-  public PsiRequiresStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PsiRequiresStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new PsiRequiresStatementStubImpl(parentStub, dataStream.readNameString());
   }
 

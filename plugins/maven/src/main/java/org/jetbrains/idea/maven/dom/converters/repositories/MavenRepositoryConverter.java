@@ -43,7 +43,7 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
   public static class Id extends MavenRepositoryConverter {
     @Override
     @NotNull
-    public Collection<String> getVariants(final ConvertContext context) {
+    public Collection<String> getVariants(final @NotNull ConvertContext context) {
       Module module = context.getModule();
       if (module != null) {
         return MavenRepositoriesProvider.getInstance().getRepositoryIds();
@@ -62,7 +62,7 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
   public static class Name extends MavenRepositoryConverter {
     @Override
     @NotNull
-    public Collection<String> getVariants(final ConvertContext context) {
+    public Collection<String> getVariants(final @NotNull ConvertContext context) {
       Module module = context.getModule();
 
       if (module != null) {
@@ -101,12 +101,12 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
   }
 
   @Override
-  public String fromString(@Nullable @NonNls final String s, final ConvertContext context) {
+  public String fromString(@Nullable @NonNls final String s, final @NotNull ConvertContext context) {
     return s;
   }
 
   @Override
-  public String toString(@Nullable String s, ConvertContext convertContext) {
+  public String toString(@Nullable String s, @NotNull ConvertContext convertContext) {
     return s;
   }
 }

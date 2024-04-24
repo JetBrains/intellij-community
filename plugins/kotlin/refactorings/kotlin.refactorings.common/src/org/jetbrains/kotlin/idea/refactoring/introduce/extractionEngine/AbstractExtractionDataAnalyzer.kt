@@ -174,7 +174,7 @@ abstract class AbstractExtractionDataAnalyzer<KotlinType, P : IMutableParameter<
             else -> KotlinNameSuggestionProvider.ValidatorTarget.FUNCTION
         }
         val validator = nameSuggester.createNameValidator(
-            data.targetSibling.parent as KtElement,
+            data.targetSibling as KtElement,
             if (data.targetSibling is KtAnonymousInitializer) data.targetSibling.parent else data.targetSibling,
             validatorTarget
         )

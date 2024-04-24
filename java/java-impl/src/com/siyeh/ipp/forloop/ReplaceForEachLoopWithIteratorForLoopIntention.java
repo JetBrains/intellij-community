@@ -43,8 +43,7 @@ public final class ReplaceForEachLoopWithIteratorForLoopIntention extends MCInte
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new IterableForEachLoopPredicate();
   }
 
@@ -71,7 +70,7 @@ public final class ReplaceForEachLoopWithIteratorForLoopIntention extends MCInte
     if (variableType == null) {
       return;
     }
-    @NonNls final StringBuilder newStatement = new StringBuilder();
+    final @NonNls StringBuilder newStatement = new StringBuilder();
     newStatement.append("for(").append(variableType.getCanonicalText()).append(' ');
     final String iterator = new VariableNameGenerator(statement, VariableKind.LOCAL_VARIABLE)
       .byName("iterator", "iter", "it").generate(true);

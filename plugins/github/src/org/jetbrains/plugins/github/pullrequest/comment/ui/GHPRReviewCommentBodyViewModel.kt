@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.async.computationState
 import com.intellij.collaboration.async.launchNowIn
+import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.collaboration.util.getOrNull
@@ -12,9 +12,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.*
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil.getLinesInRange
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.indeterminateStep
@@ -25,21 +23,16 @@ import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverter
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.detailsComputationFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
 
 private val LOG = logger<GHPRReviewCommentBodyViewModel>()
@@ -68,7 +61,7 @@ class GHPRReviewCommentBodyViewModel internal constructor(
 
   init {
     body = MutableStateFlow("")
-    reviewData.createThreadsRequestsFlow().computationState().mapNotNull { it.getOrNull() }.onEach { threads ->
+    reviewData.threadsComputationFlow.mapNotNull { it.getOrNull() }.onEach { threads ->
       val thread = threads.find { it.id == threadId }
       threadData.value = thread?.let {
         val lineCount = (if (it.line != null && it.startLine != null) {
@@ -143,7 +136,9 @@ class GHPRReviewCommentBodyViewModel internal constructor(
     }
   }
 
-  private val loadedDetailsState = detailsData.createLoadedDetailsStateIn(cs)
+  private val loadedDetailsState = detailsData.detailsComputationFlow
+    .filter { !it.isInProgress }.map { it.getOrNull() }
+    .stateInNow(cs, null)
   val isOnReviewBranch: StateFlow<Boolean> = repository.infoStateIn(cs)
     .combineState(loadedDetailsState) { _, details ->
       val remote = details?.getHeadRemoteDescriptor(server) ?: return@combineState false
@@ -159,7 +154,7 @@ class GHPRReviewCommentBodyViewModel internal constructor(
           }
           if (applyStatus == ApplyPatchStatus.SUCCESS && canResolvedThread.value) {
             indeterminateStep(GithubBundle.message("pull.request.comment.suggested.changes.resolving")) {
-              reviewData.resolveThread(EmptyProgressIndicator(), threadId).asDeferred().await()
+              reviewData.resolveThread(threadId)
             }
           }
         }
@@ -179,7 +174,7 @@ class GHPRReviewCommentBodyViewModel internal constructor(
             val applyStatus = GHSuggestedChangeApplier.commitSuggestedChanges(project, repository, patch, commitMessage)
             if (applyStatus == ApplyPatchStatus.SUCCESS && canResolvedThread.value) {
               reporter.indeterminateStep(GithubBundle.message("pull.request.comment.suggested.changes.resolving"))
-              reviewData.resolveThread(EmptyProgressIndicator(), threadId).asDeferred().await()
+              reviewData.resolveThread(threadId)
             }
           }
         }
@@ -241,21 +236,6 @@ class GHPRReviewCommentBodyViewModel internal constructor(
     val endLineIndex: Int?
   )
 }
-
-@OptIn(ExperimentalCoroutinesApi::class)
-private fun GHPRDetailsDataProvider.createLoadedDetailsStateIn(cs: CoroutineScope): StateFlow<GHPullRequest?> =
-  callbackFlow {
-    val disposable = Disposer.newDisposable()
-    addDetailsLoadedListener(disposable) {
-      trySend(loadDetails())
-    }
-    send(loadDetails())
-    awaitClose { Disposer.dispose(disposable) }
-  }.mapLatest {
-    runCatching {
-      it.await()
-    }.getOrNull()
-  }.stateIn(cs, SharingStarted.Eagerly, loadedDetails)
 
 private fun String.getSuggestions(): List<List<String>> {
   val result = mutableListOf<List<String>>()

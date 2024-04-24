@@ -21,6 +21,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.EditedCommitNode;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,6 +108,13 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
   public void rebuildTree() {
     // currently not used in ChangesListView code flow
     LOG.warn("rebuildTree() not implemented in " + this, new Throwable());
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void updateTreeModel(@NotNull DefaultTreeModel model,
+                              @NotNull TreeStateStrategy treeStateStrategy) {
+    super.updateTreeModel(model, treeStateStrategy);
   }
 
   @Nullable

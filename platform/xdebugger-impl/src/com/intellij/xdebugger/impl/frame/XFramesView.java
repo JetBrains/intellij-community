@@ -48,6 +48,7 @@ import com.intellij.xdebugger.impl.frame.XDebuggerFramesList.ItemWithSeparatorAb
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -736,6 +737,11 @@ public final class XFramesView extends XDebugView {
       }
       return selectCurrentFrame();
     }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull ComboBox<XExecutionStack> getThreadComboBox() {
+    return myThreadComboBox;
   }
 
   /**

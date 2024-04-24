@@ -83,6 +83,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("../../idea/tests/testData/editor/quickDoc/ConstructorVarParameter.kt");
     }
 
+    @TestMetadata("DataClass.kt")
+    public void testDataClass() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/DataClass.kt");
+    }
+
     @TestMetadata("DefinitelyNonNullType.kt")
     public void testDefinitelyNonNullType() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/DefinitelyNonNullType.kt");

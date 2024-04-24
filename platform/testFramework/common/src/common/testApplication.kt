@@ -124,7 +124,7 @@ fun loadApp(setupEventQueue: Runnable) {
     """
     $COROUTINE_DUMP_HEADER
     ${dumpCoroutines(stripDump = false)}
-    """
+    """.trimIndent()
   }
   val isHeadless = UITestUtil.getAndSetHeadlessProperty()
   AppMode.setHeadlessInTestMode(isHeadless)
@@ -289,7 +289,9 @@ fun Application.checkEditorsReleased() {
       EditorFactoryImpl.throwNotReleasedError(editor)
     }
     actions.add {
-      editorFactory.releaseEditor(editor)
+      ApplicationManager.getApplication().invokeAndWait {
+        editorFactory.releaseEditor(editor)
+      }
     }
   }
   runAll(actions)

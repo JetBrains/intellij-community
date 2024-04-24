@@ -19,6 +19,7 @@ public final class JpsJavaCompilerConfigurationSerializer extends JpsProjectExte
   public static final String RESOURCE_EXTENSIONS = "resourceExtensions";
   public static final String ANNOTATION_PROCESSING = "annotationProcessing";
   public static final String BYTECODE_TARGET_LEVEL = "bytecodeTargetLevel";
+  public static final String FS_COMPILER_REFERENCE_TYPE = "fsCompilerReferenceType";
   public static final String WILDCARD_RESOURCE_PATTERNS = "wildcardResourcePatterns";
   public static final String ADD_NOTNULL_ASSERTIONS = "addNotNullAssertions";
   public static final String ENTRY = "entry";

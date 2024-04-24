@@ -89,6 +89,7 @@ final class PsiUpdateImpl {
       myCopyFile = copyFile(myProject, origFile);
       PsiFileImplUtil.setNonPhysicalFileDeleteHandler(myCopyFile, f -> myDeleted = true);
       myDocument = myCopyFile.getViewProvider().getDocument();
+      assert !myCopyFile.getViewProvider().isEventSystemEnabled() : "Event system for " + myCopyFile.getName();
       InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(myProject);
       boolean injected = injectionManager.isInjectedFragment(origFile);
       if (injected) {

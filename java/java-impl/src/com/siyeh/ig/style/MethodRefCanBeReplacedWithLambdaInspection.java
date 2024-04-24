@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -32,9 +32,8 @@ import java.util.Set;
 
 public final class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return getDisplayName();
   }
 
@@ -48,9 +47,8 @@ public final class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspec
     return new MethodRefToLambdaVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)infos[0];
     final boolean onTheFly = (Boolean)infos[1];
     if (LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects(methodReferenceExpression)) {
@@ -73,10 +71,8 @@ public final class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspec
   }
 
   private static class MethodRefToLambdaFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix");
     }
 
@@ -89,10 +85,8 @@ public final class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspec
   }
 
   private static class SideEffectsMethodRefToLambdaFix extends InspectionGadgetsFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return ApplicationManager.getApplication().isUnitTestMode() ?
              (InspectionGadgetsBundle.message("side.effects.method.ref.to.lambda.fix.family.name",
                                               InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix"))) :

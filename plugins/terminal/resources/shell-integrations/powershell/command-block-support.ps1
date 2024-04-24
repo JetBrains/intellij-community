@@ -28,6 +28,13 @@ function Global:__JetBrainsIntellijGetCommandEndMarker() {
 $Global:__JetBrainsIntellijTerminalInitialized=$false
 $Global:__JetBrainsIntellijGeneratorRunning=$false
 
+if (Test-Path Function:\Prompt) {
+  Rename-Item Function:\Prompt Global:__JetBrainsIntellijOriginalPrompt
+}
+else {
+  function Global:__JetBrainsIntellijOriginalPrompt() { return "" }
+}
+
 function Global:Prompt() {
   $Success = $?
   $ExitCode = $Global:LastExitCode
@@ -90,11 +97,13 @@ function Global:__JetBrainsIntellijCreatePromptStateOSC() {
   }
   $VirtualEnv = if ($Env:VIRTUAL_ENV -ne $null) { $Env:VIRTUAL_ENV } else { "" }
   $CondaEnv = if ($Env:CONDA_DEFAULT_ENV -ne $null) { $Env:CONDA_DEFAULT_ENV } else { "" }
+  $OriginalPrompt = __JetBrainsIntellijOriginalPrompt 6>&1
   $StateOSC = Global:__JetBrainsIntellijOSC ("prompt_state_updated;" +
     "current_directory=$(__JetBrainsIntellijEncode $CurrentDirectory);" +
     "git_branch=$(__JetBrainsIntellijEncode $GitBranch);" +
     "virtual_env=$(__JetBrainsIntellijEncode $VirtualEnv);" +
-    "conda_env=$(__JetBrainsIntellijEncode $CondaEnv)")
+    "conda_env=$(__JetBrainsIntellijEncode $CondaEnv);" +
+    "original_prompt=$(__JetBrainsIntellijEncode $OriginalPrompt)")
 
   $Global:LastExitCode = $RealExitCode
   return $StateOSC

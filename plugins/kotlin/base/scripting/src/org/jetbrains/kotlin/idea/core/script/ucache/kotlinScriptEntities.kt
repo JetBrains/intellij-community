@@ -9,11 +9,11 @@ import com.intellij.platform.backend.workspace.BuilderSnapshot
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -71,114 +71,6 @@ internal fun BuilderSnapshot.syncScriptEntities(
     val scriptLibrariesDebugInfo = project.scriptLibrariesDebugInfo();
     Unit // <= toggle breakpoint here and enjoy
 */
-}
-
-@Suppress("unused")
-// Use this method troubleshooting to see scripts-to-libraries relations
-private fun Project.scriptsDebugInfo(): String {
-    val storage = WorkspaceModel.getInstance(this).currentSnapshot
-    val scriptEntities = storage.entities(KotlinScriptEntity::class.java).toList()
-
-    return buildString {
-        append("Total number of scripts: ${scriptEntities.size}\n\n")
-        append(
-            scriptEntities.asSequence()
-                .map { it.debugInfo(storage) }
-                .joinToString("\n\n")
-        )
-    }
-}
-
-@Suppress("unused")
-// Use this method troubleshooting to see libraries-to-scripts relations
-private fun Project.scriptLibrariesDebugInfo(): String {
-    val storage = WorkspaceModel.getInstance(this).currentSnapshot
-    val scriptLibraries = storage.entities(KotlinScriptLibraryEntity::class.java).toList()
-
-    return buildString {
-        append("Total number of libraries: ${scriptLibraries.size}\n\n")
-        append(
-            scriptLibraries.asSequence()
-                .map { it.debugInfo(storage) }
-                .joinToString("\n\n")
-        )
-    }
-}
-
-private fun KotlinScriptLibraryEntity.debugInfo(storage: EntityStorage): String {
-    return buildString {
-        append("[$name, rootsNum=${roots.size}, usedInScriptsNum=${usedInScripts.size}]")
-        append("\n")
-        append(usedInScripts.joinToString("\n") {
-            val scriptEntity = storage.resolve(it)
-            "   - ${it.path}, libsNum=${scriptEntity?.dependencies?.size}"
-        })
-    }
-}
-
-
-private fun KotlinScriptEntity.debugInfo(storage: EntityStorage): String {
-    return buildString {
-        append("[$path, libsNum=${dependencies.size}]")
-        append("\n")
-        append(dependencies.joinToString("\n") {
-            val libraryEntity = storage.resolve(it)
-            "   - ${it.name}, rootsNum=${libraryEntity?.roots?.size}, reusedNum=${libraryEntity?.usedInScripts?.size}"
-        })
-    }
-}
-
-@Suppress("unused") // exists for debug purposes
-private fun managerScriptsDebugInfo(project: Project, scriptFiles: Sequence<VirtualFile>? = null): String = buildString {
-    val configurationManager = ScriptConfigurationManager.getInstance(project)
-
-    val allSourcesSize = configurationManager.getAllScriptDependenciesSources().size
-    val allSdkSourcesSize = configurationManager.getAllScriptSdkDependenciesSources().size
-
-    val allClassesSize = configurationManager.getAllScriptsDependenciesClassFiles().size
-    val allSdkClassesSize = configurationManager.getAllScriptsSdkDependenciesClassFiles().size
-
-    scriptFiles?.forEach {
-        val classDepSize = configurationManager.getScriptDependenciesClassFiles(it).size
-        val sourceDepSize = configurationManager.getScriptDependenciesSourceFiles(it).size
-        append("[${it.path}]: classes: ${classDepSize}, sources: ${sourceDepSize}\n")
-    }
-    insert(
-        0,
-        "==> ScriptConfigurationManager (classes: $allClassesSize, sdkClasses: $allSdkClassesSize, sources: $allSourcesSize, sdkSources: $allSdkSourcesSize)\n"
-    )
-}
-
-@Suppress("unused") // exists for debug purposes
-private fun scriptEntitiesDebugInfo(project: Project, listRoots: Boolean = false): String {
-    fun List<KotlinScriptLibraryRoot>.print(indent: CharSequence = "          ") = asSequence()
-        .mapIndexed { i, root -> "$indent${i + 1}: ${root.url.presentableUrl}" }
-        .joinToString("\n", indent)
-
-    return buildString {
-        val entityStorage = WorkspaceModel.getInstance(project).currentSnapshot
-
-        val allClasses = HashSet<KotlinScriptLibraryRoot>()
-        val allSources = HashSet<KotlinScriptLibraryRoot>()
-
-        entityStorage.entities(KotlinScriptEntity::class.java).forEachIndexed { scriptIndex, scriptEntity ->
-            append("#${scriptIndex + 1}: [${scriptEntity.path}]\n")
-            scriptEntity.dependencies.forEachIndexed dependencies@{ libIndex, libId ->
-                val lib = entityStorage.resolve(libId) ?: return@dependencies
-
-                val (classes, sources) = lib.roots.partition { it.type == KotlinScriptLibraryRootTypeId.COMPILED }
-                allClasses.addAll(classes)
-                allSources.addAll(sources)
-                append("      Lib #${libIndex + 1}: \"${lib.name}\", classes: ${classes.size}, sources: ${sources.size} \n")
-                applyIf(listRoots) {
-                    append("        Classes:\n ${classes.print()}\n")
-                    append("        Sources:\n ${sources.print()}\n")
-                }
-            }
-        }
-
-        insert(0, "==> WorkspaceModel (unique classes: ${allClasses.size}, sources: ${allSources.size})\n")
-    }
 }
 
 private fun MutableEntityStorage.syncScriptEntities(
@@ -290,7 +182,7 @@ private fun MutableList<KotlinScriptLibraryEntity.Builder>.fillWithFiles(
 private fun MutableEntityStorage.getActualScriptLibraries(scriptFile: VirtualFile, project: Project): List<KotlinScriptLibraryEntity> {
     val configurationManager = ScriptConfigurationManager.getInstance(project)
 
-    val dependenciesClassFiles = configurationManager.getScriptDependenciesClassFiles(scriptFile)
+    val dependenciesClassFiles = ScriptDependencyAware.getInstance(project).getScriptDependenciesClassFiles(scriptFile)
     val dependenciesSourceFiles = configurationManager.getScriptDependenciesSourceFiles(scriptFile)
 
     // List builders are not supported by WorkspaceModel yet

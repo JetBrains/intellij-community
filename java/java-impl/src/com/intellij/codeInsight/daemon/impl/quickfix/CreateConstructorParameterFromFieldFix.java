@@ -43,8 +43,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.constructor.parameters");
   }
 
@@ -61,10 +60,9 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
                                                                                                                  member -> ((PsiMethodMember)member).getElement())));
   }
 
-  @NotNull
-  private static ModCommand performForConstructors(@NotNull ActionContext context,
-                                                   @NotNull PsiField field,
-                                                   @NotNull List<PsiMethod> constructors) {
+  private static @NotNull ModCommand performForConstructors(@NotNull ActionContext context,
+                                                            @NotNull PsiField field,
+                                                            @NotNull List<PsiMethod> constructors) {
     if (!field.isValid() || ContainerUtil.exists(constructors, c -> !c.isValid())) return ModCommand.nop();
     PsiClass psiClass = field.getContainingClass();
     if (psiClass == null) return ModCommand.nop();
@@ -79,8 +77,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
                                               constructors));
   }
 
-  @NotNull
-  private static List<PsiMethod> getFilteredConstructors(PsiMethod[] constructors, PsiField field) {
+  private static @NotNull List<PsiMethod> getFilteredConstructors(PsiMethod[] constructors, PsiField field) {
     Arrays.sort(constructors, new Comparator<>() {
       @Override
       public int compare(PsiMethod c1, PsiMethod c2) {
@@ -99,8 +96,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
     return filterConstructorsIfFieldAlreadyAssigned(constructors, field);
   }
 
-  @NotNull
-  static List<PsiField> getFieldsToFix(@NotNull PsiClass psiClass, @NotNull PsiField startField, @NotNull List<PsiMethod> constructors) {
+  static @NotNull List<PsiField> getFieldsToFix(@NotNull PsiClass psiClass, @NotNull PsiField startField, @NotNull List<PsiMethod> constructors) {
     List<PsiField> fields = new ArrayList<>();
     for (PsiField field : psiClass.getFields()) {
       if (field == startField ||
@@ -141,8 +137,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
     return ctr instanceof SyntheticElement || VariableAccessUtils.variableIsAssigned(field, getTargetConstructor(ctr));
   }
 
-  @NotNull
-  private static ModCommand performForConstructorsAndFields(ActionContext context, List<PsiField> fields, List<PsiMethod> constructors) {
+  private static @NotNull ModCommand performForConstructorsAndFields(ActionContext context, List<PsiField> fields, List<PsiMethod> constructors) {
     return ModCommand.psiUpdate(context, updater -> {
       List<PsiField> writableFields = ContainerUtil.map(fields, updater::getWritable);
       PsiClass psiClass = writableFields.get(0).getContainingClass();
@@ -227,8 +222,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
     }
   }
 
-  @NotNull
-  private static List<PsiVariable> fillVariables(@NotNull List<PsiField> fields, @NotNull PsiParameterList parameterList) {
+  private static @NotNull List<PsiVariable> fillVariables(@NotNull List<PsiField> fields, @NotNull PsiParameterList parameterList) {
     final List<PsiVariable> params = new ArrayList<>(Arrays.asList(parameterList.getParameters()));
     PsiMethod constructor = (PsiMethod)parameterList.getParent();
     for (PsiField field : fields) {
@@ -266,8 +260,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
     return true;
   }
 
-  @Nullable
-  private static PsiParameter findParamByName(@NotNull String newName, @NotNull PsiParameter @NotNull [] newParameters) {
+  private static @Nullable PsiParameter findParamByName(@NotNull String newName, @NotNull PsiParameter @NotNull [] newParameters) {
     for (PsiParameter newParameter : newParameters) {
       if (Comparing.strEqual(newName, newParameter.getName())) {
         return newParameter;
@@ -277,8 +270,7 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
   }
 
   record ChainedConstructorData(@NotNull PsiMethodCallExpression methodCall, @NotNull List<PsiVariable> thisCallVariables) {
-    @NotNull
-    private static Map<PsiMethod, ChainedConstructorData> getChainedConstructorDataMap(List<PsiField> fields, List<PsiMethod> writableConstructors) {
+    private static @NotNull Map<PsiMethod, ChainedConstructorData> getChainedConstructorDataMap(List<PsiField> fields, List<PsiMethod> writableConstructors) {
       Map<PsiMethod, ChainedConstructorData> data = new HashMap<>();
       for (PsiMethod constructor : writableConstructors) {
         PsiMethodCallExpression methodCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);

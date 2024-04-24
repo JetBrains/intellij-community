@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.ui.scale.JBUIScale
@@ -22,7 +22,7 @@ private class RealComponent(val component: Component) : Holder() {
 }
 
 internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
-                                       private val lastBlockHeightLogic: (Int) -> Int) : JPanel(null) {
+                                       private val lastBlockHeightLogic: (Pair<CombinedBlockId, Int>) -> Int) : JPanel(null) {
   private val blocksLayout = CombinedDiffBlocksLayout()
   private val holders: MutableList<Holder?> = mutableListOf()
 
@@ -112,8 +112,9 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
 
   private fun calcHeight(index: Int, holder: Holder?, defaultPlaceholderHeight: Int): Int {
     val height = holder?.height ?: defaultPlaceholderHeight
-    if (index == holders.size - 1) {
-      return lastBlockHeightLogic(height)
+    val blockId = blockOrder.getOrNull(index)
+    if (index == holders.size - 1 && blockId != null) {
+      return lastBlockHeightLogic(blockId to height)
     }
     else {
       return height

@@ -79,25 +79,29 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
 
   public void test_initialize_shows_short_history() throws InterruptedException, ExecutionException, TimeoutException {
     myLogProvider.blockFullLog();
-    myLoader.readFirstBlock();
-    DataPack result = myLoader.getCurrentDataPack();
+    myLoader.initialize();
+    DataPack result = myDataWaiter.get();
     myLogProvider.unblockFullLog();
     assertNotNull(result);
-    assertDataPack(log(myCommits.subList(0, 2)), result.getPermanentGraph().getAllCommits());
+    assertDataPack(log(myCommits.subList(0, RECENT_COMMITS_COUNT)), result.getPermanentGraph().getAllCommits());
     waitForBackgroundTasksToComplete();
     myDataWaiter.get();
   }
 
   public void test_first_refresh_reports_full_history() throws InterruptedException {
-    myLoader.readFirstBlock();
+    myLoader.initialize();
 
-    DataPack result = myDataWaiter.get();
-    assertDataPack(log(myCommits), result.getPermanentGraph().getAllCommits());
+    DataPack firstDataPack = myDataWaiter.get();
+    assertDataPack(log(myCommits.subList(0, RECENT_COMMITS_COUNT)), firstDataPack.getPermanentGraph().getAllCommits());
+
+    DataPack fullDataPack = myDataWaiter.get();
+    assertDataPack(log(myCommits), fullDataPack.getPermanentGraph().getAllCommits());
   }
 
   public void test_first_refresh_waits_for_full_log() throws InterruptedException {
     myLogProvider.blockFullLog();
-    myLoader.readFirstBlock();
+    myLoader.initialize();
+    myDataWaiter.get();
     assertTimeout("Refresh waiter should have failed on the timeout");
     myLogProvider.unblockFullLog();
 
@@ -136,7 +140,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     myLoader.refresh(Collections.singletonList(getProjectRoot()), false);
 
     // initiate reinitialize; the full log will await because the Task is busy waiting for the refresh
-    myLoader.readFirstBlock();
+    myLoader.initialize();
 
     // the task queue now contains (1) blocked ongoing refresh request; (2) queued complete refresh request
     // we want to make sure only one data pack is reported
@@ -170,7 +174,11 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
 
   private void initAndWaitForFirstRefresh() throws InterruptedException, ExecutionException, TimeoutException {
     // wait for the first block and the whole log to complete
-    myLoader.readFirstBlock();
+    myLoader.initialize();
+
+    DataPack firstDataPack = myDataWaiter.get();
+    assertFalse(firstDataPack.isFull());
+
     DataPack fullDataPack = myDataWaiter.get();
     assertTrue(fullDataPack.isFull());
     assertNoMoreResultsArrive();

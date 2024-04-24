@@ -3126,6 +3126,62 @@ public class PyTypeTest extends PyTestCase {
              expr, y2 = p2""");
   }
 
+  // PY-29489
+  public void testGenericIterableUnpackingNoBrackets() {
+    doTest("int",
+           """
+             _, expr, _ = [1, 2, 3]
+             """);
+  }
+
+  // PY-29489
+  public void testGenericIterableUnpackingParentheses() {
+    doTest("int",
+           """
+             (_, expr, _) = [1, 2, 3]
+             """);
+  }
+
+  // PY-29489
+  public void testGenericIterableUnpackingSquareBrackets() {
+    doTest("int",
+           """
+             [_, expr] = [1, 2, 3]
+             """);
+  }
+
+  // PY-29489
+  public void testNonGenericIterableUnpacking() {
+    doTest("str",
+           """
+             _, expr = "ab"
+             """);
+  }
+
+  public void testUnpackingToNestedTargetsInSquareBracketsInAssignments() {
+    doTest("int",
+           """
+             [_, [[expr], _]] = "foo", ((42,), "bar")
+             """);
+  }
+
+  public void testUnpackingToNestedTargetsInSquareBracketsInForLoops() {
+    doTest("str",
+           """
+             xs = [(1, ("foo",))]
+             for [_, [expr]] in xs:
+                 pass
+             """);
+  }
+
+  public void testUnpackingToNestedTargetsInSquareBracketsInComprehensions() {
+    doTest("str",
+           """
+             xs = [(1, ("foo",))]
+             ys = [expr for [_, [expr]] in xs]
+             """);
+  }
+
   // PY-4351
   public void testCollectionsNTInheritorUnpacking() {
     // Seems that this case won't be supported because

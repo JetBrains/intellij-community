@@ -1,4 +1,4 @@
-// IGNORE_K2
+// INPLACE_VARIABLE_NAME: i
 fun foo(param: Int): String {
     val x = "a1234_"
     val y = "-4123a"

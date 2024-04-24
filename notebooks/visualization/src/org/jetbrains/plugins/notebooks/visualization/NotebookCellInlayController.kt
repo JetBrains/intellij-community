@@ -50,11 +50,7 @@ interface NotebookCellInlayController {
   /**
    * The method may traverse iterator without returning to the initial position, the iterator is disposable.
    */
-  fun paintGutter(editor: EditorImpl,
-                  g: Graphics,
-                  r: Rectangle,
-                  interval: NotebookCellLines.Interval)
-
+  fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle, interval: NotebookCellLines.Interval) { }
 
   fun createGutterRendererLineMarker(editor: EditorEx, interval: NotebookCellLines.Interval) {}
 

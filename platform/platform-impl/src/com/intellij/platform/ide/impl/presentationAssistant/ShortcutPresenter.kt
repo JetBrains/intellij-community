@@ -4,6 +4,7 @@
 package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionCopiedShortcutsTracker
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -53,7 +54,7 @@ internal class ShortcutPresenter(private val coroutineScope: CoroutineScope) {
         // Otherwise, popups may be presented with visible blinks.
         coroutineScope.launch(Dispatchers.EDT) {
           val actionId = serviceAsync<ActionManager>().getId(action)
-                         ?: action.copySourceActionId
+                         ?: ActionCopiedShortcutsTracker.getInstance().getSourceId(action)
                          ?: return@launch
           if (!movingActions.contains(actionId) && !typingActions.contains(actionId)) {
             val project = event.project

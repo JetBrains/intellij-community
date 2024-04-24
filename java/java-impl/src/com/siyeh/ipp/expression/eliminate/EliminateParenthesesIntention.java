@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.expression.eliminate;
 
 import com.intellij.modcommand.*;
@@ -24,10 +24,8 @@ public final class EliminateParenthesesIntention extends PsiBasedModCommandActio
     super(PsiJavaToken.class);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return IntentionPowerPackBundle.message("eliminate.parentheses.intention.name");
   }
 
@@ -72,8 +70,7 @@ public final class EliminateParenthesesIntention extends PsiBasedModCommandActio
     PsiReplacementUtil.replaceExpression(outerExpression, sb.toString(), commentTracker);
   }
 
-  @Nullable
-  private static EliminableExpression createEliminableExpression(@NotNull PsiParenthesizedExpression parenthesized) {
+  private static @Nullable EliminableExpression createEliminableExpression(@NotNull PsiParenthesizedExpression parenthesized) {
     DistributiveExpression distributive = DistributiveExpression.create(parenthesized);
     AssociativeExpression additive = AssociativeExpression.create(parenthesized);
     if (distributive == null) return additive;
@@ -82,8 +79,7 @@ public final class EliminateParenthesesIntention extends PsiBasedModCommandActio
     return distributive;
   }
 
-  @Nullable
-  private static List<PsiParenthesizedExpression> getPossibleInnerExpressions(@NotNull PsiElement element) {
+  private static @Nullable List<PsiParenthesizedExpression> getPossibleInnerExpressions(@NotNull PsiElement element) {
     if (!(element instanceof PsiJavaToken)) return null;
     List<PsiParenthesizedExpression> possibleExpressions = new ArrayList<>();
     while ((element = PsiTreeUtil.getParentOfType(element, PsiParenthesizedExpression.class)) != null) {

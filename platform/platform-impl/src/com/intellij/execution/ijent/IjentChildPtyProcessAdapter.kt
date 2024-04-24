@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent
 
 import com.intellij.execution.process.SelfKiller
 import com.intellij.platform.ijent.IjentChildProcess
+import com.intellij.platform.ijent.IjentId
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.pty4j.PtyProcess
 import com.pty4j.WinSize
@@ -20,9 +21,11 @@ import java.util.concurrent.TimeUnit
  */
 class IjentChildPtyProcessAdapter(
   coroutineScope: CoroutineScope,
+  ijentId: IjentId,
   private val ijentChildProcess: IjentChildProcess,
 ) : PtyProcess(), SelfKiller {
   private val delegate = IjentChildProcessAdapterDelegate(
+    ijentId,
     coroutineScope,
     ijentChildProcess,
   )
@@ -82,4 +85,7 @@ class IjentChildPtyProcessAdapter(
 
   override fun onExit(): CompletableFuture<Process> =
     delegate.onExit().thenApply { this }
+
+  override fun tryDestroyGracefully(): Boolean =
+    delegate.tryDestroyGracefully()
 }

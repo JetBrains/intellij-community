@@ -53,6 +53,7 @@ import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
@@ -290,16 +291,30 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                 addTask { applyQueryFilters(element, options, forHighlight, ReferencesSearch.search(searchParameters)).forEach(referenceProcessor) }
 
                 if (element is KtElement && !isOnlyKotlinSearch(options.searchScope)) {
-                    // TODO: very bad code!! ReferencesSearch does not work correctly for constructors and annotation parameters
+                    val nonKotlinSources = options.searchScope.excludeKotlinSources(project)
                     val psiMethodScopeSearch = when {
-                        element is KtParameter && element.dataClassComponentMethodName != null ->
-                            options.searchScope.excludeKotlinSources(project)
+                        element is KtParameter && element.dataClassComponentMethodName != null -> {
+                            nonKotlinSources
+                        }
                         else -> options.searchScope
                     }
 
                     for (psiMethod in element.toLightMethods().filterDataClassComponentsIfDisabled(kotlinSearchOptions)) {
                         addTask {
                             val query = MethodReferencesSearch.search(psiMethod, psiMethodScopeSearch, true)
+                            applyQueryFilters(
+                                element,
+                                options,
+                                forHighlight,
+                                query
+                            ).forEach(referenceProcessor)
+                        }
+                    }
+
+                    if (element is KtPrimaryConstructor) {
+                        val containingClass = element.containingClass()
+                        if (containingClass?.isAnnotation() == true) {
+                            val query = ReferencesSearch.search(containingClass, nonKotlinSources)
                             applyQueryFilters(
                                 element,
                                 options,

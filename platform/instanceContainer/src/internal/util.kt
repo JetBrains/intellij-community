@@ -103,7 +103,11 @@ internal fun checkExistingRegistration(
     InstanceNotRegisteredException("$keyClassName -> ${new?.instanceClassName() ?: "<removed>"}")
   }
   else if (!override && existing != null) {
-    InstanceAlreadyRegisteredException("$keyClassName : ${existing.instanceClassName()} -> ${new?.instanceClassName() ?: "<removed>"}")
+    InstanceAlreadyRegisteredException(
+      keyClassName,
+      existingInstanceClassName = existing.instanceClassName(),
+      newInstanceClassName = new?.instanceClassName(),
+    )
   }
   else {
     null

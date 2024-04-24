@@ -37,8 +37,7 @@ public final class ExtractIncrementIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new ExtractIncrementPredicate();
   }
 

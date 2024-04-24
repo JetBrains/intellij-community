@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
@@ -24,9 +24,8 @@ import java.util.*;
  */
 public final class CopyConstructorMissesFieldInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final List<PsiField> fields = (List<PsiField>)infos[0];
     if (fields.size() == 1) {
       return InspectionGadgetsBundle.message("copy.constructor.misses.field.problem.descriptor.1", fields.get(0).getName());

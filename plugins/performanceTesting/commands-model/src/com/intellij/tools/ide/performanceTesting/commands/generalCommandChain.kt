@@ -361,8 +361,11 @@ fun <T : CommandChain> T.pressKey(key: Keys): T = apply {
   addCommand("${CMD_PREFIX}pressKey", key.name)
 }
 
-fun <T : CommandChain> T.delayType(delayMs: Int, text: String, calculateAnalyzesTime: Boolean = false): T = apply {
-  addCommand("${CMD_PREFIX}delayType", "$delayMs|$text|$calculateAnalyzesTime")
+fun <T : CommandChain> T.delayType(delayMs: Int,
+                                   text: String,
+                                   calculateAnalyzesTime: Boolean = false,
+                                   disableWriteProtection: Boolean = false): T = apply {
+  addCommand("${CMD_PREFIX}delayType", "$delayMs|$text|$calculateAnalyzesTime|$disableWriteProtection")
 }
 
 fun <T : CommandChain> T.doLocalInspection(): T = apply {
@@ -512,6 +515,10 @@ fun <T : CommandChain> T.deleteFile(path: String, fileName: String): T = apply {
 
 fun <T : CommandChain> T.delay(delayMs: Int): T = apply {
   addCommand("${CMD_PREFIX}delay ${delayMs}")
+}
+
+fun <T : CommandChain> T.delay(delay: Duration): T = apply {
+  addCommand("${CMD_PREFIX}delay ${delay.inWholeMilliseconds}")
 }
 
 fun <T : CommandChain> T.withSystemMetrics(chain: CommandChain): T = apply {
@@ -856,6 +863,14 @@ fun <T : CommandChain> T.convertJavaToKotlinByDefault(value: Boolean): T = apply
 
 fun <T : CommandChain> T.assertOpenedKotlinFileInRoot(path: String): T = apply {
   addCommand("${CMD_PREFIX}assertOpenedKotlinFileInRoot ${path}")
+}
+
+fun <T : CommandChain> T.enableKotlinDaemonLog(): T = apply {
+  addCommand("${CMD_PREFIX}enableKotlinDaemonLog")
+}
+
+fun <T : CommandChain> T.addKotlinCompilerOptions(vararg options: String): T = apply {
+  addCommand("${CMD_PREFIX}addKotlinCompilerOptions ${options.joinToString(" ")}")
 }
 
 fun <T : CommandChain> T.assertFindUsagesCount(count: Int): T = apply {

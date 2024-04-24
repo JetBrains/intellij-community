@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -38,12 +38,7 @@ abstract class AbstractAsyncStackTraceTest : KotlinDescriptorTestCaseWithSteppin
     }
 
     private fun SuspendContextImpl.printAsyncStackTrace(frameProxy: StackFrameProxyImpl) {
-        val sem = frameProxy.location().getSuspendExitMode()
-        val coroutineInfoData =
-            if (sem.isCoroutineFound())
-                CoroutineFrameBuilder.lookupContinuation(this, frameProxy, sem)?.coroutineInfoData
-            else
-                null
+        val coroutineInfoData = CoroutineFrameBuilder.lookupContinuation(this, frameProxy)?.coroutineInfoData
         if (coroutineInfoData != null && coroutineInfoData.continuationStackFrames.isNotEmpty()) {
             print(renderAsyncStackTrace(coroutineInfoData.continuationStackFrames), ProcessOutputTypes.SYSTEM)
         } else {

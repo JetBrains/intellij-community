@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.ui.ColorUtil
 import com.intellij.util.DocumentUtil
 import java.awt.Point
 import java.awt.Rectangle
@@ -23,7 +24,8 @@ internal class StickyLinesManager(
 ) : VisibleAreaListener, Disposable, StickyLinesModel.Listener {
 
   private val stickyModel: StickyLinesModel = StickyLinesModel.getModel(markupModel)
-  val stickyPanel: StickyLinesPanel = StickyLinesPanel(editor)
+  private val shadowPainter: StickyLineShadowPainter = StickyLineShadowPainter(isDarkColorScheme())
+  val stickyPanel: StickyLinesPanel = StickyLinesPanel(editor, shadowPainter)
 
   init {
     Disposer.register(parentDisposable, this)
@@ -31,7 +33,10 @@ internal class StickyLinesManager(
     stickyModel.addListener(this)
     editor.project!!.messageBus.connect(this).subscribe(
       UISettingsListener.TOPIC,
-      UISettingsListener { recalculateLinesAndRepaint() }
+      UISettingsListener {
+        shadowPainter.isDarkColorScheme = isDarkColorScheme()
+        recalculateLinesAndRepaint()
+      }
     )
   }
 
@@ -64,6 +69,11 @@ internal class StickyLinesManager(
 
   override fun dispose() {
     stickyModel.removeListener(this)
+  }
+
+  private fun isDarkColorScheme(): Boolean {
+    val background = editor.colorsScheme.defaultBackground
+    return ColorUtil.isDark(background)
   }
 
   private fun recalculateLinesAndRepaint() {

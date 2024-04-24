@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -17,6 +18,10 @@ public final class RestoreDefaultLayoutAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
+      // In the main menu the main action is hidden, instead a child to the current layout submenu is added.
+      e.getPresentation().setVisible(false);
+    }
     e.getPresentation().setEnabled(e.getProject() != null);
     String activeLayout = ToolWindowDefaultLayoutManager.getInstance().getActiveLayoutName();
     e.getPresentation().setDescription(

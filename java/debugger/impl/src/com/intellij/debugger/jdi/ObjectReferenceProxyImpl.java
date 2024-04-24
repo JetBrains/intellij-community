@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ObjectReferenceProxyImpl extends JdiProxy {
   private final ObjectReference myObjectReference;
@@ -20,7 +21,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
   //caches
   private ReferenceType myReferenceType;
   private Type myType;
-  private ThreeState myIsCollected = ThreeState.UNSURE;
+  private final AtomicReference<ThreeState> myIsCollected = new AtomicReference<>(ThreeState.UNSURE);
 
   public ObjectReferenceProxyImpl(VirtualMachineProxyImpl virtualMachineProxy, @NotNull ObjectReference objectReference) {
     super(virtualMachineProxy);
@@ -69,15 +70,22 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
 
   public boolean isCollected() {
     checkValid();
-    if (myIsCollected != ThreeState.YES) {
-      try {
-        myIsCollected = ThreeState.fromBoolean(VirtualMachineProxyImpl.isCollected(myObjectReference));
-      }
-      catch (VMDisconnectedException ignored) {
-        myIsCollected = ThreeState.YES;
-      }
+    switch (myIsCollected.get()) {
+      case YES:
+        return true;
+      case NO:
+        return false;
+      default:
+        try {
+          boolean res = VirtualMachineProxyImpl.isCollected(myObjectReference);
+          myIsCollected.set(ThreeState.fromBoolean(res));
+          return res;
+        }
+        catch (VMDisconnectedException ignored) {
+          myIsCollected.set(ThreeState.YES);
+          return true;
+        }
     }
-    return myIsCollected.toBoolean();
   }
 
   public long uniqueID() {
@@ -118,9 +126,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
    */
   @Override
   protected void clearCaches() {
-    if (myIsCollected == ThreeState.NO) {
-      // clearing cache makes sense only if the object has not been collected yet
-      myIsCollected = ThreeState.UNSURE;
-    }
+    // clearing cache makes sense only if the object has not been collected yet
+    myIsCollected.compareAndSet(ThreeState.NO, ThreeState.UNSURE);
   }
 }

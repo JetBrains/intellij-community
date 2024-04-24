@@ -53,8 +53,10 @@ class DirtyFiles {
     }
   }
 
-  fun addProject(project: Project) {
-    myDirtyFiles.add(Pair(project, ProjectDirtyFiles()))
+  fun addProject(project: Project): ProjectDirtyFiles {
+    val files = ProjectDirtyFiles()
+    myDirtyFiles.add(Pair(project, files))
+    return files
   }
 
   fun getProjects(): List<Project> {
@@ -82,6 +84,18 @@ class ProjectDirtyFiles {
   fun containsFile(fileId: Int) = filesSet.get(fileId)
   fun removeFile(fileId: Int) = filesSet.clear(fileId)
   fun clear() = filesSet.clear()
+
+  fun addFiles(fileIds: Collection<Int>) {
+    for (fileId in fileIds) {
+      addFile(fileId)
+    }
+  }
+
+  fun removeFiles(fileIds: Collection<Int>) {
+    for (fileId in fileIds) {
+      removeFile(fileId)
+    }
+  }
 
   fun addAllTo(set: IntSet) {
     for (fileId in 0 until filesSet.size()) {

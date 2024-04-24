@@ -263,8 +263,7 @@ public class ConfigUI extends JPanel {
         }
     }
 
-    @Nullable
-    private static String emptyToNull(final String s) {
+    private static @Nullable String emptyToNull(final String s) {
         if (s != null && s.isEmpty()) return null;
         return s;
     }

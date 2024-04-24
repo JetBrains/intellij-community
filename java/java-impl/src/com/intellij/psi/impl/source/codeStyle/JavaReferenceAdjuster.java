@@ -216,18 +216,16 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
     }
   }
 
-  @NotNull
-  private static ASTNode makeShortReference(@NotNull CompositeElement reference, @NotNull PsiClass refClass, boolean addImports) {
-    @NotNull final PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)reference.getPsi();
+  private static @NotNull ASTNode makeShortReference(@NotNull CompositeElement reference, @NotNull PsiClass refClass, boolean addImports) {
+    final @NotNull PsiJavaCodeReferenceElement psiReference = (PsiJavaCodeReferenceElement)reference.getPsi();
     final PsiQualifiedReferenceElement reference1 = getClassReferenceToShorten(refClass, addImports, psiReference);
     if (reference1 != null) replaceReferenceWithShort(reference1);
     return reference;
   }
 
-  @Nullable
-  public static PsiQualifiedReferenceElement getClassReferenceToShorten(@NotNull final PsiClass refClass,
-                                                                        final boolean addImports,
-                                                                        @NotNull final PsiQualifiedReferenceElement reference) {
+  public static @Nullable PsiQualifiedReferenceElement getClassReferenceToShorten(final @NotNull PsiClass refClass,
+                                                                                  final boolean addImports,
+                                                                                  final @NotNull PsiQualifiedReferenceElement reference) {
     PsiClass parentClass = refClass.getContainingClass();
     if (parentClass != null) {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(parentClass.getProject());
@@ -306,8 +304,7 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
     return false;
   }
 
-  @NotNull
-  private static ASTNode replaceReferenceWithShort(PsiQualifiedReferenceElement reference) {
+  private static @NotNull ASTNode replaceReferenceWithShort(PsiQualifiedReferenceElement reference) {
     ASTNode node = reference.getNode();
     assert node != null;
     deQualifyImpl(reference);

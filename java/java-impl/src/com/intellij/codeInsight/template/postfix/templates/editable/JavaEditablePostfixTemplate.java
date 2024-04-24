@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -24,7 +24,7 @@ public class JavaEditablePostfixTemplate
   extends EditablePostfixTemplateWithMultipleExpressions<JavaPostfixTemplateExpressionCondition> {
   private static final Condition<PsiElement> PSI_ERROR_FILTER = element -> !PsiTreeUtil.hasErrorElements(element);
 
-  @NotNull private final LanguageLevel myMinimumLanguageLevel;
+  private final @NotNull LanguageLevel myMinimumLanguageLevel;
 
   public JavaEditablePostfixTemplate(@NotNull String templateName,
                                      @NotNull String templateText,
@@ -62,8 +62,7 @@ public class JavaEditablePostfixTemplate
   }
 
 
-  @NotNull
-  public LanguageLevel getMinimumLanguageLevel() {
+  public @NotNull LanguageLevel getMinimumLanguageLevel() {
     return myMinimumLanguageLevel;
   }
 
@@ -89,9 +88,8 @@ public class JavaEditablePostfixTemplate
       getExpressionCompositeCondition())));
   }
 
-  @NotNull
   @Override
-  protected PsiElement getTopmostExpression(@NotNull PsiElement element) {
+  protected @NotNull PsiElement getTopmostExpression(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
     if (parent instanceof PsiExpressionStatement) {
       return parent;
@@ -115,9 +113,8 @@ public class JavaEditablePostfixTemplate
     return toRemove.getTextRange();
   }
 
-  @NotNull
   @Override
-  protected Function<PsiElement, String> getElementRenderer() {
+  protected @NotNull Function<PsiElement, String> getElementRenderer() {
     return JavaPostfixTemplatesUtils.getRenderer();
   }
 

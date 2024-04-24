@@ -359,6 +359,9 @@
         <synonym key="action.ShowBlankDiffWindow.synonym1"/>
         <synonym key="action.ShowBlankDiffWindow.synonym2"/>
       </action>
+      <action id="CloseDiffEditor" class="com.intellij.diff.editor.CloseDiffEditorAction">
+        <keyboard-shortcut keymap="$default" first-keystroke="ESCAPE"/>
+      </action>
 
       <separator/>
       <action id="Diff.OpenDiffInEditor" class="com.intellij.diff.actions.impl.OpenDiffInEditorAction" internal="true"/>
@@ -748,7 +751,7 @@
       <group id="WindowMenu" popup="true">
         <action id="MinimizeCurrentWindow" class="com.intellij.ide.actions.MinimizeCurrentWindowAction"/>
         <action id="ZoomCurrentWindow" class="com.intellij.ide.actions.ZoomCurrentWindowAction"/>
-        <group id="LayoutsGroup" popup="true" class="com.intellij.ide.actions.LayoutsGroup">
+        <group id="LayoutsGroup" popup="true">
           <override-text place="MainMenu"/>
           <action id="RestoreFactoryDefaultLayout" class="com.intellij.ide.actions.RestoreFactoryDefaultLayoutAction" />
           <separator/>

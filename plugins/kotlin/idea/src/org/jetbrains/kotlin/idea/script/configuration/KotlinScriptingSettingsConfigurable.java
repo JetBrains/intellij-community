@@ -22,6 +22,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.kotlin.idea.core.script.ScriptUtilsKt.getAllDefinitions;
+
 public class KotlinScriptingSettingsConfigurable implements SearchableConfigurable {
     public static final String ID = "preferences.language.Kotlin.scripting";
 
@@ -41,7 +43,7 @@ public class KotlinScriptingSettingsConfigurable implements SearchableConfigurab
         this.project = project;
         manager = ScriptDefinitionsManager.Companion.getInstance(project);
         settings = KotlinScriptingSettings.Companion.getInstance(project);
-        model = KotlinScriptDefinitionsModel.Companion.createModel(manager.getAllDefinitions(), settings);
+        model = KotlinScriptDefinitionsModel.Companion.createModel(getAllDefinitions(project), settings);
     }
 
     @Nullable

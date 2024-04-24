@@ -5,8 +5,8 @@
 
     <!-- todo navbar is not essential-->
     <module name="intellij.platform.navbar.compatibility"/>
-    <module name="intellij.platform.navbar.compatibility.backend"/>
-    <module name="intellij.platform.navbar.compatibility.ide"/>
-    <module name="intellij.platform.navbar.compatibility.monolith"/>
+    <module name="intellij.platform.navbar.backend.compatibility"/>
+    <module name="intellij.platform.navbar.frontend.compatibility"/>
+    <module name="intellij.platform.navbar.monolith.compatibility"/>
   </content>
 </idea>

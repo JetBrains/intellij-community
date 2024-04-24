@@ -5,6 +5,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrRenameableLightElement {
+public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrRenameableLightElement, SyntheticElement {
   private static final Function<ClosureSyntheticParameter,PsiType> TYPES_CALCULATOR = parameter -> {
     PsiType typeGroovy = GrVariableEnhancer.getEnhancedType(parameter);
     if (typeGroovy instanceof PsiIntersectionType) {
@@ -38,6 +39,15 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   @Override
   public PsiElement getParent() {
     return myClosure.getElement();
+  }
+
+  @Override
+  public @NotNull PsiElement findSameElementInCopy(@NotNull PsiFile copy) {
+    GrClosableBlock block = myClosure.getElement();
+    if (block == null) {
+      throw new IllegalStateException("No parent closure");
+    }
+    return new ClosureSyntheticParameter(PsiTreeUtil.findSameElementInCopy(block, copy), isOptional());
   }
 
   @Override

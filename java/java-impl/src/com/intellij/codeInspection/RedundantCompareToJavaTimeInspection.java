@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
@@ -35,9 +35,8 @@ public final class RedundantCompareToJavaTimeInspection extends AbstractBaseJava
       .parameterTypes(JAVA_TIME_OFFSET_DATE_TIME)
   );
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -80,29 +79,26 @@ public final class RedundantCompareToJavaTimeInspection extends AbstractBaseJava
   }
 
   private static class InlineCompareToTimeCallFix extends PsiUpdateModCommandQuickFix {
-    private @NotNull final RelationType myRelationType;
-    private @NotNull final String myArgumentType;
+    private final @NotNull RelationType myRelationType;
+    private final @NotNull String myArgumentType;
 
     InlineCompareToTimeCallFix(@NotNull RelationType relationType, @NotNull @NlsSafe String argumentType) {
       myRelationType = relationType;
       myArgumentType = argumentType;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       String method = getMethodName();
       return CommonQuickFixBundle.message("fix.replace.with.x.call", method);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.simplifiable.compare.java.time.family.name");
     }
 
-    @NotNull
-    private String getMethodName() {
+    private @NotNull String getMethodName() {
       return switch (myRelationType) {
         case EQ, NE -> myArgumentType.equals(JAVA_TIME_LOCAL_TIME) ? "equals" : "isEqual";
         case GT, LE -> "isAfter";

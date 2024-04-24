@@ -108,21 +108,28 @@ object CallableReturnTypeUpdaterUtils {
         TemplateManager.getInstance(project).startTemplate(
             editor,
             builder.buildInlineTemplate(),
-            object : TemplateEditingAdapter() {
-                override fun templateFinished(template: Template, brokenOff: Boolean) {
-                    val typeRef = declaration.typeReference
-                    if (typeRef != null && typeRef.isValid) {
-                        runWriteAction {
-                            shortenReferences(typeRef)
-                            setTypeWithTemplate(declarationAndTypes, project, editor)
-                        }
-                    }
-                }
-            }
+            createPostTypeUpdateProcessor(declaration, declarationAndTypes, project, editor)
         )
     }
 
-    private class TypeChooseValueExpression(
+    fun createPostTypeUpdateProcessor(
+        declaration: KtCallableDeclaration,
+        declarationAndTypes: Iterator<Pair<KtCallableDeclaration, TypeInfo>>,
+        project: Project,
+        editor: Editor
+    ): TemplateEditingAdapter = object : TemplateEditingAdapter() {
+        override fun templateFinished(template: Template, brokenOff: Boolean) {
+            val typeRef = declaration.typeReference
+            if (typeRef != null && typeRef.isValid) {
+                runWriteAction {
+                    shortenReferences(typeRef)
+                    setTypeWithTemplate(declarationAndTypes, project, editor)
+                }
+            }
+        }
+    }
+
+    class TypeChooseValueExpression(
         items: List<TypeInfo.Type>, defaultItem: TypeInfo.Type
     ) : ChooseValueExpression<TypeInfo.Type>(items, defaultItem) {
         override fun getLookupString(element: TypeInfo.Type): String = element.shortTypeRepresentation

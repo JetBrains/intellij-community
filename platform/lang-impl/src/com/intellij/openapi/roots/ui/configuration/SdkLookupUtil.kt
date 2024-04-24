@@ -9,43 +9,56 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.util.ThrowableRunnable
-import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 
 /**
  * Finds sdk at everywhere with parameters that defined by [configure]
  *
- * Note: this function block current thread until sdk is resolved
+ * Note: this function blocks the current thread until the sdk is resolved
+ *
+ * Note: SdkLookupBuilder is immutable
  */
-fun lookupSdk(configure: (SdkLookupBuilder) -> SdkLookupBuilder): Sdk? {
+fun lookupSdkBlocking(configure: (SdkLookupBuilder) -> SdkLookupBuilder): Sdk? {
   val provider = SdkLookupProviderImpl()
   var builder = provider.newLookupBuilder()
   builder = configure(builder)
   builder.executeLookup()
-  return provider.blockingGetSdk()
+  provider.waitForLookup()
+  return provider.getSdk()
 }
 
-fun findAndSetupSdk(project: Project, indicator: ProgressIndicator, sdkType: SdkType, applySdk: (Sdk) -> Unit) {
-  val future = CompletableFuture<Sdk>()
-  SdkLookup.newLookupBuilder()
-    .withProgressIndicator(indicator)
-    .withSdkType(sdkType)
-    .withVersionFilter { true }
-    .withProject(project)
-    .onDownloadableSdkSuggested { SdkLookupDecision.STOP }
-    .onSdkResolved {
-      future.complete(it)
-    }
-    .executeLookup()
+/**
+ * Finds sdk at everywhere with parameters with defined parameters.
+ *
+ * Note: this function blocks the current thread until the sdk is resolved
+ */
+fun lookupAndSetupSdkBlocking(project: Project, indicator: ProgressIndicator, sdkType: SdkType, applySdk: Consumer<Sdk>) {
+  val sdk = lookupSdkBlocking {
+    it.withProgressIndicator(indicator)
+      .withSdkType(sdkType)
+      .withVersionFilter { true }
+      .withProject(project)
+      .onDownloadableSdkSuggested { SdkLookupDecision.STOP }
+  }
 
   try {
-    val sdk = future.get()
     if (sdk != null) {
       WriteAction.runAndWait(
-        ThrowableRunnable { applySdk.invoke(sdk) }
+        ThrowableRunnable { applySdk.accept(sdk) }
       )
     }
   }
   catch (t: Throwable) {
     Logger.getInstance("sdk.lookup").warn("Couldn't lookup for a SDK", t)
   }
+}
+
+@Deprecated("Use lookupSdkBlocking instead", ReplaceWith("lookupSdkBlocking(configure)"))
+fun lookupSdk(configure: (SdkLookupBuilder) -> SdkLookupBuilder): Sdk? {
+  return lookupSdkBlocking(configure)
+}
+
+@Deprecated("Use lookupAndSetupSdk instead", ReplaceWith("lookupAndSetupSdkBlocking(project, indicator, sdkType, applySdk)"))
+fun findAndSetupSdk(project: Project, indicator: ProgressIndicator, sdkType: SdkType, applySdk: (Sdk) -> Unit) {
+  lookupAndSetupSdkBlocking(project, indicator, sdkType, applySdk)
 }

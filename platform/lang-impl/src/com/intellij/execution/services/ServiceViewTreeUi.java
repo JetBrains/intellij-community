@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.platform.navbar.ide.ui.NavBarBorder;
+import com.intellij.platform.navbar.frontend.ui.NavBarBorder;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.util.containers.ContainerUtil;

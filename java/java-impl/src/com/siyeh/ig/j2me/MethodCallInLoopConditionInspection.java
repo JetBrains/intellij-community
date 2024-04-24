@@ -33,22 +33,19 @@ public final class MethodCallInLoopConditionInspection extends BaseInspection {
 
   public boolean ignoreIterationMethods = true;
 
-  @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
     return new IntroduceVariableFix(false) {
 
-      @NotNull
       @Override
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return InspectionGadgetsBundle.message("introduce.variable.may.change.semantics.quickfix");
       }
     };
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("method.call.in.loop.condition.problem.descriptor");
   }
 

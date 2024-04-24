@@ -9,7 +9,6 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 interface GHPRDataProvider {
   val id: GHPRIdentifier
   val detailsData: GHPRDetailsDataProvider
-  val stateData: GHPRStateDataProvider
   val changesData: GHPRChangesDataProvider
   val commentsData: GHPRCommentsDataProvider
   val reviewData: GHPRReviewDataProvider

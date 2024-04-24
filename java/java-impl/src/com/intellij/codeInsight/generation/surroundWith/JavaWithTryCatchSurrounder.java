@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -42,8 +42,7 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
     }
   }
 
-  @Nullable
-  public TextRange doSurround(Project project, PsiElement container, PsiElement[] origStatements) {
+  public @Nullable TextRange doSurround(Project project, PsiElement container, PsiElement[] origStatements) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
 
@@ -98,8 +97,7 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
     });
   }
 
-  @NotNull
-  private static List<PsiClassType> getExceptionTypes(PsiElement container, PsiElement[] statements, PsiElementFactory factory) {
+  private static @NotNull List<PsiClassType> getExceptionTypes(PsiElement container, PsiElement[] statements, PsiElementFactory factory) {
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(statements);
     if (exceptions.isEmpty()) {
       exceptions = ExceptionUtil.getThrownExceptions(statements);

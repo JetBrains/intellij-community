@@ -40,19 +40,19 @@ public class Proto implements ExternalizableGraphElement {
     RW.writeCollection(out, annotations, t -> t.write(out));
   }
 
-  public JVMFlags getFlags() {
+  public final JVMFlags getFlags() {
     return access;
   }
 
-  public String getSignature() {
+  public final String getSignature() {
     return signature;
   }
 
-  public String getName() {
+  public final String getName() {
     return name;
   }
 
-  public @NotNull Iterable<ElementAnnotation> getAnnotations() {
+  public final @NotNull Iterable<ElementAnnotation> getAnnotations() {
     return annotations;
   }
 
@@ -114,7 +114,7 @@ public class Proto implements ExternalizableGraphElement {
     return false;
   }
 
-  public boolean isWeakerAccessThan(Proto anotherProto) {
+  public final boolean isWeakerAccessThan(Proto anotherProto) {
     return getFlags().isWeakerAccess(anotherProto.getFlags());
   }
 

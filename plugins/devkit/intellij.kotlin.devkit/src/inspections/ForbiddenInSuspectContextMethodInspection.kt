@@ -110,7 +110,7 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
         val calledSymbol = functionCall?.partiallyAppliedSymbol?.symbol
 
         if (calledSymbol !is KtNamedSymbol) return
-        val hasAnnotation = calledSymbol.hasAnnotation(requiresBlockingContextAnnotationId)
+        val hasAnnotation = calledSymbol.hasAnnotation(RequiresBlockingContextAnnotationId)
 
         if (!hasAnnotation) {
           if (calledSymbol is KtFunctionSymbol) {

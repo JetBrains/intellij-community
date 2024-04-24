@@ -40,8 +40,7 @@ public final class MergeIfOrIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new MergeIfOrPredicate();
   }
 
@@ -79,7 +78,7 @@ public final class MergeIfOrIntention extends MCIntention {
       return;
     }
     final String parentThenBranchText = tracker.text(parentThenBranch);
-    @NonNls final StringBuilder statement = new StringBuilder();
+    final @NonNls StringBuilder statement = new StringBuilder();
     statement.append("if(");
     statement.append(parentConditionText);
     statement.append("||");

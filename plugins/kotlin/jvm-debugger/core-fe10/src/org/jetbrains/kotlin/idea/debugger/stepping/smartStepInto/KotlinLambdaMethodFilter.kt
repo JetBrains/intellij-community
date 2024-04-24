@@ -6,6 +6,7 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.BreakpointStepMethodFilter
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.openapi.application.runReadAction
+import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBacken
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.debugger.core.stepping.StopOnReachedMethodFilter
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 class KotlinLambdaMethodFilter(
     lambda: KtFunction,

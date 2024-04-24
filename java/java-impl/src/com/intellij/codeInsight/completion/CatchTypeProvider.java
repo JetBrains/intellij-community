@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -90,8 +90,7 @@ final class CatchTypeProvider {
     }
   }
 
-  @NotNull
-  private static LookupElement createCatchTypeVariant(PsiCodeBlock tryBlock, PsiClassType type) {
+  private static @NotNull LookupElement createCatchTypeVariant(PsiCodeBlock tryBlock, PsiClassType type) {
     return TailTypeDecorator.withTail(PsiTypeLookupItem.createLookupItem(type, tryBlock), TailTypes.humbleSpaceBeforeWordType());
   }
 }

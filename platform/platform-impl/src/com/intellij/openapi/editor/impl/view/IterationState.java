@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -50,7 +52,7 @@ public final class IterationState {
       }
 
       if (a1 == null) {
-        return result;
+        return 0;
       }
 
       final Color fore1 = a1.getForegroundColor();
@@ -64,9 +66,20 @@ public final class IterationState {
       if (back1 == null ^ back2 == null) {
         return back1 == null ? 1 : -1;
       }
-
-      return result;
+      return compareByHighlightInfoSeverity(o1, o2);
     };
+  }
+
+  private static int compareByHighlightInfoSeverity(@NotNull RangeHighlighterEx o1, @NotNull RangeHighlighterEx o2) {
+    HighlightInfo info1 = HighlightInfo.fromRangeHighlighter(o1);
+    HighlightInfo info2 = HighlightInfo.fromRangeHighlighter(o2);
+    HighlightSeverity severity1 = info1 == null ? null : info1.getSeverity();
+    HighlightSeverity severity2 = info2 == null ? null : info2.getSeverity();
+    if (severity1 != null && severity2 != null) {
+      return -severity1.compareTo(severity2);
+    }
+    // having severity has more priority than no severity
+    return Boolean.compare(severity1 == null, severity2 == null);
   }
 
   private static final Comparator<RangeHighlighterEx> BY_AFFECTED_END_OFFSET_REVERSED =

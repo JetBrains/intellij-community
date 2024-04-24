@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.util.io.dev.StorageFactory;
+import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.KeyValueStoreTestBase;
 import org.jetbrains.annotations.NotNull;
 
 public class PersistentHashMapTest extends KeyValueStoreTestBase<String, String, PersistentHashMap<String, String>> {

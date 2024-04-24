@@ -1,12 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamToLoop;
 
-import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -140,7 +140,7 @@ public class ChainContext {
   }
 
   private boolean isUsed(String varName) {
-    return myUsedNames.contains(varName) || JavaLexer.isKeyword(varName, LanguageLevel.HIGHEST) ||
+    return myUsedNames.contains(varName) || PsiUtil.isKeyword(varName, LanguageLevel.HIGHEST) ||
            !varName.equals(JavaCodeStyleManager.getInstance(getProject())
                              .suggestUniqueVariableName(varName, myChainExpression,
                                                         v -> PsiTreeUtil.isAncestor(myChainExpression, v, true)));

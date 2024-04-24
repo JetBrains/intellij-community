@@ -14,7 +14,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalFocus
  * If the action is invoked in the prompt editor, the action will be performed.
  * If the action is invoked in the output editor, the focus will be moved to prompt instead of performing an action.
  */
-abstract class TerminalPromptEditorActionHandler(runForEachCaret: Boolean = false) : EditorActionHandler(runForEachCaret) {
+internal abstract class TerminalPromptEditorActionHandler(runForEachCaret: Boolean = false) : EditorActionHandler(runForEachCaret) {
   final override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     if (editor.isOutputEditor) {
       dataContext.terminalFocusModel?.focusPrompt()

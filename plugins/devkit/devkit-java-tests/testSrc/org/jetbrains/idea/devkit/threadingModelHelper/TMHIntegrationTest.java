@@ -28,7 +28,7 @@ import static com.intellij.util.concurrency.ThreadingAssertions.*;
  * Note that if this happens, you need to update the instrumenter and install the updated version of the devkit to IDEA.
  * <p/>
  *
- * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html">General Threading Rules</a>
  */
 public class TMHIntegrationTest extends LightPlatformTestCase {
   private ExecutorService mySingleThreadExecutor;

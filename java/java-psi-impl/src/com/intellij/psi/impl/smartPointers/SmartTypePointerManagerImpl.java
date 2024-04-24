@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.project.DumbService;
@@ -26,8 +26,7 @@ public final class SmartTypePointerManagerImpl extends SmartTypePointerManager {
   }
 
   @Override
-  @NotNull
-  public SmartTypePointer createSmartTypePointer(@NotNull PsiType type) {
+  public @NotNull SmartTypePointer createSmartTypePointer(@NotNull PsiType type) {
     final SmartTypePointer pointer = DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> type.accept(new SmartTypeCreatingVisitor()));
     return pointer != null ? pointer : NULL_POINTER;
   }
@@ -53,9 +52,8 @@ public final class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       myComponentTypePointer = componentTypePointer;
     }
 
-    @Nullable
     @Override
-    protected PsiArrayType calcType() {
+    protected @Nullable PsiArrayType calcType() {
       final PsiType type = myComponentTypePointer.getType();
       return type == null ? null : new PsiArrayType(type);
     }
@@ -211,8 +209,7 @@ public final class SmartTypePointerManagerImpl extends SmartTypePointerManager {
     }
   }
 
-  @NotNull
-  private SmartTypePointer createClassReferenceTypePointer(@NotNull PsiClassType classType) {
+  private @NotNull SmartTypePointer createClassReferenceTypePointer(@NotNull PsiClassType classType) {
     for (ClassTypePointerFactory factory : ClassTypePointerFactory.EP_NAME.getExtensionList()) {
       SmartTypePointer pointer = factory.createClassTypePointer(classType, myProject);
       if (pointer != null) {

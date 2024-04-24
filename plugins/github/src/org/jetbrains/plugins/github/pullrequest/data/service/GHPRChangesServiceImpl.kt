@@ -1,149 +1,153 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
-import com.github.benmanes.caffeine.cache.AsyncCacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.google.common.graph.Graph
-import com.google.common.graph.GraphBuilder
-import com.google.common.graph.ImmutableGraph
-import com.google.common.graph.Traverser
-import com.intellij.collaboration.async.CompletableFutureUtil
-import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
-import com.intellij.execution.process.ProcessIOExecutorService
-import com.intellij.openapi.Disposable
+import com.intellij.collaboration.api.page.ApiPageUtil
+import com.intellij.collaboration.async.classAsCoroutineName
+import com.intellij.collaboration.util.ResultUtil.processErrorAndGet
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.ProgressWrapper
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitCommitShaWithPatches
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
 import git4idea.fetch.GitFetchSupport
 import git4idea.remote.GitRemoteUrlCoordinates
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.fold
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests.Repos.Commits
 import org.jetbrains.plugins.github.api.GithubApiRequests.Repos.PullRequests
 import org.jetbrains.plugins.github.api.data.GHCommit
-import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.data.commit.GHCommitFile
+import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
-import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.data.service.GHServiceUtil.logError
 import java.time.Duration
-import java.util.concurrent.CancellationException
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
 
 private typealias DiffSpec = Pair<String?, String>
 
-class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
+class GHPRChangesServiceImpl(parentCs: CoroutineScope,
                              private val project: Project,
                              private val requestExecutor: GithubApiRequestExecutor,
                              private val gitRemote: GitRemoteUrlCoordinates,
-                             private val ghRepository: GHRepositoryCoordinates) : GHPRChangesService, Disposable {
-
-  private val patchesLoadingIndicator = EmptyProgressIndicator()
+                             private val ghRepository: GHRepositoryCoordinates) : GHPRChangesService {
+  private val cs = parentCs.childScope(classAsCoroutineName() + Dispatchers.Default)
 
   private val patchesCache = Caffeine.newBuilder()
     .expireAfterAccess(Duration.ofMinutes(5))
-    .executor(ProcessIOExecutorService.INSTANCE)
-    .buildAsync(AsyncCacheLoader<DiffSpec, List<FilePatch>> { key, executor ->
-      val (ref1, ref2) = key
+    .build<DiffSpec, Deferred<List<FilePatch>>> { spec ->
+      val (ref1, ref2) = spec
       if (ref1 == null) {
-        loadCommitDiff(ProgressWrapper.wrap(patchesLoadingIndicator), ref2)
+        cs.async {
+          loadCommitDiff(ref2)
+        }
       }
       else {
-        loadDiff(ProgressWrapper.wrap(patchesLoadingIndicator), ref1, ref2)
-          .thenApplyAsync({ readAllPatches(it) }, executor)
+        cs.async {
+          val diff = loadDiff(ref1, ref2)
+          readAllPatches(diff)
+        }
       }
-    })
+    }
 
-  override fun fetch(progressIndicator: ProgressIndicator, refspec: String) =
-    progressManager.submitIOTask(progressIndicator) {
-      GitFetchSupport.fetchSupport(project)
-        .fetch(gitRemote.repository, gitRemote.remote, refspec).throwExceptionIfFailed()
-    }.logError(LOG, "Error occurred while fetching \"$refspec\"")
+  override suspend fun fetch(refspec: String) =
+    runCatching {
+      withContext(Dispatchers.IO) {
+        coroutineToIndicator {
+          GitFetchSupport.fetchSupport(project).fetch(gitRemote.repository, gitRemote.remote, refspec).throwExceptionIfFailed()
+        }
+      }
+    }.processErrorAndGet {
+      LOG.info("Error occurred while fetching \"$refspec\"", it)
+    }
 
-  override fun fetchBranch(progressIndicator: ProgressIndicator, branch: String) =
-    fetch(progressIndicator, branch).logError(LOG, "Error occurred while fetching \"$branch\"")
+  override suspend fun isAncestor(potentialAncestorRev: String, rev: String): Boolean =
+    runCatching {
+      withContext(Dispatchers.IO) {
+        coroutineToIndicator {
+          val h = GitLineHandler(project, gitRemote.repository.root, GitCommand.MERGE_BASE)
+          h.setSilent(true)
+          h.addParameters("--is-ancestor", potentialAncestorRev, rev)
+          Git.getInstance().runCommand(h).success()
+        }
+      }
+    }.processErrorAndGet {
+      LOG.info("Error occurred while checking revision ancestry relation", it)
+    }
 
-  override fun loadCommitsFromApi(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier) =
-    progressManager.submitIOTask(progressIndicator) { indicator ->
-      SimpleGHGQLPagesLoader(requestExecutor, { p ->
-        GHGQLRequests.PullRequest.commits(ghRepository, pullRequestId.number, p)
-      }).loadAll(indicator).map { it.commit }.let(::buildCommitsTree)
-    }.logError(LOG, "Error occurred while loading commits for PR ${pullRequestId.number}")
+  override suspend fun loadCommitsFromApi(pullRequestId: GHPRIdentifier): List<GHCommit> =
+    runCatching {
+      ApiPageUtil.createGQLPagesFlow {
+        requestExecutor.executeSuspend(GHGQLRequests.PullRequest.commits(ghRepository, pullRequestId.number, it))
+      }.fold(mutableListOf<GHCommit>()) { acc, value ->
+        acc.addAll(value.nodes.map { it.commit })
+        acc
+      }
+    }.processErrorAndGet {
+      LOG.info("Error occurred while loading commits for PR ${pullRequestId.number}", it)
+    }
 
-  private fun loadCommitDiff(progressIndicator: ProgressIndicator, oid: String): CompletableFuture<List<FilePatch>> =
-    progressManager.submitIOTask(progressIndicator) { indicator ->
+  private suspend fun loadCommitDiff(oid: String): List<FilePatch> =
+    runCatching {
       val request = GithubApiPagesLoader.Request(Commits.getDiffFiles(ghRepository, oid), Commits::getDiffFiles)
-      GithubApiPagesLoader.loadAll(requestExecutor, indicator, request).mapNotNull(::toPatch)
-    }.logError(LOG, "Error occurred while loading diffs for commit $oid")
+      GithubApiPagesLoader.loadAll(requestExecutor, request).mapNotNull(::toPatch)
+    }.processErrorAndGet {
+      LOG.info("Error occurred while loading diffs for commit $oid", it)
+    }
 
-  private fun loadDiff(progressIndicator: ProgressIndicator, ref1: String, ref2: String): CompletableFuture<String> =
-    progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(it, Commits.getDiff(ghRepository, ref1, ref2))
-    }.logError(LOG, "Error occurred while loading diffs between $ref1 and $ref2")
+  private suspend fun loadDiff(ref1: String, ref2: String): String =
+    runCatching {
+      requestExecutor.executeSuspend(Commits.getDiff(ghRepository, ref1, ref2))
+    }.processErrorAndGet {
+      LOG.info("Error occurred while loading diffs between $ref1 and $ref2", it)
+    }
 
-  override fun loadMergeBaseOid(progressIndicator: ProgressIndicator, baseRefOid: String, headRefOid: String) =
-    progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(it,
-                              Commits.compare(ghRepository, baseRefOid, headRefOid)).mergeBaseCommit.sha
-    }.logError(LOG, "Error occurred while calculating merge base for $baseRefOid and $headRefOid")
+  override suspend fun loadMergeBaseOid(baseRefOid: String, headRefOid: String) =
+    runCatching {
+      requestExecutor.executeSuspend(Commits.compare(ghRepository, baseRefOid, headRefOid)).mergeBaseCommit.sha
+    }.processErrorAndGet {
+      LOG.info("Error occurred while calculating merge base for $baseRefOid and $headRefOid", it)
+    }
 
-  override fun loadPatch(ref1: String, ref2: String): CompletableFuture<List<FilePatch>> =
-    patchesCache.get(ref1 to ref2)
+  override suspend fun loadPatch(ref1: String, ref2: String): List<FilePatch> =
+    patchesCache.get(ref1 to ref2).await()
 
-  override fun createChangesProvider(progressIndicator: ProgressIndicator,
-                                     id: GHPRIdentifier,
-                                     baseRef: String,
-                                     mergeBaseRef: String,
-                                     headRef: String,
-                                     commits: Pair<GHCommit, Graph<GHCommit>>): CompletableFuture<GitBranchComparisonResult> =
-    progressManager.submitIOTask(ProgressWrapper.wrap(progressIndicator)) {
-      val (lastCommit, graph) = commits
-      val commitsPatchesRequests = LinkedHashMap<GHCommit, CompletableFuture<List<FilePatch>>>()
-      for (commit in Traverser.forGraph(graph).depthFirstPostOrder(lastCommit)) {
-        commitsPatchesRequests[commit] = patchesCache.get(null to commit.oid)
+  override suspend fun createChangesProvider(id: GHPRIdentifier,
+                                             baseRef: String,
+                                             mergeBaseRef: String,
+                                             headRef: String,
+                                             commits: List<GHCommit>): GitBranchComparisonResult =
+    runCatching {
+      coroutineScope {
+        val commitsWithPatchesReqs = commits.map { commit ->
+          async {
+            val patches = patchesCache.get(null to commit.oid).await()
+            GitCommitShaWithPatches(commit.oid, commit.parents.map { it.oid }, patches)
+          }
+        }
+        val request = GithubApiPagesLoader.Request(PullRequests.getDiffFiles(ghRepository, id), PullRequests::getDiffFiles)
+        val prPatches = GithubApiPagesLoader.loadAll(requestExecutor, request).mapNotNull(::toPatch)
+        val commitsWithPatches = commitsWithPatchesReqs.awaitAll()
+
+        GitBranchComparisonResult.create(project, gitRemote.repository.root, baseRef, mergeBaseRef, commitsWithPatches, prPatches)
       }
-
-      val commitsList = commitsPatchesRequests.map { (commit, request) ->
-        val patches = request.joinCancellable()
-        GitCommitShaWithPatches(commit.oid, commit.parents.map { it.oid }, patches)
-      }
-      val request = GithubApiPagesLoader.Request(PullRequests.getDiffFiles(ghRepository, id), PullRequests::getDiffFiles)
-      val prPatches = GithubApiPagesLoader.loadAll(requestExecutor, it, request).mapNotNull(::toPatch)
-      it.checkCanceled()
-
-      GitBranchComparisonResult.create(project, gitRemote.repository.root, baseRef, mergeBaseRef, commitsList, prPatches)
-    }.logError(LOG, "Error occurred while building changes from commits")
+    }.processErrorAndGet {
+      LOG.info("Error occurred while building changes from commits", it)
+    }
 
   companion object {
     private val LOG = logger<GHPRChangesService>()
-
-    @Throws(ProcessCanceledException::class)
-    private fun <T> CompletableFuture<T>.joinCancellable(): T {
-      try {
-        return join()
-      }
-      catch (e: CancellationException) {
-        throw ProcessCanceledException(e)
-      }
-      catch (e: CompletionException) {
-        if (CompletableFutureUtil.isCancellation(e)) throw ProcessCanceledException(e)
-        throw CompletableFutureUtil.extractError(e)
-      }
-    }
 
     private fun readAllPatches(diffFile: String): List<FilePatch> {
       val reader = PatchReader(diffFile, true)
@@ -180,42 +184,5 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
       }
       return filePatch
     }
-
-    private fun buildCommitsTree(commits: List<GHCommit>): Pair<GHCommit, Graph<GHCommit>> {
-      val commitsBySha = mutableMapOf<String, GHCommit>()
-      val parentCommits = mutableSetOf<GHCommitHash>()
-
-      for (commit in commits) {
-        commitsBySha[commit.oid] = commit
-        parentCommits.addAll(commit.parents)
-      }
-
-      // Last commit is a commit which is not a parent of any other commit
-      // We start searching from the last hoping for some semblance of order
-      val lastCommit = commits.findLast { !parentCommits.contains(it) } ?: error("Could not determine last commit")
-
-      fun ImmutableGraph.Builder<GHCommit>.addCommits(commit: GHCommit) {
-        addNode(commit)
-        for (parent in commit.parents) {
-          val parentCommit = commitsBySha[parent.oid]
-          if (parentCommit != null) {
-            putEdge(commit, parentCommit)
-            addCommits(parentCommit)
-          }
-        }
-      }
-
-      return lastCommit to GraphBuilder
-        .directed()
-        .allowsSelfLoops(false)
-        .immutable<GHCommit>()
-        .apply {
-          addCommits(lastCommit)
-        }.build()
-    }
-  }
-
-  override fun dispose() {
-    patchesLoadingIndicator.cancel()
   }
 }

@@ -35,7 +35,6 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.plugins.notebooks.visualization.r.VisualizationBundle
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.ClipboardUtils
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.InlayDimensions
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.MouseWheelUtils
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.dataframe.DataFrameCSVAdapter
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.runAsyncInlay
@@ -233,7 +232,7 @@ class InlayOutputText(parent: Disposable, editor: Editor, clearAction: () -> Uni
     toolbarPane.dataComponent = console.component
 
     val consoleEditor = console.editor as EditorEx
-    initOutputTextConsole(editor, parent, consoleEditor, scrollPaneTopBorderHeight)
+    initOutputTextConsole(editor, consoleEditor, scrollPaneTopBorderHeight)
     ApplicationManager.getApplication().messageBus.connect(console)
       .subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
         updateOutputTextConsoleUI(consoleEditor, editor)
@@ -325,14 +324,12 @@ object EmptySoftWrapPainter : SoftWrapPainter {
 }
 
 fun initOutputTextConsole(editor: Editor,
-                          parent: Disposable,
                           consoleEditor: EditorEx,
                           scrollPaneTopBorderHeight: Int) {
   updateOutputTextConsoleUI(consoleEditor, editor)
   consoleEditor.apply {
     isRendererMode = true
     scrollPane.border = IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(scrollPaneTopBorderHeight))
-    MouseWheelUtils.wrapMouseWheelListeners(scrollPane, parent)
     contentComponent.putClientProperty("AuxEditorComponent", true)
   }
 
@@ -368,7 +365,6 @@ class InlayOutputHtml(parent: Disposable, editor: Editor, clearAction: () -> Uni
   private var height: Int = 0
 
   init {
-    MouseWheelUtils.wrapMouseWheelListeners(jbBrowser.component, parent)
     heightJsCallback.addHandler {
       val height = it.toInt()
       if (this.height != height) {
@@ -448,7 +444,6 @@ class InlayOutputTable(val parent: Disposable, editor: Editor, clearAction: () -
 
   init {
     toolbarPane.dataComponent = inlayTablePage
-    MouseWheelUtils.wrapMouseWheelListeners(inlayTablePage.scrollPane, parent)
   }
 
   override fun clear() {}

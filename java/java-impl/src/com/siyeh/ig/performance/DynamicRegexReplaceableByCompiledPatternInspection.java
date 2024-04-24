@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -23,8 +23,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 
 public final class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInspection {
-  @NonNls
-  private static final Collection<String> regexMethodNames = Set.of(
+  private static final @NonNls Collection<String> regexMethodNames = Set.of(
     "matches", "replace", "replaceFirst", "replaceAll", "split"
   );
 
@@ -34,8 +33,7 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "dynamic.regex.replaceable.by.compiled.pattern.problem.descriptor");
   }
@@ -48,8 +46,7 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
   private static class DynamicRegexReplaceableByCompiledPatternFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "dynamic.regex.replaceable.by.compiled.pattern.quickfix");
     }
@@ -96,9 +93,9 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
         }
       }
 
-      @NonNls final StringBuilder expressionText = new StringBuilder(name + ".");
+      final @NonNls StringBuilder expressionText = new StringBuilder(name + ".");
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      @NonNls final String qualifierText = (qualifier == null) ? "this" : commentTracker.text(qualifier);
+      final @NonNls String qualifierText = (qualifier == null) ? "this" : commentTracker.text(qualifier);
       if ("split".equals(methodName)) {
         expressionText.append(methodName);
         expressionText.append('(');
@@ -166,7 +163,7 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
 
     private static boolean isCallToRegexMethod(PsiMethodCallExpression expression) {
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String name = methodExpression.getReferenceName();
+      final @NonNls String name = methodExpression.getReferenceName();
       if (!regexMethodNames.contains(name)) {
         return false;
       }

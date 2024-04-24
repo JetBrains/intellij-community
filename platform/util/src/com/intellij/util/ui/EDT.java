@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtil;
@@ -86,6 +88,12 @@ public final class EDT {
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      dispatchAllInvocationEventsImpl();
+    }
+  }
+
+  private static void dispatchAllInvocationEventsImpl() {
     assertIsEdt();
 
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
@@ -126,7 +134,8 @@ public final class EDT {
           // todo temporary hack to diagnose hanging builds
           try {
             Object application =
-              ReflectionUtil.getMethod(Class.forName("com.intellij.openapi.application.ApplicationManager"), "getApplication").invoke(null);
+              ReflectionUtil.getMethod(Class.forName("com.intellij.openapi.application.ApplicationManager"), "getApplication")
+                .invoke(null);
             System.err.println("Application=" + application + "\n" + ThreadDumper.dumpThreadsToString());
           }
           catch (Exception e) {

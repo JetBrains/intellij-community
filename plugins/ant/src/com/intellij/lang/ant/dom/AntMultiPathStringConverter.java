@@ -34,7 +34,7 @@ import java.util.List;
 public class AntMultiPathStringConverter extends Converter<List<File>> implements CustomReferenceConverter<List<File>> {
 
   @Override
-  public List<File> fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public List<File> fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {
       return null;
@@ -84,7 +84,7 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
   }
 
   @Override
-  public String toString(@Nullable List<File> files, ConvertContext context) {
+  public String toString(@Nullable List<File> files, @NotNull ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {
       return null;

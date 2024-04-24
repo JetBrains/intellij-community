@@ -14,7 +14,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
 import com.intellij.workspaceModel.core.fileIndex.impl.*;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry;
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry;
 import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

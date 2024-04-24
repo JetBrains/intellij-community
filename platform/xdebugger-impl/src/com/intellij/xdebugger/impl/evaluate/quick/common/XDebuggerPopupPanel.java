@@ -107,7 +107,7 @@ public abstract class XDebuggerPopupPanel {
 
     var toolbarImpl = new ActionToolbarImpl(actionsPlace, wrappedActions, true);
     toolbarImpl.setTargetComponent(null);
-    for (AnAction action : wrappedActions.getChildren(null)) {
+    for (AnAction action : wrappedActions.getChildren(ActionManager.getInstance())) {
       action.registerCustomShortcutSet(action.getShortcutSet(), myMainPanel);
     }
 
@@ -131,7 +131,7 @@ public abstract class XDebuggerPopupPanel {
                                          @NotNull String actionsPlace,
                                          @Nullable Component toolbarActionsDataProvider) {
     DefaultActionGroup wrappedActions = new DefaultActionGroup();
-    for (AnAction action : toolbarActions.getChildren(null)) {
+    for (AnAction action : toolbarActions.getChildren(ActionManager.getInstance())) {
       ActionWrapper actionLink = new ActionWrapper(action, actionsPlace);
       actionLink.setDataProvider(toolbarActionsDataProvider);
       wrappedActions.add(actionLink);

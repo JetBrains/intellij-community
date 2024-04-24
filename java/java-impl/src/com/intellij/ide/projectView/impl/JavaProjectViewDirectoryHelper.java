@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.ViewSettings;
@@ -26,9 +26,8 @@ public final class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHe
     super(project);
   }
 
-  @Nullable
   @Override
-  public String getLocationString(@NotNull PsiDirectory directory, boolean includeUrl, boolean includeRootType) {
+  public @Nullable String getLocationString(@NotNull PsiDirectory directory, boolean includeUrl, boolean includeRootType) {
     String result = null;
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (ProjectRootsUtil.isSourceRoot(directory) && aPackage != null) {   //package prefix
@@ -55,9 +54,8 @@ public final class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHe
     return false;
   }
 
-  @NotNull
   @Override
-  public String getNodeName(final ViewSettings settings, final Object parentValue, final PsiDirectory directory) {
+  public @NotNull String getNodeName(final ViewSettings settings, final Object parentValue, final PsiDirectory directory) {
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
 
     PsiPackage parentPackage;

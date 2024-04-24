@@ -123,9 +123,9 @@ public abstract class K2BindToFqnTestGenerated extends AbstractK2BindToFqnTest {
             runTest("../../idea/tests/testData/refactoring/bindToFqn/constructorCall/ChangeImport.kt");
         }
 
-        @TestMetadata("ChangeImportQualified.kt")
-        public void testChangeImportQualified() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToFqn/constructorCall/ChangeImportQualified.kt");
+        @TestMetadata("ChangeImportToRootPkg.kt")
+        public void testChangeImportToRootPkg() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToFqn/constructorCall/ChangeImportToRootPkg.kt");
         }
 
         @TestMetadata("FullyQualified.kt")
@@ -348,6 +348,11 @@ public abstract class K2BindToFqnTestGenerated extends AbstractK2BindToFqnTest {
     public static class TopLevelProperty extends AbstractK2BindToFqnTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ChangeImportToRootPkg.kt")
+        public void testChangeImportToRootPkg() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToFqn/topLevelProperty/ChangeImportToRootPkg.kt");
         }
 
         @TestMetadata("Qualified.kt")

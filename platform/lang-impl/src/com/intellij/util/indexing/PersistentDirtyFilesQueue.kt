@@ -15,7 +15,10 @@ import java.io.EOFException
 import java.io.IOException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.div
+import kotlin.io.path.inputStream
+import kotlin.io.path.outputStream
 
 
 @ApiStatus.Internal
@@ -35,18 +38,6 @@ object PersistentDirtyFilesQueue {
 
   @JvmStatic
   fun Project.getQueueFile(): Path = getQueuesDir() / locationHash
-
-  @JvmStatic
-  fun removeCurrentFile(queueFile: Path) {
-    if (isUnittestMode) {
-      thisLogger().info("removing ${queueFile.absolutePathString()}")
-    }
-    try {
-      queueFile.deleteIfExists()
-    }
-    catch (ignored: IOException) {
-    }
-  }
 
   @JvmStatic
   fun readProjectDirtyFilesQueue(queueFile: Path, currentVfsVersion: Long?): ProjectDirtyFilesQueue {

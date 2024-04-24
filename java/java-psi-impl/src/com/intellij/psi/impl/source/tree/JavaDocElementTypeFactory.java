@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.impl.source.AbstractBasicJavaDocElementTypeFactory;
@@ -10,10 +10,9 @@ public class JavaDocElementTypeFactory extends AbstractBasicJavaDocElementTypeFa
   private JavaDocElementTypeFactory() {
   }
 
-  public final static AbstractBasicJavaDocElementTypeFactory INSTANCE = new JavaDocElementTypeFactory();
+  public static final AbstractBasicJavaDocElementTypeFactory INSTANCE = new JavaDocElementTypeFactory();
 
-  @NotNull
-  private static JavaDocElementTypeContainer getJavaDocElementTypeContainer() {
+  private static @NotNull JavaDocElementTypeContainer getJavaDocElementTypeContainer() {
     return new JavaDocElementTypeContainer(
       JavaDocElementType.DOC_TAG,
       JavaDocElementType.DOC_COMMENT,

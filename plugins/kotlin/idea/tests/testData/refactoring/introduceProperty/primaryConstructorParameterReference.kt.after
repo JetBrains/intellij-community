@@ -4,3 +4,6 @@ class Foo(s: String) {
 
     val l = s.length
 }
+
+// KT-67653
+// IGNORE_K2

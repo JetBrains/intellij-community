@@ -40,5 +40,5 @@ class SymbolEmbeddingStorage(project: Project, cs: CoroutineScope)
 }
 
 open class IndexableSymbol(override val id: String) : IndexableEntity {
-  override val indexableRepresentation: String by lazy { splitIdentifierIntoTokens(id).joinToString(separator = " ") }
+  override val indexableRepresentation: String by lazy { splitIdentifierIntoTokens(id) }
 }

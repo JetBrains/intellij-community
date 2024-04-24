@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.Queryable;
@@ -25,7 +25,7 @@ public final class AssertFocused extends AbstractCommand {
     String text = getText().substring(PREFIX.length()).trim();
     final Map<String, String> expected = new LinkedHashMap<>();
 
-    if (text.length() > 0) {
+    if (!text.isEmpty()) {
       final String[] keyValue = text.split(",");
       for (String each : keyValue) {
         final String[] eachPair = each.split("=");
@@ -91,7 +91,7 @@ public final class AssertFocused extends AbstractCommand {
 
     StringBuilder untestedText = new StringBuilder();
     for (String each : untested.keySet()) {
-      if (untestedText.length() > 0) {
+      if (!untestedText.isEmpty()) {
         untestedText.append(",");
       }
       untestedText.append(each).append("=").append(untested.get(each));

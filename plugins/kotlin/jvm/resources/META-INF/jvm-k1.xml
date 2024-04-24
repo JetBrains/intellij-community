@@ -6,10 +6,6 @@
             <add-to-group group-id="KotlinToolsGroup" anchor="last"/>
         </action>
 
-        <action id="ConfigureKotlinInProject" class="org.jetbrains.kotlin.idea.actions.ConfigureKotlinJavaInProjectAction">
-            <add-to-group group-id="KotlinToolsGroup"/>
-        </action>
-
         <action id="CreateIncrementalCompilationBackup"
                 class="org.jetbrains.kotlin.idea.internal.makeBackup.CreateIncrementalCompilationBackup" internal="true">
             <add-to-group group-id="KotlinInternalGroup"/>
@@ -122,7 +118,6 @@
         <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.NoArgUltraLightClassModifierExtension"/>
         <defaultErrorMessages implementation="org.jetbrains.kotlin.noarg.diagnostic.DefaultErrorMessagesNoArg"/>
 
-        <newFileHook implementation="org.jetbrains.kotlin.idea.configuration.NewKotlinFileConfigurationHook"/>
         <quickFixContributor implementation="org.jetbrains.kotlin.idea.quickfix.JvmQuickFixRegistrar"/>
         <facetValidatorCreator implementation="org.jetbrains.kotlin.idea.facet.KotlinLibraryValidatorCreator"/>
     </extensions>

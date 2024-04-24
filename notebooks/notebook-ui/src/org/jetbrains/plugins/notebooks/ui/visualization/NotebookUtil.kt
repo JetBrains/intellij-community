@@ -97,6 +97,7 @@ fun paintCaretRow(editor: EditorImpl, g: Graphics, lines: IntRange) {
   }
 }
 
+@Deprecated("To be removed after PY-71962")
 fun installNotebookEditorView(editor: Editor) {
   if (editor is EditorEx) {
     editor.gutterComponentEx.setLineNumberConverter(object : LineNumberConverter {

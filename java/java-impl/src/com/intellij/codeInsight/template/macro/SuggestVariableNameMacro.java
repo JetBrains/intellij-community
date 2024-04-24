@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -26,8 +26,7 @@ public final class SuggestVariableNameMacro extends Macro {
   }
 
   @Override
-  @NotNull
-  public String getDefaultValue() {
+  public @NotNull String getDefaultValue() {
     return "a";
   }
 
@@ -38,9 +37,8 @@ public final class SuggestVariableNameMacro extends Macro {
     return new TextResult(names[0]);
   }
 
-  @Nullable
   @Override
-  public Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
     return calculateResult(params, context);
   }
 
@@ -89,9 +87,8 @@ public final class SuggestVariableNameMacro extends Macro {
     return context instanceof JavaCodeContextType;
   }
 
-  @NotNull
   @Override
-  public LookupFocusDegree getLookupFocusDegree() {
+  public @NotNull LookupFocusDegree getLookupFocusDegree() {
     return LookupFocusDegree.UNFOCUSED;
   }
 }

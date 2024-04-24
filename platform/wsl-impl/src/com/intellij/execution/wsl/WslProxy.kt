@@ -116,7 +116,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
     val args = if (Registry.`is`("wsl.proxy.connect.localhost")) arrayOf("--loopback") else emptyArray()
     val wslCommandLine = distro.getTool("wslproxy", *args)
     val process =
-      if (Registry.`is`("wsl.use.remote.agent.for.launch.processes"))
+      if (WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent())
         wslCommandLine.createProcess()
       else
         Runtime.getRuntime().exec(wslCommandLine.commandLineString)

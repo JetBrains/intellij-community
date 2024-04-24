@@ -25,9 +25,14 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.DependencyVersionStore"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.libraries.CoroutinesLibraryCompatibilityStore"/>
     <newProjectWizard.languageGenerator implementation="org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard"/>
 
     <newProjectWizard.kotlin.buildSystem implementation="org.jetbrains.kotlin.tools.projectWizard.IntelliJKotlinNewProjectWizard"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <libraryVersionProvider implementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.libraries.DefaultKotlinLibraryVersionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">

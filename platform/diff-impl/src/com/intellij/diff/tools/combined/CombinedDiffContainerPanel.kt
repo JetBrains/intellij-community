@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.util.ui.GraphicsUtil
@@ -8,6 +8,7 @@ import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D
 import javax.swing.JPanel
 import javax.swing.border.EmptyBorder
+import kotlin.properties.Delegates
 
 /**
  * A very special panel that does optimized painting for rounded combined diff panels
@@ -18,7 +19,13 @@ internal class CombinedDiffContainerPanel(
   private val arcRadius: Int = CombinedDiffUI.BLOCK_ARC
 
   private val borderThickness: Int = 1
-  private val borderColor: Color = CombinedDiffUI.EDITOR_BORDER_COLOR
+  var borderColor: Color by Delegates.observable(CombinedDiffUI.EDITOR_BORDER_COLOR) { _, oldValue, newValue ->
+    if (oldValue != newValue) repaint()
+  }
+
+  var bottomBorderColor: Color by Delegates.observable(CombinedDiffUI.EDITOR_BORDER_COLOR) { _, oldValue, newValue ->
+    if (oldValue != newValue) repaint()
+  }
 
   init {
     // unscaled border for correct insets
@@ -100,9 +107,13 @@ internal class CombinedDiffContainerPanel(
 
   private fun paintBottomBoxOutline(g: Graphics2D, outerBounds: Rectangle) {
     GraphicsUtil.disableAAPainting(g)
-    g.color = borderColor
+
+    g.color = bottomBorderColor //sticky header bottom border color
+
     // bottom
     g.fillRect(outerBounds.x, outerBounds.y + height - borderThickness, outerBounds.width, borderThickness)
+
+    g.color = borderColor
 
     val sideY = outerBounds.y + height - arcRadius
     // left

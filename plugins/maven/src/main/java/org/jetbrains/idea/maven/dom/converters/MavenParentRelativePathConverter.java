@@ -47,7 +47,7 @@ import java.util.List;
 
 public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile> implements CustomReferenceConverter {
   @Override
-  public PsiFile fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public PsiFile fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     if (StringUtil.isEmptyOrSpaces(s)) return null;
 
     VirtualFile contextFile = context.getFile().getVirtualFile();
@@ -67,7 +67,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
   }
 
   @Override
-  public String toString(@Nullable PsiFile f, ConvertContext context) {
+  public String toString(@Nullable PsiFile f, @NotNull ConvertContext context) {
     if (f == null) return null;
     VirtualFile currentFile = context.getFile().getOriginalFile().getVirtualFile();
     if (currentFile == null) return null;
@@ -77,7 +77,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
 
   @NotNull
   @Override
-  public Collection<PsiFile> getVariants(ConvertContext context) {
+  public Collection<PsiFile> getVariants(@NotNull ConvertContext context) {
     List<PsiFile> result = new ArrayList<>();
     PsiFile currentFile = context.getFile().getOriginalFile();
     for (DomFileElement<MavenDomProjectModel> each : MavenDomUtil.collectProjectModels(context.getFile().getProject())) {
@@ -89,7 +89,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes(ConvertContext context) {
+  public LocalQuickFix[] getQuickFixes(@NotNull ConvertContext context) {
     return ArrayUtil.append(super.getQuickFixes(context), new RelativePathFix(context));
   }
 

@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.exp.completion
 
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 
-interface DataProviderCommand<T> {
+internal interface DataProviderCommand<T> {
   val functionName: String
   val parameters: List<String>
   val defaultResult: T

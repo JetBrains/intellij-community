@@ -11,6 +11,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -175,7 +177,9 @@ public class ThreadBlockedMonitor {
     void invocationFinished() {
       myObsolete.set(true);
       if (myTask.isDone() && myAllResumed.get()) {
+        myProcess.mySuspendAllInvocation.decrementAndGet();
         // suspend all threads but the current one (which should be suspended already
+        LOG.warn("Long invocation on " + myThread + " has been finished");
         myThread.getVirtualMachine().getVirtualMachine().suspend();
         DebuggerUtilsAsync.resume(myThread.getThreadReference());
       }
@@ -192,12 +196,22 @@ public class ThreadBlockedMonitor {
           VirtualMachine virtualMachine = myThread.getVirtualMachine().getVirtualMachine();
           virtualMachine.suspend();
           try {
+            if (myObsolete.get()) return;
             ThreadReference threadReference = myThread.getThreadReference();
-            if (!myObsolete.get() && threadReference.suspendCount() == 1) { // extra check for invocation in progress
+            if (threadReference.suspendCount() == 1) { // extra check for invocation in progress
               // resume all but this
+              LOG.warn("Resume other threads because long invocation detected on " + myThread);
+              int number = myProcess.mySuspendAllInvocation.getAndIncrement();
+              if (number != 0) {
+                LOG.error("Parallel suspend all invocations: " + (number + 1));
+              }
               myAllResumed.set(true);
               threadReference.suspend();
               DebuggerUtilsAsync.resume(virtualMachine);
+            }
+            else {
+              Set<SuspendContextImpl> suspendingContexts = SuspendManagerUtil.getSuspendingContexts(myProcess.getSuspendManager(), myThread);
+              LOG.error("Blocked thread detected during invocation on " + myThread, new Attachment("contexts", suspendingContexts.toString()));
             }
           }
           finally {

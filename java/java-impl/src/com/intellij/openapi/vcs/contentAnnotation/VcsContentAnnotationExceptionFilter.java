@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.contentAnnotation;
 
 import com.intellij.execution.filters.*;
@@ -58,9 +58,8 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
       super(start, end);
     }
 
-    @NotNull
     @Override
-    public TextAttributes getTextAttributes(@Nullable TextAttributes source) {
+    public @NotNull TextAttributes getTextAttributes(@Nullable TextAttributes source) {
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
       final TextAttributes changedColor = globalScheme.getAttributes(DiffColors.DIFF_MODIFIED);
       if (source == null) {
@@ -81,7 +80,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   }
 
   @Override
-  public void applyHeavyFilter(@NotNull final Document copiedFragment,
+  public void applyHeavyFilter(final @NotNull Document copiedFragment,
                                int startOffset,
                                int startLineNumber,
                                @NotNull Consumer<? super AdditionalHighlight> consumer) {
@@ -163,9 +162,8 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
     }
   }
 
-  @NotNull
   @Override
-  public String getUpdateMessage() {
+  public @NotNull String getUpdateMessage() {
     return VcsBundle.message("checking.recent.changes");
   }
 
@@ -193,8 +191,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
                                                     provider.getLineNumber(range.getEndOffset())));
     }
 
-    @NotNull
-    private UpToDateLineNumberProvider getProvider(@NotNull VirtualFile vf, @NotNull Document document) {
+    private @NotNull UpToDateLineNumberProvider getProvider(@NotNull VirtualFile vf, @NotNull Document document) {
       UpToDateLineNumberProvider provider = myRecentlyChanged.get(vf);
       if (provider == null) {
         provider = new UpToDateLineNumberProviderImpl(document, myProject);
@@ -232,8 +229,7 @@ class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   }
 
   // null - check all
-  @Nullable
-  private static List<UMethod> selectMethod(List<UMethod> methods, final LineResult previousLineResult) {
+  private static @Nullable List<UMethod> selectMethod(List<UMethod> methods, final LineResult previousLineResult) {
     if (previousLineResult == null || previousLineResult.method() == null) return null;
 
     final List<UMethod> result = new SmartList<>();

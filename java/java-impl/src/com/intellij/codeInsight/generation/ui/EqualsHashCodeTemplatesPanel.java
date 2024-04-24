@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
@@ -61,8 +61,7 @@ public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Cou
       return Couple.of(copyOf(couple.first), copyOf(couple.second));
     }
 
-    @NotNull
-    private static TemplateResource copyOf(TemplateResource resource) {
+    private static @NotNull TemplateResource copyOf(TemplateResource resource) {
       TemplateResource result = new TemplateResource();
       result.setFileName(resource.getFileName());
       result.setTemplate(resource.getTemplate());
@@ -91,8 +90,7 @@ public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Cou
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return JavaBundle.message("configurable.EqualsHashCodeTemplatesPanel.display.name");
   }
 
@@ -112,9 +110,7 @@ public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Cou
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
+  public @Nullable @NonNls String getHelpTopic() {
     return null;
   }
 

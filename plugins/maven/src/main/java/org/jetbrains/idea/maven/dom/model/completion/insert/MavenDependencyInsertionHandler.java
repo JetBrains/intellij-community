@@ -49,7 +49,7 @@ public class MavenDependencyInsertionHandler implements InsertHandler<LookupElem
     if (domCoordinates == null) {
       return;
     }
-    setDependency(context, completionItem, (XmlFile)contextFile, domCoordinates);
+    setDependency(context, completionItem, xmlFile, domCoordinates);
 
     logMavenDependencyInsertion(context, item, completionItem);
   }

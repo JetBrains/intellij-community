@@ -27,11 +27,6 @@ interface SoftwareBillOfMaterials {
     var creator: String? = null
 
     /**
-     * [Specification](https://spdx.github.io/spdx-spec/v2.3/package-information/#717-copyright-text-field)
-     */
-    var copyrightText: String? = null
-
-    /**
      * [Specification](https://spdx.github.io/spdx-spec/v2.3/package-information/#715-declared-license-field)
      */
     var license: DistributionLicense? = null
@@ -41,9 +36,17 @@ interface SoftwareBillOfMaterials {
      */
     var documentNamespace: String? = null
 
-    class DistributionLicense(val name: String, val text: String, val url: String?) {
+    /**
+     * @param copyrightText https://spdx.github.io/spdx-spec/v2.3/package-information/#717-copyright-text-field
+     */
+    class DistributionLicense(val name: String, val text: String, val url: String?, var copyrightText: String) {
       internal companion object {
-        val JETBRAINS = DistributionLicense(LibraryLicense.JETBRAINS_OWN, LibraryLicense.JETBRAINS_OWN, null)
+        val JETBRAINS = DistributionLicense(
+          name = LibraryLicense.JETBRAINS_OWN,
+          text = LibraryLicense.JETBRAINS_OWN,
+          copyrightText = LibraryLicense.JETBRAINS_OWN,
+          url = null,
+        )
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter;
 
 import com.intellij.lang.ASTNode;
@@ -13,7 +13,7 @@ public final class JavaWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpa
 
   // Handles Javadoc
   @Override
-  public boolean containsWhitespacesOnly(@NotNull final ASTNode node) {
+  public boolean containsWhitespacesOnly(final @NotNull ASTNode node) {
     return (node.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA ||
             node.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) && node.getText().trim().isEmpty();
   }

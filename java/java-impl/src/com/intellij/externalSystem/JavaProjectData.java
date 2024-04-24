@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,11 +27,11 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   private static final Pattern JDK_VERSION_PATTERN = Pattern.compile(".*1.(\\d+).*");
 
   private boolean isSetJdkVersion = false;
-  @NotNull private JavaSdkVersion jdkVersion;
+  private @NotNull JavaSdkVersion jdkVersion;
 
-  @NotNull private String compileOutputPath;
-  @NotNull private LanguageLevel languageLevel;
-  @Nullable private String targetBytecodeVersion;
+  private @NotNull String compileOutputPath;
+  private @NotNull LanguageLevel languageLevel;
+  private @Nullable String targetBytecodeVersion;
 
   public JavaProjectData(@NotNull ProjectSystemId owner, @NotNull String compileOutputPath) {
     this(owner, compileOutputPath, null, null);
@@ -67,8 +67,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
     this.targetBytecodeVersion = targetBytecodeVersion;
   }
 
-  @NotNull
-  public String getCompileOutputPath() {
+  public @NotNull String getCompileOutputPath() {
     return compileOutputPath;
   }
 
@@ -79,9 +78,8 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   /**
    * @deprecated use {@link ProjectSdkData#getSdkName()} instead
    */
-  @NotNull
   @Deprecated(forRemoval = true)
-  public JavaSdkVersion getJdkVersion() {
+  public @NotNull JavaSdkVersion getJdkVersion() {
     return jdkVersion;
   }
 
@@ -93,9 +91,8 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   /**
    * @deprecated needed to support backward compatibility
    */
-  @Nullable
   @Deprecated(forRemoval = true)
-  public static JavaSdkVersion resolveSdkVersion(@Nullable String jdk) {
+  public static @Nullable JavaSdkVersion resolveSdkVersion(@Nullable String jdk) {
     if (jdk == null) {
       return null;
     }
@@ -124,8 +121,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
     return null;
   }
 
-  @Nullable
-  private static JavaSdkVersion resolveSdkVersion(int version) {
+  private static @Nullable JavaSdkVersion resolveSdkVersion(int version) {
     if (version < 0 || version >= JavaSdkVersion.values().length) {
       LOG.warn(String.format(
         "Unsupported jdk version detected (%d). Expected to get number from range [0; %d]", version, JavaSdkVersion.values().length
@@ -141,8 +137,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
     return null;
   }
 
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
+  public @NotNull LanguageLevel getLanguageLevel() {
     return languageLevel;
   }
 
@@ -157,8 +152,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
     }
   }
 
-  @Nullable
-  public String getTargetBytecodeVersion() {
+  public @Nullable String getTargetBytecodeVersion() {
     return targetBytecodeVersion;
   }
 

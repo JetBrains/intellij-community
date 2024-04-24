@@ -29,9 +29,8 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
     return "Generate_Setter_Dialog";
   }
 
-  @Nullable
   @Override
-  protected JComponent getHeaderPanel(final Project project) {
+  protected @Nullable JComponent getHeaderPanel(final Project project) {
     return getHeaderPanel(project, SetterTemplatesManager.getInstance(), JavaBundle.message("generate.equals.hashcode.template"));
   }
 

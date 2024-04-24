@@ -1,7 +1,7 @@
 fun main() {
     println()
-
     __dummyTestFun__()
+
 }
 
 private fun __dummyTestFun__() {
@@ -9,5 +9,3 @@ private fun __dummyTestFun__() {
     if (true) return
     println()
 }
-
-// IGNORE_K1

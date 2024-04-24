@@ -459,7 +459,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     @Override
     public boolean execute(@NotNull PsiElement element) {
       if (element instanceof XmlTag tag &&
-          ((XmlTag)element).getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)
+          tag.getLocalName().equals(DOCUMENTATION_ELEMENT_LOCAL_NAME)
       ) {
         result = tag.getValue().getText().trim();
         boolean withCData = false;

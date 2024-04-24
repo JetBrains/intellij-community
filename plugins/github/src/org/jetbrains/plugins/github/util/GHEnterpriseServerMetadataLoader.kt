@@ -1,48 +1,33 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
-import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
-import com.intellij.collaboration.util.ProgressIndicatorsProvider
-import com.intellij.openapi.Disposable
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.Disposer
-import org.jetbrains.annotations.CalledInAny
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import org.jetbrains.plugins.github.api.GithubApiRequest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHEnterpriseServerMeta
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
+import org.jetbrains.plugins.github.api.executeSuspend
 
 @Service
-class GHEnterpriseServerMetadataLoader : Disposable {
+internal class GHEnterpriseServerMetadataLoader(serviceCs: CoroutineScope) {
+  private val cs = serviceCs.childScope()
 
   private val apiRequestExecutor = GithubApiRequestExecutor.Factory.getInstance().create()
-  private val serverMetadataRequests = ConcurrentHashMap<GithubServerPath, CompletableFuture<GHEnterpriseServerMeta>>()
-  private val indicatorProvider = ProgressIndicatorsProvider().also {
-    Disposer.register(this, it)
-  }
+  private val cache = Caffeine.newBuilder()
+    .build<GithubServerPath, Deferred<GHEnterpriseServerMeta>>()
 
-  @CalledInAny
-  fun loadMetadata(server: GithubServerPath): CompletableFuture<GHEnterpriseServerMeta> {
+  suspend fun loadMetadata(server: GithubServerPath): GHEnterpriseServerMeta {
     require(!server.isGithubDotCom) { "Cannot retrieve server metadata from github.com" }
-    return serverMetadataRequests.getOrPut(server) {
-      ProgressManager.getInstance().submitIOTask(indicatorProvider) {
-        val metaUrl = server.toApiUrl() + "/meta"
-        apiRequestExecutor.execute(it, GithubApiRequest.Get.json<GHEnterpriseServerMeta>(metaUrl))
+    return cache.get(server) {
+      val metaUrl = server.toApiUrl() + "/meta"
+      cs.async {
+        apiRequestExecutor.executeSuspend(GithubApiRequest.Get.json<GHEnterpriseServerMeta>(metaUrl))
       }
-    }
+    }.await()
   }
-
-  @CalledInAny
-  internal fun findRequestByEndpointUrl(url: String): CompletableFuture<GHEnterpriseServerMeta>? {
-    for ((server, request) in serverMetadataRequests) {
-      val serverUrl = server.toUrl()
-      if (url.startsWith(serverUrl)) return request
-    }
-    return null
-  }
-
-  override fun dispose() {}
 }

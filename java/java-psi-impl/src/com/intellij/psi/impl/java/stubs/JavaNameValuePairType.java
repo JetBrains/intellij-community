@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -35,15 +35,13 @@ public final class JavaNameValuePairType extends JavaStubElementType<PsiNameValu
     return new PsiNameValuePairImpl(node);
   }
 
-  @NotNull
   @Override
-  public ASTNode createCompositeNode() {
+  public @NotNull ASTNode createCompositeNode() {
     return new NameValuePairElement();
   }
 
-  @NotNull
   @Override
-  public PsiNameValuePairStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
+  public @NotNull PsiNameValuePairStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     String name = null;
     String value = null;
     List<LighterASTNode> children = tree.getChildren(node);
@@ -75,9 +73,8 @@ public final class JavaNameValuePairType extends JavaStubElementType<PsiNameValu
     }
   }
 
-  @NotNull
   @Override
-  public PsiNameValuePairStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PsiNameValuePairStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     String name = dataStream.readNameString();
     boolean hasValue = dataStream.readBoolean();
     return new PsiNameValuePairStubImpl(parentStub, name, hasValue ? dataStream.readUTFFast() : null);

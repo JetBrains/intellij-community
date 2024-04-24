@@ -24,7 +24,7 @@ interface VcsLogFileHistoryHandler {
   }
 
   @Throws(VcsException::class, UnsupportedHistoryFiltersException::class)
-  fun getHistoryFast(root: VirtualFile, filePath: FilePath, hash: Hash?, filters: VcsLogFilterCollection, commitCount: Int): List<VcsFileRevisionEx>
+  fun getHistoryFast(root: VirtualFile, filePath: FilePath, hash: Hash?, filters: VcsLogFilterCollection, commitCount: Int, consumer: (VcsFileRevision) -> Unit)
 
   @Throws(VcsException::class, UnsupportedHistoryFiltersException::class)
   fun collectHistory(root: VirtualFile, filePath: FilePath, hash: Hash?, filters: VcsLogFilterCollection, consumer: (VcsFileRevision) -> Unit)

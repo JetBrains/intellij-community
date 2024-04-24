@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -160,8 +160,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     return false;
   }
 
-  @Nullable
-  private static PsiStatement getAnchor(PsiExpression... expressionOccurrences) {
+  private static @Nullable PsiStatement getAnchor(PsiExpression... expressionOccurrences) {
     PsiElement parent = expressionOccurrences[0];
     int minOffset = expressionOccurrences[0].getTextRange().getStartOffset();
     for (int i = 1; i < expressionOccurrences.length; i++) {
@@ -190,8 +189,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.local.from.usage.family");
   }
 

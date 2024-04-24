@@ -17,11 +17,11 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -64,8 +64,7 @@ public final class EmptyClassInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final Object element = infos[0];
     if (element instanceof PsiAnonymousClass) {
       return InspectionGadgetsBundle.message("empty.anonymous.class.problem.descriptor");
@@ -122,10 +121,8 @@ public final class EmptyClassInspection extends BaseInspection {
       }
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("convert.empty.anonymous.to.new.fix.family.name");
     }
   }
@@ -140,7 +137,7 @@ public final class EmptyClassInspection extends BaseInspection {
       if (javaFile.getClasses().length != 0) {
         return;
       }
-      @NonNls final String fileName = javaFile.getName();
+      final @NonNls String fileName = javaFile.getName();
       if (PsiPackage.PACKAGE_INFO_FILE.equals(fileName) || PsiJavaModule.MODULE_INFO_FILE.equals(fileName)) {
         return;
       }

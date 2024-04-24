@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
@@ -25,18 +25,17 @@ import java.util.Set;
 public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
   private final GlobalSearchScope mySearchScope;
 
-  public PackageReferenceSet(@NotNull final String str, @NotNull final PsiElement element, final int startInElement) {
+  public PackageReferenceSet(final @NotNull String str, final @NotNull PsiElement element, final int startInElement) {
     this(str, element, startInElement, element.getResolveScope());
   }
 
-  public PackageReferenceSet(@NotNull final String str, @NotNull final PsiElement element, final int startInElement, @NotNull GlobalSearchScope scope) {
+  public PackageReferenceSet(final @NotNull String str, final @NotNull PsiElement element, final int startInElement, @NotNull GlobalSearchScope scope) {
     super(str, element, startInElement, DOT_SEPARATOR);
     mySearchScope=scope;
   }
 
   @Override
-  @NotNull
-  protected PsiPackageReference createReference(final TextRange range, final int index) {
+  protected @NotNull PsiPackageReference createReference(final TextRange range, final int index) {
     return new PsiPackageReference(this, range, index);
   }
 
@@ -47,8 +46,7 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
     return Collections.emptyList();
   }
 
-  @NotNull
-  protected GlobalSearchScope getResolveScope() {
+  protected @NotNull GlobalSearchScope getResolveScope() {
     return mySearchScope;
   }
 

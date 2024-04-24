@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.editor.Editor;
@@ -11,9 +11,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class HighlightImportedElementsHandlerFactory extends HighlightUsagesHandlerFactoryBase {
 
-  @Nullable
   @Override
-  public HighlightUsagesHandlerBase<PsiMember> createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
+  public @Nullable HighlightUsagesHandlerBase<PsiMember> createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
     if (!(target instanceof PsiKeyword) || !PsiKeyword.IMPORT.equals(target.getText())) {
       return null;
     }

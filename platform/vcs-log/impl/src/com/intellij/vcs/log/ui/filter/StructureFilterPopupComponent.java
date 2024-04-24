@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -26,13 +26,13 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.CheckboxIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.ui.RootIcon;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
@@ -294,7 +294,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
   }
 
   private final class SelectVisibleRootAction extends ToggleAction implements DumbAware, KeepingPopupOpenAction {
-    final RootIcon.CheckboxColorIcon myIcon;
+    final CheckboxIcon.WithColor myIcon;
     final VirtualFile myRoot;
     final List<SelectVisibleRootAction> myAllActions;
 
@@ -303,7 +303,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
       getTemplatePresentation().setText(root.getName(), false);
       myRoot = root;
       myAllActions = allActions;
-      myIcon = RootIcon.createAndScaleCheckbox(myColorManager.getRootColor(myRoot));
+      myIcon = CheckboxIcon.createAndScaleCheckbox(myColorManager.getRootColor(myRoot));
       getTemplatePresentation().setIcon(JBUIScale.scaleIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE))); // see PopupFactoryImpl.calcMaxIconSize
     }
 
@@ -334,7 +334,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
     }
 
     private static int getModifier() {
-      return SystemInfo.isMac ? ActionEvent.META_MASK : ActionEvent.CTRL_MASK;
+      return ClientSystemInfo.isMac() ? ActionEvent.META_MASK : ActionEvent.CTRL_MASK;
     }
 
     @Override

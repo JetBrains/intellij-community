@@ -88,13 +88,12 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     }
 
     // Import missing library dependencies.
-    LibraryTable moduleLibraryTable = modifiableRootModel.getModuleLibraryTable();
     for (LibraryDependencyData dependencyData : toImport.projectLibraries.values()) {
-      OrderEntry entry = importMissingLibraryOrderEntry(dependencyData, moduleLibraryTable, modifiableRootModel, modelsProvider, module);
+      OrderEntry entry = importMissingLibraryOrderEntry(dependencyData, modifiableRootModel, modelsProvider, module);
       orderEntryDataMap.put(entry, dependencyData);
     }
     for (LibraryDependencyData dependencyData : toImport.moduleLibraries.values()) {
-      OrderEntry entry = importMissingModuleLibraryOrderEntry(dependencyData, moduleLibraryTable, modifiableRootModel, modelsProvider,
+      OrderEntry entry = importMissingModuleLibraryOrderEntry(dependencyData, modifiableRootModel, modelsProvider,
                                                               module);
       orderEntryDataMap.put(entry, dependencyData);
     }
@@ -174,7 +173,6 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
   }
 
   private static @NotNull OrderEntry importMissingModuleLibraryOrderEntry(@NotNull LibraryDependencyData dependencyData,
-                                                                          @NotNull LibraryTable moduleLibraryTable,
                                                                           @NotNull ModifiableRootModel moduleRootModel,
                                                                           @NotNull IdeModifiableModelsProvider modelsProvider,
                                                                           @NotNull Module module
@@ -182,6 +180,7 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     final Library moduleLib;
     final LibraryData libraryData = dependencyData.getTarget();
     final String libraryName = libraryData.getInternalName();
+    LibraryTable moduleLibraryTable = moduleRootModel.getModuleLibraryTable();
     if (libraryName.isEmpty()) {
       moduleLib = moduleLibraryTable.createLibrary();
     }
@@ -192,7 +191,6 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
   }
 
   private static @NotNull OrderEntry importMissingLibraryOrderEntry(@NotNull LibraryDependencyData dependencyData,
-                                                                    @NotNull LibraryTable moduleLibraryTable,
                                                                     @NotNull ModifiableRootModel moduleRootModel,
                                                                     @NotNull IdeModifiableModelsProvider modelsProvider,
                                                                     @NotNull Module module
@@ -201,6 +199,7 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     final String libraryName = libraryData.getInternalName();
     final Library projectLib = modelsProvider.getLibraryByName(libraryName);
     if (projectLib == null) {
+      LibraryTable moduleLibraryTable = moduleRootModel.getModuleLibraryTable();
       return syncExistingLibraryDependency(modelsProvider, dependencyData, moduleLibraryTable.createLibrary(libraryName), moduleRootModel,
                                            module, null);
     }
@@ -221,8 +220,8 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
                                       @NotNull LibraryDependencyData dependencyData) {
     orderEntry.setExported(dependencyData.isExported());
     orderEntry.setScope(dependencyData.getScope());
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format(
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(String.format(
         "Configuring library '%s' of module '%s' to be%s exported and have scope %s",
         lib, module.getName(), dependencyData.isExported() ? " not" : "", dependencyData.getScope()
       ));

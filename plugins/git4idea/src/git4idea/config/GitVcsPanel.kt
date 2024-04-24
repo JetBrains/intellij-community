@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -260,8 +260,18 @@ internal class GitVcsPanel(private val project: Project) :
       checkBox(cdOverrideCredentialHelper)
     }
     if (isStashTabAvailable()) {
-      row {
-        checkBox(cdCombineStashesAndShelves)
+      group(message("settings.stash")) {
+        row {
+          checkBox(cdCombineStashesAndShelves)
+        }
+        buttonsGroup(message("settings.stash.show.diff.group")) {
+          row {
+            radioButton(message("settings.stash.show.diff.with.local"), true)
+          }
+          row {
+            radioButton(message("settings.stash.show.diff.with.head"), false)
+          }
+        }.bind({ applicationSettings.isCompareWithLocalInStashesEnabled }, { applicationSettings.isCompareWithLocalInStashesEnabled = it })
       }
     }
     for (configurable in configurables) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -253,9 +253,8 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
     }
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.surround.resource.with.ARM.block");
   }
 
@@ -293,9 +292,8 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
       return elements.length == 1 && (findExpression(elements[0]) != null || findVariable(elements[0]) != null);
     }
 
-    @Nullable
     @Override
-    public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements) {
+    public @Nullable TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements) {
       if (elements.length == 1) {
         ActionContext context = ActionContext.from(editor, elements[0].getContainingFile());
         ModCommand command = new SurroundAutoCloseableAction().perform(context, elements[0]);

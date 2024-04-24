@@ -324,7 +324,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     AddAction() {
       super(IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.text.add"),
             IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.description.add"), AllIcons.General.Add);
-      registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
+      registerCustomShortcutSet(CommonShortcuts.getInsert(), myTree);
     }
 
     @Override

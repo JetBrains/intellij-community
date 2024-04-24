@@ -9,6 +9,7 @@
 
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
             implementation="org.jetbrains.kotlin.idea.maven.MavenFailedToDownloadSuggestedSolutionsContributorImpl"/>
+    <buildSystemDependencyManager implementation="org.jetbrains.kotlin.idea.maven.MavenKotlinBuildSystemDependencyManager"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">

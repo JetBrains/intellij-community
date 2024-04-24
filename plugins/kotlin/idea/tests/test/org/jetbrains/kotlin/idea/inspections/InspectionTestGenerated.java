@@ -88,11 +88,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/arrayInDataClass/inspectionData/inspections.test");
         }
 
-        @TestMetadata("canBeParameter/inspectionData/inspections.test")
-        public void testCanBeParameter_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/canBeParameter/inspectionData/inspections.test");
-        }
-
         @TestMetadata("canBePrimaryConstructorProperty/inspectionData/inspections.test")
         public void testCanBePrimaryConstructorProperty_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/canBePrimaryConstructorProperty/inspectionData/inspections.test");

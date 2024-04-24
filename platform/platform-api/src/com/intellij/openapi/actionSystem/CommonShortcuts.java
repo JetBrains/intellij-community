@@ -28,6 +28,10 @@ public final class CommonShortcuts {
                                                                                             SystemInfo.isMac
                                                                                             ? InputEvent.META_DOWN_MASK
                                                                                             : InputEvent.CTRL_DOWN_MASK));
+  /**
+   * @deprecated use {@link #getInsert()} instead to support remote development and code-with-me scenarios
+   */
+  @Deprecated(forRemoval = true)
   public static final ShortcutSet INSERT = new CustomShortcutSet(getInsertKeystroke());
 
   /**
@@ -60,8 +64,8 @@ public final class CommonShortcuts {
   }
 
   public static KeyStroke getInsertKeystroke() {
-    return SystemInfo.isMac ? KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK)
-                              : KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0);
+    return ClientSystemInfo.isMac() ? KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_DOWN_MASK)
+                                    : KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0);
   }
 
   public static ShortcutSet getCopy() {
@@ -151,5 +155,9 @@ public final class CommonShortcuts {
   public static ShortcutSet getCtrlEnter() {
     return new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ClientSystemInfo.isMac() ? InputEvent.META_DOWN_MASK
                                                                                                     : InputEvent.CTRL_DOWN_MASK));
+  }
+
+  public static ShortcutSet getInsert() {
+    return new CustomShortcutSet(getInsertKeystroke());
   }
 }

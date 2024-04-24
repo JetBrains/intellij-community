@@ -22,6 +22,7 @@ FunctionBreakpoint created at functionBreakpoints.kt:82
 FunctionBreakpoint created at functionBreakpoints.kt:84
 FunctionBreakpoint created at functionBreakpoints.kt:86
 FunctionBreakpoint created at functionBreakpoints.kt:91
+FunctionBreakpoint created at functionBreakpoints.kt:113
 Run Java
 Connected to the target VM
 functionBreakpoints.kt:4
@@ -51,6 +52,7 @@ resuming functionBreakpoints.kt:96
 resuming functionBreakpoints.kt:100
 resuming functionBreakpoints.kt:104
 resuming functionBreakpoints.kt:108
+resuming functionBreakpoints.kt:113
 Disconnected from the target VM
 
 Process finished with exit code 0

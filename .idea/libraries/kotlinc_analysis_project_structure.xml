@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.analysis-project-structure" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-project-structure-for-ide:2.0.20-dev-1117">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-project-structure-for-ide:2.0.20-dev-1563">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/2.0.20-dev-1117/analysis-project-structure-for-ide-2.0.20-dev-1117.jar">
-          <sha256sum>8a4df5561d09e8e44f77c29e73ea388c189e8ffb3e5a6acfa75f3d157fc56504</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/2.0.20-dev-1563/analysis-project-structure-for-ide-2.0.20-dev-1563.jar">
+          <sha256sum>0396b372088d03dff60b2a76bb8d3cb07757936e15c230abdf21dca17f43332d</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/2.0.20-dev-1117/analysis-project-structure-for-ide-2.0.20-dev-1117.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/2.0.20-dev-1563/analysis-project-structure-for-ide-2.0.20-dev-1563.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/2.0.20-dev-1117/analysis-project-structure-for-ide-2.0.20-dev-1117-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/2.0.20-dev-1563/analysis-project-structure-for-ide-2.0.20-dev-1563-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

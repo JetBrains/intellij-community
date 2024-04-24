@@ -41,4 +41,9 @@
   </action>
   <action id="ActivateUnitTestsToolWindow"/>
   <action id="ActivateNuGetToolWindow"/>
+  <action id="SurroundWith">
+    <keyboard-shortcut first-keystroke="control alt shift B"/>
+    <!--leaving "Ctrl+Alt+T' on this action for users who might have disabled the default OS Terminal shortcut in favor of the IDE-->
+    <keyboard-shortcut first-keystroke="control alt T"/>
+  </action>
 </keymap>

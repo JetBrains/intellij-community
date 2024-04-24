@@ -46,12 +46,17 @@ public class JmxCallHandler implements InvocationHandler {
     }
 
     if (this.currentConnector == null) {
+      ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
       try {
+        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
         this.currentConnector = getConnector();
       }
       catch (IOException e) {
         this.currentConnector = null;
         throw new JmxCallException("Unable to connect to JMX host", e);
+      }
+      finally {
+        Thread.currentThread().setContextClassLoader(originalClassLoader);
       }
     }
 

@@ -7,4 +7,5 @@ fun foo(x : String, y : String.() -> Unit) {
 
 private fun function(y: String.() -> Unit) = y
 
+// KT-67620
 // IGNORE_K2

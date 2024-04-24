@@ -369,7 +369,7 @@ public final class XmlUtil {
 
         processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), element -> {
           if (element instanceof XmlTag tag1) {
-            final @NonNls String s = ((XmlTag)element).getLocalName();
+            final @NonNls String s = tag1.getLocalName();
 
             if ((s.equals(XSD_SIMPLE_CONTENT_TAG) ||
                  s.equals("restriction") && "string".equals(findLocalNameByQualifiedName(tag1.getAttributeValue("base")))) &&

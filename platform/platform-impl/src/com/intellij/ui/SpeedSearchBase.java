@@ -11,11 +11,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.ToolWindow;
@@ -47,11 +51,9 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.font.TextHitInfo;
 import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.text.AttributedCharacterIterator;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
@@ -200,7 +202,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       public @NotNull ActionUpdateThread getActionUpdateThread() {
         return ActionUpdateThread.EDT;
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString(ClientSystemInfo.isMac() ? "meta BACK_SPACE" : "control BACK_SPACE"),
+                                myComponent);
 
     ActionManager.getInstance().getAction(SpeedSearchAction.ID).registerCustomShortcutSet(myComponent, null);
 

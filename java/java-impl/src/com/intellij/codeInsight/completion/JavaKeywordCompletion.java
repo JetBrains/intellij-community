@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SealedUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -246,8 +247,7 @@ public class JavaKeywordCompletion {
     }
   }
 
-  @NotNull
-  private LookupElement createReturnKeyword() {
+  private @NotNull LookupElement createReturnKeyword() {
     TailType returnTail = getReturnTail(myPosition);
     LookupElement ret = createKeyword(PsiKeyword.RETURN);
     if (returnTail != TailTypes.noneType()) {
@@ -554,8 +554,7 @@ public class JavaKeywordCompletion {
     addSealedHierarchyCases(selectorType, containedLabels);
   }
 
-  @NotNull
-  private static Set<String> getSwitchCoveredLabels(@Nullable PsiSwitchBlock block, PsiElement position) {
+  private static @NotNull Set<String> getSwitchCoveredLabels(@Nullable PsiSwitchBlock block, PsiElement position) {
     HashSet<String> labels = new HashSet<>();
     if (block == null) {
       return labels;
@@ -687,8 +686,7 @@ public class JavaKeywordCompletion {
     }
   }
 
-  @NotNull
-  private static LookupElement prioritizeForRule(@NotNull LookupElement decorator, @Nullable PsiSwitchBlock switchBlock) {
+  private static @NotNull LookupElement prioritizeForRule(@NotNull LookupElement decorator, @Nullable PsiSwitchBlock switchBlock) {
     if (switchBlock == null) {
       return decorator;
     }
@@ -817,7 +815,14 @@ public class JavaKeywordCompletion {
     if (!(file instanceof PsiExpressionCodeFragment) &&
         !(file instanceof PsiJavaCodeReferenceCodeFragment) &&
         !(file instanceof PsiTypeCodeFragment)) {
-      if (myPrevLeaf == null) {
+      PsiMember parentMember = PsiTreeUtil.getParentOfType(myPosition, PsiMember.class);
+      boolean bogusDeclarationInImplicitClass =
+        parentMember instanceof PsiField field &&
+        field.getParent() instanceof PsiImplicitClass implicitClass &&
+        StreamEx.of(implicitClass.getChildren()).select(PsiMember.class).findFirst().orElse(null) == field;
+      if (myPrevLeaf == null ||
+          bogusDeclarationInImplicitClass && file instanceof PsiJavaFile javaFile && javaFile.getPackageStatement() == null &&
+          javaFile.getImportList() != null && javaFile.getImportList().getAllImportStatements().length == 0) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.PACKAGE), TailTypes.humbleSpaceBeforeWordType()));
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
       }
@@ -825,7 +830,7 @@ public class JavaKeywordCompletion {
                && PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.PACKAGE), TailTypes.humbleSpaceBeforeWordType()));
       }
-      else if (isEndOfBlock(myPosition) && PsiTreeUtil.getParentOfType(myPosition, PsiMember.class) == null) {
+      else if (isEndOfBlock(myPosition) && (parentMember == null || bogusDeclarationInImplicitClass)) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
       }
     }
@@ -920,8 +925,7 @@ public class JavaKeywordCompletion {
     }
   }
 
-  @NotNull
-  private LookupElement createTypeDeclaration(String keyword, String className) {
+  private @NotNull LookupElement createTypeDeclaration(String keyword, String className) {
     LookupElement element;
     PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(PsiTreeUtil.nextLeaf(myPosition));
     IElementType nextToken;
@@ -969,8 +973,7 @@ public class JavaKeywordCompletion {
     return element;
   }
 
-  @Nullable
-  private String recommendClassName() {
+  private @Nullable String recommendClassName() {
     if (myPrevLeaf == null) return null;
     if (!myPrevLeaf.textMatches(PsiKeyword.PUBLIC) || !(myPrevLeaf.getParent() instanceof PsiModifierList)) return null;
 
@@ -997,8 +1000,7 @@ public class JavaKeywordCompletion {
     return PsiTreeUtil.skipWhitespacesAndCommentsForward(grandParent) instanceof PsiIdentifier;
   }
 
-  @Nullable
-  private static PsiJavaFile getFileForDeclaration(@NotNull PsiElement elementBeforeName) {
+  private static @Nullable PsiJavaFile getFileForDeclaration(@NotNull PsiElement elementBeforeName) {
     PsiElement parent = elementBeforeName.getParent();
     if (parent == null) return null;
     PsiElement grandParent = parent.getParent();
@@ -1162,6 +1164,10 @@ public class JavaKeywordCompletion {
     if (AFTER_DOT.accepts(position) ||
         psiElement().inside(psiAnnotation()).accepts(position) && !expectsClassLiteral(position)) {
       return;
+    }
+
+    if (JavaPatternCompletionUtil.insideDeconstructionList(position)) {
+      JavaPatternCompletionUtil.suggestPrimitivesInsideDeconstructionListPattern(position, result);
     }
 
     boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position) &&

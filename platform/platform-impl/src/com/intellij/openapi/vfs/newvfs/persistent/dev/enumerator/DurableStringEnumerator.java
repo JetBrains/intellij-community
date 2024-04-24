@@ -1,14 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSAsyncTaskExecutor;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
+import com.intellij.platform.util.io.storages.enumerator.DurableEnumerator;
 import com.intellij.util.io.*;
-import com.intellij.util.io.dev.StorageFactory;
-import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
-import com.intellij.util.io.dev.intmultimaps.Int2IntMultimap;
+import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
+import com.intellij.platform.util.io.storages.intmultimaps.Int2IntMultimap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Uses append-only log to store strings, and in-memory Map[string.hash->id*].
  * Suitable for moderately big enumerators that are used very intensively, so
  * increased heap consumption pays off. For general cases use {@link DurableEnumerator}
+ *
+ * TODO RC: move it to platform.util.storages as soon, as VFSAsyncTaskExecutor will be moved to some shared util package/moduel
  */
 @ApiStatus.Internal
 public final class DurableStringEnumerator implements DurableDataEnumerator<String>,

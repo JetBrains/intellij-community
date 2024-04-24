@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
@@ -490,7 +491,7 @@ public abstract class GitHandler {
     executionEnvironment.putAll(myCustomEnv);
     executionEnvironment.put(GitCommand.IJ_HANDLER_MARKER_ENV, "true");
 
-    if (!shouldSuppressReadLocks()) {
+    if (!shouldSuppressReadLocks() && Registry.is("git.use.env.from.project.context")) {
       VcsEnvCustomizer.EP_NAME.forEachExtensionSafe(customizer -> {
         customizer.customizeCommandAndEnvironment(myProject, executionEnvironment, myExecutableContext);
       });

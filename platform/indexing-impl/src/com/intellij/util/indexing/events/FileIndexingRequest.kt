@@ -25,7 +25,7 @@ class FileIndexingRequest private constructor(
     @JvmStatic
     fun deleteRequest(file: VirtualFile): FileIndexingRequest {
       LOG.assertTrue(file is VirtualFileWithId, "Not a VirtualFileWithId: $file")
-      return FileIndexingRequest(isDeleteRequest = false, file)
+      return FileIndexingRequest(isDeleteRequest = true, file)
     }
   }
 }

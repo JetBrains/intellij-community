@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -29,10 +29,10 @@ import java.util.function.Supplier;
 
 public final class JavaConstructorCallElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   private static final Key<JavaConstructorCallElement> WRAPPING_CONSTRUCTOR_CALL = Key.create("WRAPPING_CONSTRUCTOR_CALL");
-  @NotNull private final PsiMethod myConstructor;
-  @NotNull private final PsiClassType myType;
-  @NotNull private final PsiSubstitutor mySubstitutor;
-  @Nullable private final Arguments myArguments;
+  private final @NotNull PsiMethod myConstructor;
+  private final @NotNull PsiClassType myType;
+  private final @NotNull PsiSubstitutor mySubstitutor;
+  private final @Nullable Arguments myArguments;
   
   private record Arguments(String canonical, String presentation) {}
 
@@ -105,9 +105,8 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
     }
   }
 
-  @NotNull
   @Override
-  public PsiMethod getObject() {
+  public @NotNull PsiMethod getObject() {
     return myConstructor;
   }
 
@@ -126,9 +125,8 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
     return 31 * super.hashCode() + myConstructor.hashCode();
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return myType;
   }
 
@@ -154,8 +152,7 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
     presentation.appendTailText(tailText.substring(genericsEnd), true);
   }
 
-  @NotNull
-  public PsiClass getConstructedClass() {
+  public @NotNull PsiClass getConstructedClass() {
     PsiClass aClass = myConstructor.getContainingClass();
     if (aClass == null) {
       PsiUtilCore.ensureValid(myConstructor);
@@ -198,8 +195,7 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
     });
   }
 
-  @Nullable
-  static PsiMethod extractCalledConstructor(@NotNull LookupElement element) {
+  static @Nullable PsiMethod extractCalledConstructor(@NotNull LookupElement element) {
     JavaConstructorCallElement callItem = element.getUserData(WRAPPING_CONSTRUCTOR_CALL);
     return callItem != null ? callItem.getObject() : null;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.ASTNode;
@@ -32,8 +32,7 @@ public final class CommentFoldingUtil {
    * @param processedComments  already processed comments
    * @param isCustomRegionFunc determines whether element contains custom region tag
    */
-  @Nullable
-  public static FoldingDescriptor getCommentDescriptor(@NotNull PsiComment comment,
+  public static @Nullable FoldingDescriptor getCommentDescriptor(@NotNull PsiComment comment,
                                                        @NotNull Document document,
                                                        @NotNull Set<? super PsiElement> processedComments,
                                                        @NotNull Predicate<? super PsiElement> isCustomRegionFunc,
@@ -55,11 +54,10 @@ public final class CommentFoldingUtil {
     return new FoldingDescriptor(comment.getNode(), commentRange, null, placeholder, isCollapse, Collections.emptySet());
   }
 
-  @Nullable
-  private static TextRange getCommentRange(@NotNull PsiComment comment,
-                                           @NotNull Set<? super PsiElement> processedComments,
-                                           @NotNull Predicate<? super PsiElement> isCustomRegionFunc,
-                                           @NotNull CodeDocumentationAwareCommenter docCommenter) {
+  private static @Nullable TextRange getCommentRange(@NotNull PsiComment comment,
+                                                     @NotNull Set<? super PsiElement> processedComments,
+                                                     @NotNull Predicate<? super PsiElement> isCustomRegionFunc,
+                                                     @NotNull CodeDocumentationAwareCommenter docCommenter) {
     final IElementType commentType = comment.getTokenType();
     if (commentType == docCommenter.getDocumentationCommentTokenType() || commentType == docCommenter.getBlockCommentTokenType()) {
       return comment.getTextRange();
@@ -83,8 +81,7 @@ public final class CommentFoldingUtil {
    *                          we want to create fold region during the first comment processing, put second comment to it and
    *                          skip processing when current method is called for the second element
    */
-  @Nullable
-  private static TextRange getOneLineCommentRange(@NotNull PsiComment startComment,
+  private static @Nullable TextRange getOneLineCommentRange(@NotNull PsiComment startComment,
                                                   @NotNull Set<? super PsiElement> processedComments,
                                                   @NotNull Predicate<? super PsiElement> isCustomRegionFunc,
                                                   @NotNull CodeDocumentationAwareCommenter docCommenter) {
@@ -125,8 +122,7 @@ public final class CommentFoldingUtil {
    * @param commentType  type of comment
    * @param commentRange text range of comment
    */
-  @Nullable
-  public static String getCommentPlaceholder(@NotNull Document document,
+  public static @Nullable String getCommentPlaceholder(@NotNull Document document,
                                              @NotNull IElementType commentType,
                                              @NotNull TextRange commentRange) {
     return getCommentPlaceholder(document, commentType, commentRange, "...");
@@ -141,8 +137,7 @@ public final class CommentFoldingUtil {
    * @param commentRange text range of comment
    * @param replacement  replacement for comment content. included in placeholder
    */
-  @Nullable
-  public static String getCommentPlaceholder(@NotNull Document document,
+  public static @Nullable String getCommentPlaceholder(@NotNull Document document,
                                              @NotNull IElementType commentType,
                                              @NotNull TextRange commentRange,
                                              @NotNull String replacement) {
@@ -168,11 +163,10 @@ public final class CommentFoldingUtil {
     return placeholder;
   }
 
-  @Nullable
-  private static String getDocCommentPlaceholderText(@NotNull Document document,
-                                                     @NotNull CodeDocumentationAwareCommenter commenter,
-                                                     @NotNull TextRange commentRange,
-                                                     @NotNull String replacement) {
+  private static @Nullable String getDocCommentPlaceholderText(@NotNull Document document,
+                                                               @NotNull CodeDocumentationAwareCommenter commenter,
+                                                               @NotNull TextRange commentRange,
+                                                               @NotNull String replacement) {
     final String prefix = commenter.getDocumentationCommentPrefix();
     final String suffix = commenter.getDocumentationCommentSuffix();
     final String linePrefix = commenter.getDocumentationCommentLinePrefix();
@@ -186,8 +180,7 @@ public final class CommentFoldingUtil {
     return getCommentPlaceholder(prefix, suffix, header, replacement);
   }
 
-  @Nullable
-  private static String getMultilineCommentPlaceholderText(@NotNull Commenter commenter, @NotNull String replacement) {
+  private static @Nullable String getMultilineCommentPlaceholderText(@NotNull Commenter commenter, @NotNull String replacement) {
     final String prefix = commenter.getBlockCommentPrefix();
     final String suffix = commenter.getBlockCommentSuffix();
 
@@ -196,8 +189,7 @@ public final class CommentFoldingUtil {
     return getCommentPlaceholder(prefix, suffix, null, replacement);
   }
 
-  @Nullable
-  private static String getLineCommentPlaceholderText(@NotNull Commenter commenter, @NotNull String replacement) {
+  private static @Nullable String getLineCommentPlaceholderText(@NotNull Commenter commenter, @NotNull String replacement) {
     final String prefix = commenter.getLineCommentPrefix();
 
     if (prefix == null) return null;
@@ -211,8 +203,7 @@ public final class CommentFoldingUtil {
    * @param text        part of comment content to include in placeholder
    * @param replacement replacement for the rest of comment content
    */
-  @NotNull
-  public static String getCommentPlaceholder(@NotNull String prefix,
+  public static @NotNull String getCommentPlaceholder(@NotNull String prefix,
                                              @Nullable String suffix,
                                              @Nullable String text,
                                              @NotNull String replacement) {
@@ -241,8 +232,7 @@ public final class CommentFoldingUtil {
    * @param linePrefix    prefix for doc comment line
    * @param commentRange  comment text range in document
    */
-  @NotNull
-  public static String getCommentHeader(@NotNull Document document,
+  public static @NotNull String getCommentHeader(@NotNull Document document,
                                         @NotNull String commentSuffix,
                                         @NotNull String commentPrefix,
                                         @NotNull String linePrefix,
@@ -266,8 +256,7 @@ public final class CommentFoldingUtil {
    * @param linePrefix    prefix for doc comment line
    * @param commentRange  comment text range in document
    */
-  @NotNull
-  public static String getCommentText(@NotNull Document document,
+  public static @NotNull String getCommentText(@NotNull Document document,
                                       @NotNull String commentSuffix,
                                       @NotNull String commentPrefix,
                                       @NotNull String linePrefix,
@@ -282,22 +271,20 @@ public final class CommentFoldingUtil {
     return sb.toString();
   }
 
-  @NotNull
   @Contract("_, _ -> new")
-  private static TextRange getLineRange(@NotNull Document document, int nLine) {
+  private static @NotNull TextRange getLineRange(@NotNull Document document, int nLine) {
     int startOffset = document.getLineStartOffset(nLine);
     int endOffset = document.getLineEndOffset(nLine);
     return new TextRange(startOffset, endOffset);
   }
 
-  @Nullable
-  private static String getCommentLine(int lineOffset,
-                                       int nFirstCommentLine,
-                                       @NotNull Document document,
-                                       @NotNull String commentSuffix,
-                                       @NotNull String commentPrefix,
-                                       @NotNull String linePrefix,
-                                       @NotNull TextRange commentRange) {
+  private static @Nullable String getCommentLine(int lineOffset,
+                                                 int nFirstCommentLine,
+                                                 @NotNull Document document,
+                                                 @NotNull String commentSuffix,
+                                                 @NotNull String commentPrefix,
+                                                 @NotNull String linePrefix,
+                                                 @NotNull TextRange commentRange) {
     if (lineOffset == 0) {
       final TextRange lineRange = getLineRange(document, nFirstCommentLine);
       return getCommentLine(document, lineRange, commentRange, commentPrefix, commentSuffix);
@@ -311,12 +298,11 @@ public final class CommentFoldingUtil {
     return getCommentLine(document, lineRange, commentRange, linePrefix, commentSuffix);
   }
 
-  @NotNull
-  private static String getCommentLine(@NotNull Document document,
-                                       @NotNull TextRange lineRange,
-                                       @NotNull TextRange commentRange,
-                                       @NotNull String prefix,
-                                       @NotNull String suffix) {
+  private static @NotNull String getCommentLine(@NotNull Document document,
+                                                @NotNull TextRange lineRange,
+                                                @NotNull TextRange commentRange,
+                                                @NotNull String prefix,
+                                                @NotNull String suffix) {
     int startOffset = Math.max(lineRange.getStartOffset(), commentRange.getStartOffset());
     int endOffset = Math.min(lineRange.getEndOffset(), commentRange.getEndOffset());
 

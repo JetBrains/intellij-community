@@ -6,7 +6,6 @@ import com.intellij.util.messages.Topic
 @JvmDefaultWithCompatibility
 interface GHPRDataOperationsListener {
 
-  fun onStateChanged() {}
   fun onMetadataChanged() {}
   fun onCommentAdded() {}
   fun onCommentUpdated(commentId: String, newBody: String) {}

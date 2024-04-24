@@ -302,10 +302,13 @@ class JarPackager private constructor(
           continue
         }
 
+        val descriptor = readXmlAsModel(context.findFileInModuleSources(moduleName, "$moduleName.xml")!!)
+
         computeSourcesForModule(
           item = ModuleItem(
             moduleName = moduleName,
-            relativeOutputFile = layout.getMainJarName(),
+            // relative path with `/` is always packed by dev-mode, so, we don't need to fix resolving for now and can imporove it later
+            relativeOutputFile = if (descriptor.getAttributeValue("package") == null) "modules/$moduleName.jar" else layout.getMainJarName(),
             reason = "<- ${layout.mainModule} (plugin content)",
           ),
           moduleOutputPatcher = moduleOutputPatcher,

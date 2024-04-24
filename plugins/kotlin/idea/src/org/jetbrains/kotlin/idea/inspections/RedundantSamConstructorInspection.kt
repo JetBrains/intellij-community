@@ -6,6 +6,7 @@ import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.codegen.SamCodegenUtil
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -25,7 +26,6 @@ import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.resolve.BindingContext

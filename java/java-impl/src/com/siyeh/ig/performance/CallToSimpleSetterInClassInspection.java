@@ -60,14 +60,12 @@ public final class CallToSimpleSetterInClassInspection extends BaseInspection im
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "CallToSimpleSetterFromWithinClass";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("call.to.simple.setter.in.class.problem.descriptor");
   }
 

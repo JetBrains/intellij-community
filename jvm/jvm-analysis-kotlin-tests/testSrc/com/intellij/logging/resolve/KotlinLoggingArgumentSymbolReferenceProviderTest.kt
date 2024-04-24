@@ -482,4 +482,64 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       """.trimIndent())
     doTest(emptyMap())
   }
+
+  fun `test should resolve with escape character in simple string log4j2`() {
+    myFixture.configureByText("Logging.kt", """
+      import org.apache.logging.log4j.*
+      class Logging {
+        val LOG: Logger = LoggerFactory.getLogger(Logging.class)
+        fun m(i: Int) {
+          LOG.info("\\{<caret>}", i)
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(3, 5) to "i"))
+  }
+
+
+  fun `test should resolve with escape character in multiline string log4j2`() {
+    val multilineString = "\"\"\"\n" +
+                          "\\\\{<caret>}" +
+                          "\"\"\""
+    myFixture.configureByText("Logging.kt", """
+      import org.apache.logging.log4j.*
+      class Logging {
+        val LOG: Logger = LoggerFactory.getLogger(Logging.class)
+        fun m(i: Int) {
+          LOG.info("$multilineString", i)
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(7, 9) to "i"))
+  }
+
+  fun `test should not resolve with escape character in simple string slf4j`() {
+    myFixture.configureByText("Logging.kt", """
+      import org.slf4j.*
+      class Logging {
+        val LOG: Logger = LogManager.getFormatterLogger()
+        fun m(i: Int) {
+          LOG.info("\\{<caret>}", i)
+        }
+     }
+      """.trimIndent())
+    doTest(emptyMap())
+  }
+
+
+  fun `test should resolve with escape character in multiline string slf4j`() {
+    val multilineString = "\"\"\"\n" +
+                          "\\\\{<caret>}" +
+                          "\"\"\""
+    myFixture.configureByText("Logging.kt", """
+      import org.slf4j.*
+      class Logging {
+        val LOG: Logger = LoggerFactory.getLogger(Logging.class)
+        fun m(i: Int) {
+          LOG.info("$multilineString", i)
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(7, 9) to "i"))
+  }
 }

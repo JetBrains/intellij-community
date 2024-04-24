@@ -67,7 +67,7 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
       true
     ).apply {
-      setMinimumSize(JBDimension(270, 1))
+      setMinimumSize(JBDimension(300, 1))
     }
 
   private fun createActionGroup(): ActionGroup {

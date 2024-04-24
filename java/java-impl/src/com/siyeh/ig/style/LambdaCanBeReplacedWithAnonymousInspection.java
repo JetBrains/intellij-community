@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -33,9 +33,8 @@ import java.util.Set;
 public final class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
   private static final Logger LOG = Logger.getInstance(LambdaCanBeReplacedWithAnonymousInspection.class);
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return getDisplayName();
   }
 
@@ -49,9 +48,8 @@ public final class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspec
     return new LambdaToAnonymousVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new LambdaToAnonymousFix();
   }
 
@@ -225,10 +223,8 @@ public final class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspec
   }
 
   private static class LambdaToAnonymousFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("lambda.can.be.replaced.with.anonymous.quickfix");
     }
 

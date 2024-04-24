@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
@@ -37,9 +37,8 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
     }
   }
 
-  @Nullable
   @Override
-  protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull final PsiClass containingClass, boolean shouldImport) {
+  protected @Nullable LookupElement createLookupElement(@NotNull PsiMember member, final @NotNull PsiClass containingClass, boolean shouldImport) {
     shouldImport |= myOriginalPosition != null && PsiTreeUtil.isAncestor(containingClass, myOriginalPosition, false);
 
     if (!PsiNameHelper.getInstance(member.getProject()).isIdentifier(member.getName(), PsiUtil.getLanguageLevel(getPosition()))) {
@@ -82,8 +81,7 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
     return element;
   }
 
-  @NotNull
-  protected JavaMethodCallElement getMethodCallElement(boolean shouldImport, List<? extends PsiMethod> members) {
+  protected @NotNull JavaMethodCallElement getMethodCallElement(boolean shouldImport, List<? extends PsiMethod> members) {
     return new GlobalMethodCallElement(members.get(0), shouldImport, members.size()>1);
   }
 

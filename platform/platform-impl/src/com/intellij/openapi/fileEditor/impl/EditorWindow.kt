@@ -174,7 +174,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
    * For example, if a context menu is shown currently for some tab, the composite for which a menu is invoked will be returned
    */
   fun getContextComposite(): EditorComposite? {
-    return (tabbedPane.tabs.targetInfo?.component as? EditorWindowTopComponent)?.composite
+    return getSelectedComposite(false)
   }
 
   val allComposites: List<EditorComposite>

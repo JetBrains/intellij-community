@@ -3,8 +3,13 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.*;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,11 +17,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class MoveMembersIntoClassFix implements ModCommandAction {
-  private final SmartPsiElementPointer<PsiImplicitClass> myImplicitClass;
-
+public class MoveMembersIntoClassFix extends PsiBasedModCommandAction<PsiImplicitClass> {
   public MoveMembersIntoClassFix(PsiImplicitClass implicitClass) {
-    myImplicitClass = SmartPointerManager.createPointer(implicitClass);
+    super(implicitClass);
   }
 
   @Override
@@ -25,19 +28,18 @@ public class MoveMembersIntoClassFix implements ModCommandAction {
   }
 
   @Override
-  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
-    return Presentation.of(JavaAnalysisBundle.message("intention.family.name.move.members.into.class"));
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiImplicitClass implicitClass) {
+    long count = StreamEx.of(implicitClass.getChildren()).select(PsiMember.class)
+      .remove(PsiClass.class::isInstance).count();
+    if (count == 0) return null;
+    return Presentation.of(JavaAnalysisBundle.message("intention.name.move.members.into.class", count));
   }
 
   @Override
-  public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    PsiImplicitClass implicitClass = myImplicitClass.getElement();
-    if (implicitClass == null) return ModCommand.nop();
-    PsiClass[] innerClasses = implicitClass.getInnerClasses();
-
-    List<? extends ModCommandAction> actionsPerClass = Arrays.stream(innerClasses).map(MoveAllMembersToParticularClassAction::new).toList();
-
-    return ModCommand.chooseAction(JavaAnalysisBundle.message("chooser.popup.title.select.class.to.move.members.to"), actionsPerClass);
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiImplicitClass implicitClass) {
+    return ModCommand.chooseAction(
+      JavaAnalysisBundle.message("chooser.popup.title.select.class.to.move.members.to"),
+      ContainerUtil.map(implicitClass.getInnerClasses(), MoveAllMembersToParticularClassAction::new));
   }
 
   private static class MoveAllMembersToParticularClassAction extends PsiUpdateModCommandAction<PsiClass> {

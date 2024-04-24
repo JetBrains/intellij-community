@@ -34,7 +34,7 @@ class AssertTrueOrFalsePredicate implements PsiElementPredicate {
       return false;
     }
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     if (!"assertTrue".equals(methodName) && !"assertFalse".equals(methodName)) {
       return false;
     }

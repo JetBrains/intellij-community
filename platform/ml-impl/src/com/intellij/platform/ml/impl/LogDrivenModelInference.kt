@@ -125,7 +125,7 @@ open class LogDrivenModelInference<M : MLModel<P>, P : Any>(
   }
 
   open class Builder<M : MLModel<P>, P : Any>(
-    override val task: MLTask<P>,
+    final override val task: MLTask<P>,
     private val details: SessionDetails.Builder<M, P>,
   ) : MLTaskApproachBuilder<P> {
     final override fun buildApproach(apiPlatform: MLApiPlatform): MLTaskApproach<P> {
@@ -202,7 +202,7 @@ open class LogDrivenModelInference<M : MLModel<P>, P : Any>(
     var sessionListener: MLSessionListener<M, P>? = null
 
     val analyseThenLogStructure = SessionTreeHandler<DescribedRootContainer<M, P>, M, P> { treeRoot ->
-      sessionListener?.onSessionDescriptionFinished(treeRoot)
+      sessionListener?.onSessionFinishedSuccessfully(treeRoot)
     }
 
     val notUsedDescription = sessionDetails.getNotUsedDescription(callParameters, mlModel)

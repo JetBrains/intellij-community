@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -51,8 +51,7 @@ public class GenerateToStringWorker {
    * @throws GenerateCodeException       is thrown when there is an error generating the javacode.
    * @throws IncorrectOperationException is thrown by IDEA.
    */
-  @Nullable
-  private PsiMethod createToStringMethod(Collection<PsiMember> selectedMembers,
+  private @Nullable PsiMethod createToStringMethod(Collection<PsiMember> selectedMembers,
                                          ConflictResolutionPolicy policy,
                                          Map<String, String> params,
                                          TemplateResource template) throws IncorrectOperationException, GenerateCodeException {

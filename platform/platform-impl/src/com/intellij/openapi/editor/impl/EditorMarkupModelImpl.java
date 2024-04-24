@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -698,7 +698,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     int shift = 0;
     if (visualLine >= lineCount - 1) {
       CharSequence sequence = editor.getDocument().getCharsSequence();
-      shift = sequence.length() < 1 ? 0 : sequence.charAt(sequence.length() - 1) == '\n' ? 1 : 0;
+      shift = sequence.isEmpty() ? 0 : sequence.charAt(sequence.length() - 1) == '\n' ? 1 : 0;
     }
     return Math.max(0, Math.min(lineCount - shift, visualLine));
   }

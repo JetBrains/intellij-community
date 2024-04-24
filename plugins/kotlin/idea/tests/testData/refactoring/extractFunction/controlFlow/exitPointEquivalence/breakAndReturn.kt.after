@@ -17,5 +17,3 @@ private fun __dummyTestFun__(a: Int, b: Int) {
     println(a - b)
     return
 }
-
-// IGNORE_K2

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -11,7 +12,6 @@ import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
@@ -22,7 +22,8 @@ sealed interface MovePropertyToConstructorInfo {
     ) : MovePropertyToConstructorInfo {
         override fun toWritable(updater: ModPsiUpdater): MovePropertyToConstructorInfo =
             ReplacementParameter(
-                constructorParameterToReplace.dereference()?.let { updater.getWritable(it).createSmartPointer() } ?: constructorParameterToReplace,
+                constructorParameterToReplace.dereference()?.let { updater.getWritable(it).createSmartPointer() }
+                    ?: constructorParameterToReplace,
                 propertyAnnotationsText
             )
 

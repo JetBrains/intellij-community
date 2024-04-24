@@ -5,9 +5,8 @@ import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.UserDataHolderEx;
-import org.gradle.tooling.CancellationTokenSource;
+import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
@@ -41,13 +40,7 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   ProjectConnection getConnection();
 
   @NotNull
-  CancellationTokenSource getCancellationTokenSource();
-
-  boolean isCancellationRequested();
-
-  void cancel();
-
-  void checkCancelled() throws ProcessCanceledException;
+  CancellationToken getCancellationToken();
 
   @NotNull
   ExternalSystemTaskNotificationListener getListener();

@@ -6,7 +6,7 @@ import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
 
 internal class InstanceRegistrarImpl(
   private val debugString: String,
-  private val existingKeys: Set<String>,
+  private val existingKeys: Map<String, InstanceHolder>,
   private val completion: (Map<String, RegistrationAction>) -> UnregisterHandle?,
 ) : InstanceRegistrar {
 
@@ -28,12 +28,21 @@ internal class InstanceRegistrarImpl(
 
   override fun registerInitializer(keyClassName: String, initializer: InstanceInitializer) {
     val actions = actions()
-    if (keyClassName in existingKeys) {
-      throw InstanceAlreadyRegisteredException(keyClassName)
+    val existingHolder = existingKeys[keyClassName]
+    if (existingHolder != null) {
+      throw InstanceAlreadyRegisteredException(
+        keyClassName,
+        existingInstanceClassName = existingHolder.instanceClassName(),
+        newInstanceClassName = initializer.instanceClassName,
+      )
     }
-    when (actions[keyClassName]) {
+    when (val existingAction = actions[keyClassName]) {
       null -> actions[keyClassName] = RegistrationAction.Register(initializer)
-      is RegistrationAction.Register -> throw InstanceAlreadyRegisteredException(keyClassName)
+      is RegistrationAction.Register -> throw InstanceAlreadyRegisteredException(
+        keyClassName,
+        existingInstanceClassName = existingAction.initializer.instanceClassName,
+        newInstanceClassName = initializer.instanceClassName,
+      )
       is RegistrationAction.Override -> error("must not happen unless keyClassName is in existingKeys which is false") // sanity check
       RegistrationAction.Remove -> error("must not happen unless keyClassName is in existingKeys which is false") // sanity check
     }

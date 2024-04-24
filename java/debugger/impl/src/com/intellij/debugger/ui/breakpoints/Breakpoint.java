@@ -271,9 +271,9 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, @NotNull final SourcePosition classPosition) {
+    long startTimeNs = System.nanoTime();
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
     if (debugProcess.getVirtualMachineProxy().canBeModified() && !isObsolete()) {
-      long startTimeNs = System.nanoTime();
       List<ReferenceType> classes = debugProcess.getPositionManager().getAllClasses(classPosition);
       long timeMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNs);
       DebuggerStatistics.logBreakpointInstallSearchOverhead(this, timeMs);

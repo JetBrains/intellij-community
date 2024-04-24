@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
@@ -70,8 +70,7 @@ public final class InlineStreamMapAction extends PsiUpdateModCommandAction<PsiId
     return InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
   }
 
-  @Nullable
-  private static PsiMethodCallExpression getNextExpressionToMerge(PsiMethodCallExpression methodCallExpression) {
+  private static @Nullable PsiMethodCallExpression getNextExpressionToMerge(PsiMethodCallExpression methodCallExpression) {
     PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(methodCallExpression);
     if (nextCall == null) return null;
     String nextName = nextCall.getMethodExpression().getReferenceName();
@@ -94,8 +93,7 @@ public final class InlineStreamMapAction extends PsiUpdateModCommandAction<PsiId
    * @param nextCall next call (assumed to be in NEXT_METHODS)
    * @return a name of the resulting method
    */
-  @Nullable
-  private static String translateName(@NotNull PsiMethodCallExpression prevCall, @NotNull PsiMethodCallExpression nextCall) {
+  private static @Nullable String translateName(@NotNull PsiMethodCallExpression prevCall, @NotNull PsiMethodCallExpression nextCall) {
     PsiMethod nextMethod = nextCall.resolveMethod();
     if (nextMethod == null) return null;
     String nextName = nextMethod.getName();
@@ -136,8 +134,7 @@ public final class InlineStreamMapAction extends PsiUpdateModCommandAction<PsiId
   }
 
   @Contract(pure = true)
-  @Nullable
-  private static String mapToFlatMap(String mapMethod) {
+  private static @Nullable String mapToFlatMap(String mapMethod) {
     return switch (mapMethod) {
       case "map" -> "flatMap";
       case "mapToInt" -> "flatMapToInt";
@@ -150,8 +147,7 @@ public final class InlineStreamMapAction extends PsiUpdateModCommandAction<PsiId
   }
 
   @Contract(pure = true)
-  @NotNull
-  private static String translateMap(String nextMethod) {
+  private static @NotNull String translateMap(String nextMethod) {
     return switch (nextMethod) {
       case "boxed" -> "mapToObj";
       case "asLongStream" -> "mapToLong";
@@ -161,8 +157,7 @@ public final class InlineStreamMapAction extends PsiUpdateModCommandAction<PsiId
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.inline.map.family");
   }
 
@@ -226,8 +221,7 @@ public final class InlineStreamMapAction extends PsiUpdateModCommandAction<PsiId
     CodeStyleManager.getInstance(context.project()).reformat(lambda);
   }
 
-  @Nullable
-  private static PsiLambdaExpression getLambda(PsiMethodCallExpression call) {
+  private static @Nullable PsiLambdaExpression getLambda(PsiMethodCallExpression call) {
     PsiExpression[] expressions = call.getArgumentList().getExpressions();
     if(expressions.length == 1) {
       PsiExpression expression = expressions[0];

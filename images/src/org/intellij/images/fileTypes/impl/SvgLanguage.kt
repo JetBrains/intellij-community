@@ -9,7 +9,7 @@ import com.intellij.psi.impl.source.xml.XmlFileImpl
 import com.intellij.psi.tree.IFileElementType
 import org.jetbrains.annotations.NotNull
 
-class SvgLanguage : XMLLanguage(XMLLanguage.INSTANCE, "SVG", "image/svg+xml") {
+class SvgLanguage private constructor(): XMLLanguage(XMLLanguage.INSTANCE, "SVG", "image/svg+xml") {
   companion object {
     @JvmField
     val INSTANCE = SvgLanguage()

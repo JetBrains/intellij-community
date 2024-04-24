@@ -1,84 +1,137 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
-import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
-import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.ui.SimpleEventListener
+import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.util.CollectionDelta
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.util.EventDispatcher
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.messages.MessageBus
-import org.jetbrains.plugins.github.api.data.GHLabel
-import org.jetbrains.plugins.github.api.data.GHUser
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRDetailsService
-import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
-import java.util.concurrent.CompletableFuture
 
-class GHPRDetailsDataProviderImpl(private val detailsService: GHPRDetailsService,
-                                  private val pullRequestId: GHPRIdentifier,
-                                  private val messageBus: MessageBus)
-  : GHPRDetailsDataProvider, Disposable {
+internal class GHPRDetailsDataProviderImpl(parentCs: CoroutineScope,
+                                           private val detailsService: GHPRDetailsService,
+                                           private val pullRequestId: GHPRIdentifier,
+                                           private val messageBus: MessageBus)
+  : GHPRDetailsDataProvider {
+  private val cs = parentCs.childScope(classAsCoroutineName())
 
-  private val detailsLoadedEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
+  private val _loadedDetailsState = MutableStateFlow<GHPullRequest?>(null)
+  val loadedDetailsState = _loadedDetailsState.asStateFlow()
 
-  @Volatile
-  override var loadedDetails: GHPullRequest? = null
-    private set
+  override val loadedDetails: GHPullRequest?
+    get() = loadedDetailsState.value
 
-  private val detailsRequestValue = LazyCancellableBackgroundProcessValue.create { indicator ->
-    detailsService.loadDetails(indicator, pullRequestId).successOnEdt {
-      loadedDetails = it
-      detailsLoadedEventDispatcher.multicaster.eventOccurred()
-      it
+  override val stateChangeSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  private val detailsLoader = LoaderWithMutableCache(cs) { detailsService.loadDetails(pullRequestId) }
+  override val detailsNeedReloadSignal = detailsLoader.updatedSignal
+
+  override suspend fun loadDetails(): GHPullRequest = detailsLoader.load().also {
+    _loadedDetailsState.value = it
+  }
+
+  private val mergeabilityLoader = LoaderWithMutableCache(cs) { detailsService.loadMergeabilityState(pullRequestId) }
+  override val mergeabilityNeedsReloadSignal = mergeabilityLoader.updatedSignal
+
+  override suspend fun loadMergeabilityState(): GHPRMergeabilityState = mergeabilityLoader.load()
+
+  override suspend fun updateDetails(title: String?, description: String?): GHPullRequest {
+    val details = detailsService.updateDetails(pullRequestId, title, description)
+    withContext(NonCancellable) {
+      detailsLoader.overrideResult(details)
+      withContext(Dispatchers.Main) {
+        messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onMetadataChanged()
+      }
+    }
+    return details
+  }
+
+  override suspend fun adjustReviewers(delta: CollectionDelta<GHPullRequestRequestedReviewer>) {
+    try {
+      detailsService.adjustReviewers(pullRequestId, delta)
+    }
+    finally {
+      notifyNeedsReload(false)
     }
   }
 
-  override fun loadDetails(): CompletableFuture<GHPullRequest> = detailsRequestValue.value
-
-  override fun reloadDetails() = detailsRequestValue.drop()
-
-  override fun updateDetails(indicator: ProgressIndicator, title: String?, description: String?): CompletableFuture<GHPullRequest> {
-    val future = detailsService.updateDetails(indicator, pullRequestId, title, description).completionOnEdt {
-      messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onMetadataChanged()
+  override suspend fun close() =
+    try {
+      detailsService.close(pullRequestId)
     }
-    detailsRequestValue.overrideProcess(future.successOnEdt {
-      loadedDetails = it
-      detailsLoadedEventDispatcher.multicaster.eventOccurred()
-      it
-    })
-    return future
-  }
-
-  override fun adjustReviewers(indicator: ProgressIndicator,
-                               delta: CollectionDelta<GHPullRequestRequestedReviewer>): CompletableFuture<Unit> {
-    return detailsService.adjustReviewers(indicator, pullRequestId, delta).notify()
-  }
-
-  override fun adjustAssignees(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>): CompletableFuture<Unit> {
-    return detailsService.adjustAssignees(indicator, pullRequestId, delta).notify()
-  }
-
-  override fun adjustLabels(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>): CompletableFuture<Unit> {
-    return detailsService.adjustLabels(indicator, pullRequestId, delta).notify()
-  }
-
-  override fun addDetailsReloadListener(disposable: Disposable, listener: () -> Unit) =
-    detailsRequestValue.addDropEventListener(disposable, listener)
-
-  override fun addDetailsLoadedListener(disposable: Disposable, listener: () -> Unit) =
-    SimpleEventListener.addDisposableListener(detailsLoadedEventDispatcher, disposable, listener)
-
-  private fun <T> CompletableFuture<T>.notify(): CompletableFuture<T> =
-    completionOnEdt {
-      detailsRequestValue.drop()
-      messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onMetadataChanged()
+    finally {
+      notifyNeedsReload()
     }
 
-  override fun dispose() {
-    detailsRequestValue.drop()
+  override suspend fun reopen() =
+    try {
+      detailsService.reopen(pullRequestId)
+    }
+    finally {
+      notifyNeedsReload()
+    }
+
+  override suspend fun markReadyForReview() =
+    try {
+      detailsService.markReadyForReview(pullRequestId)
+    }
+    finally {
+      notifyNeedsReload()
+    }
+
+  override suspend fun merge(commitMessage: Pair<String, String>, currentHeadRef: String) =
+    try {
+      detailsService.merge(pullRequestId, commitMessage, currentHeadRef)
+    }
+    finally {
+      notifyNeedsReload()
+    }
+
+  override suspend fun rebaseMerge(currentHeadRef: String) =
+    try {
+      detailsService.rebaseMerge(pullRequestId, currentHeadRef)
+    }
+    finally {
+      notifyNeedsReload()
+    }
+
+  override suspend fun squashMerge(commitMessage: Pair<String, String>, currentHeadRef: String) =
+    try {
+      detailsService.squashMerge(pullRequestId, commitMessage, currentHeadRef)
+    }
+    finally {
+      notifyNeedsReload()
+    }
+
+  private suspend fun notifyNeedsReload(state: Boolean = true) {
+    withContext(NonCancellable) {
+      signalDetailsNeedReload()
+      signalMergeabilityNeedsReload()
+      withContext(Dispatchers.Main) {
+        messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onMetadataChanged()
+      }
+      if (state) {
+        stateChangeSignal.tryEmit(Unit)
+      }
+    }
+  }
+
+  override suspend fun signalDetailsNeedReload() {
+    detailsLoader.clearCache()
+  }
+
+  override suspend fun signalMergeabilityNeedsReload() {
+    mergeabilityLoader.clearCache()
   }
 }

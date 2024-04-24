@@ -45,8 +45,7 @@ public final class UtilityClassInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "utility.class.problem.descriptor");
   }

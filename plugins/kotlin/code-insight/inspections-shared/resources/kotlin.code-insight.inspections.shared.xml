@@ -154,13 +154,14 @@
                      language="kotlin"
                      key="inspection.delegation.to.var.property.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.JavaIoSerializableObjectMustHaveReadResolveInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="inspection.java.io.serializable.object.must.have.read.resolve.display.name" bundle="messages.KotlinBundle"/>
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.JavaIoSerializableObjectMustHaveReadResolveInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+            enabledByDefault="true"
+            level="WARNING"
+            language="kotlin"
+            key="inspection.java.io.serializable.object.must.have.read.resolve.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KDocUnresolvedReferenceInspection"
                      groupPath="Kotlin"
@@ -331,6 +332,8 @@
                      language="kotlin"
                      key="inspection.redundant.labeled.return.on.last.expression.in.lambda.display.name" bundle="messages.KotlinBundle"/>
 
+    <codeInsight.unresolvedReferenceQuickFixProvider
+            implementation="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.libraries.AddKotlinCoroutinesQuickFixProvider"/>
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.InfixCallToOrdinaryInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.code.migration"

@@ -236,8 +236,8 @@ public class GroovyBlockGenerator {
 
     boolean classLevel = blockPsi instanceof GrTypeDefinitionBody;
     if (blockPsi instanceof GrClosableBlock closableBlock &&
-        ((GrClosableBlock)blockPsi).getArrow() != null &&
-        ((GrClosableBlock)blockPsi).getParameters().length > 0 &&
+        closableBlock.getArrow() != null &&
+        closableBlock.getParameters().length > 0 &&
         !getClosureBodyVisibleChildren(myNode).isEmpty()) {
 
       ArrayList<Block> blocks = new ArrayList<>();
@@ -748,7 +748,7 @@ public class GroovyBlockGenerator {
       if (myExpr.getLeftOperand() instanceof GrBinaryExpression) {
         addBinaryChildrenRecursively(myExpr.getLeftOperand(), list, getContinuationWithoutFirstIndent(), aligner);
       }
-      PsiElement op = ((GrBinaryExpression)elem).getOperationToken();
+      PsiElement op = myExpr.getOperationToken();
       for (ASTNode childNode : visibleChildren(elem.getNode())) {
         PsiElement psi = childNode.getPsi();
         if (!(psi instanceof GrBinaryExpression)) {

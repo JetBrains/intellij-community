@@ -32,6 +32,7 @@ public final class TestUtil {
   @NonNls public static final String MARKDOWN_SUBLIME = "markdown_sublime";
   @NonNls public static final String MARKDOWN_TEXTMATE = "markdown_textmate";
   @NonNls public static final String MARKDOWN_VSC = "markdown-basics";
+  @NonNls public static final String FSHARP = "fsharp";
   @NonNls public static final String LARAVEL_BLADE = "laravel-blade";
   @NonNls public static final String INVALID_BUNDLE = "invalid_bundle";
   @NonNls public static final String LATEX = "latex";

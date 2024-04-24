@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class RefactoringCompletionContributor extends CompletionContributor {
   @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet resultSet) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, final @NotNull CompletionResultSet resultSet) {
     if (parameters.getOriginalFile().getUserData(ClassNameReferenceEditor.CLASS_NAME_REFERENCE_FRAGMENT) == null) {
       return;
     }

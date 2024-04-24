@@ -685,7 +685,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     if (actionGroup != null) {
       List<AnAction> secondary = new ArrayList<>();
-      for (AnAction each : actionGroup.getChildren(null)) {
+      for (AnAction each : actionGroup.getChildren(ActionManager.getInstance())) {
         if (actionGroup.isPrimary(each)) {
           result.add(each);
         }

@@ -173,7 +173,7 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
     }, Collections.emptyList(), position);
   }
 
-  @NotNull
+  @Nullable
   public List<XStackFrame> createStackFrames(@NotNull StackFrameDescriptorImpl descriptor) {
     return iterate(positionManager -> {
       if (positionManager instanceof PositionManagerWithMultipleStackFrames positionManagerWithMultipleStackFrames) {
@@ -189,7 +189,7 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
         }
       }
       throw NoDataException.INSTANCE;
-    }, Collections.emptyList(), null, false);
+    }, null, null, false);
   }
 
   @Override

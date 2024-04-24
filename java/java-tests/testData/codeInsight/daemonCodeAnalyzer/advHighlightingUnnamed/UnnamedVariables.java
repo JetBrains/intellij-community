@@ -28,7 +28,7 @@ public class UnnamedVariables {
   void testLocal() {
     int _ = 10;
     int _ = 20;
-    int _<error descr="Brackets are not allowed after unnamed variable declaration ">[]</error> = {30};
+    int _<error descr="Brackets are not allowed after unnamed variable declaration">[]</error> = {30};
     int[] _ = {40};
     var _ = "string";
     for (int _ = 1;;) {}

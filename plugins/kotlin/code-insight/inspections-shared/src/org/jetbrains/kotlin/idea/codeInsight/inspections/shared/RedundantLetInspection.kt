@@ -32,8 +32,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
-private val KOTLIN_LET_FQ_NAME: FqName = StandardNames.BUILT_INS_PACKAGE_FQ_NAME
-    .child(Name.identifier("let"))
+private val KOTLIN_LET_FQ_NAME: FqName = StandardNames.BUILT_INS_PACKAGE_FQ_NAME + "let"
 
 internal sealed class RedundantLetInspection :
     KotlinApplicableInspectionBase.Simple<KtCallExpression, Unit>() {
@@ -146,7 +145,7 @@ internal class ComplexRedundantLetInspection : RedundantLetInspection() {
         if (destructuringDeclaration != null) return false
 
         val singleReferenceNotInsideInnerLambda = parameterReferences.singleOrNull()?.takeIf { reference ->
-            reference.parents.takeWhile { it != functionLiteral }.find { it is KtFunction } == null
+            reference.parents.takeWhile { it != functionLiteral }.none { it is KtFunction }
         }
         return singleReferenceNotInsideInnerLambda != null
     }

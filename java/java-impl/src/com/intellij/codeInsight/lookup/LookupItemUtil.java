@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
@@ -18,8 +18,7 @@ public final class LookupItemUtil {
    * @deprecated use {@link LookupElementBuilder}
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public static LookupElement objectToLookupItem(Object object) {
+  public static @NotNull LookupElement objectToLookupItem(Object object) {
     if (object instanceof LookupElement) return (LookupElement)object;
     if (object instanceof PsiClass) {
       return JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)object, true);

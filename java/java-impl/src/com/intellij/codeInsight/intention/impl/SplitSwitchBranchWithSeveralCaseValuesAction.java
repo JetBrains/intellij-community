@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
@@ -24,10 +24,8 @@ import static com.siyeh.ig.psiutils.ControlFlowUtils.statementMayCompleteNormall
 
 public final class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandAction {
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JavaBundle.message("intention.split.switch.branch.with.several.case.values.family");
   }
 
@@ -84,8 +82,7 @@ public final class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCo
   /**
    * Handle the case where the caret is on the right side of the element we're interested in
    */
-  @Nullable
-  private static PsiElement getPreviousElement(@NotNull ActionContext context, @NotNull PsiElement element) {
+  private static @Nullable PsiElement getPreviousElement(@NotNull ActionContext context, @NotNull PsiElement element) {
     int caretOffset = context.offset();
     int elementOffset = element.getTextRange().getStartOffset();
     if (caretOffset == elementOffset && caretOffset > 0) {
@@ -169,8 +166,7 @@ public final class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCo
     return labelElement != null && PsiTreeUtil.isAncestor(labelElementList, labelElement, true);
   }
 
-  @Nullable
-  private static PsiSwitchLabelStatementBase findLabelStatement(@NotNull ActionContext context, PsiElement element) {
+  private static @Nullable PsiSwitchLabelStatementBase findLabelStatement(@NotNull ActionContext context, PsiElement element) {
     PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     if (statement instanceof PsiSwitchLabelStatementBase labelStatement) {
       return labelStatement;
@@ -195,9 +191,8 @@ public final class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCo
     return branch.copyTo(anchor);
   }
 
-  @Nullable
-  private static PsiElement moveLabelElementAfter(@NotNull PsiSwitchLabelStatement labelStatement,
-                                                  @NotNull PsiCaseLabelElement labelElement) {
+  private static @Nullable PsiElement moveLabelElementAfter(@NotNull PsiSwitchLabelStatement labelStatement,
+                                                            @NotNull PsiCaseLabelElement labelElement) {
     Branch branch = Branch.fromLabel(labelStatement);
     if (branch == null) {
       return null;
@@ -207,8 +202,7 @@ public final class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCo
     return branch.copyTo(newLabel);
   }
 
-  @Nullable
-  private static PsiElement splitLabelValues(@NotNull PsiSwitchLabelStatement labelStatement) {
+  private static @Nullable PsiElement splitLabelValues(@NotNull PsiSwitchLabelStatement labelStatement) {
     Branch branch = Branch.fromLabel(labelStatement);
     if (branch == null) {
       return null;
@@ -266,8 +260,7 @@ public final class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCo
   }
 
   @Contract("null -> null")
-  @Nullable
-  static PsiStatement findLastStatementInBranch(@Nullable PsiElement label) {
+  static @Nullable PsiStatement findLastStatementInBranch(@Nullable PsiElement label) {
     PsiStatement lastStatement = null;
     for (PsiStatement statement = getNextSiblingOfType(label, PsiStatement.class);
          statement != null && !(statement instanceof PsiSwitchLabelStatement);
@@ -277,8 +270,7 @@ public final class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCo
     return lastStatement;
   }
 
-  @Nullable
-  private static PsiSwitchLabelStatement findLastSiblingLabel(@Nullable PsiStatement statement, boolean strict) {
+  private static @Nullable PsiSwitchLabelStatement findLastSiblingLabel(@Nullable PsiStatement statement, boolean strict) {
     PsiSwitchLabelStatement result = null;
     PsiStatement start = strict ? getNextSiblingOfType(statement, PsiStatement.class) : statement;
     for (PsiStatement next = start; next instanceof PsiSwitchLabelStatement; next = getNextSiblingOfType(next, PsiStatement.class)) {
@@ -305,8 +297,7 @@ public final class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCo
       myLBrace = lBrace;
     }
 
-    @Nullable
-    static Branch fromLabel(@NotNull PsiSwitchLabelStatement label) {
+    static @Nullable Branch fromLabel(@NotNull PsiSwitchLabelStatement label) {
       PsiCodeBlock codeBlock = ObjectUtils.tryCast(label.getParent(), PsiCodeBlock.class);
       if (codeBlock == null) {
         return null;

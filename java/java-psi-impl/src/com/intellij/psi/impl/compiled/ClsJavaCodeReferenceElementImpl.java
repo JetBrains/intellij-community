@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.project.Project;
@@ -85,14 +85,12 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myCanonicalText;
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText(boolean annotated, PsiAnnotation @Nullable [] annotations) {
+  public @NotNull String getCanonicalText(boolean annotated, PsiAnnotation @Nullable [] annotations) {
     String text = getCanonicalText();
     if (!annotated || annotations == null) return text;
 
@@ -184,8 +182,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+  public @NotNull JavaResolveResult advancedResolve(boolean incompleteCode) {
     final JavaResolveResult[] results = multiResolve(incompleteCode);
     if (results.length == 1) return results[0];
     return JavaResolveResult.EMPTY;
@@ -214,8 +211,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return advancedResolve(false).getElement();
   }
 
-  @Nullable
-  private PsiElement resolveElement(@NotNull PsiFile containingFile) {
+  private @Nullable PsiElement resolveElement(@NotNull PsiFile containingFile) {
     PsiElement element = getParent();
     while (element != null && !(element instanceof PsiFile)) {
       if (element instanceof PsiMethod) {
@@ -299,7 +295,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, @NotNull final StringBuilder buffer) {
+  public void appendMirrorText(final int indentLevel, final @NotNull StringBuilder buffer) {
     buffer.append(getCanonicalText());
   }
 
@@ -318,15 +314,13 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     }
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return this;
   }
 

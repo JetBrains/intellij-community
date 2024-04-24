@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.whileloop;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -28,8 +28,7 @@ public final class ReplaceDoWhileLoopWithWhileLoopIntention extends MCIntention 
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new DoWhileLoopPredicate();
   }
 
@@ -42,7 +41,7 @@ public final class ReplaceDoWhileLoopWithWhileLoopIntention extends MCIntention 
     final PsiStatement body = doWhileStatement.getBody();
     final PsiElement parent = doWhileStatement.getParent();
     final PsiExpression condition = doWhileStatement.getCondition();
-    @NonNls final StringBuilder replacementText = new StringBuilder();
+    final @NonNls StringBuilder replacementText = new StringBuilder();
     CommentTracker commentTracker = new CommentTracker();
     if (BoolUtils.isTrue(condition)) {
       // no trickery needed

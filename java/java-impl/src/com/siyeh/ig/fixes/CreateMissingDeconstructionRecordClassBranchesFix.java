@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.psi.*;
@@ -54,11 +54,10 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
     };
   }
 
-  @Nullable
-  public static CreateMissingDeconstructionRecordClassBranchesFix create(@NotNull PsiSwitchBlock switchBlock,
-                                                                         @NotNull PsiClass selectorType,
-                                                                         @NotNull Map<PsiType, Set<List<PsiType>>> missedBranches,
-                                                                         @NotNull List<? extends PsiCaseLabelElement> elements) {
+  public static @Nullable CreateMissingDeconstructionRecordClassBranchesFix create(@NotNull PsiSwitchBlock switchBlock,
+                                                                                   @NotNull PsiClass selectorType,
+                                                                                   @NotNull Map<PsiType, Set<List<PsiType>>> missedBranches,
+                                                                                   @NotNull List<? extends PsiCaseLabelElement> elements) {
     if (missedBranches.isEmpty()) {
       return null;
     }
@@ -104,10 +103,9 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
     return new CreateMissingDeconstructionRecordClassBranchesFix(switchBlock, new HashSet<>(missedLabels), allLabels, shortenLabels);
   }
 
-  @Nullable
-  private static List<String> getMissedLabels(@NotNull PsiSwitchBlock block,
-                                              @NotNull Map<PsiType, Set<List<PsiType>>> branchesByType,
-                                              boolean shorten)  {
+  private static @Nullable List<String> getMissedLabels(@NotNull PsiSwitchBlock block,
+                                                        @NotNull Map<PsiType, Set<List<PsiType>>> branchesByType,
+                                                        boolean shorten)  {
     List<String> result = new ArrayList<>();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(block.getProject());
     for (Map.Entry<PsiType, Set<List<PsiType>>> branches : branchesByType.entrySet()) {

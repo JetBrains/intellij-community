@@ -699,12 +699,11 @@ public class HelpTooltip {
   }
 
   boolean fromSameWindowAs(@NotNull Component component) {
-    if (myPopup != null) {
+    if (myPopup != null && !myPopup.isDisposed()) {
       Window popupWindow = SwingUtilities.getWindowAncestor(myPopup.getContent());
       return component == popupWindow || SwingUtilities.getWindowAncestor(component) == popupWindow;
-    } else {
-      return false;
     }
+    return false;
   }
 
   private final class Header extends BoundWidthLabel {

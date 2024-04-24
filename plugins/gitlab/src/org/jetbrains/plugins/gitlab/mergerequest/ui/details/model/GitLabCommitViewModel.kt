@@ -18,9 +18,9 @@ internal class GitLabCommitViewModel(
   val authoredDate = model.authoredDate
 
   val titleHtml = model.fullTitle?.let {
-    GitLabUIUtil.convertToHtml(project, mr.gitRepository, it)
+    GitLabUIUtil.convertToHtml(project, mr.gitRepository, mr.glProject.projectPath, it)
   }
   val descriptionHtml = model.description?.removePrefix(model.fullTitle.orEmpty())?.let {
-    GitLabUIUtil.convertToHtml(project, mr.gitRepository, it)
+    GitLabUIUtil.convertToHtml(project, mr.gitRepository, mr.glProject.projectPath, it)
   }
 }

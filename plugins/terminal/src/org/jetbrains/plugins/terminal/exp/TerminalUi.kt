@@ -15,7 +15,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.Color
 
 @Suppress("ConstPropertyName")
-object TerminalUi {
+internal object TerminalUi {
   const val blockTopInset = 8
   const val blockBottomInset = 12
   const val blockLeftInset = 12

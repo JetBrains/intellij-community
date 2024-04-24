@@ -32,9 +32,9 @@ class TerminalUiSettingsManager internal constructor() : PersistentStateComponen
     connection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
       resetFontSize() // Enter/Exit Presentation Mode
     })
-    connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { scheme ->
+    connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { _ ->
       // ANSI colors changed, Console Font changed
-      editorColorsScheme = scheme ?: EditorColorsManager.getInstance().globalScheme
+      editorColorsScheme = EditorColorsManager.getInstance().globalScheme
       cachedColorPalette = null
       resetFontSize()
     })

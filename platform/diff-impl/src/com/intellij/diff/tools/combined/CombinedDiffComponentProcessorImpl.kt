@@ -131,8 +131,8 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
     val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
     if (blocks.isEmpty()) return null
 
-    val blockState = BlockState(blocks.map { it.id }, blockToSelect ?: blocks.first().id) {
-      eventDispatcher.multicaster.onActiveFileChanged()
+    val blockState = BlockState(blocks.map { it.id }, blockToSelect ?: blocks.first().id).apply {
+      addListener({ _, _ -> eventDispatcher.multicaster.onActiveFileChanged() }, disposable)
     }
 
     return CombinedDiffViewer(context, MyBlockListener(), blockState, mainUi.getUiState()).also { viewer ->

@@ -461,7 +461,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           }
           try {
             boolean computationSuccessful;
-            if (AppExecutorUtil.propagateContextOrCancellation()) {
+            if (AppExecutorUtil.propagateContext()) {
               try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
                 computationSuccessful = attemptComputation();
               }
@@ -723,7 +723,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
         if (isSucceeded()) { // in case when another thread managed to cancel it just before `setResult`
           try {
-            if (AppExecutorUtil.propagateContextOrCancellation()) {
+            if (AppExecutorUtil.propagateContext()) {
               try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), false)) {
                 builder.myUiThreadAction.accept(result);
               }

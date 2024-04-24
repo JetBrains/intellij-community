@@ -11,5 +11,3 @@ fun foo(a: Int) {
     println(a - b)</selection>
     println(a + b)
 }
-
-// IGNORE_K2

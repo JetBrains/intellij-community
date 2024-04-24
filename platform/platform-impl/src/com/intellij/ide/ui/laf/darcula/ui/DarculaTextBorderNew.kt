@@ -1,9 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui
 
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.ide.ui.laf.darcula.fillInsideComponentBorder
-import com.intellij.ide.ui.laf.darcula.paintComponentBorder
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
@@ -23,15 +22,15 @@ internal class DarculaTextBorderNew : DarculaTextBorder() {
     JBInsets.removeFrom(r, getBorderInsets(c))
     val isFocused = isFocused(c)
     val editable = c !is JTextComponent || c.isEditable
-    paintComponentBorder(g, r, DarculaUIUtil.getOutline(c), isFocused, c.isEnabled && editable)
+    DarculaNewUIUtil.paintComponentBorder(g, r, DarculaUIUtil.getOutline(c), isFocused, c.isEnabled && editable)
   }
 
   override fun paintSearchArea(g: Graphics2D, r: Rectangle, c: JTextComponent, fillBackground: Boolean) {
     JBInsets.removeFrom(r, getBorderInsets(c))
     if (fillBackground) {
-      fillInsideComponentBorder(g, r, c.background)
+      DarculaNewUIUtil.fillInsideComponentBorder(g, r, c.background)
     }
-    paintComponentBorder(g, r, DarculaUIUtil.getOutline(c), c.hasFocus(), c.isEnabled && c.isEditable)
+    DarculaNewUIUtil.paintComponentBorder(g, r, DarculaUIUtil.getOutline(c), c.hasFocus(), c.isEnabled && c.isEditable)
   }
 
   /**
@@ -40,6 +39,6 @@ internal class DarculaTextBorderNew : DarculaTextBorder() {
   protected fun paintTextBackground(g: Graphics2D, component: JTextComponent, color: Color) {
     val r = Rectangle(component.size)
     JBInsets.removeFrom(r, getBorderInsets(component))
-    fillInsideComponentBorder(g, r, color)
+    DarculaNewUIUtil.fillInsideComponentBorder(g, r, color)
   }
 }

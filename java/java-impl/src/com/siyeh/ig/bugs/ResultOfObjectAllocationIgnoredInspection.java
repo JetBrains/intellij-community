@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
@@ -39,9 +39,8 @@ public final class ResultOfObjectAllocationIgnoredInspection extends BaseInspect
                           InspectionGadgetsBundle.message("result.of.object.allocation.ignored.options.chooserTitle"))));
   }
 
-  @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected @Nullable InspectionGadgetsFix buildFix(Object... infos) {
     final PsiElement context = (PsiElement)infos[0];
     return SuppressForTestsScopeFix.build(this, context);
   }
@@ -63,8 +62,7 @@ public final class ResultOfObjectAllocationIgnoredInspection extends BaseInspect
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("result.of.object.allocation.ignored.problem.descriptor");
   }
 

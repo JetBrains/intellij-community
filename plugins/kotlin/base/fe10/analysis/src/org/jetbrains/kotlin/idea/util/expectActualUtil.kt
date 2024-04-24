@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.util
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
@@ -221,9 +222,9 @@ private fun LibrarySourceInfo.libraryVariantsDescriptors(onlyPlatformVariants: B
     return LibraryInfoVariantsService.getInstance(project)
         .variants(binariesModuleInfo)
         .filter { !onlyPlatformVariants || it.isPlatformVariant() || isBundledLibraryVariant() }
-        .mapNotNull {
+        .map {
             KotlinCacheService.getInstance(project)
-                .getResolutionFacadeByModuleInfo(it, it.platform)?.moduleDescriptor
+                .getResolutionFacadeByModuleInfo(it, it.platform).moduleDescriptor
         }
 }
 

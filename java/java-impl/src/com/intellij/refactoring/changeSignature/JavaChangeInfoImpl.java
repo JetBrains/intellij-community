@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.Language;
@@ -23,20 +23,15 @@ import java.util.*;
 public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChangeInfo {
   private static final Logger LOG = Logger.getInstance(JavaChangeInfoImpl.class);
 
-  @PsiModifier.ModifierConstant
-  @NotNull
-  private final String newVisibility;
+  @PsiModifier.ModifierConstant private final @NotNull String newVisibility;
   boolean propagateVisibility;
   
-  @NotNull
-  private PsiMethod method;
-  @NotNull
-  private final String oldName;
+  private @NotNull PsiMethod method;
+  private final @NotNull String oldName;
   private final String oldType;
   String[] oldParameterNames;
   String[] oldParameterTypes;
-  @NotNull
-  private final String newName;
+  private final @NotNull String newName;
   final CanonicalTypes.Type newReturnType;
   final ParameterInfoImpl[] newParms;
   private ThrownExceptionInfo[] newExceptions;
@@ -273,10 +268,9 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     return newParms;
   }
 
-  @NotNull
   @Override
   @PsiModifier.ModifierConstant
-  public String getNewVisibility() {
+  public @NotNull String getNewVisibility() {
     return newVisibility;
   }
 
@@ -359,8 +353,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
-  @Nullable
-  public PsiExpression getValue(int i, PsiCallExpression expr) throws IncorrectOperationException {
+  public @Nullable PsiExpression getValue(int i, PsiCallExpression expr) throws IncorrectOperationException {
     if (defaultValues[i] != null) return defaultValues[i];
     final PsiElement valueAtCallSite = newParms[i].getActualValue(expr, PsiSubstitutor.EMPTY);
     return valueAtCallSite instanceof PsiExpression ? (PsiExpression)valueAtCallSite : null;
@@ -382,8 +375,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
-  @NotNull
-  public String getNewName() {
+  public @NotNull String getNewName() {
     return newName;
   }
 
@@ -458,8 +450,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   }
 
   @Override
-  @NotNull
-  public String getOldName() {
+  public @NotNull String getOldName() {
     return oldName;
   }
 

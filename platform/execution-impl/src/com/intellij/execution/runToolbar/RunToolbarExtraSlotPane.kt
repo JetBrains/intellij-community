@@ -234,17 +234,10 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
         null
     })
 
-    val runToolbarActionsGroup = ActionManager.getInstance().getAction(
+    val actionManager = ActionManager.getInstance()
+    val runToolbarActionsGroup = actionManager.getAction(
       "RunToolbarActionsGroup") as DefaultActionGroup
-
-    for (action in runToolbarActionsGroup.getChildren(null)) {
-      if (action is ActionGroup && !action.isPopup) {
-        group.addAll(*action.getChildren(null))
-      }
-      else {
-        group.addAction(action)
-      }
-    }
+    group.addAll(runToolbarActionsGroup)
 
     return component
   }

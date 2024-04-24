@@ -1,9 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.openapi.util.Pair;
-import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,14 +10,13 @@ public class DeclarationParser extends BasicDeclarationParser {
     FILE, CLASS, CODE_BLOCK, ANNOTATION_INTERFACE
   }
 
-  public DeclarationParser(@NotNull final JavaParser javaParser) {
+  public DeclarationParser(final @NotNull JavaParser javaParser) {
     super(javaParser);
   }
 
   //for backward compatibility
-  @Nullable
   @Override
-  public PsiBuilder.Marker parse(@NotNull PsiBuilder builder, BaseContext context) {
+  public @Nullable PsiBuilder.Marker parse(@NotNull PsiBuilder builder, BaseContext context) {
     return parse(builder, toContext(context));
   }
 

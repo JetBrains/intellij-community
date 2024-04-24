@@ -334,7 +334,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
   private void checkFinalFieldAccess(@NotNull GrReferenceExpression ref) {
     final PsiElement resolved = ref.resolve();
 
-    if (resolved instanceof GrField field && resolved.isPhysical() && ((GrField)resolved).hasModifierProperty(PsiModifier.FINAL) && PsiUtil.isLValue(ref)) {
+    if (resolved instanceof GrField field && resolved.isPhysical() && field.hasModifierProperty(PsiModifier.FINAL) && PsiUtil.isLValue(ref)) {
 
       final PsiClass containingClass = field.getContainingClass();
       if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, ref, true)) {

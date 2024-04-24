@@ -1,10 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline.item
 
-import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.timeline.CollapsibleTimelineItemViewModel
@@ -15,24 +13,21 @@ import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.SingleCoroutineLauncher
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.LineRange
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.PatchReader
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
@@ -41,6 +36,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRNewThreadCommentV
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.changesComputationState
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.UpdateableGHPRReviewThreadCommentViewModel
@@ -135,21 +131,9 @@ class UpdateableGHPRTimelineThreadViewModel internal constructor(
   private val _repliesFolded = MutableStateFlow(true)
   override val repliesFolded: StateFlow<Boolean> = _repliesFolded.asStateFlow()
 
-  private val currentChanges = MutableStateFlow<GitBranchComparisonResult?>(null)
-
-  init {
-    dataProvider.changesData.loadChanges(cs.nestedDisposable()) {
-      currentChanges.value = null
-      cs.launchNow {
-        currentChanges.value = try {
-          it.asDeferred().await()
-        }
-        catch (e: Exception) {
-          null
-        }
-      }
-    }
-  }
+  private val currentChanges = dataProvider.changesData.changesComputationState
+    .mapNotNull { it.getOrNull() }
+    .stateIn(cs, SharingStarted.Eagerly, null)
 
   val showDiffRequests = MutableSharedFlow<ChangesSelection>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -158,11 +142,11 @@ class UpdateableGHPRTimelineThreadViewModel internal constructor(
     taskLauncher.launch {
       val newData = try {
         if (resolved) {
-          reviewData.unresolveThread(EmptyProgressIndicator(), id)
+          reviewData.unresolveThread(id)
         }
         else {
-          reviewData.resolveThread(EmptyProgressIndicator(), id)
-        }.asDeferred().await()
+          reviewData.resolveThread(id)
+        }
       }
       catch (e: Exception) {
         if (e is ProcessCanceledException || e is CancellationException) return@launch
@@ -254,7 +238,7 @@ class UpdateableGHPRTimelineThreadViewModel internal constructor(
     override fun submit() {
       val replyId = dataState.value.comments.firstOrNull()?.id ?: return
       submit {
-        reviewData.addComment(EmptyProgressIndicator(), replyId, it).await()
+        reviewData.addComment(replyId, it)
         text.value = ""
       }
     }

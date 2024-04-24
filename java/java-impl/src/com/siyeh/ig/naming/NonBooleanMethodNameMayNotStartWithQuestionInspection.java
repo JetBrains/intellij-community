@@ -40,8 +40,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends BaseI
   public static final @NonNls String DEFAULT_QUESTION_WORDS =
     "are,can,check,contains,could,endsWith,equals,has,is,matches,must,shall,should,startsWith,was,were,will,would";
 
-  @SuppressWarnings("PublicField")
-  @NonNls public String questionString = DEFAULT_QUESTION_WORDS;
+  @SuppressWarnings("PublicField") public @NonNls String questionString = DEFAULT_QUESTION_WORDS;
   @SuppressWarnings("PublicField")
   public boolean ignoreBooleanMethods = false;
   @SuppressWarnings("PublicField")
@@ -72,8 +71,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection extends BaseI
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("non.boolean.method.name.must.not.start.with.question.problem.descriptor");
   }
 

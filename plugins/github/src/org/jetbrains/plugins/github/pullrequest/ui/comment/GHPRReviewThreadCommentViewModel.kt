@@ -119,7 +119,7 @@ internal class UpdateableGHPRReviewThreadCommentViewModel(
 
   override fun delete() {
     taskLauncher.launch {
-      reviewData.deleteComment(EmptyProgressIndicator(), id)
+      reviewData.deleteComment(id)
     }
   }
 
@@ -131,7 +131,7 @@ internal class UpdateableGHPRReviewThreadCommentViewModel(
     : CodeReviewSubmittableTextViewModelBase(project, cs, initialText), CodeReviewTextEditingViewModel {
     override fun save() {
       submit { text ->
-        val updated = reviewData.updateComment(EmptyProgressIndicator(), id, text).await()
+        val updated = reviewData.updateComment(id, text)
         dataState.update {
           it.copy(value = updated)
         }

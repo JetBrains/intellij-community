@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.lang.ASTNode;
@@ -24,9 +24,8 @@ public final class JShellParserDefinition extends JavaParserDefinition {
   public static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType("JSHELL_FILE", JShellLanguage.INSTANCE);
 
   private static final PsiParser PARSER = new PsiParser() {
-    @NotNull
     @Override
-    public ASTNode parse(@NotNull IElementType rootElement, @NotNull PsiBuilder builder) {
+    public @NotNull ASTNode parse(@NotNull IElementType rootElement, @NotNull PsiBuilder builder) {
       JavaParserUtil.setLanguageLevel(builder, LanguageLevel.HIGHEST);
       final PsiBuilder.Marker r = builder.mark();
       JShellParser.INSTANCE.getFileParser().parse(builder);
@@ -45,9 +44,8 @@ public final class JShellParserDefinition extends JavaParserDefinition {
     return FILE_ELEMENT_TYPE;
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     final IElementType type = node.getElementType();
     if (type instanceof IJShellElementType) {
       return ((IJShellElementType)type).createPsi(node);
@@ -55,9 +53,8 @@ public final class JShellParserDefinition extends JavaParserDefinition {
     return super.createElement(node);
   }
 
-  @NotNull
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return PARSER;
   }
 }

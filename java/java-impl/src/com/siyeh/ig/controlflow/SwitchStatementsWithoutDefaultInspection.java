@@ -45,8 +45,7 @@ public final class SwitchStatementsWithoutDefaultInspection extends AbstractBase
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "SwitchStatementWithoutDefaultBranch";
   }
 
@@ -56,9 +55,8 @@ public final class SwitchStatementsWithoutDefaultInspection extends AbstractBase
       checkbox("m_ignoreFullyCoveredEnums", InspectionGadgetsBundle.message("switch.statement.without.default.ignore.option")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       // handling switch expression seems unnecessary here as non-exhaustive switch expression
       // without default is a compilation error

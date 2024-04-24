@@ -103,6 +103,8 @@ internal fun KtDeclarationContainer.findUsages(
 /**
  * Finds usages to a [KtNamedDeclaration] that might need to be updated for the move refactoring, this includes non-code and internal
  * usages.
+ * Internal usages are marked by [K2MoveRenameUsageInfo.internalUsageInfo].
+ * @return external usages of the declaration to move
  */
 internal fun KtNamedDeclaration.findUsages(
     searchInCommentsAndStrings: Boolean,

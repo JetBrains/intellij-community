@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.todo.nodes;
 
@@ -51,9 +51,9 @@ public final class TodoJavaTreeHelper extends TodoTreeHelper {
   }
 
   @Override
-  public void addPackagesToChildren(@NotNull final ArrayList<? super AbstractTreeNode<?>> children,
-                                    @Nullable final Module module,
-                                    @NotNull final TodoTreeBuilder builder) {
+  public void addPackagesToChildren(final @NotNull ArrayList<? super AbstractTreeNode<?>> children,
+                                    final @Nullable Module module,
+                                    final @NotNull TodoTreeBuilder builder) {
     Project project = getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final List<VirtualFile> sourceRoots = new ArrayList<>();
@@ -135,8 +135,7 @@ public final class TodoJavaTreeHelper extends TodoTreeHelper {
     addDirsToChildren(roots, children, builder);
   }
 
-   @Nullable
-  public static PsiPackage findNonEmptyPackage(@NotNull PsiPackage rootPackage, Module module, Project project, TodoTreeBuilder builder, GlobalSearchScope scope){
+   public static @Nullable PsiPackage findNonEmptyPackage(@NotNull PsiPackage rootPackage, Module module, Project project, TodoTreeBuilder builder, GlobalSearchScope scope){
     if (!isPackageEmpty(new PackageElement(module, rootPackage, false), builder, project)){
       return rootPackage;
     }

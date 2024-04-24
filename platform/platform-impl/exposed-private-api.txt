@@ -96,6 +96,7 @@ com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory$JAction
 com/intellij/patterns/compiler/PatternCompilerImpl$Node
 com/intellij/platform/diagnostic/telemetry/Scope
 com/intellij/platform/ide/menu/ActionAwareIdeMenuBar
+com/intellij/platform/util/io/storages/mmapped/MMappedFileStorage
 com/intellij/platform/workspace/jps/serialization/impl/FileInDirectorySourceNames
 com/intellij/platform/workspace/jps/serialization/impl/JpsFileContentReader
 com/intellij/platform/workspace/jps/serialization/impl/JpsFileContentWriter
@@ -117,6 +118,5 @@ com/intellij/util/io/SimpleStringPersistentEnumerator
 com/intellij/util/io/blobstorage/ByteBufferReader
 com/intellij/util/io/blobstorage/ByteBufferWriter
 com/intellij/util/io/blobstorage/StreamlinedBlobStorage$Processor
-com/intellij/util/io/dev/mmapped/MMappedFileStorage
 com/intellij/util/io/storage/VFSContentStorage
 com/intellij/xml/breadcrumbs/BreadcrumbsComponent$Crumb

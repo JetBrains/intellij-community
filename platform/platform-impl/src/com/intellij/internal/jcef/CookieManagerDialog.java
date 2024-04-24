@@ -108,7 +108,7 @@ final class CookieManagerDialog extends JDialog {
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-      if (rowData.size() > 0) {
+      if (!rowData.isEmpty()) {
         if (rowData.get(0)[columnIndex] != null) {
           return rowData.get(0)[columnIndex].getClass();
         }

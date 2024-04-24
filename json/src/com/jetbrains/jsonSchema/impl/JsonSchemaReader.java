@@ -40,6 +40,11 @@ import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
 
+/**
+ * @deprecated This class will be removed in the future. The main purpose of it is to read json schema file, that can currently be achieved
+ * via `com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage#getOrComputeSchemaRootObject` call. Other utility methods will stay as is,
+ * because they have different semantics.
+ */
 @Deprecated
 public final class JsonSchemaReader {
   private static final int MAX_SCHEMA_LENGTH = FileUtilRt.LARGE_FOR_CONTENT_LOADING;

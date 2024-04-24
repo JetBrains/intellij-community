@@ -54,6 +54,7 @@
   <technology name="google-http-java-client" class="com.google.api.client.http.HttpResponse"/>
   <technology name="gorm" class="org.grails.datastore.gorm.GormInstanceApi"/>
   <technology name="grails" class="grails.core.GrailsClass"/>
+  <technology name="graphql-dgs" class="com.netflix.graphql.dgs.DgsQuery"/>
   <technology name="graphql-java" class="graphql.GraphQL"/>
   <technology name="groovy" class="groovy.lang.GroovyObject"/>
   <technology name="grpc" class="io.grpc.ManagedChannel"/>
@@ -63,6 +64,7 @@
   <technology name="hazelcast" class="com.hazelcast.config.Config"/>
   <technology name="hazelcast-jet" class="com.hazelcast.jet.pipeline.Pipeline"/>
   <technology name="helidon" class="io.helidon.webserver.WebServer"/>
+  <technology name="helidon-mp" class="io.helidon.microprofile.server.Server"/>
   <technology name="hexagonkt" class="com.hexagonkt.http.Path"/>
   <technology name="hibernate" class="org.hibernate.Hibernate"/>
   <technology name="hibernate-envers" class="org.hibernate.envers.Audited"/>
@@ -186,6 +188,7 @@
   <technology name="spring-amqp" class="org.springframework.amqp.core.Message"/>
   <technology name="spring-batch" class="org.springframework.batch.core.Job"/>
   <technology name="spring-boot" class="org.springframework.boot.SpringApplication"/>
+  <technology name="spring-boot-testjars" class="org.springframework.experimental.boot.test.context.DynamicProperty"/>
   <technology name="spring-cloud" class="org.springframework.cloud.client.SpringCloudApplication"/>
   <technology name="spring-cloud-gateway" class="org.springframework.cloud.gateway.route.RouteDefinition"/>
   <technology name="spring-cloud-kubernetes" class="org.springframework.cloud.kubernetes.commons.ConditionalOnKubernetesEnabled"/>
@@ -206,7 +209,7 @@
   <technology name="spring-integration" class="org.springframework.integration.channel.DirectChannel"/>
   <technology name="spring-integration-amqp" class="org.springframework.integration.amqp.channel.AbstractAmqpChannel"/>
   <technology name="spring-kafka" class="org.springframework.kafka.core.KafkaTemplate"/>
-  <technology name="spring-modulith" class="org.springframework.modulith.core.ApplicationModule"/>
+  <technology name="spring-modulith" class="org.springframework.modulith.ApplicationModule"/>
   <technology name="spring-mvc" class="org.springframework.web.context.WebApplicationContext"/>
   <technology name="spring-osgi" class="org.springframework.osgi.OsgiException"/>
   <technology name="spring-rabbitmq" class="org.springframework.amqp.rabbit.core.RabbitTemplate"/>

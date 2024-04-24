@@ -473,7 +473,7 @@ public final class JBCefApp {
     return JreHiDpiUtil.isJreHiDPIEnabled() ? scaledSize : ROUND.round(scaledSize / getForceDeviceScaleFactor());
   }
 
-  protected static boolean isRemoteEnabled() {
+  static boolean isRemoteEnabled() {
     return IS_REMOTE_ENABLED;
   }
 

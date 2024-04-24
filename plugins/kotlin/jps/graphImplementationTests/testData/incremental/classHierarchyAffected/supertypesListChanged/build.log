@@ -53,6 +53,8 @@ Compiling files:
   src/classLiteral.kt
   src/functionParameter.kt
   src/getA.kt
+  src/importA.kt
+  src/importAGrandChild.kt
   src/importStar.kt
   src/referencedByFqName.kt
   src/returnType.kt

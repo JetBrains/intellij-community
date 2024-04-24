@@ -19,6 +19,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectManager
@@ -292,8 +293,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   @TestOnly
   fun openProjectSync(projectFile: Path, openProjectOptions: OpenProjectTask): Project? {
-    @Suppress("RAW_RUN_BLOCKING")
-    return runBlocking { openProject(projectFile, openProjectOptions) }
+    return runBlockingMaybeCancellable { openProject(projectFile, openProjectOptions) }
   }
 
   open suspend fun openProject(projectFile: Path, options: OpenProjectTask): Project? {

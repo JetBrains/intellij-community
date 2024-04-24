@@ -144,7 +144,7 @@ f:com.intellij.platform.ml.impl.environment.ExtendedEnvironmentKt
 f:com.intellij.platform.ml.impl.environment.TopologicalSortingResolverKt
 f:com.intellij.platform.ml.impl.logs.CommonKt
 f:com.intellij.platform.ml.impl.logs.MLSessionLoggerKt
-f:com.intellij.platform.ml.impl.logs.SessionAsMultipleEventsLoggingSchemeKt
+f:com.intellij.platform.ml.impl.logs.SessionAsMultipleEventsLoggingStrategyKt
 f:com.intellij.platform.ml.impl.logs.SessionFinishedKt
 f:com.intellij.platform.ml.impl.model.RegressionModelKt
 a:com.intellij.platform.ml.impl.ngram.model.NGramModel

@@ -43,5 +43,5 @@ class FileEmbeddingsStorage(project: Project, coroutineScope: CoroutineScope)
 
 class IndexableFile(file: VirtualFile) : IndexableEntity {
   override val id = file.name.intern()
-  override val indexableRepresentation by lazy { splitIdentifierIntoTokens(file.nameWithoutExtension).joinToString(separator = " ") }
+  override val indexableRepresentation by lazy { splitIdentifierIntoTokens(file.nameWithoutExtension) }
 }

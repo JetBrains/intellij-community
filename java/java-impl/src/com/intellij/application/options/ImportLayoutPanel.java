@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.icons.AllIcons;
@@ -235,8 +235,7 @@ public abstract class ImportLayoutPanel extends JPanel {
       }
 
       @Override
-      @Nullable
-      public Object getValueAt(int row, int col) {
+      public @Nullable Object getValueAt(int row, int col) {
         PackageEntry entry = packageTable.getEntryAt(row);
         if (entry == null || !isCellEditable(row, col)) return null;
         col += panel.areStaticImportsEnabled() ? 0 : 1;

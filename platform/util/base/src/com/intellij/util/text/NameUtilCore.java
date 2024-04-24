@@ -7,8 +7,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
 public final class NameUtilCore {
 
@@ -169,30 +167,5 @@ public final class NameUtilCore {
       }
     }
     return ArrayUtilRt.toStringArray(array);
-  }
-
-  /**
-   * Generates a unique name
-   * 
-   * @param origName original symbol name
-   * @param alreadyUsed a predicate that returns true if a supplied name is already used and we cannot use it
-   * @return the name based on the origName, which is definitely not used (typically by adding a numeric suffix)
-   */
-  public static @NotNull String uniqName(@NotNull String origName, @NotNull Predicate<@NotNull String> alreadyUsed) {
-    if (!alreadyUsed.test(origName)) return origName;
-    String baseName = origName;
-    int index = 0;
-    Pattern pattern = Pattern.compile("(.+?)(\\d+)");
-    java.util.regex.Matcher matcher = pattern.matcher(baseName);
-    if (matcher.matches()) {
-      baseName = matcher.group(1);
-      index = Integer.parseInt(matcher.group(2));
-    }
-    while (true) {
-      String name = baseName + (++index);
-      if (!alreadyUsed.test(name)) {
-        return name;
-      }
-    }
   }
 }

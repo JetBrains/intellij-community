@@ -30,7 +30,6 @@ internal class EditorCellOutput(editor: EditorEx, private val outputController: 
           it.updatePosition(location.y, size.height)
         }
       })
-      it.hide()
     }
 
   fun updatePositions() {
@@ -45,12 +44,16 @@ internal class EditorCellOutput(editor: EditorEx, private val outputController: 
     outputController.onViewportChange()
   }
 
-  fun mouseExited() {
+  fun hideFolding() {
     folding.hide()
   }
 
-  fun mouseEntered() {
+  fun showFolding() {
     folding.show()
+  }
+
+  fun updateSelection(value: Boolean) {
+    folding.updateSelection(value)
   }
 
 }

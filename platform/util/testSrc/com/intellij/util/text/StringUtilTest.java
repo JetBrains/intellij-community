@@ -943,6 +943,23 @@ public class StringUtilTest {
     assertTrue(StringUtil.isJavaIdentifier("\u03B1A"));
   }
 
+  @SuppressWarnings("UnnecessaryUnicodeEscape")
+  @Test
+  public void testCharSequenceSliceIsJavaIdentifier() {
+    assertFalse(StringUtil.isJavaIdentifier("", 0, 0));
+    assertTrue(StringUtil.isJavaIdentifier("x", 0, 1));
+    assertFalse(StringUtil.isJavaIdentifier("0", 0, 1));
+    assertFalse(StringUtil.isJavaIdentifier("0x", 0, 2));
+    assertTrue(StringUtil.isJavaIdentifier("foo$bar", 0, 7));
+    assertTrue(StringUtil.isJavaIdentifier("x0", 0, 2));
+    assertTrue(StringUtil.isJavaIdentifier("\uD835\uDEFCA", 0, 3));
+    assertTrue(StringUtil.isJavaIdentifier("A\uD835\uDEFC", 0, 3));
+    assertTrue(StringUtil.isJavaIdentifier("\u03B1A", 0, 2));
+    assertTrue(StringUtil.isJavaIdentifier("###\u03B1A", 3, 5));
+    assertTrue(StringUtil.isJavaIdentifier("\u03B1A###", 0, 2));
+    assertTrue(StringUtil.isJavaIdentifier("###\u03B1A###", 3, 5));
+  }
+
   @Test
   public void testSplit() {
     String spaceSeparator = " ";

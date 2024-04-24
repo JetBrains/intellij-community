@@ -26,7 +26,7 @@ public abstract class ClassValueConverter extends Converter<PsiClass> implements
   }
 
   @Override
-  public PsiClass fromString(@Nullable @NonNls String s, final ConvertContext context) {
+  public PsiClass fromString(@Nullable @NonNls String s, final @NotNull ConvertContext context) {
     if (s == null) return null;
     final Module module = context.getModule();
     final PsiFile psiFile = context.getFile();
@@ -35,7 +35,7 @@ public abstract class ClassValueConverter extends Converter<PsiClass> implements
   }
 
   @Override
-  public String toString(@Nullable PsiClass psiClass, final ConvertContext context) {
+  public String toString(@Nullable PsiClass psiClass, final @NotNull ConvertContext context) {
     return psiClass == null ? null : psiClass.getQualifiedName();
   }
 

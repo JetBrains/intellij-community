@@ -34,7 +34,7 @@ class PlantUMLCodeGeneratingProvider(
     val key = getUniqueFile(language.lowercase(), raw, "png").toFile()
     cacheDiagram(key, raw)
     collector?.addAliveCachedFile(this, key)
-    return "<img src=\"${key.toURI()}\"/>"
+    return "<img src=\"${key.toURI()}\" from-extension=true/>"
   }
 
   override val displayName: String

@@ -942,6 +942,17 @@
           "StopFollowingLinkForeground": "#29498A",
           "FollowingBorderTextForeground": "Gray1"
         }
+      },
+      "EndSessionPopup": {
+        "EndButton": {
+          "Background": "Gray4",
+          "Foreground": "Gray14"
+        },
+        "Background": "Gray2",
+        "Foreground": "Gray14",
+        "info.Foreground": "Gray9",
+        "timer.Foreground": "Gray14",
+        "link": "Blue8"
       }
     },
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 /**
  * This inspection finds and replaces `when` expressions containing only a single `else` branch by the body of that branch, accounting for

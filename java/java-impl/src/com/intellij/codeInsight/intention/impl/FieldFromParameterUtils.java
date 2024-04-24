@@ -28,8 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class FieldFromParameterUtils {
   private FieldFromParameterUtils() {}
 
-  @Nullable
-  public static PsiParameter findParameterAtOffset(@NotNull PsiFile file, int offset) {
+  public static @Nullable PsiParameter findParameterAtOffset(@NotNull PsiFile file, int offset) {
     PsiParameterList parameterList = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiParameterList.class, false);
     if (parameterList == null) return null;
     PsiParameter[] parameters = parameterList.getParameters();
@@ -40,14 +39,12 @@ public final class FieldFromParameterUtils {
     return null;
   }
 
-  @NotNull
-  public static PsiType getType(@NotNull PsiParameter myParameter) {
+  public static @NotNull PsiType getType(@NotNull PsiParameter myParameter) {
     PsiType type = myParameter.getType();
     return type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
   }
 
-  @Nullable
-  public static PsiType getSubstitutedType(@NotNull PsiParameter parameter) {
+  public static @Nullable PsiType getSubstitutedType(@NotNull PsiParameter parameter) {
     PsiType type = getType(parameter);
 
     if (type instanceof PsiArrayType) {
@@ -84,13 +81,11 @@ public final class FieldFromParameterUtils {
     return JavaPsiFacade.getElementFactory(parameter.getProject()).createType(psiClass, substitutor);
   }
 
-  @Nullable
-  public static PsiField getParameterAssignedToField(@NotNull PsiParameter parameter) {
+  public static @Nullable PsiField getParameterAssignedToField(@NotNull PsiParameter parameter) {
     return getParameterAssignedToField(parameter, true);
   }
 
-  @Nullable
-  public static PsiField getParameterAssignedToField(@NotNull PsiParameter parameter, boolean findIndirectAssignments) {
+  public static @Nullable PsiField getParameterAssignedToField(@NotNull PsiParameter parameter, boolean findIndirectAssignments) {
     for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false)) {
       if (!(reference instanceof PsiReferenceExpression expression)) continue;
       PsiAssignmentExpression assignmentExpression;

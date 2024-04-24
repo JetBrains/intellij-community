@@ -100,6 +100,9 @@ public final class JavaChangeSignatureUsageProvider implements ChangeSignatureUs
     else if (element instanceof PsiMethodReferenceExpression && MethodReferenceUsageInfo.needToExpand(javaChangeInfo)) {
       return new MethodReferenceUsageInfo(element, isToModifyArgs, isToCatchExceptions);
     }
+    else if (method.isConstructor() && element.getParent() instanceof PsiTypeElement) {
+      return null;
+    }
     else {
       return new MoveRenameUsageInfo(element, reference, method);
     }

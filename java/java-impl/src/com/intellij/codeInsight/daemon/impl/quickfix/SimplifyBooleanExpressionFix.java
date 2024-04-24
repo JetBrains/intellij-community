@@ -54,9 +54,7 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
     mySubExpressionValue = subExpressionValue;
   }
 
-  @IntentionName
-  @NotNull
-  private String getText(@NotNull PsiExpression subExpression) {
+  private @IntentionName @NotNull String getText(@NotNull PsiExpression subExpression) {
     String suffix = "";
     if (SideEffectChecker.mayHaveSideEffects(subExpression, e -> shouldIgnore(e, subExpression))) {
       suffix = canExtractSideEffect(subExpression) ? QuickFixBundle.message("simplify.boolean.expression.extracting.side.effects")
@@ -86,8 +84,7 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
     return false;
   }
 
-  @NotNull
-  public static @IntentionName String getIntentionText(@NotNull PsiExpression expression, boolean constantValue) {
+  public static @NotNull @IntentionName String getIntentionText(@NotNull PsiExpression expression, boolean constantValue) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (constantValue && parent instanceof PsiSwitchLabelStatementBase switchLabel &&
         PsiTreeUtil.isAncestor(switchLabel.getGuardExpression(), expression, false)) {
@@ -110,8 +107,7 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getFamilyNameText();
   }
 
@@ -290,10 +286,9 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
     return surrounder == null ? null : surrounder.surround().getExpression();
   }
 
-  @Nullable
-  private static PsiExpression expandLastIfDisjunct(PsiPolyadicExpression orChain,
-                                                    PsiExpression subExpression,
-                                                    PsiElementFactory factory) {
+  private static @Nullable PsiExpression expandLastIfDisjunct(PsiPolyadicExpression orChain,
+                                                              PsiExpression subExpression,
+                                                              PsiElementFactory factory) {
     PsiIfStatement ifStatement = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(orChain.getParent()), PsiIfStatement.class);
     if (ifStatement == null) return null;
     PsiExpression lastOperand = ArrayUtil.getLastElement(orChain.getOperands());

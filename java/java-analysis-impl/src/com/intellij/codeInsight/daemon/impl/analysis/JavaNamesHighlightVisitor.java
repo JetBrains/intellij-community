@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
-import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -155,7 +154,7 @@ final class JavaNamesHighlightVisitor extends JavaElementVisitor implements High
   @Override
   public void visitKeyword(@NotNull PsiKeyword keyword) {
     if (shouldHighlightSoftKeywords &&
-        (JavaLexer.isSoftKeyword(keyword.getNode().getChars(), myLanguageLevel) || JavaTokenType.NON_SEALED_KEYWORD == keyword.getTokenType())) {
+        (PsiUtil.isSoftKeyword(keyword.getNode().getChars(), myLanguageLevel) || JavaTokenType.NON_SEALED_KEYWORD == keyword.getTokenType())) {
       myHolder.add(HighlightNamesUtil.highlightKeyword(keyword));
     }
   }

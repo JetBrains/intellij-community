@@ -36,8 +36,7 @@ import java.util.List;
  */
 @Service(Service.Level.PROJECT)
 public final class ProjectIconsAccessor {
-  @NonNls
-  private static final String JAVAX_SWING_ICON = "javax.swing.Icon";
+  private static final @NonNls String JAVAX_SWING_ICON = "javax.swing.Icon";
 
   private static final int ICON_MAX_WEIGHT = 16;
   private static final int ICON_MAX_HEIGHT = 16;
@@ -49,8 +48,7 @@ public final class ProjectIconsAccessor {
                                                                                "intellij.platform.commercial",
                                                                                "intellij.android.studio.integration");
 
-  @NotNull
-  private final Project project;
+  private final @NotNull Project project;
 
   private final Cache<String, Pair<Long, Icon>> iconCache = Caffeine.newBuilder().maximumSize(500).build();
 
@@ -62,8 +60,7 @@ public final class ProjectIconsAccessor {
     return project.getService(ProjectIconsAccessor.class);
   }
 
-  @Nullable
-  public VirtualFile resolveIconFile(UElement initializerElement) {
+  public @Nullable VirtualFile resolveIconFile(UElement initializerElement) {
     if (initializerElement == null) return null;
     final List<FileReference> refs = new ArrayList<>();
     initializerElement.accept(new AbstractUastVisitor() {

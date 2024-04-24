@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.module.Module;
@@ -31,9 +31,8 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
     mySourceRoot = sourceRoot;
   }
 
-  @NotNull
   @Override
-  public PackageWrapper getTargetPackage() {
+  public @NotNull PackageWrapper getTargetPackage() {
     return myPackage;
   }
 
@@ -58,9 +57,7 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   }
 
   @Override
-  @Nullable
-  @NlsContexts.DialogMessage
-  public String verify(PsiFile source) {
+  public @Nullable @NlsContexts.DialogMessage String verify(PsiFile source) {
     return checkCanCreateInSourceRoot(mySourceRoot);
   }
 
@@ -75,7 +72,7 @@ public class AutocreatingSingleSourceRootMoveDestination extends AutocreatingMov
   }
 
   @Override
-  public void analyzeModuleConflicts(@NotNull final Collection<? extends PsiElement> elements,
+  public void analyzeModuleConflicts(final @NotNull Collection<? extends PsiElement> elements,
                                      @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
     RefactoringConflictsUtil.getInstance()
       .analyzeModuleConflicts(getTargetPackage().getManager().getProject(), elements, usages, mySourceRoot, conflicts);

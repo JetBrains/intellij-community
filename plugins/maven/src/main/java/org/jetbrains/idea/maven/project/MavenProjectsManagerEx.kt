@@ -354,7 +354,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
     finally {
       logDebug("Finish update ${project.name}, $spec ${myProject.name}")
-      console.finishTransaction()
+      console.finishTransaction(spec.resolveIncrementally())
       syncActivity.finished {
         listOf(ProjectImportCollector.LINKED_PROJECTS.with(projectsTree.rootProjects.count()),
                ProjectImportCollector.SUBMODULES_COUNT.with(projectsTree.projects.count()))

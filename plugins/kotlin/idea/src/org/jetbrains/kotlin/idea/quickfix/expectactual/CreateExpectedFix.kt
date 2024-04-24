@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -32,7 +33,6 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getSuperNames
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -58,7 +58,10 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
         val targetExpectedClass = targetExpectedClassPointer?.element
         val expectedFile = targetExpectedClass?.containingKtFile ?: getOrCreateImplementationFile() ?: return
         val declaration = element ?: return
-        generateExpectOrActualInFile(project, editor, originalFile = file, targetFile = expectedFile, targetClass = targetExpectedClass, declaration, module, generateIt)
+        generateExpectOrActualInFile(
+            project, editor, originalFile = file, targetFile = expectedFile, targetClass = targetExpectedClass,
+            declaration, module, generateIt
+        )
     }
 
     private fun findExistingFileToCreateDeclaration(
@@ -102,9 +105,11 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
                 is KtClassOrObject -> expectedModules.map {
                     CreateExpectedClassFix(actualDeclaration, expectedContainingClass, it)
                 }
+
                 is KtProperty, is KtParameter, is KtFunction -> expectedModules.map {
                     CreateExpectedCallableMemberFix(actualDeclaration as KtCallableDeclaration, expectedContainingClass, it)
                 }
+
                 else -> emptyList()
             }
         }

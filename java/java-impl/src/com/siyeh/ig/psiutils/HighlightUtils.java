@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -41,11 +41,11 @@ public final class HighlightUtils {
     highlightElements(Collections.singleton(element), editor);
   }
 
-  public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection, Editor editor) {
+  public static void highlightElements(final @NotNull Collection<? extends PsiElement> elementCollection, Editor editor) {
     highlightElements(elementCollection, InspectionGadgetsBundle.message("press.escape.to.remove.highlighting.message"), editor);
   }
 
-  public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection,
+  public static void highlightElements(final @NotNull Collection<? extends PsiElement> elementCollection,
                                        @NlsContexts.StatusBarText String statusBarText,
                                        @Nullable Editor editor) {
     if (elementCollection.isEmpty()) {

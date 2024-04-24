@@ -9,7 +9,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEdito
 import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
 import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter.Companion.isTerminalCommandSearch
 
-class TerminalCharFilter : CharFilter() {
+internal class TerminalCharFilter : CharFilter() {
   override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup): Result? {
     return if (lookup.isTerminalCommandHistory) {
       // Close the lookup on any char typed for command history because the user wants to edit the command

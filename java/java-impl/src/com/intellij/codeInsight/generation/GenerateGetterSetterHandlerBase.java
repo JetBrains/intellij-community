@@ -80,9 +80,8 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
               return false;
             }
 
-            @Nls
             @Override
-            public String getDisplayName() {
+            public @Nls String getDisplayName() {
               return StringUtil.capitalizeWords(UIUtil.removeMnemonic(StringUtil.trimEnd(templatesTitle, ":")), true);
             }
           };
@@ -97,7 +96,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
     setComboboxModel(templatesManager, comboBox);
     comboBox.addActionListener(new ActionListener() {
       @Override
-      public void actionPerformed(@NotNull final ActionEvent M) {
+      public void actionPerformed(final @NotNull ActionEvent M) {
         templatesManager.setDefaultTemplate((TemplateResource)comboBox.getSelectedItem());
       }
     });

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem {
-  @NonNls private static final String DOT_CLASS = ".class";
-  @Nullable private final SmartPsiElementPointer<PsiClass> myClass;
+  private static final @NonNls String DOT_CLASS = ".class";
+  private final @Nullable SmartPsiElementPointer<PsiClass> myClass;
   private final PsiExpression myExpr;
   private final String myPresentableText;
   private final String myCanonicalText;
@@ -32,9 +32,8 @@ class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem
     myExpr = JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(myCanonicalText + DOT_CLASS, context);
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myPresentableText + ".class";
   }
 
@@ -48,15 +47,13 @@ class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem
     }
   }
 
-  @Nullable
   @Override
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     return myClass == null ? null : myClass.getElement();
   }
 
-  @NotNull
   @Override
-  public Object getObject() {
+  public @NotNull Object getObject() {
     return myExpr;
   }
 

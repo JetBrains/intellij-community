@@ -48,8 +48,7 @@ text.html.php;meta.embedded.block.php;source.php: [121, 122], {
 text.html.php;meta.embedded.block.php;source.php: [122, 123], {
 }
 text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php;punctuation.definition.comment.php: [123, 125], {//}
-text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: [125, 146], { wrong brace matching}
-text.html.php;meta.embedded.block.php;source.php: [146, 147], {
+text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: [125, 147], { wrong brace matching
 }
 text.html.php;meta.embedded.block.php;source.php;keyword.control.for.php: [147, 150], {for}
 text.html.php;meta.embedded.block.php;source.php: [150, 151], { }
@@ -99,8 +98,7 @@ text.html.php;meta.embedded.block.php;source.php: [215, 216], {
 text.html.php;meta.embedded.block.php;source.php: [216, 217], {
 }
 text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php;punctuation.definition.comment.php: [217, 219], {//}
-text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: [219, 238], { wrong highlighting}
-text.html.php;meta.embedded.block.php;source.php: [238, 239], {
+text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: [219, 239], { wrong highlighting
 }
 text.html.php;meta.embedded.block.php;source.php;constant.other.php: [239, 242], {let}
 text.html.php;meta.embedded.block.php;source.php: [242, 243], { }

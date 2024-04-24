@@ -51,8 +51,7 @@ public final class BooleanMethodNameMustStartWithQuestionInspection extends NonB
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("boolean.method.name.must.start.with.question.problem.descriptor");
   }
 

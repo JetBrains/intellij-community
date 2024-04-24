@@ -44,7 +44,7 @@ public interface OverrideText extends DomElement {
 
     @Override
     public @Nullable PsiField fromString(@Nullable String s,
-                                         ConvertContext context) {
+                                         @NotNull ConvertContext context) {
       if (s == null) return null;
       CommonProcessors.FindProcessor<PsiField> resolve = new CommonProcessors.FindProcessor<>() {
         @Override
@@ -60,7 +60,7 @@ public interface OverrideText extends DomElement {
 
     @Override
     public @Nullable String toString(@Nullable PsiField field,
-                                     ConvertContext context) {
+                                     @NotNull ConvertContext context) {
       return field != null ? field.getName() : null;
     }
 
@@ -75,7 +75,7 @@ public interface OverrideText extends DomElement {
 
     @NotNull
     @Override
-    public Collection<PsiField> getVariants(ConvertContext context) {
+    public Collection<PsiField> getVariants(@NotNull ConvertContext context) {
       CommonProcessors.CollectProcessor<PsiField> collectProcessor = new CommonProcessors.CollectProcessor<>();
       processAllActionPlaces(context, collectProcessor);
       return collectProcessor.getResults();

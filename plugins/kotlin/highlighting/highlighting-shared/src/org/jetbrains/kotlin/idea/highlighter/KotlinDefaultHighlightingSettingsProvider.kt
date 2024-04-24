@@ -8,9 +8,11 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
+import org.jetbrains.kotlin.idea.core.script.K2ScriptDependenciesProvider
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
@@ -27,11 +29,21 @@ class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProv
         return when {
             psiFile is KtFile ->
                 when {
+                    KotlinPluginModeProvider.isK2Mode() && psiFile.isScript() ->
+                        if (K2ScriptDependenciesProvider.getInstanceIfCreated(project)
+                                ?.getConfiguration(psiFile.virtualFile) == null
+                        ) {
+                            FileHighlightingSetting.SKIP_HIGHLIGHTING
+                        } else {
+                            FileHighlightingSetting.FORCE_HIGHLIGHTING
+                        }
+
                     psiFile.isCompiled -> FileHighlightingSetting.SKIP_INSPECTION
                     !KotlinSupportAvailability.isSupported(psiFile) -> FileHighlightingSetting.SKIP_HIGHLIGHTING
                     RootKindFilter.libraryFiles.matches(project, file) -> FileHighlightingSetting.SKIP_INSPECTION
                     else -> null
                 }
+
             file.isKotlinDecompiledFile -> FileHighlightingSetting.SKIP_HIGHLIGHTING
             else -> null
         }

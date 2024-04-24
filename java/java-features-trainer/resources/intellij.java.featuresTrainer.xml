@@ -1,4 +1,7 @@
 <idea-plugin>
+  <dependencies>
+    <plugin id="training"/>
+  </dependencies>
   <extensions defaultExtensionNs="training">
     <ift.language.extension language="JAVA" defaultProductName="IDEA,Aqua" implementationClass="com.intellij.java.ift.JavaLangSupport"/>
     <ift.learning.course language="JAVA" implementationClass="com.intellij.java.ift.JavaLearningCourse"/>

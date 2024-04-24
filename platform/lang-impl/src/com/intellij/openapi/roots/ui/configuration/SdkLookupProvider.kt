@@ -17,7 +17,10 @@ interface SdkLookupProvider {
 
   fun getSdk(): Sdk?
 
+  @Deprecated("Consider using the SdkLookupProvider.waitForLookup with the SdkLookupUtil.getSdk")
   fun blockingGetSdk(): Sdk?
+
+  fun waitForLookup()
 
   sealed class SdkInfo {
     object Undefined : SdkInfo()

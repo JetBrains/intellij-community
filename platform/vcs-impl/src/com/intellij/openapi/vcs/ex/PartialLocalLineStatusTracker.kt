@@ -93,6 +93,10 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
   fun addListener(listener: Listener, disposable: Disposable)
 
   open class ListenerAdapter : Listener
+
+  /**
+   * The threading of the events is VERY delicate. Take no additional locks inside to avoid deadlocks.
+   */
   interface Listener : EventListener {
     fun onBecomingValid(tracker: PartialLocalLineStatusTracker) = Unit
 

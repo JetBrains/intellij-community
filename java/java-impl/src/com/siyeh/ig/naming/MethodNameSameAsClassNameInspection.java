@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -55,8 +55,7 @@ public final class MethodNameSameAsClassNameInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "method.name.same.as.class.name.problem.descriptor");
   }
@@ -75,8 +74,7 @@ public final class MethodNameSameAsClassNameInspection extends BaseInspection {
     extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("make.method.ctr.quickfix");
     }
 

@@ -619,7 +619,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         DefaultActionGroup filteringActions = popup.getUserData(DefaultActionGroup.class);
         if (filteringActions == null) return;
 
-        List<ToggleAction> unselectedActions = Arrays.stream(filteringActions.getChildren(null))
+        List<ToggleAction> unselectedActions = Arrays.stream(filteringActions.getChildren(ActionManager.getInstance()))
           .filter(action -> action instanceof ToggleAction)
           .map(action -> (ToggleAction)action)
           .filter(ta -> !ta.isSelected(fakeEvent(ta)))
@@ -964,7 +964,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
     DefaultActionGroup filteringGroup = new DefaultActionGroup();
     usageView.addFilteringActions(filteringGroup);
-    filteringGroup.add(ActionManager.getInstance().getAction("UsageGrouping.FileStructure"));
+    ActionManager actionManager = ActionManager.getInstance();
+    filteringGroup.add(actionManager.getAction("UsageGrouping.FileStructure"));
     filteringGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text"), null, AllIcons.Actions.PreviewDetailsVertically) {
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
@@ -1003,7 +1004,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     if (!(maximalScope instanceof LocalSearchScope)) {
       DefaultActionGroup scopeChooserGroup = new DefaultActionGroup(createScopeChooser(project, contentDisposable, usageView, showUsagesPopupData));
       ActionToolbar scopeChooserToolbar =
-        ActionManager.getInstance().createActionToolbar(ActionPlaces.SHOW_USAGES_POPUP_TOOLBAR, scopeChooserGroup, true);
+        actionManager.createActionToolbar(ActionPlaces.SHOW_USAGES_POPUP_TOOLBAR, scopeChooserGroup, true);
       scopeChooserToolbar.setTargetComponent(table);
       scopeChooserToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
       ((ActionToolbarImpl) scopeChooserToolbar).setForceMinimumSize(true);
@@ -1175,12 +1176,12 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     }
 
     parameters.minWidth.set(-1);
-    for (AnAction action : filteringGroup.getChildren(null)) {
+    for (AnAction action : filteringGroup.getChildren(actionManager)) {
       action.unregisterCustomShortcutSet(usageView.getComponent());
       action.registerCustomShortcutSet(action.getShortcutSet(), content);
     }
 
-    for (AnAction action : showUsagesPopupData.pinGroup.getChildren(null)) {
+    for (AnAction action : showUsagesPopupData.pinGroup.getChildren(actionManager)) {
       action.unregisterCustomShortcutSet(usageView.getComponent());
       action.registerCustomShortcutSet(action.getShortcutSet(), content);
     }

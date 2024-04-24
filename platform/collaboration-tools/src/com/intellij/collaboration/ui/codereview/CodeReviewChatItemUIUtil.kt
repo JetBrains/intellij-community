@@ -212,7 +212,7 @@ object CodeReviewChatItemUIUtil {
   fun withHoverHighlight(comp: JComponent): JComponent {
     val highlighterPanel = JPanelWithBackground(BorderLayout()).apply {
       isOpaque = false
-      background = UIUtil.TRANSPARENT_COLOR
+      background = null
       add(comp, BorderLayout.CENTER)
     }.also {
       object : HoverStateListener() {
@@ -222,7 +222,7 @@ object CodeReviewChatItemUIUtil {
             CodeReviewColorUtil.Review.Chat.hover
           }
           else {
-            UIUtil.TRANSPARENT_COLOR
+            null
           }
         }
       }.apply {

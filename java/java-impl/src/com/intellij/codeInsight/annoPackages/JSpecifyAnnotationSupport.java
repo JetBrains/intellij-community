@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.annoPackages;
 
 import com.intellij.codeInsight.Nullability;
@@ -20,12 +20,11 @@ public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport
   private static final String DEFAULT_NOT_NULL = PACKAGE_NAME + "." + "NullMarked";
   private static final String DEFAULT_NULLNESS_UNKNOWN = PACKAGE_NAME + "." + "NullUnmarked";
 
-  @Nullable
   @Override
-  public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
-                                                                       @NotNull PsiElement context,
-                                                                       PsiAnnotation.TargetType @NotNull [] types,
-                                                                       boolean superPackage) {
+  public @Nullable NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
+                                                                                 @NotNull PsiElement context,
+                                                                                 PsiAnnotation.TargetType @NotNull [] types,
+                                                                                 boolean superPackage) {
     if (superPackage) return null;
     String name = anno.getQualifiedName();
     if (name == null) return null;
@@ -49,9 +48,8 @@ public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport
     return new NullabilityAnnotationInfo(anno, nullability, true);
   }
   
-  @NotNull
   @Override
-  public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
+  public @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return switch (nullability) {
       case NOT_NULL -> Collections.singletonList(NOT_NULL);
       case NULLABLE -> Collections.singletonList(NULLABLE);

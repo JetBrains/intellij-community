@@ -683,8 +683,55 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         addParameter(createKotlinIntParameter(defaultValueForCall = KtPsiFactory(project).createExpression("0")))
     }
 
-    fun testNewParamValueRefsOtherParam() = doTest {//todo substitute references in default value: `org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinFunctionCallUsage.updateArgumentsAndReceiver`
+    fun testNewParamValueRefsOtherParam() = doTest {
         val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("p1 * p1", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsProperty() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("n + 1", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsCallExpressions() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("a * b", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsIncrement() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("a * b", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsPrimaryConstructor() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("a + 1", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsOtherParamReceiver() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("this + 1", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsOtherParamRemoveReceiver() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("n + 1", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+        removeParameter(0)
+    }
+
+    fun testNewParamValueRefsSimpleNameWithDefaultValue() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("prop", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+        removeParameter(0)
+    }
+
+    fun testNewParamValueRefsOtherParamReceiver1() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("this@foo.a", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsOtherParamNeedVariable() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("this.a", method)
         addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
     }
 
@@ -698,6 +745,11 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
     }
 
     fun testConstructorJavaUsages() = doTestAndIgnoreConflicts {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("\"abc\"")
+        addParameter(createKotlinStringParameter(defaultValueForCall = defaultValueForCall))
+    }
+
+    fun testConstructorJavaUsages1() = doTestAndIgnoreConflicts {
         val defaultValueForCall = KtPsiFactory(project).createExpression("\"abc\"")
         addParameter(createKotlinStringParameter(defaultValueForCall = defaultValueForCall))
     }
@@ -933,6 +985,14 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
     }
 
     fun testRemoveReceiverInContainingClassConflict() = doTestConflict {
+        removeParameter(0)
+    }
+
+    fun testRemoveParameterUsedInClassBody() = doTestConflict {
+        removeParameter(0)
+    }
+
+    fun testRemovePropertyUsedInAnotherClass() = doTestConflict {
         removeParameter(0)
     }
 
@@ -1224,6 +1284,24 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         newParameters[1].setType("Float?")
     }
 
+    fun testAddValParameterToConstructorConflictWithClass() = doTestConflict {
+        val parameter = createKotlinIntParameter("c")
+        parameter.valOrVar = KotlinValVar.Val
+        addParameter(parameter)
+    }
+
+    fun testAddValParameterToConstructorConflictWithProperty() = doTestConflict {
+        val parameter = createKotlinIntParameter("p")
+        parameter.valOrVar = KotlinValVar.Val
+        addParameter(parameter)
+    }
+
+    fun testAddValParameterToConstructorConflictWithFunction() = doTest {
+        val parameter = createKotlinParameter("f", "() -> Unit", null, false)
+        parameter.valOrVar = KotlinValVar.Val
+        addParameter(parameter)
+    }
+
     fun testGenericConstructor() = doTest {
         setNewVisibility(Public)
 
@@ -1264,6 +1342,11 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
     }
 
+    fun testSyntheticPrimaryConstructorByRef() = doTest {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
+    }
+
     fun testChangeConstructorVisibility() = doTest { setNewVisibility(Protected) }
 
     fun testDoNotApplyPrimarySignatureToSecondaryCalls() = doTest {
@@ -1295,7 +1378,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     fun testJvmOverloadedSwapParams2() = doTestAndIgnoreConflicts { swapParameters(0, 2) }//todo
 
-    fun testJvmOverloadedConstructorSwapParams() = doTestAndIgnoreConflicts { swapParameters(1, 2) }//todo
+    fun testJvmOverloadedConstructorSwapParams() = doTestAndIgnoreConflicts { swapParameters(1, 2) }
 
     fun testJvmOverloadedAddDefault1() = doTestJvmOverloadedAddDefault(0)
 
@@ -1492,7 +1575,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
     fun testAddParameterFromFunctionWithReceiver() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiTypes.intType())) }
 
     // ---- data class ---------
-    fun testRemoveDataClassParameter() = doTest { removeParameter(1) }
+    open fun testRemoveDataClassParameter() = doTest { removeParameter(1) }
     fun testSwapDataClassParameters() = doTest {
         swapParameters(0, 2)
         swapParameters(1, 2)
@@ -1506,7 +1589,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         )
     }
 
-    fun testRemoveAllOriginalDataClassParameters() = doTest {
+    open fun testRemoveAllOriginalDataClassParameters() = doTest {
         val psiFactory = KtPsiFactory(project)
 
         swapParameters(1, 2)

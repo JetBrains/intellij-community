@@ -14,9 +14,7 @@ public final class CoroutineDumpState {
 
     // set to true - otherwise, install will try to load byte-buddy
     kotlinx.coroutines.debug.internal.AgentInstallationType.INSTANCE.setInstalledStatically$kotlinx_coroutines_core(true);
-    kotlinx.coroutines.debug.internal.DebugProbesImpl debugProbes = kotlinx.coroutines.debug.internal.DebugProbesImpl.INSTANCE;
-    debugProbes.setEnableCreationStackTraces$kotlinx_coroutines_core(false);
-    debugProbes.install$kotlinx_coroutines_core();
+    kotlinx.coroutines.debug.internal.DebugProbesImpl.INSTANCE.install$kotlinx_coroutines_core();
 
     INSTALLED = true;
   }

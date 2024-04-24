@@ -43,8 +43,7 @@ public final class MethodOverloadsParentMethodInspection extends BaseInspection 
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "MethodOverloadsMethodOfSuperclass";
   }
 
@@ -54,8 +53,7 @@ public final class MethodOverloadsParentMethodInspection extends BaseInspection 
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("method.overloads.problem.descriptor");
   }
 

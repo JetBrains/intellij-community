@@ -19,12 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EmptyIcon;
-import git4idea.GitBranch;
-import git4idea.GitLocalBranch;
-import git4idea.GitReference;
-import git4idea.GitTag;
-import git4idea.GitProtectedBranchesKt;
-import git4idea.GitRemoteBranch;
+import git4idea.*;
 import git4idea.actions.branch.GitBranchActionsUtil;
 import git4idea.branch.*;
 import git4idea.config.GitSharedSettings;
@@ -983,8 +978,7 @@ public final class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      String fullBranchName = (myReference instanceof GitBranch branch) ? branch.getFullName() : myBranchName;
-      GitBrancher.getInstance(myProject).rebase(myRepositories, fullBranchName);
+      GitBrancher.getInstance(myProject).rebase(myRepositories, myReference.getFullName());
     }
   }
 

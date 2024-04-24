@@ -41,7 +41,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
@@ -305,8 +305,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     return targetElements != null && targetElements.length > 0;
   }
 
-  @Nullable
-  private static PsiElementClassMember chooseTarget(PsiFile file, Editor editor, Project project) {
+  private static @Nullable PsiElementClassMember chooseTarget(PsiFile file, Editor editor, Project project) {
     final PsiElementClassMember[] targetElements = getTargetElements(file, editor);
     if (targetElements == null || targetElements.length == 0) return null;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {

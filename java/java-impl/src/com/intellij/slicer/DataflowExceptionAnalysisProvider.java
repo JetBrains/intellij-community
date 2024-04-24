@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -155,7 +155,7 @@ public final class DataflowExceptionAnalysisProvider implements ExceptionAnalysi
     return null;
   }
 
-  private @Nullable static AnalysisStartingPoint fromThrowStatement(PsiThrowStatement throwStatement) {
+  private static @Nullable AnalysisStartingPoint fromThrowStatement(PsiThrowStatement throwStatement) {
     PsiElement parent = throwStatement.getParent();
     if (parent instanceof PsiCodeBlock) {
       PsiElement statement = throwStatement.getPrevSibling();
@@ -302,8 +302,7 @@ public final class DataflowExceptionAnalysisProvider implements ExceptionAnalysi
     return null;
   }
 
-  @Nullable
-  private static AnalysisStartingPoint fromAssertionError(@NotNull PsiElement anchor) {
+  private static @Nullable AnalysisStartingPoint fromAssertionError(@NotNull PsiElement anchor) {
     if (anchor instanceof PsiAssertStatement) {
       return AnalysisStartingPoint.tryNegate(AnalysisStartingPoint.fromCondition(((PsiAssertStatement)anchor).getAssertCondition()));
     }

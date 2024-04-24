@@ -90,6 +90,7 @@ a:com.intellij.diagnostic.logging.LogConsoleManagerBase
 - pa:getUi():com.intellij.execution.ui.RunnerLayoutUi
 - removeAdditionalTabComponent(com.intellij.diagnostic.logging.AdditionalTabComponent):V
 - removeLogConsole(java.lang.String):V
+f:com.intellij.diagnostic.logging.LogFilesCollectorKt
 f:com.intellij.diagnostic.logging.LogFilesManager
 - <init>(com.intellij.openapi.project.Project,com.intellij.diagnostic.logging.LogConsoleManager,com.intellij.openapi.Disposable):V
 - addLogConsoles(com.intellij.execution.configurations.RunConfigurationBase,com.intellij.execution.process.ProcessHandler):V
@@ -3959,6 +3960,8 @@ c:com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 - getCloseSessionActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
 - getCopyActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
 - getCursorShape():com.jediterm.terminal.CursorShape
+- getDefaultBackground():com.jediterm.terminal.TerminalColor
+- getDefaultForeground():com.jediterm.terminal.TerminalColor
 - getDefaultStyle():com.jediterm.terminal.TextStyle
 - getFindActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
 - getFoundPatternColor():com.jediterm.terminal.TextStyle

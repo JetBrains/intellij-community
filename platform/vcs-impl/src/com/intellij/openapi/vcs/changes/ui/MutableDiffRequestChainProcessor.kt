@@ -5,6 +5,7 @@ import com.intellij.diff.chains.AsyncDiffRequestChain
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.CacheDiffRequestProcessor
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
@@ -12,10 +13,10 @@ import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupA
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
-import kotlin.properties.Delegates
 
 @ApiStatus.Internal
 class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?) : CacheDiffRequestProcessor.Simple(project) {
+  private var _chain: DiffRequestChain? = null
 
   private val asyncChangeListener = AsyncDiffRequestChain.Listener {
     dropCaches()
@@ -23,21 +24,14 @@ class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain
     updateRequest(true)
   }
 
-  var chain: DiffRequestChain? by Delegates.observable(null) { _, oldValue, newValue ->
-    if (oldValue is AsyncDiffRequestChain) {
-      oldValue.onAssigned(false)
-      oldValue.removeListener(asyncChangeListener)
+  var chain: DiffRequestChain?
+    get() = _chain
+    set(newChain) {
+      updateChain(newChain)
+      dropCaches()
+      updateRequest()
     }
 
-    if (newValue is AsyncDiffRequestChain) {
-      newValue.onAssigned(true)
-      // listener should be added after `onAssigned` call to avoid notification about synchronously loaded requests
-      newValue.addListener(asyncChangeListener, this)
-    }
-    dropCaches()
-    currentIndex = newValue?.index ?: 0
-    updateRequest()
-  }
   var currentIndex: Int = 0
     private set
 
@@ -45,6 +39,14 @@ class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain
 
   init {
     this.chain = chain
+  }
+
+  fun setChain(chain: DiffRequestChain?, clearCache: Boolean = true, scrollToChangePolicy: DiffUserDataKeysEx.ScrollToPolicy? = null) {
+    updateChain(chain)
+    if (clearCache) {
+      dropCaches()
+    }
+    updateRequest(false, !clearCache, scrollToChangePolicy)
   }
 
   override fun onDispose() {
@@ -93,6 +95,22 @@ class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain
   private fun selectCurrentChange() {
     val producer = currentRequestProvider as? ChangeDiffRequestChain.Producer ?: return
     selectionEventDispatcher.multicaster.onSelected(producer)
+  }
+
+  private fun updateChain(newChain: DiffRequestChain?) {
+    (_chain as? AsyncDiffRequestChain)?.let {
+      it.onAssigned(false)
+      it.removeListener(asyncChangeListener)
+    }
+
+    _chain = newChain
+    (newChain as? AsyncDiffRequestChain)?.let {
+      it.onAssigned(true)
+      // listener should be added after `onAssigned` call to avoid notification about synchronously loaded requests
+      it.addListener(asyncChangeListener, this)
+    }
+
+    currentIndex = newChain?.index ?: 0
   }
 
   private inner class MyGoToChangePopupAction : PresentableGoToChangePopupAction.Default<ChangeDiffRequestChain.Producer>() {

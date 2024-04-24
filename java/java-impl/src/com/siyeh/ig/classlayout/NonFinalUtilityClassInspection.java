@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.siyeh.ig.classlayout;
 
@@ -20,15 +20,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class NonFinalUtilityClassInspection extends BaseInspection {
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new MakeClassFinalFix((PsiClass)infos[0]);
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("non.final.utility.class.problem.descriptor");
   }
 

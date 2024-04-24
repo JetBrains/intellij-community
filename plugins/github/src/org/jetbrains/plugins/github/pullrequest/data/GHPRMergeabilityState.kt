@@ -3,10 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 
-class GHPRMergeabilityState(val headRefOid: String,
-                            val htmlUrl: String,
-
-                            val hasConflicts: Boolean?,
+class GHPRMergeabilityState(val hasConflicts: Boolean?,
 
                             val ciJobs: List<CodeReviewCIJob>,
 

@@ -61,7 +61,7 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandC
 @Service(Service.Level.PROJECT)
 class ListenerState(val project: Project, val cs: CoroutineScope) {
 
-  private companion object {
+  internal companion object {
     val LOG = logger<WaitForFinishedCodeAnalysis>()
   }
 
@@ -143,7 +143,12 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
     }
 
     if (errors.isEmpty()) return
-    cs.launch { errors.forEach { LOG.error(it) } }
+    cs.launch {
+      errors.forEach {
+        LOG.error(it)
+        it.suppressed.forEach { suppressed -> LOG.error("   Suppressed exception: ", suppressed) }
+      }
+    }
   }
 
   interface HighlightedEditor {
@@ -233,6 +238,8 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   }
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
+    ListenerState.LOG.info("daemon starting with ${fileEditors.size} unfiltered editors: " +
+                           fileEditors.joinToString(separator = "\n") { it.description })
     project.service<ListenerState>().registerAnalysisStarted(fileEditors.getWorthy())
   }
 
@@ -245,6 +252,7 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   }
 
   private fun daemonStopped(fileEditors: Collection<FileEditor>, isCancelled: Boolean) {
+    ListenerState.LOG.info("daemon stopped with ${fileEditors.size} unfiltered editors")
     val worthy = fileEditors.getWorthy()
     if (worthy.isEmpty()) return
 
@@ -283,7 +291,7 @@ private sealed class ExceptionWithTime(override val message: String?) : Exceptio
 
   companion object {
     private class DaemonAnalysisStarted(editor: TextEditor, override val wasStartedInLimitedSetup: Boolean) :
-      ExceptionWithTime(message = "Previous daemon start trace (editor = $editor)") {
+      ExceptionWithTime(message = "Previous daemon start trace (editor = ${editor.description})") {
       private var analysisFinished = false
 
       fun markAnalysisFinished() {
@@ -293,12 +301,12 @@ private sealed class ExceptionWithTime(override val message: String?) : Exceptio
       fun isNotFinished() = !analysisFinished
     }
 
-    private class EditorOpened(editor: TextEditor) : ExceptionWithTime(message = "Previous editor opening trace (editor = $editor)") {
+    private class EditorOpened(editor: TextEditor) : ExceptionWithTime(message = "Previous editor opening trace (editor = ${editor.description})") {
       override val wasStartedInLimitedSetup: Boolean
         get() = true //because it's unknown
     }
 
-    private class EditorEdited(editor: TextEditor) : ExceptionWithTime(message = "Previous editor edited trace (editor = $editor)") {
+    private class EditorEdited(editor: TextEditor) : ExceptionWithTime(message = "Previous editor edited trace (editor = ${editor.description})") {
       override val wasStartedInLimitedSetup: Boolean
         get() = true //because it's unknown
     }
@@ -343,4 +351,4 @@ private sealed class ExceptionWithTime(override val message: String?) : Exceptio
 }
 
 private val FileEditor.description: String
-  get() = "${hashCode()} ${toString()}"
+  get() = "${hashCode()} ${javaClass} ${toString()}"

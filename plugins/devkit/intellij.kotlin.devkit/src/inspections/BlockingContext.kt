@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 
-internal val requiresBlockingContextAnnotation = FqName(REQUIRES_BLOCKING_CONTEXT_ANNOTATION)
-internal val requiresBlockingContextAnnotationId = ClassId.topLevel(requiresBlockingContextAnnotation)
+internal val RequiresBlockingContextAnnotation: FqName = FqName(REQUIRES_BLOCKING_CONTEXT_ANNOTATION)
+internal val RequiresBlockingContextAnnotationId: ClassId = ClassId.topLevel(RequiresBlockingContextAnnotation)
 
 internal abstract class BlockingContextFunctionBodyVisitor : KtTreeVisitorVoid() {
   override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression): Unit = Unit

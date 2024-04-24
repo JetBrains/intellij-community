@@ -3,13 +3,13 @@ package com.intellij.ide.ui.text
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil.NON_BREAK_SPACE
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -128,7 +128,7 @@ object ShortcutsRenderingUtil {
   }
 
   private fun getModifiersText(modifiers: Int): List<String> {
-    val modifiersString = if (SystemInfo.isMac) {
+    val modifiersString = if (ClientSystemInfo.isMac()) {
       // returns glyphs if native shortcuts are enabled, text presentation otherwise
       MacKeymapUtil.getModifiersText(modifiers, "+")
     }
@@ -145,7 +145,7 @@ object ShortcutsRenderingUtil {
     KeyEvent.VK_UP -> "↑"
     KeyEvent.VK_DOWN -> "↓"
     KeyEvent.VK_BACK_SLASH -> """\"""
-    else -> if (SystemInfo.isMac) getMacKeyString(code) else getLinuxWinKeyString(code)
+    else -> if (ClientSystemInfo.isMac()) getMacKeyString(code) else getLinuxWinKeyString(code)
   }.replaceSpacesWithNonBreakSpaces()
 
   private fun getLinuxWinKeyString(code: Int) = when (code) {

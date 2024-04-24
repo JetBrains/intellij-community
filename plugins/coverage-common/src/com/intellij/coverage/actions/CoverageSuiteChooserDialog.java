@@ -236,7 +236,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   private class AddExternalSuiteAction extends AnAction {
     AddExternalSuiteAction() {
       super(CommonBundle.message("button.add"), CommonBundle.message("button.add"), IconUtil.getAddIcon());
-      registerCustomShortcutSet(CommonShortcuts.INSERT, mySuitesTree);
+      registerCustomShortcutSet(CommonShortcuts.getInsert(), mySuitesTree);
     }
 
     @Override

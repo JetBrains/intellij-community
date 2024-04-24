@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -62,8 +62,7 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
     return JavaBundle.message("intention.family.name.convert.record.to.class");
   }
 
-  @Nullable
-  public static PsiClass tryMakeRecord(@NotNull PsiElement element) {
+  public static @Nullable PsiClass tryMakeRecord(@NotNull PsiElement element) {
     // We use java.util.Objects for code generation, but it's absent before Java 7
     if (!PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, element)) return null;
     PsiJavaFile maybeRecord = (PsiJavaFile)PsiFileFactory.getInstance(element.getProject())
@@ -103,8 +102,7 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
     CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
   }
 
-  @NotNull
-  private String generateText(@NotNull PsiClass recordClass) {
+  private @NotNull String generateText(@NotNull PsiClass recordClass) {
     PsiField lastField =
       StreamEx.ofReversed(recordClass.getFields()).findFirst(field -> field.hasModifierProperty(PsiModifier.STATIC)).orElse(null);
     PsiMethod lastMethod =
@@ -363,8 +361,7 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
     }
   }
 
-  @Nullable
-  private static PsiField getSerialVersionUIDField(@NotNull PsiClass recordClass) {
+  private static @Nullable PsiField getSerialVersionUIDField(@NotNull PsiClass recordClass) {
     return recordClass.findFieldByName(SERIAL_VERSION_UID_FIELD_NAME, false);
   }
 }

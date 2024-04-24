@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
@@ -15,12 +16,14 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.configuration.findApplicableConfigurator
+import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
+import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.configuration.withScope
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.util.createIntentionForFirstParentOfType
 import org.jetbrains.kotlin.name.FqName
@@ -125,6 +128,8 @@ abstract class AddKotlinLibQuickFix(
 ) : KotlinQuickFixAction<KtElement>(element) {
     protected abstract fun getLibraryDescriptor(module: Module): MavenExternalLibraryDescriptor
 
+    override fun startInWriteAction(): Boolean = true
+
     class MavenExternalLibraryDescriptor private constructor(
         groupId: String,
         artifactId: String,
@@ -144,8 +149,15 @@ abstract class AddKotlinLibQuickFix(
         val element = element ?: return
         val module = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(element.containingFile.virtualFile) ?: return
 
-        val configurator = findApplicableConfigurator(module)
-        configurator.addLibraryDependency(module, element, getLibraryDescriptor(module), libraryJarDescriptor, scope)
+        val configurator = KotlinBuildSystemDependencyManager.findApplicableConfigurator(module) ?: return
+        val scopeOverride = OrderEntryFix.suggestScopeByLocation(module, element)
+        configurator.addDependency(module, getLibraryDescriptor(module).withScope(scopeOverride))
+
+        configurator.getBuildScriptFile(module)?.let {
+            NotificationMessageCollector.create(project)
+                .addMessage(KotlinJvmBundle.message("text.was.modified", it.path))
+                .showNotification()
+        }
     }
 
     override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = null

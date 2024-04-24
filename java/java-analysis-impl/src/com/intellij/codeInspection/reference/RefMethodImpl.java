@@ -24,7 +24,7 @@ import org.jetbrains.uast.expressions.UInjectionHost;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
+public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMethod permits RefImplicitConstructorImpl {
   private static final int IS_APPMAIN_MASK            = 0b1_00000000_00000000; // 17th bit
   private static final int IS_LIBRARY_OVERRIDE_MASK   = 0b10_00000000_00000000; // 18th bit
   private static final int IS_CONSTRUCTOR_MASK        = 0b100_00000000_00000000; // 19th bit

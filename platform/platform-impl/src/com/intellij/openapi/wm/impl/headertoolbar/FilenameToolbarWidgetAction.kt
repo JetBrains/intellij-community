@@ -3,7 +3,7 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -28,14 +28,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
-import com.intellij.openapi.wm.impl.ExpandableComboAction
-import com.intellij.openapi.wm.impl.FrameTitleBuilder
-import com.intellij.openapi.wm.impl.ToolbarComboButton
-import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
+import com.intellij.openapi.wm.impl.*
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.IconUtil
-import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.event.MouseEvent
@@ -45,7 +41,7 @@ import javax.swing.JComponent
 /**
  * @author Konstantin Bulenkov
  */
-class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+class FilenameToolbarWidgetAction : ExpandableComboAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -60,7 +56,7 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
 
   private fun updatePresentationFromFile(project: Project, file: VirtualFile, presentation: Presentation) {
     val status = FileStatusManager.getInstance(project).getStatus(file)
-    var fg:Color?
+    var fg: Color?
 
     var icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, project)
     if (JBColor.isBright() && isDarkToolbar()) {
@@ -106,9 +102,7 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
     (component as FilenameToolbarWidget).update(presentation)
   }
 
-  private inner class FilenameToolbarWidget(model: ToolbarComboButtonModel) : ToolbarComboButton(model) {
-
-    private var messageBusConnection: SimpleMessageBusConnection? = null
+  private inner class FilenameToolbarWidget(model: ToolbarComboButtonModel) : ListenableToolbarComboButton(model) {
 
     init {
       isOpaque = false
@@ -147,25 +141,14 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
       }
     }
 
-    override fun addNotify() {
-      super.addNotify()
-      if (messageBusConnection != null) {
-        LOG.warn("FilenameToolbarWidgetAction.FilenameToolbarWidget.addNotify: already connected, looks like the component was added without removing it")
-        return
-      }
+    override fun installListeners(project: Project?, disposable: Disposable) {
+      if (project == null) return
       val editorListener = object : FileEditorManagerListener {
         override fun selectionChanged(event: FileEditorManagerEvent) {
-          ActionToolbar.findToolbarBy(this@FilenameToolbarWidget)?.updateActionsImmediately()
+          updateWidgetAction()
         }
       }
-      messageBusConnection = ProjectUtil.getProjectForComponent(this@FilenameToolbarWidget)?.messageBus?.simpleConnect()
-      messageBusConnection?.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener)
-    }
-
-    override fun removeNotify() {
-      super.removeNotify()
-      messageBusConnection?.disconnect()
-      messageBusConnection = null
+      project.messageBus.connect(disposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener)
     }
   }
 

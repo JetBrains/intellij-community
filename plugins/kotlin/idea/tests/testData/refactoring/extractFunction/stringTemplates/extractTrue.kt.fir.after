@@ -2,8 +2,8 @@
 fun foo(param: Int): String {
     val x = "atrue123"
     val x = "aTRUE123"
-    val z = true
-    return "ab${string()}def"
+    val z = bool()
+    return "ab${bool()}def"
 }
 
-private fun string(): String = "true"
+private fun bool(): Boolean = true

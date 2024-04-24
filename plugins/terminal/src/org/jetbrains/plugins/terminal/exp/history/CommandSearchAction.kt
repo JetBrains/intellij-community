@@ -12,8 +12,8 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.ui.ScrollingUtil
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
-import org.jetbrains.plugins.terminal.exp.TerminalPromotedEditorAction
 import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter.Companion.isTerminalCommandSearch
+import org.jetbrains.plugins.terminal.exp.TerminalPromotedEditorAction
 
 internal class CommandSearchAction : TerminalPromotedEditorAction(Handler()), ActionRemoteBehaviorSpecification.Disabled {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

@@ -279,37 +279,45 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
     val words = registrar.getProcessedWords(pattern)
     val filterOutInspections = Registry.`is`("go.to.action.filter.out.inspections", true)
 
+    @Suppress("RemoveExplicitTypeArguments")
     return channelFlow<Any> {
-      var optionDescriptions: MutableSet<OptionDescription>? = null
-      for (word in words) {
-        val descriptions = Objects.requireNonNullElse(registrar.getAcceptableDescriptions(word), hashSetOf())
-        descriptions.removeIf { "ActionManager" == it.path || filterOutInspections && "Inspections" == it.groupName }
-
-        if (!descriptions.isEmpty()) {
-          if (optionDescriptions == null) {
-            optionDescriptions = descriptions
-          }
-          else {
-            optionDescriptions.retainAll(descriptions)
-          }
-        }
-        else {
-          optionDescriptions = null
-          break
-        }
-      }
+      // Use LinkedHashSet to preserve the order of the elements to iterate through them later
+      val optionDescriptions = LinkedHashSet<OptionDescription>()
       if (!Strings.isEmptyOrSpaces(pattern)) {
         val matcher = buildMatcher(pattern)
-        if (optionDescriptions == null) {
-          optionDescriptions = HashSet()
-        }
         for ((key, value) in map) {
           if (matcher.matches(value)) {
             optionDescriptions.add(OptionDescription(null, key, value, null, value))
           }
         }
       }
-      if (!optionDescriptions.isNullOrEmpty()) {
+
+      var registrarDescriptions: MutableSet<OptionDescription>? = null
+      for (word in words) {
+        val descriptions = Objects.requireNonNullElse(registrar.getAcceptableDescriptions(word), hashSetOf())
+        descriptions.removeIf { "ActionManager" == it.path || filterOutInspections && "Inspections" == it.groupName }
+
+        if (!descriptions.isEmpty()) {
+          if (registrarDescriptions == null) {
+            registrarDescriptions = descriptions
+          }
+          else {
+            registrarDescriptions.retainAll(descriptions)
+          }
+        }
+        else {
+          registrarDescriptions = null
+          break
+        }
+      }
+
+      // Add registrar's options to the end of the `LinkedHashSet`
+      // to guarantee that options from the `map` are going to be processed first
+      if (registrarDescriptions != null) {
+        optionDescriptions.addAll(registrarDescriptions)
+      }
+
+      if (optionDescriptions.isNotEmpty()) {
         val currentHits: MutableSet<String> = hashSetOf()
         val iterator = optionDescriptions.iterator()
         for (description in iterator) {

@@ -50,7 +50,7 @@
 
     <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
 
-    <projectModelContributor implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModelContributor"/>
+    <syncContributor implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptSyncContributor"/>
 
     <executionEnvironmentProvider implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleAppEnvProvider"/>
     <initScriptGenerator implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinMPGradleInitScriptGenerator"/>

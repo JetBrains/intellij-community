@@ -5,6 +5,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.documentation.DocumentationMarkup.*
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -296,6 +297,7 @@ object QuickDocHighlightingHelper {
           trim, DocumentationSettings.getHighlightingSaturation(isForRenderedDoc))
       }
       catch (e: Exception) {
+        if (e is ControlFlowException) throw e
         thisLogger().error("Failed to highlight code fragment with language $language", e)
         append(XmlStringUtil.escapeString(processedCode.applyIf(trim) { trimIndent() }))
       }

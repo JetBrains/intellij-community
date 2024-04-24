@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
@@ -33,9 +33,7 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends Base
   /**
    * Don't remove, otherwise user inspection profiles will be modified.
    */
-  @NonNls
-  @SuppressWarnings({"PublicField", "unused"})
-  public String nonThreadSafeTypes = "";
+  @SuppressWarnings({"PublicField", "unused"}) public @NonNls String nonThreadSafeTypes = "";
 
   @Override
   public @NotNull OptPane getOptionsPane() {
@@ -45,15 +43,13 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends Base
     );
   }
 
-  @NotNull
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     return "AccessToNonThreadSafeStaticField";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.field.problem.descriptor", infos[0]);
   }
 

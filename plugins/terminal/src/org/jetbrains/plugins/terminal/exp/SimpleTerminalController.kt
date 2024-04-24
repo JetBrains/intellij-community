@@ -15,7 +15,7 @@ import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
 
-class SimpleTerminalController(
+internal class SimpleTerminalController(
   settings: JBTerminalSystemSettingsProviderBase,
   private val session: BlockTerminalSession,
   private val editor: EditorEx
@@ -37,7 +37,7 @@ class SimpleTerminalController(
     Disposer.register(this, caretPainter)
 
     // create dummy logical block, that will cover all the output, needed only for caret model
-    outputModel.createBlock(command = null, prompt = null)
+    outputModel.createBlock(command = null, prompt = null, session.model.width)
     terminalModel.isCommandRunning = true
 
     setupContentListener()
@@ -63,13 +63,13 @@ class SimpleTerminalController(
   }
 
   private fun updateEditorContent() {
-    val content: TerminalContent = computeTerminalContent()
+    val content: TextWithHighlightings = computeTerminalContent()
     invokeLater(editor.getDisposed(), ModalityState.any()) {
       updateEditor(content)
     }
   }
 
-  private fun computeTerminalContent(): TerminalContent {
+  private fun computeTerminalContent(): TextWithHighlightings {
     val builder = StringBuilder()
     val highlightings = mutableListOf<HighlightingInfo>()
     val consumer = object : StyledTextConsumer {
@@ -115,10 +115,10 @@ class SimpleTerminalController(
       builder.deleteCharAt(builder.lastIndex)
       highlightings.removeLast()
     }
-    return TerminalContent(builder.toString(), highlightings)
+    return TextWithHighlightings(builder.toString(), highlightings)
   }
 
-  private fun updateEditor(content: TerminalContent) {
+  private fun updateEditor(content: TextWithHighlightings) {
     document.setText(content.text)
     editor.highlighter = TerminalTextHighlighter(AllHighlightingsSnapshot(editor.document, content.highlightings))
 
@@ -131,8 +131,6 @@ class SimpleTerminalController(
   private fun TextStyle.toTextAttributesProvider(): TextAttributesProvider = TextStyleAdapter(this, session.colorPalette)
 
   override fun dispose() {}
-
-  private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
 
   companion object {
     val KEY: DataKey<SimpleTerminalController> = DataKey.create("SimpleTerminalController")

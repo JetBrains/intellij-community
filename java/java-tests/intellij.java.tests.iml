@@ -87,6 +87,6 @@
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.navbar.compatibility.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.navbar.testFramework" scope="TEST" />
   </component>
 </module>

@@ -464,4 +464,64 @@ class JavaLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRefe
       """.trimIndent())
     doTest(emptyMap())
   }
+
+  fun `test should resolve with escape character in simple string log4j2`() {
+    myFixture.configureByText("Logging.java", """
+      import org.apache.logging.log4j.*;
+      class Logging {
+        private static final Logger LOG = LogManager.getLogger();
+        void m(int i) {
+          LOG.info("\\{<caret>}", i);
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(3, 5) to "i"))
+  }
+
+  fun `test should resolve with escape character in multiline string log4j2`() {
+    val multilineString = "\"\"\"\n" +
+                          "\\\\{<caret>}" +
+                          "\"\"\""
+    myFixture.configureByText("Logging.java", """
+      import org.apache.logging.log4j.*;
+      class Logging {
+        private static final Logger LOG = LogManager.getLogger();
+        void m(int i) {
+          LOG.info($multilineString, i);
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(6, 8) to "i"))
+  }
+
+
+
+  fun `test should not resolve with escape character in simple string slf4j`() {
+    myFixture.configureByText("Logging.java", """
+      import org.slf4j.*;
+      class Logging {
+        private static final Logger LOG = LoggerFactory.getLogger(Logging.class);
+        void m(int i) {
+          LOG.info("\\{<caret>}", i);
+        }
+     }
+      """.trimIndent())
+    doTest(emptyMap())
+  }
+
+  fun `test should not resolve with escape character in multiline string slf4j`() {
+    val multilineString = "\"\"\"\n" +
+                          "\\\\{<caret>}" +
+                          "\"\"\""
+    myFixture.configureByText("Logging.java", """
+      import org.slf4j.*;
+      class Logging {
+        private static final Logger LOG = LoggerFactory.getLogger(Logging.class);
+        void m(int i) {
+          LOG.info($multilineString, i);
+        }
+     }
+      """.trimIndent())
+    doTest(emptyMap())
+  }
 }

@@ -594,6 +594,7 @@ f:com.intellij.icons.AllIcons$Ide
 - sf:DislikeDimmed:javax.swing.Icon
 - sf:DislikeSelected:javax.swing.Icon
 - sf:ErrorPoint:javax.swing.Icon
+- sf:ExternalLinkArrowWhite:javax.swing.Icon
 - sf:External_link_arrow:javax.swing.Icon
 - sf:FatalError:javax.swing.Icon
 - sf:FatalErrorRead:javax.swing.Icon
@@ -1279,6 +1280,8 @@ f:com.intellij.icons.ExpUiIcons$Actions
 - sf:DiffWithClipboard:javax.swing.Icon
 - sf:Filterdups:javax.swing.Icon
 - sf:Generated:javax.swing.Icon
+- sf:GroupByClass:javax.swing.Icon
+- sf:GroupByFile:javax.swing.Icon
 - sf:GroupByMethod:javax.swing.Icon
 - sf:GroupByModule:javax.swing.Icon
 - sf:GroupByPackage:javax.swing.Icon
@@ -1671,6 +1674,7 @@ f:com.intellij.icons.ExpUiIcons$Hierarchy
 f:com.intellij.icons.ExpUiIcons$Ide
 - sf:ConfigFile:javax.swing.Icon
 - sf:ExternalLink:javax.swing.Icon
+- sf:ExternalLinkWhite:javax.swing.Icon
 - sf:FeedbackRating:javax.swing.Icon
 - sf:FeedbackRatingFocused:javax.swing.Icon
 - sf:FeedbackRatingFocusedOn:javax.swing.Icon
@@ -1989,7 +1993,6 @@ f:com.intellij.icons.ExpUiIcons$Vcs
 - sf:Diff:javax.swing.Icon
 - sf:Fetch:javax.swing.Icon
 - sf:IncomingUpdate:javax.swing.Icon
-- sf:IntelliSort:javax.swing.Icon
 - sf:Merge:javax.swing.Icon
 - sf:OutgoingPush:javax.swing.Icon
 - sf:Patch:javax.swing.Icon
@@ -3346,8 +3349,9 @@ c:com.intellij.ui.RoundedLineBorder
 - <init>(java.awt.Color):V
 - <init>(java.awt.Color,I):V
 - <init>(java.awt.Color,I,I):V
+- b:<init>(java.awt.Color,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
-- setColor(java.awt.Color):V
+- f:setColor(java.awt.Color):V
 f:com.intellij.ui.ScreenUtil
 - sf:DISPOSE_TEMPORARY:java.lang.String
 - s:cropRectangleToFitTheScreen(java.awt.Rectangle):V
@@ -3955,6 +3959,7 @@ f:com.intellij.ui.paint.PaintUtil
 - s:getFractOffsetInRootPane(javax.swing.JComponent):java.awt.geom.Point2D
 - s:getParityMode(D,com.intellij.ui.scale.ScaleContext,com.intellij.ui.paint.PaintUtil$RoundingMode):com.intellij.ui.paint.PaintUtil$ParityMode
 - s:getParityMode(D,java.awt.Graphics2D):com.intellij.ui.paint.PaintUtil$ParityMode
+- s:getStringWidth(java.lang.String,java.awt.Graphics,java.awt.FontMetrics):I
 - s:insets2offset(java.awt.Insets):java.awt.geom.Point2D
 - s:isFractionalScale(java.awt.geom.AffineTransform):Z
 - s:negate(java.awt.geom.Point2D):java.awt.geom.Point2D
@@ -5413,6 +5418,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - s:defaultExperimentalToolbarButtonSize():com.intellij.util.ui.JBDimension
 - s:defaultExperimentalToolbarFont():com.intellij.util.ui.JBFont
 - s:defaultStripeToolbarButtonIconPadding():com.intellij.util.ui.JBInsets
+- s:defaultStripeToolbarButtonIconPaddingForCompactMode():com.intellij.util.ui.JBInsets
 - s:defaultStripeToolbarButtonIconSize():I
 - s:defaultStripeToolbarButtonSize():com.intellij.util.ui.JBDimension
 - s:experimentalToolbarButtonIconSize():I
@@ -5426,6 +5432,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - s:mainToolbarButtonInsets():java.awt.Insets
 - s:mainToolbarButtonInsetsKey():java.lang.String
 - s:stripeToolbarButtonIconPadding():java.awt.Insets
+- s:stripeToolbarButtonIconPaddingForCompactMode():java.awt.Insets
 - s:stripeToolbarButtonIconPaddingKey():java.lang.String
 - s:stripeToolbarButtonIconSize():I
 - s:stripeToolbarButtonIconSizeKey():java.lang.String
@@ -5721,6 +5728,7 @@ f:com.intellij.util.ui.SplitBySeparatorPolicy
 - getPresentableName(java.io.File,I):java.lang.String
 f:com.intellij.util.ui.StartupUiUtil
 - sf:INSTANCE:com.intellij.util.ui.StartupUiUtil
+- sf:addAwtListener(J,com.intellij.openapi.Disposable,java.awt.event.AWTEventListener):V
 - sf:addAwtListener(java.awt.event.AWTEventListener,J,com.intellij.openapi.Disposable):V
 - sf:drawImage(java.awt.Graphics,java.awt.Image):V
 - sf:drawImage(java.awt.Graphics,java.awt.Image,I,I,java.awt.image.ImageObserver):V

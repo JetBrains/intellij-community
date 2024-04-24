@@ -210,7 +210,8 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
 
   private val unsavedIndexingActivityHistories = ConcurrentCollectionFactory.createConcurrentIdentitySet<ProjectIndexingActivityHistory>()
 
-  fun onScanningStarted(history: ProjectScanningHistory) {
+  fun onScanningStarted(history: ProjectScanningHistoryImpl) {
+    history.scanningStarted()
     runAllListenersSafely(projectIndexingActivityHistoryListenerEpName, indexingActivityHistoryListenerPublisher) {
       onStartedScanning(history)
     }

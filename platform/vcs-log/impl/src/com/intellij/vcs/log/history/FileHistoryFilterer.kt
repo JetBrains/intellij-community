@@ -91,7 +91,8 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
     cancelLastTask(false)
 
     val newHistoryTask = FileHistoryTask(project, historyHandler, storage, vcsLogObjectsFactory, root,
-                                         filePath, hash, filters, createProgressIndicator())
+                                         filePath, hash, filters, createProgressIndicator(),
+                                         if (historyHandler.isFastStartSupported) createProgressIndicator() else null)
     fileHistoryTask = newHistoryTask
     return newHistoryTask
   }
@@ -180,16 +181,9 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
       val fastStartSupported = fileHistoryHandler.isFastStartSupported
       val isFastStart = commitCount == CommitCountStage.INITIAL && fastStartSupported
 
-      val (revisions, isDone) = if (isFastStart) {
-        cancelLastTask(false)
-        fileHistoryHandler.getHistoryFast(root, filePath, hash, filters, commitCount.count).map {
-          vcsLogObjectsFactory.createCommitMetadataWithPath(storage, it, root)
-        } to false
-      }
-      else {
-        val isInitial = commitCount == (if (fastStartSupported) CommitCountStage.FIRST_STEP else CommitCountStage.INITIAL)
-        createFileHistoryTask(fileHistoryHandler, root, filePath, hash, filters, isInitial).waitForRevisions(100)
-      }
+      val isInitial = commitCount == CommitCountStage.INITIAL
+      val (revisions, isDone) = createFileHistoryTask(fileHistoryHandler, root, filePath, hash, filters, isInitial).waitForRevisions(100)
+
 
       if (revisions.isEmpty()) return VisiblePack.EMPTY
 
@@ -370,8 +364,8 @@ private data class CommitMetadataWithPath(@JvmField val commit: Int, @JvmField v
 
 private class FileHistoryTask(project: Project, val handler: VcsLogFileHistoryHandler, val storage: VcsLogStorage,
                               val factory: VcsLogObjectsFactory, val root: VirtualFile, val filePath: FilePath, val hash: Hash?,
-                              val filters: VcsLogFilterCollection, indicator: ProgressIndicator) :
-  RevisionCollectorTask<CommitMetadataWithPath>(project, indicator) {
+                              val filters: VcsLogFilterCollection, mainIndicator: ProgressIndicator, fastTaskIndicator: ProgressIndicator?) :
+  RevisionCollectorTask<CommitMetadataWithPath>(project, mainIndicator, fastTaskIndicator) {
 
   @Throws(VcsException::class)
   override fun collectRevisions(consumer: (CommitMetadataWithPath) -> Unit) {
@@ -389,6 +383,16 @@ private class FileHistoryTask(project: Project, val handler: VcsLogFileHistoryHa
 
   fun createCommitMetadataWithPath(revision: VcsFileRevision): CommitMetadataWithPath {
     return factory.createCommitMetadataWithPath(storage, revision as VcsFileRevisionEx, root)
+  }
+
+  override fun collectRevisionsFast(consumer: (CommitMetadataWithPath) -> Unit) {
+    handler.getHistoryFast(root, filePath, hash, filters, FAST_TASK_COMMIT_COUNT) { revision ->
+      consumer(createCommitMetadataWithPath(revision))
+    }
+  }
+
+  companion object {
+    private const val FAST_TASK_COMMIT_COUNT = 30
   }
 }
 

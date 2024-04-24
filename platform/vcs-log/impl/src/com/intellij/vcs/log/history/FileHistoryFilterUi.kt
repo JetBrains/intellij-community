@@ -19,7 +19,6 @@ import com.intellij.vcs.log.ui.filter.VcsLogPopupComponentAction
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import java.util.function.Consumer
-import java.util.function.Supplier
 import javax.swing.JComponent
 
 class FileHistoryFilterUi(private val path: FilePath,
@@ -35,8 +34,7 @@ class FileHistoryFilterUi(private val path: FilePath,
   var visiblePack: VisiblePack = VisiblePack.EMPTY
 
   init {
-    branchFilterModel = BranchFilterModel(Supplier { visiblePack }, data.storage, listOf(root), propertiesWrapper, initialFilters)
-    branchFilterModel.visibleRoots = listOf(root)
+    branchFilterModel = BranchFilterModel(::visiblePack, data.storage, listOf(root), { listOf(root) }, propertiesWrapper, initialFilters)
     branchFilterModel.addSetFilterListener { filterConsumer.accept(filters) }
   }
 

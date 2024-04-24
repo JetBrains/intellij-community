@@ -176,10 +176,11 @@ class DynamicPluginsTest {
           <reference ref="QuickActionPopup">
             <add-to-group group-id="ListActions" anchor="last"/>
           </reference>"""))
-    val group = ActionManager.getInstance().getAction("ListActions") as DefaultActionGroup
-    assertThat(group.getChildren(null).any { it is ShowQuickActionPopupAction }).isTrue()
+    val actionManager = ActionManager.getInstance()
+    val group = actionManager.getAction("ListActions") as DefaultActionGroup
+    assertThat(group.getChildren(actionManager).any { it is ShowQuickActionPopupAction }).isTrue()
     Disposer.dispose(disposable)
-    assertThat(group.getChildren(null).any { it is ShowQuickActionPopupAction }).isFalse()
+    assertThat(group.getChildren(actionManager).any { it is ShowQuickActionPopupAction }).isFalse()
   }
 
   @Test

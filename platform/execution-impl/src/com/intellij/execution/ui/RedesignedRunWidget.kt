@@ -240,7 +240,8 @@ private class PreparedIcon(private val width: Int, private val height: Int, priv
   override fun retrieveIcon(): Icon = iconFn()
 
   override fun replaceBy(replacer: IconReplacer): Icon {
-    return PreparedIcon(width, height) { replacer.replaceIcon(iconFn()) }
+    val res = replacer.replaceIcon(iconFn())
+    return PreparedIcon(res.iconWidth, res.iconHeight, { res })
   }
 }
 

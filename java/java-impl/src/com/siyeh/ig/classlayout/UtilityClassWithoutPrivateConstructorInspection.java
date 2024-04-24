@@ -18,10 +18,10 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -81,8 +81,7 @@ public final class UtilityClassWithoutPrivateConstructorInspection extends BaseI
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("utility.class.without.private.constructor.problem.descriptor");
   }
 
@@ -96,8 +95,7 @@ public final class UtilityClassWithoutPrivateConstructorInspection extends BaseI
     return query.anyMatch(ref -> ref != null && ref.getElement().getParent() instanceof PsiNewExpression);
   }
 
-  @Nullable
-  static PsiMethod getNullArgConstructor(PsiClass aClass) {
+  static @Nullable PsiMethod getNullArgConstructor(PsiClass aClass) {
     final PsiMethod[] constructors = aClass.getConstructors();
     for (final PsiMethod constructor : constructors) {
       final PsiParameterList params = constructor.getParameterList();
@@ -111,8 +109,7 @@ public final class UtilityClassWithoutPrivateConstructorInspection extends BaseI
   protected static class CreateEmptyPrivateConstructor extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("utility.class.without.private.constructor.create.quickfix");
     }
 
@@ -140,8 +137,7 @@ public final class UtilityClassWithoutPrivateConstructorInspection extends BaseI
   private static class MakeConstructorPrivateFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("utility.class.without.private.constructor.make.quickfix");
     }
 
@@ -229,7 +225,7 @@ public final class UtilityClassWithoutPrivateConstructorInspection extends BaseI
         final PsiParameter[] parameters = parameterList.getParameters();
         final PsiParameter parameter = parameters[0];
         final PsiType type = parameter.getType();
-        @NonNls final String stringArray = "java.lang.String[]";
+        final @NonNls String stringArray = "java.lang.String[]";
         if (!type.equalsToText(stringArray)) {
           return false;
         }

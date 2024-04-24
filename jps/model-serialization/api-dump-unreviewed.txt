@@ -375,6 +375,7 @@ f:org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurati
 - sf:ENABLED:java.lang.String
 - sf:ENTRY:java.lang.String
 - sf:EXCLUDE_FROM_COMPILE:java.lang.String
+- sf:FS_COMPILER_REFERENCE_TYPE:java.lang.String
 - sf:MODULE:java.lang.String
 - sf:NAME:java.lang.String
 - sf:RESOURCE_EXTENSIONS:java.lang.String

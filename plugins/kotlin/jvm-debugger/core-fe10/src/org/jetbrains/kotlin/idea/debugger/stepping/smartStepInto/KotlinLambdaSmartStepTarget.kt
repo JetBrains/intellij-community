@@ -5,10 +5,10 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 import com.intellij.debugger.engine.MethodFilter
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import javax.swing.Icon
 
 class KotlinLambdaSmartStepTarget(

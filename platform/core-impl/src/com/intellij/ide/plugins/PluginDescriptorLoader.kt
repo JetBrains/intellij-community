@@ -792,23 +792,14 @@ private fun loadProductModule(
       moduleRaw = RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
     }
     else {
-      val resolver = pool.load(jarFile)
-      try {
-        val entry = resolver.loadZipEntry(subDescriptorFile)
-                    ?: throw IllegalStateException("Module descriptor $subDescriptorFile not found in $jarFile")
-        moduleRaw = readModuleDescriptor(
-          input = entry,
-          readContext = context,
-          pathResolver = pathResolver,
-          dataLoader = dataLoader,
-          includeBase = null,
-          readInto = null,
-          locationSource = jarFile.toString(),
-        )
-      }
-      finally {
-        (resolver as? Closeable)?.close()
-      }
+      moduleRaw = loadModuleFromSeparateJar(
+        pool = pool,
+        jarFile = jarFile,
+        subDescriptorFile = subDescriptorFile,
+        context = context,
+        pathResolver = pathResolver,
+        dataLoader = dataLoader,
+      )
     }
   }
   else {
@@ -831,6 +822,33 @@ private fun loadProductModule(
   subDescriptor.jarFiles = jarFile?.let { Java11Shim.INSTANCE.listOf(it) } ?: Java11Shim.INSTANCE.listOf()
   module.descriptor = subDescriptor
   return true
+}
+
+internal fun loadModuleFromSeparateJar(
+  pool: ZipFilePool,
+  jarFile: Path,
+  subDescriptorFile: String,
+  context: DescriptorListLoadingContext,
+  pathResolver: PathResolver,
+  dataLoader: DataLoader,
+): RawPluginDescriptor {
+  val resolver = pool.load(jarFile)
+  try {
+    val entry = resolver.loadZipEntry(subDescriptorFile)
+                ?: throw IllegalStateException("Module descriptor $subDescriptorFile not found in $jarFile")
+    return readModuleDescriptor(
+      input = entry,
+      readContext = context,
+      pathResolver = pathResolver,
+      dataLoader = dataLoader,
+      includeBase = null,
+      readInto = null,
+      locationSource = jarFile.toString(),
+    )
+  }
+  finally {
+    (resolver as? Closeable)?.close()
+  }
 }
 
 private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String> {
@@ -1026,12 +1044,26 @@ private fun loadDescriptorFromResource(
         input = Files.newInputStream(file)
       }
       URLUtil.JAR_PROTOCOL == resource.protocol -> {
-        // support for unpacked plugins in classpath, e.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
-        basePath = file.parent?.takeIf { !it.endsWith("lib") }?.parent ?: file
-
         val resolver = pool.load(file)
         closeable = resolver as? Closeable
-        dataLoader = ImmutableZipFileDataLoader(resolver = resolver, zipPath = file)
+        val loader = ImmutableZipFileDataLoader(resolver = resolver, zipPath = file)
+
+        val relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation()
+        if (relevantJarsRoot != null && file.startsWith(relevantJarsRoot)) {
+          // support for archived compile outputs (each module in separate jar)
+          basePath = file.parent
+          dataLoader = object : DataLoader by loader {
+            // should be similar as in LocalFsDataLoader
+            override val emptyDescriptorIfCannotResolve: Boolean
+              get() = true
+          }
+        }
+        else {
+          // support for unpacked plugins in classpath, e.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
+          basePath = file.parent?.takeIf { !it.endsWith("lib") }?.parent ?: file
+          dataLoader = loader
+        }
+
         input = dataLoader.load("META-INF/$filename", pluginDescriptorSourceOnly = true) ?: return null
       }
       else -> return null
@@ -1048,31 +1080,25 @@ private fun loadDescriptorFromResource(
     )
     // it is very important to not set `useCoreClassLoader = true` blindly
     // - product modules must use their own class loader if not running from sources
-    val descriptor = IdeaPluginDescriptorImpl(
-      raw = raw,
-      path = basePath,
-      isBundled = true,
-      id = null,
-      moduleName = null,
-      useCoreClassLoader = useCoreClassLoader,
-    )
+    val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = basePath, isBundled = true, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
     context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = filename)
 
     if (libDir == null) {
-      descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, dataLoader = dataLoader)
-      // do not set jarFiles by intention - doesn't make sense
+      for (module in descriptor.content.modules) {
+        val subDescriptorFile = module.configFile ?: "${module.name}.xml"
+        val subRaw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null)
+        val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
+        if (pathResolver.isRunningFromSources && subDescriptor.packagePrefix == null) {
+          // no package in run from sources - load module from main classpath
+          subDescriptor.jarFiles = Collections.emptyList()
+        }
+        module.descriptor = subDescriptor
+      }
     }
     else {
-      loadModuleDescriptors(
-        descriptor = descriptor,
-        pathResolver = pathResolver,
-        libDir = libDir,
-        pool = pool,
-        context = context,
-        dataLoader = dataLoader,
-      )
-      descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
+      loadModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, pool = pool, context = context, dataLoader = dataLoader)
     }
+    descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
     return descriptor
   }
   catch (e: CancellationException) {

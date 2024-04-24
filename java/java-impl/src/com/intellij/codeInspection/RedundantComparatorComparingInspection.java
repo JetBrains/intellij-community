@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -58,9 +58,8 @@ public final class RedundantComparatorComparingInspection extends AbstractBaseJa
     .register(staticCall(JAVA_UTIL_COMPARATOR, "comparingLong").parameterCount(1), "thenComparingLong")
     .register(staticCall(JAVA_UTIL_COMPARATOR, "comparingDouble").parameterCount(1), "thenComparingDouble");
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
@@ -160,19 +159,15 @@ public final class RedundantComparatorComparingInspection extends AbstractBaseJa
       myTargetMethod = targetMethod;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return myTargetMethod.equals("thenComparing")
              ? JavaBundle.message("inspection.simplifiable.comparator.fix.remove.name", mySourceMethod)
              : JavaBundle.message("inspection.simplifiable.comparator.fix.replace.name", mySourceMethod, myTargetMethod);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.simplifiable.comparator.fix.comparing.family.name");
     }
 
@@ -195,17 +190,13 @@ public final class RedundantComparatorComparingInspection extends AbstractBaseJa
       myReplacement = replacement;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return JavaBundle.message("inspection.simplifiable.comparator.fix.reversed.name", myReplacement);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.simplifiable.comparator.fix.reversed.family.name");
     }
 
@@ -230,17 +221,13 @@ public final class RedundantComparatorComparingInspection extends AbstractBaseJa
       myReplacementMethod = replacementMethod;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "Entry."+myReplacementMethod+"()");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.simplifiable.comparator.fix.entry.comparator.family.name");
     }
 
@@ -256,8 +243,7 @@ public final class RedundantComparatorComparingInspection extends AbstractBaseJa
       RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
     }
 
-    @NotNull
-    private static String getGenericParameters(PsiMethodCallExpression call) {
+    private static @NotNull String getGenericParameters(PsiMethodCallExpression call) {
       PsiClassType callType = tryCast(call.getType(), PsiClassType.class);
       if (!PsiTypesUtil.classNameEquals(callType, JAVA_UTIL_COMPARATOR)) return "";
       PsiType[] parameters = callType.getParameters();

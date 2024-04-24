@@ -6,6 +6,7 @@ package com.intellij.ide.ui.laf
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UITheme
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.ide.bootstrap.createBaseLaF
@@ -163,7 +164,7 @@ internal fun initBaseLaF(defaults: UIDefaults) {
 
   defaults.remove("Spinner.arrowButtonBorder")
   defaults.put("Spinner.arrowButtonSize", JBDimension(16, 5).asUIResource())
-  if (SystemInfoRt.isMac) {
+  if (ClientSystemInfo.isMac()) {
     defaults.put("RootPane.defaultButtonWindowKeyBindings", arrayOf<Any>(
       "ENTER", "press",
       "released ENTER", "release",

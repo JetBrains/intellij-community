@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection.MethodReferenceCandidate;
@@ -31,10 +31,8 @@ public final class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJ
 
   public boolean reportNotAnnotatedInterfaces = true;
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
@@ -43,9 +41,8 @@ public final class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJ
     return true;
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "Anonymous2MethodRef";
   }
 
@@ -61,9 +58,8 @@ public final class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJ
     return Set.of(JavaFeature.METHOD_REFERENCES);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
@@ -110,9 +106,8 @@ public final class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJ
   }
 
   private static class ReplaceWithMethodRefFix extends PsiUpdateModCommandQuickFix {
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.replace.with.method.reference");
     }
 

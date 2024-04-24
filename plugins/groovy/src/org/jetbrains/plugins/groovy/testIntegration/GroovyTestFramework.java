@@ -30,48 +30,35 @@ public class GroovyTestFramework extends JUnitTestFramework {
   private static final Logger LOG = Logger.getInstance(GroovyTestFramework.class);
 
   @Override
-  public boolean isDumbAware() {
-    return this.getClass().isAssignableFrom(GroovyTestFramework.class);
-  }
-
-  @Override
   protected String getMarkerClassFQName() {
     return GroovyCommonClassNames.GROOVY_UTIL_TEST_CASE;
   }
 
   @Override
   protected boolean isTestClass(PsiClass clazz, boolean canBePotential) {
-    if(clazz == null) return false;
-    return callWithAlternateResolver(clazz.getProject(), ()->{
-      return clazz.getLanguage() == GroovyLanguage.INSTANCE &&
-             //JUnitUtil.isTestClass(clazz) &&
-             InheritanceUtil.isInheritor(clazz, GroovyCommonClassNames.GROOVY_UTIL_TEST_CASE);
-    }, false);
+    return clazz.getLanguage() == GroovyLanguage.INSTANCE &&
+           //JUnitUtil.isTestClass(clazz) &&
+           InheritanceUtil.isInheritor(clazz, GroovyCommonClassNames.GROOVY_UTIL_TEST_CASE);
   }
 
   @Override
   protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
-    return callWithAlternateResolver(clazz.getProject(), () -> {
-      if (!isTestClass(clazz, false)) return null;
+    if (!isTestClass(clazz, false)) return null;
 
-      for (PsiMethod method : clazz.getMethods()) {
-        if (method.getName().equals("setUp")) return method;
-      }
-      return null;
-    }, null);
+    for (PsiMethod method : clazz.getMethods()) {
+      if (method.getName().equals("setUp")) return method;
+    }
+    return null;
   }
 
   @Override
   protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
-    return callWithAlternateResolver(clazz.getProject(), () -> {
+    if (!isTestClass(clazz, false)) return null;
 
-      if (!isTestClass(clazz, false)) return null;
-
-      for (PsiMethod method : clazz.getMethods()) {
-        if (method.getName().equals("tearDown")) return method;
-      }
-      return null;
-    }, null);
+    for (PsiMethod method : clazz.getMethods()) {
+      if (method.getName().equals("tearDown")) return method;
+    }
+    return null;
   }
 
   @Override

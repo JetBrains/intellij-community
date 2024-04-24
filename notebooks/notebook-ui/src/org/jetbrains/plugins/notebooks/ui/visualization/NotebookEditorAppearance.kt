@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Key
 import com.intellij.ui.JBColor
 import com.intellij.ui.NewUiValue
+import com.intellij.util.ui.JBUI
 import java.awt.Color
 
 
@@ -107,25 +108,25 @@ object DefaultNotebookEditorAppearanceSizes: NotebookEditorAppearanceSizes {
   override val LINE_NUMBERS_MARGIN = 10
 
   // TODO Do the pixel constants need JBUI.scale?
-  override val COMMAND_MODE_CELL_LEFT_LINE_WIDTH = 4
-  override val EDIT_MODE_CELL_LEFT_LINE_WIDTH = 2
-  override val CODE_AND_CODE_TOP_GRAY_HEIGHT = 6
-  override val CODE_AND_CODE_BOTTOM_GRAY_HEIGHT = 6
-  override val INNER_CELL_TOOLBAR_HEIGHT = 24
-  override val CELL_BORDER_HEIGHT = 20
-  override val SPACER_HEIGHT = CELL_BORDER_HEIGHT / 2
-  override val EXECUTION_TIME_HEIGHT = SPACER_HEIGHT + 6
-  override val SPACE_BELOW_CELL_TOOLBAR = 4
-  override val CELL_TOOLBAR_TOTAL_HEIGHT = INNER_CELL_TOOLBAR_HEIGHT + SPACE_BELOW_CELL_TOOLBAR
-  override val PROGRESS_STATUS_HEIGHT = 2
+  override val COMMAND_MODE_CELL_LEFT_LINE_WIDTH = JBUI.scale(4)
+  override val EDIT_MODE_CELL_LEFT_LINE_WIDTH = JBUI.scale(2)
+  override val CODE_AND_CODE_TOP_GRAY_HEIGHT = JBUI.scale(6)
+  override val CODE_AND_CODE_BOTTOM_GRAY_HEIGHT = JBUI.scale(6)
+  override val INNER_CELL_TOOLBAR_HEIGHT = JBUI.scale(24)
+  override val CELL_BORDER_HEIGHT = JBUI.scale(20)
+  override val SPACER_HEIGHT = JBUI.scale(CELL_BORDER_HEIGHT / 2)
+  override val EXECUTION_TIME_HEIGHT = JBUI.scale(SPACER_HEIGHT + 14)
+  override val SPACE_BELOW_CELL_TOOLBAR = JBUI.scale(4)
+  override val CELL_TOOLBAR_TOTAL_HEIGHT = JBUI.scale(INNER_CELL_TOOLBAR_HEIGHT + SPACE_BELOW_CELL_TOOLBAR)
+  override val PROGRESS_STATUS_HEIGHT = JBUI.scale(2)
 
   override val JUPYTER_CELL_SPACERS_INLAY_PRIORITY = 10
   override val JUPYTER_BELOW_OUTPUT_CELL_SPACERS_INLAY_PRIORITY = -10
   override val JUPYTER_CELL_TOOLBAR_INLAY_PRIORITY = JUPYTER_CELL_SPACERS_INLAY_PRIORITY + 10
   override val NOTEBOOK_OUTPUT_INLAY_PRIORITY: Int = 5
 
-  override val EXTRA_PADDING_EXECUTION_COUNT = 20
-  override val EXTRA_GUTTER_AREA_WIDTH_EXECUTION_COUNT = 0
+  override val EXTRA_PADDING_EXECUTION_COUNT = JBUI.scale(20)
+  override val EXTRA_GUTTER_AREA_WIDTH_EXECUTION_COUNT = JBUI.scale(0)
 
   override fun getCellLeftLineWidth(): Int = EDIT_MODE_CELL_LEFT_LINE_WIDTH
   override fun getCellLeftLineHoverWidth(): Int = COMMAND_MODE_CELL_LEFT_LINE_WIDTH

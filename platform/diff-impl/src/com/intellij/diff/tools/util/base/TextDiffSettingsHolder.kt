@@ -27,6 +27,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var CONTEXT_RANGE: Int = 4,
 
     var MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES: Boolean = false,
+    var MERGE_AUTO_RESOLVE_IMPORT_CONFLICTS: Boolean = false,
     var MERGE_LST_GUTTER_MARKERS: Boolean = true,
     var ENABLE_ALIGNING_CHANGES_MODE: Boolean = false
   ) {
@@ -101,6 +102,11 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
       get()      = SHARED_SETTINGS.MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES
       set(value) { SHARED_SETTINGS.MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES = value }
 
+    var isAutoResolveImportConflicts: Boolean
+      get()      = SHARED_SETTINGS.MERGE_AUTO_RESOLVE_IMPORT_CONFLICTS
+      set(value) { SHARED_SETTINGS.MERGE_AUTO_RESOLVE_IMPORT_CONFLICTS = value
+                   SHARED_SETTINGS.eventDispatcher.multicaster.resolveConflictsInImportsChanged()}
+
     var isEnableLstGutterMarkersInMerge: Boolean
       get()      = SHARED_SETTINGS.MERGE_LST_GUTTER_MARKERS
       set(value) { SHARED_SETTINGS.MERGE_LST_GUTTER_MARKERS = value }
@@ -162,6 +168,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     interface Listener : EventListener {
       fun highlightPolicyChanged() {}
       fun ignorePolicyChanged() {}
+      fun resolveConflictsInImportsChanged() {}
       fun breadcrumbsPlacementChanged() {}
       fun foldingChanged() {}
       fun scrollingChanged() {}

@@ -23,12 +23,14 @@ import com.intellij.openapi.externalSystem.statistics.Phase;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -55,9 +57,7 @@ import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
-import org.jetbrains.plugins.gradle.service.syncAction.GradleBuildActionListener;
-import org.jetbrains.plugins.gradle.service.syncAction.GradleBuildActionRunner;
-import org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder;
+import org.jetbrains.plugins.gradle.service.syncAction.*;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -72,6 +72,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
@@ -85,15 +86,16 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   private static final Logger LOG = Logger.getInstance(GradleProjectResolver.class);
 
-  @NotNull private final GradleExecutionHelper myHelper;
-  private final GradleLibraryNamesMixer myLibraryNamesMixer = new GradleLibraryNamesMixer();
+  private final @NotNull GradleExecutionHelper myHelper;
+  private final @NotNull GradleLibraryNamesMixer myLibraryNamesMixer = new GradleLibraryNamesMixer();
+  private final @NotNull MultiMap<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = MultiMap.createConcurrent();
 
-  private final MultiMap<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = MultiMap.createConcurrent();
   public static final Key<Map<String/* module id */, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>>> RESOLVED_SOURCE_SETS =
     Key.create("resolvedSourceSets");
   public static final Key<Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>>> MODULES_OUTPUTS =
     Key.create("moduleOutputsMap");
-  public static final Key<MultiMap<ExternalSystemSourceType, String /* output path*/>> GRADLE_OUTPUTS = Key.create("gradleOutputs");
+  public static final Key<MultiMap<ExternalSystemSourceType, String /* output path*/>> GRADLE_OUTPUTS =
+    Key.create("gradleOutputs");
 
   private static final Key<File> GRADLE_HOME_DIR = Key.create("gradleHomeDir");
 
@@ -107,15 +109,15 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     myHelper = helper;
   }
 
-  @Nullable
   @Override
-  public DataNode<ProjectData> resolveProjectInfo(@NotNull final ExternalSystemTaskId syncTaskId,
-                                                  @NotNull final String projectPath,
-                                                  final boolean isPreviewMode,
-                                                  @Nullable final GradleExecutionSettings settings,
-                                                  @Nullable ProjectResolverPolicy resolverPolicy,
-                                                  @NotNull final ExternalSystemTaskNotificationListener listener)
-    throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
+  public @Nullable DataNode<ProjectData> resolveProjectInfo(
+    @NotNull ExternalSystemTaskId syncTaskId,
+    @NotNull String projectPath,
+    boolean isPreviewMode,
+    @Nullable GradleExecutionSettings settings,
+    @Nullable ProjectResolverPolicy resolverPolicy,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) throws ExternalSystemException, IllegalArgumentException, IllegalStateException {
 
     GradlePartialResolverPolicy gradleResolverPolicy = null;
     if (resolverPolicy != null) {
@@ -127,21 +129,29 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     }
 
-    // Create project preview model w/o request to gradle, there are two main reasons for the it:
-    // * Slow project open - even the simplest project info provided by gradle can be gathered too long (mostly because of new gradle distribution download and downloading build script dependencies)
-    // * Ability to open  an invalid projects (e.g. with errors in build scripts)
-    if (isPreviewMode) {
-      return GradlePreviewCustomizer.Companion.getCustomizer(projectPath, syncTaskId).resolvePreviewProjectInfo(projectPath, syncTaskId, settings);
-    }
-
-    CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
-    CancellationToken cancellationToken = cancellationTokenSource.token();
-    myCancellationMap.putValue(syncTaskId, cancellationTokenSource);
-
+    GradleProjectResolverIndicator projectResolverIndicator = new GradleProjectResolverIndicator(
+      ProgressManager.getInstance().getProgressIndicator(),
+      GradleConnector.newCancellationTokenSource()
+    );
     DefaultProjectResolverContext resolverContext = new DefaultProjectResolverContext(
-      syncTaskId, projectPath, settings, listener, gradleResolverPolicy, cancellationTokenSource
+      syncTaskId, projectPath, settings, listener, gradleResolverPolicy, projectResolverIndicator
     );
 
+    return computeCancellable(resolverContext, () -> {
+      // Create project preview model w/o request to gradle, there are two main reasons for the it:
+      // * Slow project open - even the simplest project info provided by gradle can be gathered too long (mostly because of new gradle distribution download and downloading build script dependencies)
+      // * Ability to open  an invalid projects (e.g. with errors in build scripts)
+      if (isPreviewMode) {
+        return GradlePreviewCustomizer.Companion.getCustomizer(resolverContext)
+          .resolvePreviewProjectInfo(resolverContext);
+      }
+      return resolveProjectInfo(resolverContext);
+    });
+  }
+
+  private @Nullable DataNode<ProjectData> resolveProjectInfo(
+    @NotNull DefaultProjectResolverContext resolverContext
+  ) {
     final long activityId = resolverContext.getExternalSystemTaskId().getId();
     ExternalSystemSyncActionsCollector.logSyncStarted(resolverContext.getExternalSystemTaskId().findProject(), activityId);
 
@@ -149,8 +159,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .spanBuilder("GradleExecution")
       .startSpan();
     try (Scope ignore = gradleExecutionSpan.makeCurrent()) {
-      if (settings != null) {
-        myHelper.ensureInstalledWrapper(syncTaskId, projectPath, settings, listener, cancellationToken);
+      if (resolverContext.getSettings() != null) {
+        myHelper.ensureInstalledWrapper(
+          resolverContext.getExternalSystemTaskId(),
+          resolverContext.getProjectPath(),
+          resolverContext.getSettings(),
+          resolverContext.getListener(),
+          resolverContext.getCancellationToken()
+        );
       }
 
       final GradleProjectResolverExtension projectResolverChain = createProjectResolverChain(resolverContext);
@@ -160,7 +176,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         resolverContext.getSettings(),
         resolverContext.getExternalSystemTaskId(),
         resolverContext.getListener(),
-        resolverContext.getCancellationTokenSource().token(),
+        resolverContext.getCancellationToken(),
         projectDataFunction
       );
 
@@ -175,7 +191,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       return projectDataNode;
     }
     finally {
-      myCancellationMap.remove(syncTaskId, cancellationTokenSource);
       gradleExecutionSpan.end();
     }
   }
@@ -200,6 +215,19 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return true;
   }
 
+  @RequiresBlockingContext
+  private <R> R computeCancellable(@NotNull DefaultProjectResolverContext resolverContext, @NotNull Supplier<R> action) {
+    ExternalSystemTaskId taskId = resolverContext.getExternalSystemTaskId();
+    CancellationTokenSource cancellationTokenSource = resolverContext.getCancellationTokenSource();
+    myCancellationMap.putValue(taskId, cancellationTokenSource);
+    try {
+      return resolverContext.computeCancellable(action);
+    }
+    finally {
+      myCancellationMap.remove(taskId, cancellationTokenSource);
+    }
+  }
+
   @NotNull
   private DataNode<ProjectData> doResolveProjectInfo(@NotNull final DefaultProjectResolverContext resolverCtx,
                                                      @NotNull final GradleProjectResolverExtension projectResolverChain,
@@ -210,7 +238,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       resolverCtx.getConnection(),
       resolverCtx.getExternalSystemTaskId(),
       resolverCtx.getListener(),
-      resolverCtx.getCancellationTokenSource().token(),
+      resolverCtx.getCancellationToken(),
       resolverCtx.getSettings()
     );
     if (buildEnvironment != null) {
@@ -221,7 +249,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     var buildAction = useCustomSerialization
                       ? new GradleModelFetchActionWithCustomSerializer()
                       : new GradleModelFetchAction();
-    var buildActionEventDispatcher = EventDispatcher.create(GradleBuildActionListener.class);
 
     GradleExecutionSettings executionSettings = resolverCtx.getSettings();
     if (executionSettings == null) {
@@ -255,11 +282,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       catch (Throwable t) {
         LOG.warn(t);
       }
-
-      GradleBuildActionListener buildActionListener = resolverExtension.createBuildListener();
-      if (buildActionListener != null) {
-        buildActionEventDispatcher.addListener(buildActionListener);
-      }
     }
 
     GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
@@ -275,7 +297,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     var models = new GradleIdeaModelHolder(useCustomSerialization, pathMapper, buildEnvironment);
     resolverCtx.setModels(models);
 
-    resolverCtx.checkCancelled();
+
+    ProgressManager.checkCanceled();
 
     final long activityId = resolverCtx.getExternalSystemTaskId().getId();
 
@@ -293,9 +316,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       buildAction.setTracingContext(gradleDaemonObservabilityContext);
     }
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
-      var buildActionMulticaster = buildActionEventDispatcher.getMulticaster();
-      var buildActionRunner = new GradleBuildActionRunner(resolverCtx, buildAction, executionSettings, myHelper, buildActionMulticaster);
+      var syncResultHandler = new GradleSyncActionResultHandler(resolverCtx);
+      var modelFetchResultHandler = new GradleModelFetchActionResultHandler(resolverCtx, buildAction, syncResultHandler);
+      var buildActionResultHandler = new
+        GradleBuildActionResultHandler(resolverCtx, modelFetchResultHandler);
+      var buildActionRunner = new GradleBuildActionRunner(resolverCtx, buildAction, executionSettings, buildActionResultHandler);
       buildActionRunner.runBuildAction();
+
       var gradleVersion = ObjectUtils.doIfNotNull(resolverCtx.getProjectGradleVersion(), it -> GradleVersion.version(it));
       if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
         resolverCtx.report(MessageEvent.Kind.WARNING, new DeprecatedGradleVersionIssue(gradleVersion, resolverCtx.getProjectPath()));
@@ -310,13 +337,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     finally {
       final long gradleCallTimeInMs = (System.currentTimeMillis() - gradleCallStartTime);
-      LOG.debug(String.format("Gradle data obtained in %d ms", gradleCallTimeInMs));
       ExternalSystemSyncActionsCollector.logPhaseFinished(
         null, activityId, Phase.GRADLE_CALL, gradleCallTimeInMs, gradleCallErrorsCount);
       gradleCallSpan.end();
     }
 
-    resolverCtx.checkCancelled();
+    ProgressManager.checkCanceled();
 
     final long projectResolversStartTime = System.currentTimeMillis();
 
@@ -359,8 +385,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     extractExternalProjectModels(resolverCtx.getModels(), useCustomSerialization);
 
-    applyProjectModelContributors(resolverCtx);
-
     ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, projectName, projectPath, projectPath);
     DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
     DataNode<ExternalSystemOperationDescriptor> descriptorDataNode = new DataNode<>(ExternalSystemOperationDescriptor.OPERATION_DESCRIPTOR_KEY,
@@ -383,7 +407,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     // import modules data
     for (IdeaModule gradleModule : ContainerUtil.concat(gradleModules, includedModules)) {
-      resolverCtx.checkCancelled();
+      ProgressManager.checkCanceled();
       DataNode<ModuleData> moduleDataNode = createModuleData(gradleModule, tracedResolverChain, projectDataNode);
       if (moduleDataNode == null) {
         continue;
@@ -491,22 +515,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     myLibraryNamesMixer.mixNames(libraries);
 
     return projectDataNode;
-  }
-
-  private static void applyProjectModelContributors(
-    @NotNull DefaultProjectResolverContext resolverCtx
-  ) {
-    ProjectModelContributor.EP_NAME.forEachExtensionSafe(extension -> {
-      resolverCtx.checkCancelled();
-      final long starResolveTime = System.currentTimeMillis();
-      String modelContributorName = extension.getClass().getSimpleName();
-      ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "ExternalSystemProjectModelContributor", (span) -> {
-        span.setAttribute("contributor.name", modelContributorName);
-        extension.accept(resolverCtx);
-      });
-      final long resolveTimeInMs = (System.currentTimeMillis() - starResolveTime);
-      LOG.debug(String.format("Project model contributed by `" + modelContributorName + "` in %d ms", resolveTimeInMs));
-    });
   }
 
   private static @Nullable DataNode<ModuleData> createModuleData(@Nullable IdeaModule gradleModule,
@@ -866,44 +874,46 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   private final class ProjectConnectionDataNodeFunction implements Function<ProjectConnection, DataNode<ProjectData>> {
-    @NotNull private final GradleProjectResolverExtension myProjectResolverChain;
+    private final @NotNull GradleProjectResolverExtension myProjectResolverChain;
+    private final @NotNull DefaultProjectResolverContext myResolverContext;
     private final boolean myIsBuildSrcProject;
-    private final DefaultProjectResolverContext myResolverContext;
 
-    private ProjectConnectionDataNodeFunction(@NotNull DefaultProjectResolverContext resolverContext,
-                                              @NotNull GradleProjectResolverExtension projectResolverChain, boolean isBuildSrcProject) {
+    private ProjectConnectionDataNodeFunction(
+      @NotNull DefaultProjectResolverContext resolverContext,
+      @NotNull GradleProjectResolverExtension projectResolverChain,
+      boolean isBuildSrcProject
+    ) {
       myResolverContext = resolverContext;
       myProjectResolverChain = projectResolverChain;
       myIsBuildSrcProject = isBuildSrcProject;
     }
 
     @Override
-    public DataNode<ProjectData> fun(ProjectConnection connection) {
+    public @NotNull DataNode<ProjectData> fun(@NotNull ProjectConnection connection) {
       ExternalSystemTaskId taskId = myResolverContext.getExternalSystemTaskId();
       final long activityId = taskId.getId();
-      try {
-        myCancellationMap.putValue(taskId, myResolverContext.getCancellationTokenSource());
-        myResolverContext.setConnection(connection);
-        return doResolveProjectInfo(myResolverContext, myProjectResolverChain, myIsBuildSrcProject);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (RuntimeException e) {
-        LOG.info("Gradle project resolve error", e);
-        ExternalSystemException esException = ExceptionUtil.findCause(e, ExternalSystemException.class);
-        if (esException != null && esException != e) {
-          LOG.info("\nCaused by: " + esException.getOriginalReason());
-        }
-        ExternalSystemSyncActionsCollector.logError(taskId.findProject(), activityId, extractCause(e));
-        ExternalSystemSyncActionsCollector.logSyncFinished(taskId.findProject(), activityId, false);
 
-        throw myProjectResolverChain.getUserFriendlyError(
-          myResolverContext.getBuildEnvironment(), e, myResolverContext.getProjectPath(), null);
-      }
-      finally {
-        myCancellationMap.remove(taskId, myResolverContext.getCancellationTokenSource());
-      }
+      return computeCancellable(myResolverContext, () -> {
+        try {
+          myResolverContext.setConnection(connection);
+          return doResolveProjectInfo(myResolverContext, myProjectResolverChain, myIsBuildSrcProject);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (RuntimeException e) {
+          LOG.info("Gradle project resolve error", e);
+          ExternalSystemException esException = ExceptionUtil.findCause(e, ExternalSystemException.class);
+          if (esException != null && esException != e) {
+            LOG.info("\nCaused by: " + esException.getOriginalReason());
+          }
+          ExternalSystemSyncActionsCollector.logError(taskId.findProject(), activityId, extractCause(e));
+          ExternalSystemSyncActionsCollector.logSyncFinished(taskId.findProject(), activityId, false);
+
+          throw myProjectResolverChain.getUserFriendlyError(
+            myResolverContext.getBuildEnvironment(), e, myResolverContext.getProjectPath(), null);
+        }
+      });
     }
   }
 

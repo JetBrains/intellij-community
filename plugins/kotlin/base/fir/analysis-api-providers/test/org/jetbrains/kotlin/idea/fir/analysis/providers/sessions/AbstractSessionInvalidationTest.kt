@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.fir.analysis.providers.sessions
 
 import com.intellij.openapi.module.ModuleManager
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
@@ -54,6 +55,7 @@ sealed class AbstractSessionInvalidationTest : AbstractProjectStructureTest<Sess
         checkSessions(sessionsBeforeModification, sessionsAfterModification)
     }
 
+    @OptIn(LLFirInternals::class)
     private fun getAllModuleSessions(mainModule: KtModule): List<LLFirSession> {
         val projectModules = ModuleManager.getInstance(mainModule.project).modules
             .flatMap { it.sourceModuleInfos }

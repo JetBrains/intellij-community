@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -115,8 +115,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return myCachedType.getValue();
   }
 
@@ -159,8 +158,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     return depth;
   }
 
-  @NotNull
-  private ClsElementImpl getDeepestArrayElement() {
+  private @NotNull ClsElementImpl getDeepestArrayElement() {
     int depth = getArrayDepth();
     int bracketPos = myTypeText.length() - depth * 2 - (isVarArgs() ? 1 : 0);
     TypeAnnotationContainer container = myAnnotations;
@@ -170,8 +168,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     return new ClsTypeElementImpl(this, myTypeText.substring(0, bracketPos), myVariance, container);
   }
 
-  @NotNull
-  private PsiType createArrayType(PsiTypeElement deepestChild) {
+  private @NotNull PsiType createArrayType(PsiTypeElement deepestChild) {
     int depth = getArrayDepth();
     List<TypeAnnotationContainer> containers =
       StreamEx.iterate(myAnnotations, TypeAnnotationContainer::forArrayElement).limit(depth).toList();
@@ -187,13 +184,11 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     return type;
   }
 
-  @NotNull
-  private PsiType calculateType() {
+  private @NotNull PsiType calculateType() {
     return calculateBaseType().annotate(myAnnotations.getProvider(this));
   }
 
-  @NotNull
-  private PsiType calculateBaseType() {
+  private @NotNull PsiType calculateBaseType() {
     PsiType result = PsiJavaParserFacadeImpl.getPrimitiveType(myTypeText);
     if (result != null) return result;
 
@@ -258,8 +253,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation addAnnotation(@NotNull String qualifiedName) {
+  public @NotNull PsiAnnotation addAnnotation(@NotNull String qualifiedName) {
     throw new UnsupportedOperationException();
   }
 

@@ -45,8 +45,12 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,11 +60,13 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -68,10 +74,13 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.frame.XFramesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.jetbrains.jdi.ClassLoaderReferenceImpl;
 import com.jetbrains.jdi.MethodImpl;
 import com.jetbrains.jdi.VirtualMachineManagerImpl;
@@ -87,12 +96,15 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import javax.swing.plaf.basic.BasicArrowButton;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -145,6 +157,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   final Object myEvaluationStateLock = new Object();
   volatile ParametersForSuspendAllReplacing myParametersForSuspendAllReplacing = null;
   volatile boolean myPreparingToSuspendAll = false;
+
+  List<Runnable> mySuspendAllListeners = new ArrayList<>();
+
+  private SingleAlarm myOtherThreadsAlarm = null;
+  private int myOtherThreadsReachBreakpointNumber = 0;
+
+  protected AtomicInteger mySuspendAllInvocation = new AtomicInteger(0);
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
@@ -899,18 +918,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                                      @NotNull SteppingBreakpoint breakpoint,
                                                      RequestHint hint,
                                                      boolean resetThreadFilter,
-                                                     int explicitSuspendPolicy) {
+                                                     int suspendPolicy) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     if (resetThreadFilter) {
       BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(debugProcess.getProject()).getBreakpointManager();
       breakpointManager.removeThreadFilter(debugProcess); // clear the filter on resume
-    }
-    int suspendPolicy;
-    if (explicitSuspendPolicy != -1) {
-      suspendPolicy = explicitSuspendPolicy;
-    }
-    else {
-      suspendPolicy = context.getSuspendPolicy();
     }
     breakpoint.setSuspendPolicy(
       suspendPolicy == EventRequest.SUSPEND_EVENT_THREAD ? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
@@ -1145,7 +1157,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       ThreadReferenceProxyImpl invokeThread = suspendContext.getThread();
 
-      if (SuspendManagerUtil.isEvaluating(getSuspendManager(), invokeThread)) {
+      if (invokeThread.isEvaluating()) {
         throw EvaluateExceptionUtil.NESTED_EVALUATION_ERROR;
       }
 
@@ -1194,7 +1206,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         for (SuspendContextImpl suspendingContext : mySuspendManager.getEventContexts()) {
           if (suspendingContexts.contains(suspendingContext) &&
-              !suspendingContext.isEvaluating() &&
+              (!suspendingContext.isEvaluating() || suspendingContext.getThread() != invokeThread) &&
               !suspendingContext.suspends(invokeThread)) {
             mySuspendManager.suspendThread(suspendingContext, invokeThread);
           }
@@ -1331,10 +1343,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       ThreadBlockedMonitor.InvocationWatcher invocationWatcher = null;
       try {
+        thread.setEvaluating(true);
         invocationWatcher = myThreadBlockedMonitor.startInvokeWatching(invokePolicy, thread, context);
         result.set(invokeMethod(thread.getThreadReference(), invokePolicy, myMethod, myArgs));
       }
       finally {
+        thread.setEvaluating(false);
         if (invocationWatcher != null) {
           invocationWatcher.invocationFinished();
         }
@@ -1913,14 +1927,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       LightOrRealThreadInfo threadFilterFromContext = getThreadFilterFromContext(context);
       applyThreadFilter(threadFilterFromContext);
-      int explicitSuspendPolicy;
-      if (threadFilterFromContext != null && threadFilterFromContext.getRealThread() == null) {
-        explicitSuspendPolicy = EventRequest.SUSPEND_EVENT_THREAD;
+      int breakpointSuspendPolicy = context.getSuspendPolicy();
+      // In the case of the isAlwaysSuspendThreadBeforeSwitch mode, the switch will be performed for all breakpoints by engine
+      if (!DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
+        if (threadFilterFromContext != null && threadFilterFromContext.getRealThread() == null) {
+          breakpointSuspendPolicy = EventRequest.SUSPEND_EVENT_THREAD;
+        }
       }
-      else {
-        explicitSuspendPolicy = -1;
-      }
-      prepareAndSetSteppingBreakpoint(context, myRunToCursorBreakpoint, null, false, explicitSuspendPolicy);
+      prepareAndSetSteppingBreakpoint(context, myRunToCursorBreakpoint, null, false, breakpointSuspendPolicy);
       final DebugProcessImpl debugProcess = context.getDebugProcess();
 
       if (debugProcess.getRequestsManager().getWarning(myRunToCursorBreakpoint) == null) {
@@ -2601,6 +2615,48 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (myReturnValueWatcher != null) {
       myReturnValueWatcher.disable();
     }
+  }
+
+  protected void notifyStoppedOtherThreads() {
+    myOtherThreadsReachBreakpointNumber++;
+    if (myOtherThreadsAlarm != null) myOtherThreadsAlarm.cancel();
+    myOtherThreadsAlarm = new SingleAlarm(() -> {
+      showNotification(myOtherThreadsReachBreakpointNumber);
+      myOtherThreadsReachBreakpointNumber = 0;
+    }, 300);
+    myOtherThreadsAlarm.request();
+  }
+
+  private void showNotification(int number) {
+    String content = JavaDebuggerBundle.message("message.other.threads.reached.breakpoints", number);
+    MessageType messageType = MessageType.INFO;
+
+    if (mySession.getXDebugSession() instanceof XDebugSessionImpl session) {
+      XDebugSessionTab tab = session.getSessionTab();
+      if (tab != null) {
+        XFramesView view = tab.getFramesView();
+        if (view != null) {
+          ComboBox<XExecutionStack> comboBox = view.getThreadComboBox();
+          BasicArrowButton arrowButton = UIUtil.findComponentOfType(comboBox, BasicArrowButton.class);
+
+          JComponent target = arrowButton != null ? arrowButton : comboBox;
+
+          BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
+            .createHtmlTextBalloonBuilder(content, messageType, null)
+            .setHideOnClickOutside(true)
+            .setDisposable(myDisposable)
+            .setHideOnFrameResize(false);
+          Balloon balloon = balloonBuilder.createBalloon();
+          balloon.show(new AnchoredPoint(AnchoredPoint.Anchor.TOP, target), Balloon.Position.above);
+          return;
+        }
+      }
+    }
+
+    // Fallback to the whole toolwindow notification
+    XDebuggerManagerImpl.getNotificationGroup()
+      .createNotification(content, messageType)
+      .notify(getProject());
   }
 
   private record VirtualMachineData(VirtualMachineProxyImpl vm, RemoteConnection connection,

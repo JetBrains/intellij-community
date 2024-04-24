@@ -3412,6 +3412,7 @@ a:com.intellij.psi.impl.source.PsiFileImpl
 - getStartOffsetInParent():I
 - getStub():com.intellij.psi.stubs.StubElement
 - getStubTree():com.intellij.psi.stubs.StubTree
+- getStubTreeOrFileElement():com.intellij.openapi.util.Pair
 - getStubbedSpine():com.intellij.psi.impl.source.StubbedSpine
 - getText():java.lang.String
 - getTextLength():I
@@ -3447,6 +3448,9 @@ a:com.intellij.psi.impl.source.PsiFileImpl
 - textMatches(java.lang.CharSequence):Z
 - textToCharArray():C[]
 - toString():java.lang.String
+- f:withGreenStubOrAst(java.lang.Class,java.util.function.Function,java.util.function.Function):java.lang.Object
+- f:withGreenStubOrAst(java.util.function.Function,java.util.function.Function):java.lang.Object
+- f:withGreenStubTreeOrAst(java.util.function.Function,java.util.function.Function):java.lang.Object
 com.intellij.psi.impl.source.PsiFileWithStubSupport
 - com.intellij.psi.PsiFile
 - a:getStubTree():com.intellij.psi.stubs.StubTree

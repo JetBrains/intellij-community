@@ -5,8 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupShortcut
 import com.intellij.ui.components.JBPanel
@@ -153,7 +153,7 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
 
     const val COMMIT_BUTTONS_TOOLBAR = "ChangesView.CommitButtonsToolbar"
 
-    val DEFAULT_COMMIT_ACTION_SHORTCUT: ShortcutSet =
-      if (isMac) CustomShortcutSet(CTRL_ENTER, META_ENTER) else CustomShortcutSet(CTRL_ENTER)
+    val DEFAULT_COMMIT_ACTION_SHORTCUT: ShortcutSet
+      get() = if (ClientSystemInfo.isMac()) CustomShortcutSet(CTRL_ENTER, META_ENTER) else CustomShortcutSet(CTRL_ENTER)
   }
 }

@@ -5,7 +5,7 @@ import kotlinx.coroutines.*
 fun main() {
     runBlocking  {
         for (i in 0..100) {
-            launch {
+            launch(Dispatchers.Default) {
                 val x = funWithSuspendLast(i)
                 println("x = $x")
                 delay(1)
@@ -34,3 +34,5 @@ suspend fun someInt(): Int {
 // STEP_OVER: 3
 
 // REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
+// REGISTRY: debugger.always.suspend.thread.before.switch=true
+// REGISTRY: debugger.async.stacks.coroutines=false

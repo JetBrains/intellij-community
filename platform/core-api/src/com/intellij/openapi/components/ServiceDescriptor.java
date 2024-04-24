@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Describes a service which is loaded on demand.
  *
- * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_services.html">Plugin Services</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-services.html">Plugin Services</a>
  */
 public final class ServiceDescriptor {
   public ServiceDescriptor(String serviceInterface,

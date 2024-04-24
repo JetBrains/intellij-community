@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.asserttoif;
 
 import com.intellij.codeInsight.Nullability;
@@ -33,9 +33,8 @@ public final class ObjectsRequireNonNullIntention extends MCIntention {
     return IntentionPowerPackBundle.message("objects.require.non.null.intention.name");
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new NullCheckedAssignmentPredicate();
   }
 

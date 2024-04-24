@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.editor.Document;
@@ -49,18 +49,18 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   private static final ArrangementSettingsToken ANONYMOUS_CLASS_BODY =
     new ArrangementSettingsToken("Dummy", "not matchable anonymous class body");
 
-  @NotNull private final Stack<JavaElementArrangementEntry> myStack = new Stack<>();
-  @NotNull private final JavaArrangementParseInfo myInfo;
-  @NotNull private final Collection<? extends TextRange> myRanges;
-  @NotNull private final Set<ArrangementSettingsToken> myGroupingRules;
-  @NotNull private final MethodBodyProcessor myMethodBodyProcessor;
+  private final @NotNull Stack<JavaElementArrangementEntry> myStack = new Stack<>();
+  private final @NotNull JavaArrangementParseInfo myInfo;
+  private final @NotNull Collection<? extends TextRange> myRanges;
+  private final @NotNull Set<ArrangementSettingsToken> myGroupingRules;
+  private final @NotNull MethodBodyProcessor myMethodBodyProcessor;
   private final boolean myCheckDeep;
-  @NotNull private final ArrangementSectionDetector mySectionDetector;
-  @Nullable private final Document myDocument;
+  private final @NotNull ArrangementSectionDetector mySectionDetector;
+  private final @Nullable Document myDocument;
 
-  @NotNull private final HashMap<PsiClass, Set<PsiField>> myCachedClassFields = new HashMap<>();
+  private final @NotNull HashMap<PsiClass, Set<PsiField>> myCachedClassFields = new HashMap<>();
 
-  @NotNull private final Set<PsiComment> myProcessedSectionsComments = new HashSet<>();
+  private final @NotNull Set<PsiComment> myProcessedSectionsComments = new HashSet<>();
 
   JavaArrangementVisitor(@NotNull JavaArrangementParseInfo infoHolder,
                          @Nullable Document document,
@@ -89,8 +89,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     mySectionDetector.processComment(comment);
   }
 
-  @NotNull
-  private static Set<ArrangementSettingsToken> getGroupingRules(@NotNull ArrangementSettings settings) {
+  private static @NotNull Set<ArrangementSettingsToken> getGroupingRules(@NotNull ArrangementSettings settings) {
     Set<ArrangementSettingsToken> groupingRules = new HashSet<>();
     for (ArrangementGroupingRule rule : settings.getGroupings()) {
       groupingRules.add(rule.getGroupingType());
@@ -258,8 +257,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     return fields;
   }
 
-  @Nullable
-  private static PsiElement getNextAfterWsOrComment(@NotNull PsiElement element) {
+  private static @Nullable PsiElement getNextAfterWsOrComment(@NotNull PsiElement element) {
     PsiElement next = element.getNextSibling();
     while (next instanceof PsiWhiteSpace || next instanceof PsiComment) {
       next = next.getNextSibling();
@@ -267,8 +265,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     return next;
   }
 
-  @NotNull
-  private List<PsiField> getReferencedFields(@NotNull final PsiField field) {
+  private @NotNull List<PsiField> getReferencedFields(final @NotNull PsiField field) {
     final List<PsiField> referencedElements = new ArrayList<>();
 
     PsiExpression fieldInitializer = field.getInitializer();
@@ -313,8 +310,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     return first.hasModifierProperty(PsiModifier.STATIC) == isSecondFieldStatic;
   }
 
-  @Nullable
-  private static PsiElement getPreviousNonWsComment(@Nullable PsiElement element, int minOffset) {
+  private static @Nullable PsiElement getPreviousNonWsComment(@Nullable PsiElement element, int minOffset) {
     if (element == null) {
       return null;
     }
@@ -373,8 +369,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     parseModifiers(initializer.getModifierList(), entry);
   }
 
-  @NotNull
-  private static TextRange getElementRangeWithoutComments(@NotNull PsiElement element) {
+  private static @NotNull TextRange getElementRangeWithoutComments(@NotNull PsiElement element) {
     PsiElement[] children = element.getChildren();
     assert children.length > 1 && children[0] instanceof PsiComment;
 
@@ -387,8 +382,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     return new TextRange(child.getTextRange().getStartOffset(), element.getTextRange().getEndOffset());
   }
 
-  @NotNull
-  private static List<PsiComment> getComments(@NotNull PsiElement element) {
+  private static @NotNull List<PsiComment> getComments(@NotNull PsiElement element) {
     PsiElement[] children = element.getChildren();
     List<PsiComment> comments = new ArrayList<>();
 
@@ -487,7 +481,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
   private void processEntry(@Nullable JavaElementArrangementEntry entry,
                             @Nullable PsiModifierListOwner modifier,
-                            @Nullable final PsiElement nextPsiRoot) {
+                            final @Nullable PsiElement nextPsiRoot) {
     if (entry == null) {
       return;
     }
@@ -520,10 +514,9 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     }
   }
 
-  @Nullable
-  private JavaElementArrangementEntry createNewEntry(@NotNull TextRange range,
-                                                     @NotNull ArrangementSettingsToken type,
-                                                     @Nullable String name) {
+  private @Nullable JavaElementArrangementEntry createNewEntry(@NotNull TextRange range,
+                                                               @NotNull ArrangementSettingsToken type,
+                                                               @Nullable String name) {
     if (!isWithinBounds(range)) {
       return null;
     }
@@ -545,8 +538,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     return false;
   }
 
-  @Nullable
-  private DefaultArrangementEntry getCurrent() {
+  private @Nullable DefaultArrangementEntry getCurrent() {
     return myStack.isEmpty() ? null : myStack.peek();
   }
 
@@ -570,8 +562,8 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   // Visitor that search dependencies (calls of other methods, that declared in this class, or method reference usages) for given method
   private static class MethodBodyProcessor extends JavaRecursiveElementVisitor {
 
-    @NotNull private final JavaArrangementParseInfo myInfo;
-    @Nullable private PsiMethod myBaseMethod;
+    private final @NotNull JavaArrangementParseInfo myInfo;
+    private @Nullable PsiMethod myBaseMethod;
 
     MethodBodyProcessor(@NotNull JavaArrangementParseInfo info) {
       myInfo = info;

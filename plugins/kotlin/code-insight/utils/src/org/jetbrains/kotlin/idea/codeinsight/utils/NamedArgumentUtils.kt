@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.PsiComment
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
@@ -14,7 +15,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
 
 object NamedArgumentUtils {

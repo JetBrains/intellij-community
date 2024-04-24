@@ -64,6 +64,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
+import static java.util.Collections.emptyList;
 
 /**
  * Git utility/helper methods
@@ -541,6 +542,45 @@ public final class GitUtil {
                                                                   @NotNull @NonNls String branchName) {
     GitRemoteBranch remoteBranch = findRemoteBranch(repository, remote, branchName);
     return ObjectUtils.notNull(remoteBranch, new GitStandardRemoteBranch(remote, branchName));
+  }
+
+  /**
+   * @param remotes is REQUIRED to parse 'origin/feature/branch' references:
+   *                these can be both 'branch on origin/feature remote' and 'feature/branch on origin remote'.
+   */
+  public static @NotNull GitRemoteBranch parseRemoteBranch(@NotNull String fullBranchName,
+                                                           @NotNull Collection<GitRemote> remotes) {
+    String stdName = GitBranchUtil.stripRefsPrefix(fullBranchName);
+
+    int slash = stdName.indexOf('/');
+    if (slash == -1) { // .git/refs/remotes/my_branch => git-svn
+      return new GitSvnRemoteBranch(fullBranchName);
+    }
+    else {
+      GitRemote remote;
+      String remoteName;
+      String branchName;
+      do {
+        remoteName = stdName.substring(0, slash);
+        branchName = stdName.substring(slash + 1);
+        remote = findRemoteByName(remotes, remoteName);
+        slash = stdName.indexOf('/', slash + 1);
+      }
+      while (remote == null && slash >= 0);
+
+      if (remote == null) {
+        // user may remove the remote section from .git/config, but leave remote refs untouched in .git/refs/remotes
+        // assume that remote names with slashes are less common than branches
+        int firstSlash = stdName.indexOf('/');
+        remoteName = stdName.substring(0, firstSlash);
+        branchName = stdName.substring(firstSlash + 1);
+
+        LOG.trace(String.format("No remote found with the name [%s]. All remotes: %s", remoteName, remotes));
+        GitRemote fakeRemote = new GitRemote(remoteName, emptyList(), emptyList(), emptyList(), emptyList());
+        return new GitStandardRemoteBranch(fakeRemote, branchName);
+      }
+      return new GitStandardRemoteBranch(remote, branchName);
+    }
   }
 
   public static @NotNull Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<? extends GitRepository> repositories) {

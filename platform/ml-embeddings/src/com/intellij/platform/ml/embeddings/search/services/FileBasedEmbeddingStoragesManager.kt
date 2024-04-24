@@ -192,6 +192,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
       }
       else iterate()
     }
+    LocalEmbeddingServiceProvider.getInstance().cleanup()
   }
 
   private suspend fun processFile(file: VirtualFile, psiManager: PsiManager, settings: EmbeddingIndexSettings,

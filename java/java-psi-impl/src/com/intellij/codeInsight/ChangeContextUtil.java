@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.ASTNode;
@@ -108,10 +108,9 @@ public final class ChangeContextUtil {
     }
   }
 
-  @NotNull
-  public static PsiElement decodeContextInfo(@NotNull PsiElement scope,
-                                             @Nullable PsiClass thisClass,
-                                             @Nullable PsiExpression thisAccessExpr) throws IncorrectOperationException {
+  public static @NotNull PsiElement decodeContextInfo(@NotNull PsiElement scope,
+                                                      @Nullable PsiClass thisClass,
+                                                      @Nullable PsiExpression thisAccessExpr) throws IncorrectOperationException {
     if (scope instanceof StubBasedPsiElement) {
       scope.putUserData(HARD_REF_TO_AST, null);
     }

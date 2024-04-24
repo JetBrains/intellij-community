@@ -17,6 +17,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil.buildNewTokenUrl
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
@@ -83,13 +84,7 @@ internal class GHTokenCredentialsUi(
       isAccountUnique: UniqueLoginPredicate,
       fixedLogin: String?
     ): String {
-      val details = withContext(Dispatchers.IO) {
-        coroutineToIndicator {
-          executor.execute(ProgressManager.getInstance().progressIndicator,
-                           GithubApiRequests.CurrentUser.get(server))
-        }
-      }
-
+      val details = executor.executeSuspend(GithubApiRequests.CurrentUser.get(server))
       val login = details.login
       if (fixedLogin != null && fixedLogin != login) throw GithubAuthenticationException("Token should match username \"$fixedLogin\"")
       if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)

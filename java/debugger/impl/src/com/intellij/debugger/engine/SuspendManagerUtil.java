@@ -17,22 +17,13 @@ import java.util.stream.Collectors;
 public final class SuspendManagerUtil {
   private static final Logger LOG = Logger.getInstance(SuspendManagerUtil.class);
 
-  public static boolean isEvaluating(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
-    for (SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {
-      if (suspendContext.isEvaluating() && thread.equals(suspendContext.getThread())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   /**
    * Returns suspend context that suspends the thread specified (may be currently evaluating)
    */
   @Nullable
   public static SuspendContextImpl findContextByThread(@NotNull SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
     for (SuspendContextImpl context : suspendManager.getEventContexts()) {
-      if ((context.getThread() == thread || context.getSuspendPolicy() == EventRequest.SUSPEND_ALL)
+      if ((context.getEventThread() == thread || context.getSuspendPolicy() == EventRequest.SUSPEND_ALL)
           && !context.isExplicitlyResumed(thread)) {
         return context;
       }
@@ -81,11 +72,9 @@ public final class SuspendManagerUtil {
     }
 
     LOG.debug("RestoreAfterResume SuspendContextImpl...");
-    LOG.assertTrue(context.myResumedThreads == null);
 
     if (data.myResumedThreads != null) {
       data.myResumedThreads.forEach(ThreadReferenceProxyImpl::resume);
-      context.myResumedThreads = data.myResumedThreads;
     }
   }
 
@@ -94,7 +83,8 @@ public final class SuspendManagerUtil {
 
     ThreadReferenceProxyImpl thread = context.getThread();
 
-    ResumeData resumeData = new ResumeData(suspendManager.isFrozen(thread), context.myResumedThreads);
+    Set<ThreadReferenceProxyImpl> resumedThreads = context.myResumedThreads != null ? Set.copyOf(context.myResumedThreads) : null;
+    ResumeData resumeData = new ResumeData(suspendManager.isFrozen(thread), resumedThreads);
 
     if (resumeData.myIsFrozen) {
       suspendManager.unfreezeThread(thread);
@@ -102,8 +92,7 @@ public final class SuspendManagerUtil {
 
     LOG.debug("Resuming SuspendContextImpl...");
     if (context.myResumedThreads != null) {
-      context.myResumedThreads.forEach(ThreadReferenceProxyImpl::suspend);
-      context.myResumedThreads = null;
+      resumeData.myResumedThreads.forEach(ThreadReferenceProxyImpl::suspend);
     }
 
     return resumeData;

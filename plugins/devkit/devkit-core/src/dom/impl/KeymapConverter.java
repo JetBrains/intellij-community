@@ -24,7 +24,7 @@ public class KeymapConverter extends ResolvingConverter<XmlFile> {
 
   @Nullable
   @Override
-  public XmlFile fromString(@Nullable String s, ConvertContext context) {
+  public XmlFile fromString(@Nullable String s, @NotNull ConvertContext context) {
     if (StringUtil.isEmpty(s)) return null;
 
     return ContainerUtil.find(getKeymapFiles(context), file -> s.equals(getKeymapName(file)));
@@ -32,13 +32,13 @@ public class KeymapConverter extends ResolvingConverter<XmlFile> {
 
   @Nullable
   @Override
-  public String toString(@Nullable XmlFile file, ConvertContext context) {
+  public String toString(@Nullable XmlFile file, @NotNull ConvertContext context) {
     return file != null ? getKeymapName(file) : null;
   }
 
   @NotNull
   @Override
-  public Collection<? extends XmlFile> getVariants(ConvertContext context) {
+  public Collection<? extends XmlFile> getVariants(@NotNull ConvertContext context) {
     return getKeymapFiles(context);
   }
 
@@ -49,7 +49,7 @@ public class KeymapConverter extends ResolvingConverter<XmlFile> {
   }
 
   @Override
-  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+  public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
     return DevKitBundle.message("plugin.xml.convert.keymap.cannot.resolve", s);
   }
 

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiType
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.PropertyInfo
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
@@ -10,7 +11,6 @@ import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.types.Variance
 
 class AddPropertyActionCreateCallableFromUsageFix(
@@ -34,7 +34,7 @@ class AddPropertyActionCreateCallableFromUsageFix(
             val modifierList = modifierListPointer.element ?: return@run null
             val resolutionFacade = targetContainer.getResolutionFacade()
             val nullableAnyType = resolutionFacade.moduleDescriptor.builtIns.nullableAnyType
-            val initializer = if(!isLateinitPreferred) {
+            val initializer = if (!isLateinitPreferred) {
                 KtPsiFactory(targetContainer.project).createExpression("TODO(\"initialize me\")")
             } else null
             val ktType = (propertyType as? PsiType)?.resolveToKotlinType(resolutionFacade) ?: nullableAnyType

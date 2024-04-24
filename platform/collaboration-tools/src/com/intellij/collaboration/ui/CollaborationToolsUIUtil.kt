@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
+import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.content.Content
 import com.intellij.ui.speedSearch.NameFilteringListModel
@@ -109,7 +110,9 @@ object CollaborationToolsUIUtil {
       validatorDisposable = Disposer.newDisposable("Component validator")
       validator = ComponentValidator(validatorDisposable!!).withValidator(Supplier {
         errorValue.value?.let { ValidationInfo(it, component) }
-      }).installOn(component)
+      }).installOn(component).also {
+        it.revalidate()
+      }
     }
 
     override fun hideNotify() {
@@ -307,7 +310,7 @@ object CollaborationToolsUIUtil {
         text = it
       }
     }.let {
-      RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
+      BackgroundRoundedPanel(4, SingleComponentCenteringLayout()).apply {
         border = JBUI.Borders.empty()
         background = CodeReviewColorUtil.Review.stateBackground
         add(it)
@@ -394,6 +397,22 @@ private class OrientableScrollablePanel(private val orientation: Int, layout: La
 
   override fun getScrollableTracksViewportHeight(): Boolean = orientation == SwingConstants.HORIZONTAL
 }
+
+@Suppress("FunctionName")
+fun ClippingRoundedPanel(arcRadius: Int = 8, borderColor: Color = JBColor.border(), layoutManager: LayoutManager? = null): JPanel =
+  ClippingRoundedPanel(arcRadius, layoutManager).apply {
+    border = RoundedLineBorder(borderColor, (arcRadius + 1) * 2)
+  }
+
+/**
+ * A panel with rounded corners which rounds the corners of both its background and its children
+ * Supposed to be used ONLY when there is not enough space between the children and panel edges, AND background color is dynamic
+ *
+ * For simpler cases where only the background should be rounded one should use [com.intellij.ui.components.panels.BackgroundRoundedPanel]
+ */
+@Suppress("FunctionName")
+fun ClippingRoundedPanel(arcRadius: Int = 8, layoutManager: LayoutManager? = null): JPanel =
+  RoundedPanel(layoutManager, arcRadius)
 
 fun jbColorFromHex(name: @NonNls String, light: @NonNls String, dark: @NonNls String): JBColor =
   JBColor.namedColor(name, jbColorFromHex(light, dark))

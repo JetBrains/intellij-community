@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.lang.Language;
@@ -58,8 +58,8 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull final Processor<? super NavigationItem> processor,
-                                      @NotNull final FindSymbolParameters parameters) {
+                                      final @NotNull Processor<? super NavigationItem> processor,
+                                      final @NotNull FindSymbolParameters parameters) {
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       DefaultClassProcessor defaultClassProcessor = new DefaultClassProcessor(processor, parameters, false);
       PsiShortNamesCache.getInstance(parameters.getProject())
@@ -68,12 +68,12 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
   }
 
   public static class DefaultClassProcessor implements Processor<PsiClass> {
-    private @NotNull final Processor<? super NavigationItem> processor;
-    private @Nullable final MinusculeMatcher innerClassMatcher;
+    private final @NotNull Processor<? super NavigationItem> processor;
+    private final @Nullable MinusculeMatcher innerClassMatcher;
     private final boolean allowNonPhysicalClasses;
     private final boolean isAnnotation;
 
-    DefaultClassProcessor(@NotNull final Processor<? super NavigationItem> processor, @NotNull final FindSymbolParameters parameters,
+    DefaultClassProcessor(final @NotNull Processor<? super NavigationItem> processor, final @NotNull FindSymbolParameters parameters,
                           boolean allowNonPhysicalClasses) {
       this.processor = processor;
       this.innerClassMatcher = getInnerClassMatcher(parameters);
@@ -95,8 +95,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
       return processor.process(aClass);
     }
 
-    @Nullable
-    private static MinusculeMatcher getInnerClassMatcher(@NotNull FindSymbolParameters parameters) {
+    private static @Nullable MinusculeMatcher getInnerClassMatcher(@NotNull FindSymbolParameters parameters) {
       String namePattern = StringUtil.getShortName(parameters.getCompletePattern());
       boolean hasDollar = namePattern.contains("$");
       if (hasDollar) {
@@ -110,9 +109,8 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
     }
   }
 
-  @Nullable
   @Override
-  public Language getElementLanguage() {
+  public @Nullable Language getElementLanguage() {
     return JavaLanguage.INSTANCE;
   }
 

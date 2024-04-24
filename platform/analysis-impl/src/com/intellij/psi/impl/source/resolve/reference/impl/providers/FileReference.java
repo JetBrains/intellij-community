@@ -203,7 +203,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
           // match filesystem roots
           result.add(new PsiElementResolveResult(getOriginalFile(context)));
         }
-        else if (context instanceof PsiDirectory directory && caseSensitivityApplies((PsiDirectory)context, caseSensitive)) {
+        else if (context instanceof PsiDirectory directory && caseSensitivityApplies(directory, caseSensitive)) {
           // optimization: do not load all children into VFS
           PsiFileSystemItem child = directory.findFile(decoded);
           if (child == null) child = directory.findSubdirectory(decoded);

@@ -29,14 +29,12 @@ public final class FragmentManipulator extends AbstractElementManipulator<PsiFra
     return (PsiFragment)expr.replace(newExpr);
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement(@NotNull final PsiFragment element) {
+  public @NotNull TextRange getRangeInElement(final @NotNull PsiFragment element) {
     return getValueRange(element);
   }
 
-  @NotNull
-  public static TextRange getValueRange(@NotNull PsiFragment fragment) {
+  public static @NotNull TextRange getValueRange(@NotNull PsiFragment fragment) {
     return fragment.createLiteralTextEscaper().getRelevantTextRange();
   }
 }

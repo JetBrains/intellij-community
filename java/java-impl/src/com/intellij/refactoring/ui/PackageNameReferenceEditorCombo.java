@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.ide.util.PackageChooserDialog;
@@ -13,7 +13,7 @@ import java.awt.event.ActionListener;
 
 
 public class PackageNameReferenceEditorCombo extends ReferenceEditorComboWithBrowseButton {
-  public PackageNameReferenceEditorCombo(final String text, @NotNull final Project project,
+  public PackageNameReferenceEditorCombo(final String text, final @NotNull Project project,
                                          final String recentsKey, final @NlsContexts.DialogTitle String chooserTitle) {
     super(null, text, project, false, recentsKey);
     addActionListener(new ActionListener() {

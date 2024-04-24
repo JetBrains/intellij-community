@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -64,8 +64,7 @@ public final class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotati
   }
 
   @Override
-  @NotNull
-  public PsiAnnotationParameterList getParameterList() {
+  public @NotNull PsiAnnotationParameterList getParameterList() {
     return myParameterList.getValue();
   }
 
@@ -94,8 +93,7 @@ public final class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotati
   }
 
   @Override
-  @Nullable
-  public PsiAnnotationMemberValue findDeclaredAttributeValue(@NonNls final String attributeName) {
+  public @Nullable PsiAnnotationMemberValue findDeclaredAttributeValue(final @NonNls String attributeName) {
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }
 

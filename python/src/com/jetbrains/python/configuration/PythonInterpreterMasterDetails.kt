@@ -141,7 +141,7 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
       addInterpreterActionGroup.templatePresentation.icon = AllIcons.General.Add
       addInterpreterActionGroup.templatePresentation.text = PyBundle.message("python.interpreters.add.interpreter.action.text")
       addInterpreterActionGroup.isPopup = true
-      addInterpreterActionGroup.registerCustomShortcutSet(CommonShortcuts.INSERT, myTree)
+      addInterpreterActionGroup.registerCustomShortcutSet(CommonShortcuts.getInsert(), myTree)
       listOf(addInterpreterActionGroup, RemoveAction(), RenameAction(), ToggleVirtualEnvFilterButton(), ShowPathsAction())
     }
 

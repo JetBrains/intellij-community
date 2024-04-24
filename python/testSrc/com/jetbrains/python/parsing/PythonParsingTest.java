@@ -893,6 +893,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  // PY-64304 EA-247016 
+  public void testVariableAnnotationRecoveryAwaitExpressionAsTarget() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   // PY-20770
   public void testAsyncComprehensions() {
     doTest(LanguageLevel.PYTHON36);
@@ -1322,7 +1327,7 @@ public class PythonParsingTest extends ParsingTestCase {
   public void testTypeKeywordAsIdentifier() {
     doTest(LanguageLevel.PYTHON312);
   }
-  
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -1123,7 +1123,7 @@ public final class ColorPicker extends JPanel implements ColorListener, Document
 
       setTitle(caption);
       setResizable(false);
-      setOKButtonText(listeners == null || listeners.size() > 0 ? IdeBundle.message("button.choose") : IdeBundle.message("button.copy"));
+      setOKButtonText(listeners == null || !listeners.isEmpty() ? IdeBundle.message("button.choose") : IdeBundle.message("button.copy"));
       super.init();
     }
 

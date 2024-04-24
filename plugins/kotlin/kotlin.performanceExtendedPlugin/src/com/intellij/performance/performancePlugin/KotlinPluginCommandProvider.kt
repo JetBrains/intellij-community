@@ -4,6 +4,8 @@ package com.intellij.performance.performancePlugin
 import com.intellij.performance.performancePlugin.commands.*
 import com.jetbrains.performancePlugin.CommandProvider
 import com.jetbrains.performancePlugin.CreateCommand
+import org.jetbrains.plugins.gradle.performanceTesting.EnableKotlinDaemonLogCommand
+import org.jetbrains.plugins.gradle.performanceTesting.AddKotlinCompilerOptionsCommand
 
 class KotlinPluginCommandProvider : CommandProvider {
 
@@ -16,6 +18,8 @@ class KotlinPluginCommandProvider : CommandProvider {
             KotlinEditorOptionsChangeCommand.PREFIX to CreateCommand(::KotlinEditorOptionsChangeCommand),
             CreateKotlinFileCommand.PREFIX to CreateCommand(::CreateKotlinFileCommand),
             TypingWithCompletionCommand.PREFIX to CreateCommand(::TypingWithCompletionCommand),
+            EnableKotlinDaemonLogCommand.PREFIX to CreateCommand(::EnableKotlinDaemonLogCommand),
+            AddKotlinCompilerOptionsCommand.PREFIX to CreateCommand(::AddKotlinCompilerOptionsCommand),
         )
     }
 }

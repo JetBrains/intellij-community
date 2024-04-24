@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bulkOperation;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -47,14 +47,12 @@ public final class UseBulkOperationInspection extends AbstractBaseJavaLocalInspe
       checkbox("USE_ARRAYS_AS_LIST", JavaBundle.message("inspection.replace.with.bulk.wrap.arrays")));
   }
 
-  @Nullable
-  private static BulkMethodInfo findInfo(PsiReferenceExpression ref) {
+  private static @Nullable BulkMethodInfo findInfo(PsiReferenceExpression ref) {
     return StreamEx.of(BulkMethodInfoProvider.KEY.getExtensionList())
       .flatMap(BulkMethodInfoProvider::consumers).findFirst(info -> info.isMyMethod(ref)).orElse(null);
   }
 
-  @Nullable
-  private static PsiExpression findIterable(PsiMethodCallExpression expression, BulkMethodInfo info) {
+  private static @Nullable PsiExpression findIterable(PsiMethodCallExpression expression, BulkMethodInfo info) {
     PsiExpression[] args = expression.getArgumentList().getExpressions();
     if (args.length != info.getSimpleParametersCount()) return null;
     PsiElement parent = expression.getParent();
@@ -104,8 +102,7 @@ public final class UseBulkOperationInspection extends AbstractBaseJavaLocalInspe
     return null;
   }
 
-  @Nullable
-  private static PsiExpression findIterableForLambda(PsiLambdaExpression lambda, PsiExpression[] args, BulkMethodInfo info) {
+  private static @Nullable PsiExpression findIterableForLambda(PsiLambdaExpression lambda, PsiExpression[] args, BulkMethodInfo info) {
     PsiParameterList parameterList = lambda.getParameterList();
     PsiParameter[] parameters = parameterList.getParameters();
     int lambdaParametersCount = parameterList.getParametersCount();
@@ -129,8 +126,7 @@ public final class UseBulkOperationInspection extends AbstractBaseJavaLocalInspe
     return ExpressionUtils.isReferenceTo(getKeyQualifier, variable) && ExpressionUtils.isReferenceTo(getValueQualifier, variable);
   }
 
-  @Nullable
-  private static PsiExpression findIterableForSingleStatement(PsiStatement statement, PsiExpression[] args) {
+  private static @Nullable PsiExpression findIterableForSingleStatement(PsiStatement statement, PsiExpression[] args) {
     assert args.length == 1 || args.length == 2 : "The number of arguments must be either 1 or 2";
     PsiElement parent = statement.getParent();
     if (parent instanceof PsiForeachStatement foreachStatement) {
@@ -159,8 +155,7 @@ public final class UseBulkOperationInspection extends AbstractBaseJavaLocalInspe
     return null;
   }
 
-  @Nullable
-  private static PsiExpression findIterableForIndexedLoop(PsiForStatement loop, PsiExpression getElementExpression) {
+  private static @Nullable PsiExpression findIterableForIndexedLoop(PsiForStatement loop, PsiExpression getElementExpression) {
     CountingLoop countingLoop = CountingLoop.from(loop);
     if (countingLoop == null ||
         countingLoop.isIncluding() ||
@@ -175,8 +170,7 @@ public final class UseBulkOperationInspection extends AbstractBaseJavaLocalInspe
     return container.getQualifier();
   }
 
-  @Nullable
-  private static PsiExpression findIterableForFunction(PsiFunctionalExpression function) {
+  private static @Nullable PsiExpression findIterableForFunction(PsiFunctionalExpression function) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(function.getParent());
     if (parent instanceof PsiTypeCastExpression) parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
     if (!(parent instanceof PsiExpressionList)) return null;
@@ -216,9 +210,8 @@ public final class UseBulkOperationInspection extends AbstractBaseJavaLocalInspe
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -278,17 +271,13 @@ public final class UseBulkOperationInspection extends AbstractBaseJavaLocalInspe
       myInfo = info;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return JavaBundle.message("inspection.replace.with.bulk.fix.name", myInfo.getReplacementName());
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.replace.with.bulk.fix.family.name");
     }
 
@@ -323,8 +312,7 @@ public final class UseBulkOperationInspection extends AbstractBaseJavaLocalInspe
       CodeStyleManager.getInstance(project).reformat(result);
     }
 
-    @NotNull
-    private static String calculateIterableText(PsiExpression iterable, CommentTracker ct) {
+    private static @NotNull String calculateIterableText(PsiExpression iterable, CommentTracker ct) {
       if (iterable instanceof PsiSuperExpression) {
         PsiJavaCodeReferenceElement qualifier = ((PsiSuperExpression)iterable).getQualifier();
         return (qualifier != null) ? ct.text(qualifier) + ".this" : "this";

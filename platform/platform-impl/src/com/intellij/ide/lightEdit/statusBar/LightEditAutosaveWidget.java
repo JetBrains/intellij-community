@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.statusBar;
 
 import com.intellij.ide.GeneralSettings;
@@ -126,16 +126,16 @@ public final class LightEditAutosaveWidget implements StatusBarWidget, StatusBar
         builder.append(ApplicationBundle.message("light.edit.autosave.widget.popup.text.time", generalSettings.getInactiveTimeout()));
       }
       if (generalSettings.isSaveOnFrameDeactivation()) {
-        if (builder.length() > 0) {
+        if (!builder.isEmpty()) {
           builder.append(",<br>");
         }
         String message = ApplicationBundle.message("light.edit.autosave.widget.popup.text.deactivation");
-        if (builder.length() > 0) {
+        if (!builder.isEmpty()) {
           message = message.replaceAll("<br>", " ");
         }
         builder.append(message);
       }
-      if (builder.length() == 0) {
+      if (builder.isEmpty()) {
         builder.append(ApplicationBundle.message("light.edit.autosave.widget.popup.text.on.close"));
       }
       return ApplicationBundle.message("light.edit.autosave.widget.popup.text", builder.toString());

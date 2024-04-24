@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.workspace.EvaluationWorkspace
@@ -87,6 +87,11 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
       }
 
       for (step in steps.reversed()) {
+        if (step is UndoableEvaluationStep)
+          steps.add(step.undoStep())
+      }
+
+      for (step in factory.featureSpecificPreliminarySteps().reversed()) {
         if (step is UndoableEvaluationStep)
           steps.add(step.undoStep())
       }

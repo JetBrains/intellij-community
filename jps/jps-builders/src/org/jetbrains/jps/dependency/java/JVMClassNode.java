@@ -35,7 +35,7 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
 
   public JVMClassNode(GraphDataInput in) throws IOException {
     super(in);
-    myId = new JvmNodeReferenceID(in);
+    myId = new JvmNodeReferenceID(getName());
     outFilePath = in.readUTF();
 
     List<Usage> usages = new SmartList<>();
@@ -55,7 +55,6 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
   @Override
   public void write(GraphDataOutput out) throws IOException {
     super.write(out);
-    myId.write(out);
     out.writeUTF(outFilePath);
 
     Map<Class<? extends Usage>, List<Usage>> usageGroups = new HashMap<>();

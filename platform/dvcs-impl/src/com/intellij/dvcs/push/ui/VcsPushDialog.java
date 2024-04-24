@@ -7,9 +7,9 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -98,8 +98,10 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   private @NotNull List<ActionWrapper> collectPushActions() {
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("Vcs.Push.Actions");
-    List<PushActionBase> pushActions = new ArrayList<>(ContainerUtil.findAll(group.getChildren(null), PushActionBase.class));
+    ActionManager actionManager = ActionManager.getInstance();
+    DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction("Vcs.Push.Actions");
+    List<PushActionBase> pushActions = new ArrayList<>(
+      ContainerUtil.findAll(group.getChildren(actionManager), PushActionBase.class));
 
     customizeDialog(ContainerUtil.findInstance(pushActions, SimplePushAction.class));
 

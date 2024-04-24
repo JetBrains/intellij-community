@@ -209,7 +209,8 @@ class NewJavaToKotlinConverter(
             val createdImportList = importPsi.first().parent as KtImportList
             val importList = importList
             if (importList == null) {
-                addImportList(createdImportList)
+                val newImportList = addImportList(createdImportList)
+                newImportList.ensureLineBreaksAfter(psiFactory)
             } else {
                 val updatedList = if (importList.firstChild != null) {
                     createdImportList.addRangeBefore(importList.firstChild, importList.lastChild, createdImportList.firstChild)
@@ -221,14 +222,13 @@ class NewJavaToKotlinConverter(
             packageDirective?.ensureLineBreaksAfter(psiFactory)
         }
 
-        private fun KtFile.addImportList(importList: KtImportList) {
+        private fun KtFile.addImportList(importList: KtImportList): KtImportList {
             if (packageDirective != null) {
-                addAfter(importList, packageDirective) as KtImportList
-                return
+                return addAfter(importList, packageDirective) as KtImportList
             }
 
             val firstDeclaration = findChildByClass(KtDeclaration::class.java)
-            if (firstDeclaration != null) {
+            return if (firstDeclaration != null) {
                 addBefore(importList, firstDeclaration) as KtImportList
             } else {
                 add(importList) as KtImportList
@@ -236,7 +236,8 @@ class NewJavaToKotlinConverter(
         }
 
         private fun PsiElement.ensureLineBreaksAfter(psiFactory: KtPsiFactory) {
-            val nextWhiteSpace = (nextSibling as? PsiWhiteSpace)?.text ?: return
+            if (text.isBlank()) return
+            val nextWhiteSpace = (nextSibling as? PsiWhiteSpace)?.text ?: ""
             val numberOfNewLinesToAdd = when {
                 nextWhiteSpace.startsWith("\n\n") -> return
                 nextWhiteSpace.startsWith("\n") -> 1

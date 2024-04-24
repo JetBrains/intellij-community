@@ -140,7 +140,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         if (uMethod.isConstructor()) {
           constructorSeen = true;
           final List<UParameter> parameters = uMethod.getUastParameters();
-          if (!parameters.isEmpty()|| uMethod.getVisibility() != UastVisibility.PRIVATE) {
+          if (!parameters.isEmpty() || uMethod.getVisibility() != UastVisibility.PRIVATE) {
             utilityClass = false;
           }
 
@@ -440,11 +440,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
-  public boolean isSuspicious() {
-    return !(isUtilityClass() && getOutReferences().isEmpty()) && super.isSuspicious();
-  }
-
-  @Override
   public boolean isUtilityClass() {
     return checkFlag(IS_UTILITY_MASK);
   }
@@ -527,10 +522,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (super.isReferenced()) return true;
 
     if (isInterface()) {
-      if (!getDerivedReferences().isEmpty()) return true;
+      return !getDerivedReferences().isEmpty();
     }
     else if (isAbstract()) {
-      if (!getSubClasses().isEmpty()) return true;
+      return !getSubClasses().isEmpty();
     }
 
     return false;
@@ -541,10 +536,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (super.hasSuspiciousCallers()) return true;
 
     if (isInterface()) {
-      if (!getDerivedReferences().isEmpty()) return true;
+      return !getDerivedReferences().isEmpty();
     }
     else if (isAbstract()) {
-      if (!getSubClasses().isEmpty()) return true;
+      return !getSubClasses().isEmpty();
     }
 
     return false;

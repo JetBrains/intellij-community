@@ -26,6 +26,7 @@ import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.JComponent
 import javax.swing.border.Border
+import kotlin.math.max
 
 @ApiStatus.Internal
 abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: ToolWindowAnchor) : JBPanel<ToolWindowToolbar>() {
@@ -182,7 +183,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
       }
       if (anchor == ToolWindowAnchor.BOTTOM) {
         val rootBounds = Rectangle(rootPane.locationOnScreen, rootPane.size)
-        val toolWindowHeight = getFirstVisibleToolWindowSize(false)
+        val toolWindowHeight = max(getFirstVisibleToolWindowSize(false), toolBar.height)
         val bounds = Rectangle(rootBounds.x, rootBounds.y + rootBounds.height - toolWindowHeight - getStatusBarHeight(),
                                rootBounds.width / 2, toolWindowHeight)
         if (split) {

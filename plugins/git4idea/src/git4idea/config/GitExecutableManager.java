@@ -12,14 +12,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.NoSuchFileException;
-import java.text.ParseException;
-import java.util.Collections;
 
 import static com.intellij.ide.impl.TrustedProjects.isTrusted;
 import static git4idea.config.GitExecutableProblemHandlersKt.showUnsupportedVersionError;
@@ -45,46 +38,16 @@ public class GitExecutableManager {
   private static final Logger LOG = Logger.getInstance(GitExecutableManager.class);
 
   private final @NotNull GitExecutableDetector myExecutableDetector = new GitExecutableDetector();
-  private final @NotNull CachingFileTester myVersionCache;
+  private final @NotNull GitExecutableFileTester myVersionCache;
 
   @Topic.AppLevel
   public static final Topic<GitExecutableListener> TOPIC = new Topic<>(GitExecutableListener.class, Topic.BroadcastDirection.NONE);
 
   public GitExecutableManager() {
-    myVersionCache = new CachingFileTester() {
-      @Override
-      protected @NotNull GitVersion testExecutable(@NotNull GitExecutable executable) throws VcsException, ParseException {
-        return doGetGitVersion(executable);
-      }
-    };
+    myVersionCache = new GitExecutableFileTester();
   }
 
-  private static GitVersion doGetGitVersion(@NotNull GitExecutable executable) throws VcsException, ParseException {
-    GitVersion.Type type = null;
-    if (executable instanceof GitExecutable.Unknown) {
-      type = GitVersion.Type.UNDEFINED;
-    }
-    else if (executable instanceof GitExecutable.Wsl) {
-      WSLDistribution distribution = ((GitExecutable.Wsl)executable).getDistribution();
-      type = distribution.getVersion() == 1 ? GitVersion.Type.WSL1 : GitVersion.Type.WSL2;
-    }
 
-    LOG.debug("Acquiring git version for " + executable);
-    GitLineHandler handler = new GitLineHandler(null,
-                                                new File("."),
-                                                executable,
-                                                GitCommand.VERSION,
-                                                Collections.emptyList());
-    handler.setPreValidateExecutable(false);
-    handler.setSilent(false);
-    handler.setTerminationTimeout(1000);
-    handler.setStdoutSuppressed(false);
-    GitCommandResult result = Git.getInstance().runCommand(handler);
-    String rawResult = result.getOutputOrThrow();
-    GitVersion version = GitVersion.parse(rawResult, type);
-    LOG.info("Git version for " + executable + ": " + version);
-    return version;
-  }
 
   public @NotNull String getPathToGit() {
     return getPathToGit(null);
@@ -173,7 +136,7 @@ public class GitExecutableManager {
    */
   @CalledInAny
   public @NotNull GitVersion getVersion(@NotNull GitExecutable executable) {
-    CachingFileTester.TestResult result = myVersionCache.getCachedResultFor(executable);
+    GitExecutableFileTester.TestResult result = myVersionCache.getCachedResultFor(executable);
     if (result == null || result.getResult() == null) {
       return GitVersion.NULL;
     }
@@ -264,7 +227,7 @@ public class GitExecutableManager {
    */
   @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull GitVersion identifyVersion(@NotNull GitExecutable executable) throws GitVersionIdentificationException {
-    CachingFileTester.TestResult result = myVersionCache.getResultFor(executable);
+    GitExecutableFileTester.TestResult result = myVersionCache.getResultFor(executable);
     if (result.getResult() == null) {
       Exception e = result.getException();
       if (e instanceof NoSuchFileException && executable.getExePath().equals(GitExecutableDetector.getDefaultExecutable())) {
@@ -279,6 +242,10 @@ public class GitExecutableManager {
 
   public void dropVersionCache(@NotNull GitExecutable executable) {
     myVersionCache.dropCache(executable);
+  }
+
+  public void dropVersionCache() {
+    myVersionCache.dropCache();
   }
 
   /**

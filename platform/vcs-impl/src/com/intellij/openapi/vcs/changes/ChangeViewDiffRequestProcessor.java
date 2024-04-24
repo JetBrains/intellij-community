@@ -104,6 +104,17 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return true;
   }
 
+  /**
+   * Prevent sudden file switch when all the changes in a file were reverted using an editor in diff viewer,
+   * in an assumption that the user intended to change something else nearby next.
+   * </p>
+   * This mode is handy for 'Local Changes' tree previews, when the file that is currently being edited
+   * may disappear from the ChangesTree, which is used as the source for the diff preview.
+   */
+  public boolean forceKeepCurrentFileWhileFocused() {
+    return false;
+  }
+
   //
   // Update
   //
@@ -193,6 +204,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     if (fromModelRefresh &&
         selectedChange == null &&
         myCurrentChange != null &&
+        forceKeepCurrentFileWhileFocused() &&
         getContext().isWindowFocused() &&
         getContext().isFocusedInWindow()) {
       // Do not automatically switch focused viewer

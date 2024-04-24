@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.Nullability;
@@ -72,9 +72,8 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
       checkbox("m_ignoreUsedIgnoredName", InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.ignored.used")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitTryStatement(@NotNull PsiTryStatement statement) {
@@ -133,8 +132,7 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
         }
       }
 
-      @Nullable
-      private AddCatchBodyFix getAddBodyFix(PsiCodeBlock block) {
+      private @Nullable AddCatchBodyFix getAddBodyFix(PsiCodeBlock block) {
         if (ControlFlowUtils.isEmpty(block, true, true)) {
           try {
             FileTemplate template =
@@ -261,10 +259,8 @@ public final class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLoc
   }
 
   private static class AddCatchBodyFix extends PsiUpdateModCommandQuickFix implements LowPriorityAction {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.empty.catch.block.generate.body");
     }
 

@@ -10,9 +10,10 @@
     <plugin id="com.intellij.modules.python"/>
   </dependencies>
 
-  <xi:include href="/META-INF/pycharm-v2-customization-plugin-include.xml"/>
   <xi:include href="/META-INF/tips-pycharm-community.xml"/>
   <content>
+    <module name="intellij.pycharm.community.ide.impl"/>
+    <module name="intellij.pycharm.community.ide.implTraining"/>
     <module name="intellij.jupyter.core"/> <!-- Lang for notebooks preview -->
     <module name="intellij.jupyter.viewOnly"/> <!-- notebooks preview itself-->
 

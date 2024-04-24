@@ -14,7 +14,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 class KotlinAutomaticTestMethodRenamerFactory : AutomaticTestMethodRenamerFactory() {
     override fun isApplicable(element: PsiElement): Boolean {
         if (element !is KtNamedFunction) return false
-        return KotlinPsiBasedTestFramework.findTestFramework(element) == null
+        val classOrObject = element.containingClassOrObject ?: return false
+        return KotlinPsiBasedTestFramework.findTestFramework(classOrObject) == null
     }
 
     override fun createRenamer(element: PsiElement, newName: String, usages: MutableCollection<UsageInfo>): AutomaticRenamer {

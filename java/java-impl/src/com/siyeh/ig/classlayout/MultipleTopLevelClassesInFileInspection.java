@@ -48,8 +48,7 @@ public final class MultipleTopLevelClassesInFileInspection extends BaseInspectio
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "multiple.top.level.classes.in.file.problem.descriptor");
   }

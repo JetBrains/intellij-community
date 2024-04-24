@@ -110,6 +110,8 @@ sealed interface SessionTree<RootT, MainT, PredictionT> {
 
   /**
    * Accepts the [visitor], calling the corresponding interface's function.
+   *
+   * see [Visitor], [LevelVisitor]
    */
   fun <T> accept(visitor: Visitor<RootT, MainT, PredictionT, T>): T
 
@@ -170,7 +172,7 @@ sealed interface SessionTree<RootT, MainT, PredictionT> {
     override val levelData: LevelData<MainT>,
     override val children: List<SessionTree<RootT, MainT, PredictionT>>
   ) : RootContainer<RootT, MainT, PredictionT>, ChildrenContainer<RootT, MainT, PredictionT> {
-    override fun <T> accept(visitor: Visitor<RootT, MainT, PredictionT, T>): T = visitor.acceptRoot(this)
+    override fun <T> accept(visitor: Visitor<RootT, MainT, PredictionT, T>): T = visitor.acceptComplexRoot(this)
   }
 
   /**
@@ -206,61 +208,74 @@ sealed interface SessionTree<RootT, MainT, PredictionT> {
 
     fun acceptLeaf(leaf: Leaf<RootT, MainT, PredictionT>): T
 
-    fun acceptRoot(root: ComplexRoot<RootT, MainT, PredictionT>): T
+    fun acceptComplexRoot(root: ComplexRoot<RootT, MainT, PredictionT>): T
 
     fun acceptSolitaryLeaf(solitaryLeaf: SolitaryLeaf<RootT, MainT, PredictionT>): T
+
+    interface Default<ModelT, MainT, PredictionT> : Visitor<ModelT, MainT, PredictionT, Unit> {
+      override fun acceptBranching(branching: Branching<ModelT, MainT, PredictionT>) = Unit
+
+      override fun acceptLeaf(leaf: Leaf<ModelT, MainT, PredictionT>) = Unit
+
+      override fun acceptComplexRoot(root: ComplexRoot<ModelT, MainT, PredictionT>) = Unit
+
+      override fun acceptSolitaryLeaf(solitaryLeaf: SolitaryLeaf<ModelT, MainT, PredictionT>) = Unit
+    }
   }
 
   /**
    * Visits all tree's nodes on [levelIndex] depth.
+   *
+   * [levelIndex] is zero for the permanent level.
+   * It must be less than the number of levels in the corresponding task.
    */
-  abstract class LevelVisitor<RootT, PredictionT : Any> private constructor(
+  abstract class LevelVisitor<RootT, MainT, PredictionT : Any> private constructor(
     private val levelIndex: Int,
     private val thisVisitorLevel: Int,
-  ) : Visitor<RootT, DescribedTierData, PredictionT, Unit> {
+  ) : Visitor<RootT, MainT, PredictionT, Unit> {
     constructor(levelIndex: Int) : this(levelIndex, 0)
 
-    private inner class DeeperLevelVisitor : LevelVisitor<RootT, PredictionT>(levelIndex, thisVisitorLevel + 1) {
-      override fun visitLevel(level: DescribedLevel, levelRoot: SessionTree<RootT, DescribedTierData, PredictionT>) {
+    private inner class DeeperLevelVisitor : LevelVisitor<RootT, MainT, PredictionT>(levelIndex, thisVisitorLevel + 1) {
+      override fun visitLevel(level: LevelData<MainT>, levelRoot: SessionTree<RootT, MainT, PredictionT>) {
         this@LevelVisitor.visitLevel(level, levelRoot)
       }
     }
 
-    private fun maybeVisitLevel(level: DescribedLevel,
-                                levelRoot: SessionTree<RootT, DescribedTierData, PredictionT>): Boolean =
+    private fun maybeVisitLevel(level: LevelData<MainT>,
+                                levelRoot: SessionTree<RootT, MainT, PredictionT>): Boolean =
       if (levelIndex == thisVisitorLevel) {
         visitLevel(level, levelRoot)
         true
       }
       else false
 
-    final override fun acceptBranching(branching: Branching<RootT, DescribedTierData, PredictionT>) {
+    final override fun acceptBranching(branching: Branching<RootT, MainT, PredictionT>) {
       if (maybeVisitLevel(branching.levelData, branching)) return
       for (child in branching.children) {
         child.accept(DeeperLevelVisitor())
       }
     }
 
-    final override fun acceptLeaf(leaf: Leaf<RootT, DescribedTierData, PredictionT>) {
+    final override fun acceptLeaf(leaf: Leaf<RootT, MainT, PredictionT>) {
       require(maybeVisitLevel(leaf.levelData, leaf)) {
         "The deepest level in the session tree is $thisVisitorLevel, given level $levelIndex does not exist"
       }
     }
 
-    final override fun acceptRoot(root: ComplexRoot<RootT, DescribedTierData, PredictionT>) {
+    final override fun acceptComplexRoot(root: ComplexRoot<RootT, MainT, PredictionT>) {
       if (maybeVisitLevel(root.levelData, root)) return
       for (child in root.children) {
         child.accept(DeeperLevelVisitor())
       }
     }
 
-    final override fun acceptSolitaryLeaf(solitaryLeaf: SolitaryLeaf<RootT, DescribedTierData, PredictionT>) {
+    final override fun acceptSolitaryLeaf(solitaryLeaf: SolitaryLeaf<RootT, MainT, PredictionT>) {
       require(maybeVisitLevel(solitaryLeaf.levelData, solitaryLeaf)) {
         "The only level in the session tree is $thisVisitorLevel, given level $levelIndex does not exist"
       }
     }
 
-    abstract fun visitLevel(level: DescribedLevel, levelRoot: SessionTree<RootT, DescribedTierData, PredictionT>)
+    abstract fun visitLevel(level: LevelData<MainT>, levelRoot: SessionTree<RootT, MainT, PredictionT>)
   }
 }
 
@@ -277,5 +292,30 @@ typealias AnalysedRootContainer<P> = SessionTree.RootContainer<Unit, AnalysedTie
 internal val <R, P> DescribedSessionTree<R, P>.environment: Environment
   get() = Environment.of(this.levelData.mainInstances.keys)
 
-internal val DescribedLevel.environment: Environment
+internal val <T> LevelData<T>.environment: Environment
   get() = Environment.of(this.mainInstances.keys)
+
+@get:ApiStatus.Internal
+val <RootT, MainT, PredictionT> SessionTree<RootT, MainT, PredictionT>.predictions: List<SessionTree.PredictionContainer<RootT, MainT, PredictionT>>
+  get() {
+    val predictions: MutableList<SessionTree.PredictionContainer<RootT, MainT, PredictionT>> = mutableListOf()
+    accept(object : SessionTree.Visitor<RootT, MainT, PredictionT, Unit> {
+      override fun acceptLeaf(leaf: SessionTree.Leaf<RootT, MainT, PredictionT>) {
+        predictions += leaf
+      }
+
+      override fun acceptBranching(branching: SessionTree.Branching<RootT, MainT, PredictionT>) {
+        branching.children.forEach { child -> child.accept(this) }
+      }
+
+      override fun acceptComplexRoot(root: SessionTree.ComplexRoot<RootT, MainT, PredictionT>) {
+        root.children.forEach { child -> child.accept(this) }
+      }
+
+      override fun acceptSolitaryLeaf(solitaryLeaf: SessionTree.SolitaryLeaf<RootT, MainT, PredictionT>) {
+        predictions += solitaryLeaf
+      }
+    })
+
+    return predictions
+  }

@@ -72,7 +72,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testAssignmentTargets3K() {
-    doTest(LanguageLevel.PYTHON34, true, false);
+    doTest(LanguageLevel.getLatest(), true, false);
   }
 
   public void testBreakOutsideOfLoop() {

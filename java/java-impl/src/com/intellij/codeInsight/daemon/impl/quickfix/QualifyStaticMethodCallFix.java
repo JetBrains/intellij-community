@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.hint.QuestionAction;
@@ -18,17 +18,15 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
     super(file, methodCallExpression);
   }
 
-  @NotNull
   @Override
-  protected String getBaseText() {
+  protected @NotNull String getBaseText() {
     return JavaBundle.message("qualify.static.call.fix.text");
   }
 
-  @NotNull
   @Override
-  protected QuestionAction createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport,
-                                                @NotNull Project project,
-                                                Editor editor) {
+  protected @NotNull QuestionAction createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport,
+                                                         @NotNull Project project,
+                                                         Editor editor) {
     return new StaticImportMemberQuestionAction<PsiMethod>(project, editor, methodsToImport, myReferencePointer) {
       @Override
       protected void doImport(@NotNull PsiMethod toImport) {

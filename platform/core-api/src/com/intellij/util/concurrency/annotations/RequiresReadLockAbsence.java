@@ -20,7 +20,7 @@ import java.lang.annotation.*;
  * <b>Important:</b> the instrumentation has limitations. Please read the docs
  * of the {@link org.jetbrains.jps.devkit.threadingModelHelper} to learn about them.
  *
- * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html">General Threading Rules</a>
  * @see Application#assertReadAccessNotAllowed()
  * @see ReadAction#run(ThrowableRunnable)
  */

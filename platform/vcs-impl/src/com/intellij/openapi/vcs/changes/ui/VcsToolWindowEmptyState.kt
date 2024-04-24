@@ -87,8 +87,9 @@ internal class ActivateCommitToolWindowAction : ActivateToolWindowAction(ToolWin
 }
 
 private fun findCreateRepositoryAction(): AnAction? {
-  val group = ActionManager.getInstance().getAction("Vcs.ToolWindow.CreateRepository") as? ActionGroup
-  return group?.getChildren(null)?.firstOrNull()
+  val actionManager = ActionManager.getInstance()
+  val group = actionManager.getAction("Vcs.ToolWindow.CreateRepository") as? DefaultActionGroup
+  return group?.getChildren(actionManager)?.firstOrNull()
 }
 
 private fun invokeAction(project: Project, source: Any?, actionId: String, place: String) {

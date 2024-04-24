@@ -30,6 +30,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -192,7 +193,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
           List<Project> dirtyQueueProjects = myDirtyFiles.getProjects(info.getFileId());
           if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file, dirtyQueueProjects);
           if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true, dirtyQueueProjects);
-          if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file, dirtyQueueProjects);
+          if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file, Collections.emptySet(), dirtyQueueProjects);
           if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false, dirtyQueueProjects);
           if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
               StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {

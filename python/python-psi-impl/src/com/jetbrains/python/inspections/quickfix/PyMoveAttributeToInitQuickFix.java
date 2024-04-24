@@ -32,7 +32,7 @@ public class PyMoveAttributeToInitQuickFix extends PsiUpdateModCommandQuickFix {
     final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
     if (containingClass == null || assignment == null) return;
 
-    AddFieldQuickFix.addFieldToInit(project, containingClass, ((PyTargetExpression)element).getName(), x -> assignment);
+    AddFieldQuickFix.addFieldToInit(project, containingClass, targetExpression.getName(), x -> assignment);
     removeDefinition(assignment);
   }
 

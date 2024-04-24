@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -150,11 +151,8 @@ public final class JsonSchemaComplianceChecker {
   private boolean checkIfAlreadyProcessed(@NotNull PsiElement property) {
     Set<PsiElement> data = mySession.getUserData(ANNOTATED_PROPERTIES);
     if (data == null) {
-      data = new HashSet<>();
-      mySession.putUserData(ANNOTATED_PROPERTIES, data);
+      data = mySession.putUserDataIfAbsent(ANNOTATED_PROPERTIES, ConcurrentCollectionFactory.createConcurrentSet());
     }
-    if (data.contains(property)) return true;
-    data.add(property);
-    return false;
+    return !data.add(property);
   }
 }

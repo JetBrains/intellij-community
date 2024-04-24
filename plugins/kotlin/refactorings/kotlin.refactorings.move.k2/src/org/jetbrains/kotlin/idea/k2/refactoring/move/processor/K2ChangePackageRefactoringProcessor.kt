@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2ChangePackageDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
 
 class K2ChangePackageRefactoringProcessor(private val descriptor: K2ChangePackageDescriptor) : BaseRefactoringProcessor(descriptor.project) {
     override fun getCommandName(): String = KotlinBundle.message(
@@ -39,6 +40,7 @@ class K2ChangePackageRefactoringProcessor(private val descriptor: K2ChangePackag
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun performRefactoring(usages: Array<out UsageInfo>) = allowAnalysisOnEdt {
         val files = descriptor.files
+        unMarkNonUpdatableUsages(files)
         files.forEach { it.updatePackageDirective(descriptor.target) }
         val oldToNewMap = files.flatMap { it.allDeclarationsToUpdate }.associateWith { it }
         retargetUsagesAfterMove(usages.toList(), oldToNewMap)

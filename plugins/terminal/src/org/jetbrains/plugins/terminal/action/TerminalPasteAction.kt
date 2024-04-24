@@ -22,7 +22,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSessi
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
 import java.awt.datatransfer.DataFlavor
 
-class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.editor as? EditorEx ?: return
     when {

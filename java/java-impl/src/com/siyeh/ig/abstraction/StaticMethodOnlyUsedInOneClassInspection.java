@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.analysis.AnalysisScope;
@@ -151,16 +151,14 @@ public final class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalIn
     }
   }
 
-  @Nullable
-  private static RefClass getOwnerClass(RefEntity element) {
+  private static @Nullable RefClass getOwnerClass(RefEntity element) {
     while (!(element instanceof RefClass) && element instanceof RefJavaElement) {
       element = element.getOwner();
     }
     return (element instanceof RefClass) ? (RefClass)element : null;
   }
 
-  @NotNull
-  static ProblemDescriptor createProblemDescriptor(@NotNull InspectionManager manager, PsiElement problemElement, PsiClass usageClass) {
+  static @NotNull ProblemDescriptor createProblemDescriptor(@NotNull InspectionManager manager, PsiElement problemElement, PsiClass usageClass) {
     final String message = (usageClass instanceof PsiAnonymousClass anonymousClass)
                            ? InspectionGadgetsBundle.message("static.method.only.used.in.one.anonymous.class.problem.descriptor",
                                                              (problemElement.getParent() instanceof PsiMethod) ? 1 : 2,
@@ -172,9 +170,9 @@ public final class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalIn
   }
 
   @Override
-  public boolean queryExternalUsagesRequests(@NotNull final InspectionManager manager,
-                                             @NotNull final GlobalInspectionContext globalContext,
-                                             @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+  public boolean queryExternalUsagesRequests(final @NotNull InspectionManager manager,
+                                             final @NotNull GlobalInspectionContext globalContext,
+                                             final @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
         final SmartPsiElementPointer<PsiClass> classPointer = refEntity.getUserData(MARKER);
@@ -319,8 +317,7 @@ public final class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalIn
      * @return the class the specified member is used from, or null if it is
      *         used from 0 or more than 1 other classes.
      */
-    @Nullable
-    public PsiClass findUsageClass(PsiMember member) {
+    public @Nullable PsiClass findUsageClass(PsiMember member) {
       ProgressManager.getInstance().runProcess(() -> {
         final Query<PsiReference> query = member instanceof PsiMethod method
                                           ? MethodReferencesSearch.search(method)
@@ -333,9 +330,8 @@ public final class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalIn
     }
   }
 
-  @Nullable
   @Override
-  public LocalInspectionTool getSharedLocalInspectionTool() {
+  public @Nullable LocalInspectionTool getSharedLocalInspectionTool() {
     return new StaticMethodOnlyUsedInOneClassLocalInspection(this);
   }
 
@@ -347,8 +343,7 @@ public final class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalIn
     }
 
     @Override
-    @NotNull
-    protected String buildErrorString(Object... infos) {
+    protected @NotNull String buildErrorString(Object... infos) {
       final PsiMember member = (PsiMember)infos[0];
       final PsiClass usageClass = (PsiClass)infos[1];
       return (usageClass instanceof PsiAnonymousClass anonymousClass)
@@ -361,8 +356,7 @@ public final class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalIn
     }
 
     @Override
-    @Nullable
-    protected LocalQuickFix buildFix(Object... infos) {
+    protected @Nullable LocalQuickFix buildFix(Object... infos) {
       final PsiMember member = (PsiMember)infos[0];
       final PsiClass usageClass = (PsiClass)infos[1];
       return new StaticMethodOnlyUsedInOneClassFix(usageClass, member instanceof PsiMethod);
@@ -380,8 +374,7 @@ public final class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalIn
       }
 
       @Override
-      @NotNull
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix", myMethod ? 1 : 2);
       }
 
@@ -390,15 +383,13 @@ public final class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalIn
         return new IntentionPreviewInfo.Html(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix.preview"));
       }
 
-      @NotNull
       @Override
-      public RefactoringActionHandler getHandler() {
+      public @NotNull RefactoringActionHandler getHandler() {
         return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
       }
 
-      @NotNull
       @Override
-      public DataContext enhanceDataContext(DataContext context) {
+      public @NotNull DataContext enhanceDataContext(DataContext context) {
         PsiClass element = myUsageClass.getElement();
         return element == null ? context : SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT, element, context);
       }

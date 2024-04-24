@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.exp.completion
 
 import com.intellij.openapi.util.Key
 
-interface ShellCommandExecutor {
+internal interface ShellCommandExecutor {
   suspend fun <T> executeCommand(command: DataProviderCommand<T>): T
 
   companion object {

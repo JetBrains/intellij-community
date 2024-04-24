@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -70,18 +70,16 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
+  public @NotNull PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
     return findCompiledElement(myProject, psiClass, scope -> {
       String fqn = psiClass.getQualifiedName();
       return fqn != null ? Arrays.asList(JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope)) : Collections.emptyList();
     });
   }
 
-  @NotNull
   @Override
-  public PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
+  public @NotNull PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
     return findCompiledElement(myProject, module, scope -> JavaPsiFacade.getInstance(myProject).findModules(module.getName(), scope));
   }
 
@@ -115,9 +113,8 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
     return original;
   }
 
-  @NotNull
   @Override
-  public PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
+  public @NotNull PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
     Function<VirtualFile, VirtualFile> finder = null;
     Predicate<PsiFile> filter = null;
 
@@ -181,9 +178,8 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
     return Stream.concat(modelRoots, synthRoots);
   }
 
-  @NotNull
   @Override
-  public LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
+  public @NotNull LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
     // For default project, do not look into virtual file system.
     // It is important for Upsource, where operations are done in default project to
     // prevent expensive look-up into VFS
@@ -214,8 +210,7 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
    * @param virtualFile virtual file for which language level is requested.
    * @return language level for classes root or null if file is not under a library source root or no matching classes root is found.
    */
-  @Nullable
-  private LanguageLevel getClassesLanguageLevel(VirtualFile virtualFile) {
+  private @Nullable LanguageLevel getClassesLanguageLevel(VirtualFile virtualFile) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
     VirtualFile folder = virtualFile.isDirectory() ? virtualFile : virtualFile.getParent();
@@ -243,8 +238,7 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
     return null;
   }
 
-  @Nullable
-  private PsiJavaFile getPsiFileInRoot(final VirtualFile dirFile, @Nullable String className) {
+  private @Nullable PsiJavaFile getPsiFileInRoot(final VirtualFile dirFile, @Nullable String className) {
     if (className != null) {
       final VirtualFile classFile = dirFile.findChild(StringUtil.getQualifiedName(className, StdFileTypes.CLASS.getDefaultExtension()));
       if (classFile != null) {
@@ -273,9 +267,8 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
     return importHelper.getDefaultAnchor(list, statement);
   }
 
-  @Nullable
   @Override
-  public PsiElement getDefaultMemberAnchor(@NotNull PsiClass aClass, @NotNull PsiMember member) {
+  public @Nullable PsiElement getDefaultMemberAnchor(@NotNull PsiClass aClass, @NotNull PsiMember member) {
     CodeStyleSettings settings = CodeStyle.getSettings(aClass.getContainingFile());
     MemberOrderService service = ApplicationManager.getApplication().getService(MemberOrderService.class);
     PsiElement anchor = null;

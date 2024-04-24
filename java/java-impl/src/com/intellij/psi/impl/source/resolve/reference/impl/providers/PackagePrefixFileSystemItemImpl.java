@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.lang.ASTNode;
@@ -23,7 +23,7 @@ import java.util.ArrayList;
  * @author Gregory.Shrago
 */
 final class PackagePrefixFileSystemItemImpl extends PsiElementBase implements PsiFileSystemItem, PackagePrefixFileSystemItem {
-  @NotNull private final PsiDirectory myDirectory;
+  private final @NotNull PsiDirectory myDirectory;
   private final int myIndex;
   private final PsiPackage[] myPackages;
 
@@ -42,13 +42,12 @@ final class PackagePrefixFileSystemItemImpl extends PsiElementBase implements Ps
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return StringUtil.notNullize(myPackages[myIndex].getName());
   }
 
   @Override
-  public PsiElement setName(@NonNls @NotNull final String name) throws IncorrectOperationException {
+  public PsiElement setName(final @NonNls @NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -88,8 +87,7 @@ final class PackagePrefixFileSystemItemImpl extends PsiElementBase implements Ps
   }
 
   @Override
-  @Nullable
-  public PsiElement findElementAt(final int offset) {
+  public @Nullable PsiElement findElementAt(final int offset) {
     return null;
   }
 
@@ -99,8 +97,7 @@ final class PackagePrefixFileSystemItemImpl extends PsiElementBase implements Ps
   }
 
   @Override
-  @NonNls
-  public String getText() {
+  public @NonNls String getText() {
     return "";
   }
 
@@ -110,17 +107,17 @@ final class PackagePrefixFileSystemItemImpl extends PsiElementBase implements Ps
   }
 
   @Override
-  public boolean textMatches(@NotNull @NonNls final CharSequence text) {
+  public boolean textMatches(final @NotNull @NonNls CharSequence text) {
     return false;
   }
 
   @Override
-  public boolean textMatches(@NotNull final PsiElement element) {
+  public boolean textMatches(final @NotNull PsiElement element) {
     return false;
   }
 
   @Override
-  public void accept(@NotNull final PsiElementVisitor visitor) {
+  public void accept(final @NotNull PsiElementVisitor visitor) {
   }
 
   @Override
@@ -129,22 +126,22 @@ final class PackagePrefixFileSystemItemImpl extends PsiElementBase implements Ps
   }
 
   @Override
-  public PsiElement add(@NotNull final PsiElement element) throws IncorrectOperationException {
+  public PsiElement add(final @NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
   @Override
-  public PsiElement addBefore(@NotNull final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addBefore(final @NotNull PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
   @Override
-  public PsiElement addAfter(@NotNull final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addAfter(final @NotNull PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
   @Override
-  public void checkAdd(@NotNull final PsiElement element) throws IncorrectOperationException {
+  public void checkAdd(final @NotNull PsiElement element) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -159,7 +156,7 @@ final class PackagePrefixFileSystemItemImpl extends PsiElementBase implements Ps
   }
 
   @Override
-  public PsiElement replace(@NotNull final PsiElement newElement) throws IncorrectOperationException {
+  public PsiElement replace(final @NotNull PsiElement newElement) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -181,8 +178,7 @@ final class PackagePrefixFileSystemItemImpl extends PsiElementBase implements Ps
   }
 
   @Override
-  @Nullable
-  public ASTNode getNode() {
+  public @Nullable ASTNode getNode() {
     return null;
   }
 
@@ -197,8 +193,7 @@ final class PackagePrefixFileSystemItemImpl extends PsiElementBase implements Ps
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return Language.ANY;
   }
 
@@ -228,14 +223,12 @@ final class PackagePrefixFileSystemItemImpl extends PsiElementBase implements Ps
   }
 
   @Override
-  @Nullable
-  public Icon getIcon(final int flags) {
+  public @Nullable Icon getIcon(final int flags) {
     return myDirectory.getIcon(flags);
   }
 
-  @NotNull
   @Override
-  public PsiDirectory getDirectory() {
+  public @NotNull PsiDirectory getDirectory() {
     return myDirectory;
   }
 }

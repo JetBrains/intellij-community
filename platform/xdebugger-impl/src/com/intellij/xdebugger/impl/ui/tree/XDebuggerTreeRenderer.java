@@ -140,7 +140,7 @@ public class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   @Override
   public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
-    if (tag instanceof XDebuggerTreeNodeHyperlink tagValue && ((XDebuggerTreeNodeHyperlink)tag).alwaysOnScreen()) {
+    if (tag instanceof XDebuggerTreeNodeHyperlink tagValue && tagValue.alwaysOnScreen()) {
       myHaveLink = true;
       myLink.append(fragment, attributes, tag);
 

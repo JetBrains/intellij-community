@@ -20,6 +20,8 @@ import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.util.ui.update.Update
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JTree
@@ -54,6 +56,8 @@ open class TreeHandlerChangesTreeTracker(
   protected val updateWhileShown: Boolean = false
 ) {
   private val isCombinedViewer = editorViewer is CombinedDiffComponentProcessor
+  private val isForceKeepCurrentFileWhileFocused = editorViewer is ChangeViewDiffRequestProcessor &&
+                                                   editorViewer.forceKeepCurrentFileWhileFocused()
 
   private val updatePreviewQueue = MergingUpdateQueue("TreeHandlerChangesTreeTracker", 100, true, editorViewer.component, editorViewer.disposable).apply {
     setRestartTimerOnAdd(true)
@@ -81,6 +85,16 @@ open class TreeHandlerChangesTreeTracker(
     }
     tree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY, changeListener)
     Disposer.register(disposable) { tree.removePropertyChangeListener(JTree.TREE_MODEL_PROPERTY, changeListener) }
+
+    if (isForceKeepCurrentFileWhileFocused) {
+      val focusListener = object : FocusAdapter() {
+        override fun focusGained(e: FocusEvent?) {
+          updatePreviewLater(UpdateType.ON_SELECTION_CHANGE)
+        }
+      }
+      tree.addFocusListener(focusListener)
+      Disposer.register(disposable) { tree.removeFocusListener(focusListener) }
+    }
 
     if (updateWhileShown) {
       UiNotifyConnector.installOn(editorViewer.component, object : Activatable {
@@ -121,8 +135,8 @@ open class TreeHandlerChangesTreeTracker(
         refreshCombinedDiffProcessor(tree, editorViewer, handler, onlyBlockSelection)
       }
       is ChangeViewDiffRequestProcessor -> {
-        val keepOldSelectedDiffContent = updateType == UpdateType.ON_MODEL_CHANGE
-        editorViewer.refresh(keepOldSelectedDiffContent)
+        val fromModelRefresh = updateType == UpdateType.ON_MODEL_CHANGE
+        editorViewer.refresh(fromModelRefresh)
       }
       else -> fail(editorViewer)
     }
@@ -154,9 +168,12 @@ open class TreeHandlerChangesTreeTracker(
         return updateType == UpdateType.ON_MODEL_CHANGE &&
                eatenUpdate.updateType == UpdateType.ON_SELECTION_CHANGE
       }
-      else {
+      else if (isForceKeepCurrentFileWhileFocused) {
         return updateType == UpdateType.ON_SELECTION_CHANGE &&
                eatenUpdate.updateType == UpdateType.ON_MODEL_CHANGE
+      }
+      else {
+        return true
       }
     }
   }
@@ -215,9 +232,9 @@ abstract class TreeHandlerEditorDiffPreview(
 
 
 abstract class ChangesTreeDiffPreviewHandler {
-  abstract fun iterateSelectedChanges(tree: ChangesTree): Iterable<Wrapper>
+  abstract fun iterateSelectedChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
 
-  abstract fun iterateAllChanges(tree: ChangesTree): Iterable<Wrapper>
+  abstract fun iterateAllChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
 
   abstract fun selectChange(tree: ChangesTree, change: Wrapper)
 

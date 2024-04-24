@@ -1,15 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.content;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerator;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumeratorFactory;
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogOverMMappedFile;
+import com.intellij.platform.util.io.storages.DataExternalizerEx;
+import com.intellij.platform.util.io.storages.enumerator.DurableEnumerator;
+import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory;
+import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
-import com.intellij.util.io.dev.enumerator.DataExternalizerEx;
-import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -207,7 +207,7 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
 
     @Override
     public byte[] read(@NotNull ByteBuffer input) throws IOException {
-      byte[] hash = new byte[ContentHashEnumerator.SIGNATURE_LENGTH];
+      byte[] hash = new byte[SIGNATURE_LENGTH];
       input.get(hash);
       return hash;
     }

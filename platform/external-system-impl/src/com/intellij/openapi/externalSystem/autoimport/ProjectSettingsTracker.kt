@@ -25,8 +25,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.util.LocalTimeCounter.currentTime
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.Executor
@@ -166,13 +168,12 @@ class ProjectSettingsTracker(
       val fileDocumentManager = FileDocumentManager.getInstance()
       fileDocumentManager.saveAllDocuments()
       submitSettingsFilesCollection(isInvalidateCache = true) { settingsPaths ->
-        val localFileSystem = LocalFileSystem.getInstance()
-        val settingsFiles = settingsPaths.map { Path.of(it) }
+        val settingsFiles = settingsPaths.mapNotNull { Path.of(it).refreshAndFindVirtualFileOrDirectory() }
         if (settingsFiles.isEmpty()) {
           callback(settingsPaths)
         }
         else {
-          localFileSystem.refreshNioFiles(settingsFiles, isAsyncChangesProcessing, false) {
+          LocalFileSystem.getInstance().refreshFiles(settingsFiles, isAsyncChangesProcessing, false) {
             callback(settingsPaths)
           }
         }
@@ -247,7 +248,11 @@ class ProjectSettingsTracker(
     subscribeOnDocumentsAndVirtualFilesChanges(settingsAsyncSupplier, ProjectSettingsListener(), parentDisposable)
   }
 
-  data class State(var isDirty: Boolean = true, var settingsFiles: Map<String, Long> = emptyMap())
+  @Serializable
+  data class State(
+    val isDirty: Boolean = true,
+    val settingsFiles: Map<String, Long> = emptyMap()
+  )
 
   private class SettingsFilesStatus(
     val oldCRC: Map<String, Long>,

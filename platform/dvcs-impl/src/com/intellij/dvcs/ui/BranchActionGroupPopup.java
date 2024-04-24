@@ -64,13 +64,13 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   public BranchActionGroupPopup(@Nullable @NlsContexts.PopupTitle String title,
                                 @NotNull Project project,
-                                @NotNull Condition<? super AnAction> preselectActionCondition,
+                                @NotNull Condition<? super AnAction> preselectCondition,
                                 @NotNull ActionGroup actions,
                                 @Nullable String dimensionKey,
                                 @NotNull DataContext dataContext) {
     super(title,
           ActionGroupUtil.forceRecursiveUpdateInBackground(createBranchSpeedSearchActionGroup(actions)),
-          dataContext, ActionPlaces.getPopupPlace(BRANCH_POPUP), preselectActionCondition, true);
+          dataContext, ActionPlaces.getPopupPlace(BRANCH_POPUP), preselectCondition, true);
     getTitle().setBackground(JBColor.PanelBackground);
     myProject = project;
     myKey = buildDimensionKey(dimensionKey);

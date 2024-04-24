@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -28,7 +27,7 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
   @Override
   public @NotNull ScheduledFuture<?> schedule(@NotNull Runnable command, @NotNull ModalityState modalityState, long delay, TimeUnit unit) {
     return delayedExecute(new MyScheduledFutureTask<Void>(
-      ClientId.decorateRunnable(ThreadContext.captureThreadContext(command)),
+      ThreadContext.captureThreadContext(command),
       null,
       triggerTime(delay, unit)) {
       @Override

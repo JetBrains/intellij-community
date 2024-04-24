@@ -117,13 +117,20 @@ interface KotlinProjectConfigurator {
         forTests: Boolean
     )
 
+    @Deprecated(
+        "Please implement/use the KotlinBuildSystemDependencyManager EP instead.", ReplaceWith(
+            "KotlinBuildSystemDependencyManager.findApplicableConfigurator(module)?.addDependency(module, library.withScope(scope))"
+        )
+    )
     fun addLibraryDependency(
         module: Module,
         element: PsiElement,
         library: ExternalLibraryDescriptor,
         libraryJarDescriptor: LibraryJarDescriptor,
         scope: DependencyScope
-    )
+    ) {
+        KotlinBuildSystemDependencyManager.findApplicableConfigurator(module)?.addDependency(module, library.withScope(scope))
+    }
 
     companion object {
         val EP_NAME = ExtensionPointName.create<KotlinProjectConfigurator>("org.jetbrains.kotlin.projectConfigurator")

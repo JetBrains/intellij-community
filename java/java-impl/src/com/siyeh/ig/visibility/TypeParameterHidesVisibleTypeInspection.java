@@ -41,8 +41,7 @@ public final class TypeParameterHidesVisibleTypeInspection extends BaseInspectio
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     if (aClass instanceof PsiTypeParameter) {
       return InspectionGadgetsBundle.message("type.parameter.hides.type.parameter.problem.descriptor", aClass.getName());

@@ -21,13 +21,13 @@ public class PathReferenceConverter extends Converter<PathReference> implements 
   public static final Converter<PathReference> INSTANCE = new PathReferenceConverter();
 
   @Override
-  public PathReference fromString(final @Nullable String s, final ConvertContext context) {
+  public PathReference fromString(final @Nullable String s, final @NotNull ConvertContext context) {
     final XmlElement element = context.getXmlElement();
     return s == null || element == null ? null : PathReferenceManager.getInstance().getPathReference(s, element);
   }
 
   @Override
-  public String toString(final PathReference t, final ConvertContext context) {
+  public String toString(final PathReference t, final @NotNull ConvertContext context) {
     return t == null ? null : t.getPath();
   }
 

@@ -1,9 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui
 
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.ide.ui.laf.darcula.fillInsideComponentBorder
-import com.intellij.ide.ui.laf.darcula.paintComponentBorder
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ErrorBorderCapable
 import com.intellij.util.ui.JBInsets
@@ -76,7 +75,7 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
       }
       else -> {
         JBInsets.removeFrom(r, getBorderInsets(comboBox))
-        fillInsideComponentBorder(g, r, color)
+        DarculaNewUIUtil.fillInsideComponentBorder(g, r, color)
       }
     }
   }
@@ -106,12 +105,12 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
 
   private fun paintNormalBorder(g: Graphics2D, comboBox: JComboBox<*>, r: Rectangle, focused: Boolean) {
     JBInsets.removeFrom(r, getBorderInsets(comboBox))
-    paintComponentBorder(g, r, DarculaUIUtil.getOutline(comboBox), focused, comboBox.isEnabled)
+    DarculaNewUIUtil.paintComponentBorder(g, r, DarculaUIUtil.getOutline(comboBox), focused, comboBox.isEnabled)
   }
 
   private fun paintBorderlessBorder(g: Graphics2D, comboBox: JComboBox<*>, r: Rectangle, focused: Boolean) {
     JBInsets.removeFrom(r, getBorderInsets(comboBox))
-    paintComponentBorder(g, r, DarculaUIUtil.getOutline(comboBox), focused, comboBox.isEnabled, bw = DarculaUIUtil.LW.get())
+    DarculaNewUIUtil.paintComponentBorder(g, r, DarculaUIUtil.getOutline(comboBox), focused, comboBox.isEnabled, bw = DarculaUIUtil.LW.get())
   }
 
   /**

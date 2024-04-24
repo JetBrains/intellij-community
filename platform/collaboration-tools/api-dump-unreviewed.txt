@@ -242,6 +242,7 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - *sf:combineState(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.StateFlow
 - *sf:combineState(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.StateFlow
 - sf:computationState(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
+- sf:computationStateFlow(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - sf:disposingMainScope(com.intellij.openapi.Disposable):kotlinx.coroutines.CoroutineScope
 - sf:disposingScope(com.intellij.openapi.Disposable,kotlin.coroutines.CoroutineContext):kotlinx.coroutines.CoroutineScope
 - bs:disposingScope$default(com.intellij.openapi.Disposable,kotlin.coroutines.CoroutineContext,I,java.lang.Object):kotlinx.coroutines.CoroutineScope
@@ -261,6 +262,7 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - *sf:mapNullableLatest(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - *sf:mapNullableScoped(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - *sf:mapScoped(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
+- *sf:mapScoped(kotlinx.coroutines.flow.Flow,Z,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - *sf:mapState(kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function1):kotlinx.coroutines.flow.StateFlow
 - *sf:mapState(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function1):kotlinx.coroutines.flow.StateFlow
 - sf:modelFlow(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.CoroutineScope,com.intellij.openapi.diagnostic.Logger):kotlinx.coroutines.flow.SharedFlow
@@ -610,6 +612,10 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - f:wrapWithProgressOverlay(javax.swing.JComponent,com.intellij.collaboration.ui.SingleValueModel):javax.swing.JComponent
 - f:wrapWithProgressStripe(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,javax.swing.JComponent):javax.swing.JComponent
 *f:com.intellij.collaboration.ui.CollaborationToolsUIUtilKt
+- sf:ClippingRoundedPanel(I,java.awt.Color,java.awt.LayoutManager):javax.swing.JPanel
+- sf:ClippingRoundedPanel(I,java.awt.LayoutManager):javax.swing.JPanel
+- bs:ClippingRoundedPanel$default(I,java.awt.Color,java.awt.LayoutManager,I,java.lang.Object):javax.swing.JPanel
+- bs:ClippingRoundedPanel$default(I,java.awt.LayoutManager,I,java.lang.Object):javax.swing.JPanel
 - sf:HorizontalListPanel(I):javax.swing.JPanel
 - bs:HorizontalListPanel$default(I,I,java.lang.Object):javax.swing.JPanel
 - sf:LoadingLabel():javax.swing.JLabel
@@ -900,6 +906,7 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - f:createEditorInlayPanel(javax.swing.JComponent):javax.swing.JPanel
 - f:createFoldedThreadControlsIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel,com.intellij.collaboration.ui.icon.IconsProvider):javax.swing.JComponent
 - f:createPostNowButton(kotlin.jvm.functions.Function1):javax.swing.JComponent
+- f:getCOMMENT_BUBBLE_BORDER_COLOR():java.awt.Color
 - f:getInlayPadding(com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil$ComponentType):java.awt.Insets
 - f:getResolveToggleActionText(Z):java.lang.String
 *f:com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil$Actions
@@ -947,6 +954,7 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - f:getPrimaryAction():kotlinx.coroutines.flow.StateFlow
 - f:getSecondaryActions():kotlinx.coroutines.flow.StateFlow
 - f:getSubmitHint():kotlinx.coroutines.flow.StateFlow
+*f:com.intellij.collaboration.ui.codereview.comment.RoundedPanelKt
 *c:com.intellij.collaboration.ui.codereview.commits.CommitNodeComponent
 - javax.swing.JComponent
 - *sf:Companion:com.intellij.collaboration.ui.codereview.commits.CommitNodeComponent$Companion
@@ -2364,6 +2372,7 @@ f:com.intellij.collaboration.util.RefComparisonChangeKt
 - sf:getFileStatus(com.intellij.collaboration.util.RefComparisonChange):com.intellij.openapi.vcs.FileStatus
 f:com.intellij.collaboration.util.ResultUtil
 - sf:INSTANCE:com.intellij.collaboration.util.ResultUtil
+- f:processErrorAndGet(java.lang.Object,kotlin.jvm.functions.Function1):java.lang.Object
 - f:runCatchingUser-IoAF18A(kotlin.jvm.functions.Function0):java.lang.Object
 f:com.intellij.collaboration.util.ServiceUtilKt
 f:com.intellij.collaboration.util.SingleCoroutineLauncher

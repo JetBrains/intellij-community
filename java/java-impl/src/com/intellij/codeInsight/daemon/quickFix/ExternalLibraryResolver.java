@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -10,9 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Allows detecting library by unresolved class/package name in the editor.
- * 
- * If external library is detected, e.g. junit or JB annotations library, {@link AddExtLibraryDependencyFix} is registered to configure that missed library
+ * Allows detecting a library by unresolved class/package name in the editor.
+ * <p>
+ * If an external library is detected, e.g., junit or JB annotations library,
+ * {@link com.intellij.codeInsight.daemon.impl.quickfix.AddExtLibraryDependencyFix} is registered to configure that missed library
  */
 public abstract class ExternalLibraryResolver {
   public static final ExtensionPointName<ExternalLibraryResolver> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.externalLibraryResolver");
@@ -23,23 +24,21 @@ public abstract class ExternalLibraryResolver {
    * @param isAnnotation {@code ThreeState.YES} if reference is inside annotation,
    *                     {@code ThreeState.UNSURE} in imports, 
    *                     {@code ThreeState.NO} otherwise
-   * @param contextModule can be used if e.g. different versions must be used based on language level of the module or similar
+   * @param contextModule can be used if e.g., different versions must be used based on the language level of the module or similar
    * @return library descriptor if {@code shortClassName} correspond to a class in the library or null otherwise
    */
-  @Nullable
   @Contract(pure = true)
-  public abstract ExternalClassResolveResult resolveClass(@NotNull String shortClassName,
+  public abstract @Nullable ExternalClassResolveResult resolveClass(@NotNull String shortClassName,
                                                           @NotNull ThreeState isAnnotation,
                                                           @NotNull Module contextModule);
 
   /**
-   * Detects if full reference text corresponds to the package in the library, e.g. inside on demand import statement
+   * Detects if a full reference text corresponds to the package in the library, e.g., inside on a demand import statement
    * 
    * @return library descriptor if {@code packageName} correspond to the package in the library or null otherwise
    */
-  @Nullable
   @Contract(pure = true)
-  public ExternalLibraryDescriptor resolvePackage(@NotNull String packageName) {
+  public @Nullable ExternalLibraryDescriptor resolvePackage(@NotNull String packageName) {
     return null;
   }
 
@@ -53,13 +52,11 @@ public abstract class ExternalLibraryResolver {
       myLibrary = library;
     }
 
-    @NotNull
-    public String getQualifiedClassName() {
+    public @NotNull String getQualifiedClassName() {
       return myQualifiedClassName;
     }
 
-    @NotNull
-    public ExternalLibraryDescriptor getLibraryDescriptor() {
+    public @NotNull ExternalLibraryDescriptor getLibraryDescriptor() {
       return myLibrary;
     }
   }

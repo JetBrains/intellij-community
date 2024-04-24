@@ -17,7 +17,7 @@ import java.awt.geom.Rectangle2D
  * Paints the background of the block, but only in the area of the text (without top, left and bottom corners).
  * So the selection can be painted on top of it.
  */
-class TerminalBlockBackgroundRenderer private constructor(
+internal class TerminalBlockBackgroundRenderer private constructor(
   private val backgroundKey: ColorKey?,
   private val gradientCache: GradientTextureCache?
 ) : CustomHighlighterRenderer {

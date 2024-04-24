@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.keyStorage;
 
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.BlobStorageTestBase;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -55,7 +55,7 @@ public class AppendableObjectStorageBackedByResizableMappedFileTest extends Appe
   @Override
   protected @NotNull String generateValue() {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    return BlobStorageTestBase.randomString(rnd, rnd.nextInt(128));
+    return StorageTestingUtils.randomString(rnd, rnd.nextInt(128));
   }
 
   @Override

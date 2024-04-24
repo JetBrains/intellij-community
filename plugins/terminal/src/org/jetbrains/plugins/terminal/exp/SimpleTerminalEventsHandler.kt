@@ -21,7 +21,7 @@ import kotlin.math.abs
  * Logic of key events handling is copied from [com.jediterm.terminal.ui.TerminalPanel]
  * Logic of mouse event handling is copied from [com.jediterm.terminal.model.JediTerminal]
  */
-open class SimpleTerminalEventsHandler(
+internal open class SimpleTerminalEventsHandler(
   private val session: BlockTerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase,
   protected val outputModel: TerminalOutputModel,

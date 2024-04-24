@@ -383,6 +383,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFirQuickDocMultiplatformTest> {
             model("../../../idea/tests/testData/editor/quickDoc/multiplatform", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
         }
+        testClass<AbstractK2ReferenceResolveWithResolveExtensionTest> {
+            model("extensions/references", pattern = KT_WITHOUT_DOTS)
+        }
+        testClass<AbstractAdditionalKDocResolutionProviderTest> {
+            model("resolve/additionalKDocReference", pattern = KT_WITHOUT_DOTS)
+        }
     }
 
     testGroup("fir/tests", category = HIGHLIGHTING) {
@@ -393,17 +399,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractK2MultiModuleHighlightingTest> {
             model("resolve/anchors", isRecursive = false, pattern = Patterns.forRegex("^([^\\._]+)$"))
         }
+    }
 
-        testClass<AbstractK2ReferenceResolveWithResolveExtensionTest> {
-            model("extensions/references", pattern = KT_WITHOUT_DOTS)
-        }
-
+    testGroup("fir/tests", category = COMPLETION) {
         testClass<AbstractK2JvmBasicCompletionTestWithResolveExtension> {
             model("extensions/completion", pattern = KT_WITHOUT_DOTS)
-        }
-
-        testClass<AbstractAdditionalKDocResolutionProviderTest> {
-            model("resolve/additionalKDocReference", pattern = KT_WITHOUT_DOTS)
         }
     }
 
@@ -443,13 +443,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("copyright/fir-tests", testDataPath = "../../copyright/tests/testData") {
+    testGroup("copyright/fir-tests", testDataPath = "../../copyright/tests/testData", category = CODE_INSIGHT) {
         testClass<AbstractFirUpdateKotlinCopyrightTest> {
             model("update", pattern = KT_OR_KTS, testMethodName = "doTest")
         }
     }
 
-    testGroup("j2k/k2/tests", testDataPath = "../../shared/tests/testData") {
+    testGroup("j2k/k2/tests", testDataPath = "../../shared/tests/testData", category = J2K) {
         testClass<AbstractK2JavaToKotlinConverterSingleFileTest> {
             model("newJ2k", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }

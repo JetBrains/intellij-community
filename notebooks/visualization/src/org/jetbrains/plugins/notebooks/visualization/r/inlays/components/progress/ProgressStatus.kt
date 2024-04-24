@@ -2,5 +2,10 @@ package org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progre
 
 
 enum class ProgressStatus {
-  RUNNING, STOPPED_OK, STOPPED_ERROR
+  RUNNING,
+  STOPPED_OK,
+  STOPPED_ERROR,
+  NOT_STARTED,
+  QUEUED,
+  CANCELLED
 }

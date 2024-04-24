@@ -521,13 +521,14 @@ private fun getMnemonic(item: Any?, itemMap: Map<PsiElement, GotoRelatedItem?>):
   return (if (item is GotoRelatedItem) item else itemMap.get(item))!!.mnemonic
 }
 
-fun collectRelatedItems(contextElement: PsiElement, dataContext: DataContext?): List<GotoRelatedItem> {
+/**
+ * Query all [GotoRelatedProvider]s for their related items.
+ */
+fun collectRelatedItems(contextElement: PsiElement, dataContext: DataContext): List<GotoRelatedItem> {
   val items = LinkedHashSet<GotoRelatedItem>()
   GO_TO_EP_NAME.forEachExtensionSafe { provider ->
     items.addAll(provider.getItems(contextElement))
-    if (dataContext != null) {
-      items.addAll(provider.getItems(dataContext))
-    }
+    items.addAll(provider.getItems(dataContext))
   }
   val result = items.toTypedArray<GotoRelatedItem>()
   Arrays.sort(result) { i1, i2 ->

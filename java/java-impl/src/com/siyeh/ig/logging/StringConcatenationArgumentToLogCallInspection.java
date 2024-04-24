@@ -44,8 +44,7 @@ import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
  */
 public final class StringConcatenationArgumentToLogCallInspection extends BaseInspection {
 
-  @NonNls
-  private static final Set<String> logNames = Set.of(
+  private static final @NonNls Set<String> logNames = Set.of(
     "trace",
     "debug",
     "info",
@@ -80,9 +79,8 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     );
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.problem.descriptor");
   }
 
@@ -93,9 +91,8 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     }
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     if (!(infos[0] instanceof ProblemType problemType)) {
       return null;
     }
@@ -180,9 +177,8 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
 
     StringConcatenationArgumentToLogCallFix() { }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix");
     }
 
@@ -202,7 +198,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       if (arguments.length == 0) {
         return;
       }
-      @NonNls final StringBuilder newMethodCall = new StringBuilder(methodCallExpression.getMethodExpression().getText());
+      final @NonNls StringBuilder newMethodCall = new StringBuilder(methodCallExpression.getMethodExpression().getText());
       newMethodCall.append('(');
       PsiExpression argument = arguments[0];
       int usedArguments;
@@ -370,13 +366,11 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     }
   }
 
-  private static abstract class FormatArgumentToLogCallFix extends PsiUpdateModCommandQuickFix implements EvaluatedStringFix {
+  private abstract static class FormatArgumentToLogCallFix extends PsiUpdateModCommandQuickFix implements EvaluatedStringFix {
 
-    @NotNull
-    private final Map<TextRange, Integer> myTextMapping;
+    private final @NotNull Map<TextRange, Integer> myTextMapping;
 
-    @NotNull
-    private final String format;
+    private final @NotNull String format;
 
     private FormatArgumentToLogCallFix(@NotNull Map<TextRange, Integer> textMapping,
                                        @NotNull String format) {
@@ -419,9 +413,8 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       fix(project, callExpression);
     }
 
-    @NotNull
-    private String createNewArgumentsFromCall(@NotNull PsiMethodCallExpression formatCallExpression,
-                                              @NotNull CommentTracker tracker) {
+    private @NotNull String createNewArgumentsFromCall(@NotNull PsiMethodCallExpression formatCallExpression,
+                                                       @NotNull CommentTracker tracker) {
       List<String> arguments = new ArrayList<>();
       List<Map.Entry<TextRange, Integer>> placeholders =
         myTextMapping.entrySet()
@@ -455,8 +448,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     }
 
 
-    @Nullable
-    static PsiUpdateModCommandQuickFix create(@NotNull PsiExpression expression) {
+    static @Nullable PsiUpdateModCommandQuickFix create(@NotNull PsiExpression expression) {
       if (!(expression instanceof PsiMethodCallExpression callExpression)) {
         return null;
       }
@@ -510,8 +502,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       super(result, format);
     }
 
-    @Nullable
-    static PsiUpdateModCommandQuickFix create(@NotNull PsiExpression originalExpression) {
+    static @Nullable PsiUpdateModCommandQuickFix create(@NotNull PsiExpression originalExpression) {
       if (!(originalExpression instanceof PsiMethodCallExpression callExpression)) {
         return null;
       }
@@ -634,8 +625,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
   public record LogConcatenationContext(@NotNull PsiExpression argument, @NotNull ProblemType problemType) {
   }
 
-  @Nullable
-  public static LogConcatenationContext getLogConcatenationContext(PsiExpression @NotNull [] arguments) {
+  public static @Nullable LogConcatenationContext getLogConcatenationContext(PsiExpression @NotNull [] arguments) {
     PsiExpression argument = arguments[0];
 
     ProblemType problemType = null;

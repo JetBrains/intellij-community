@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -31,6 +33,7 @@ import org.jetbrains.plugins.notebooks.visualization.ui.EditorCell
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellEventListener
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellEventListener.*
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellView
+import org.jetbrains.plugins.notebooks.visualization.ui.keepScrollingPositionWhile
 import java.awt.Graphics
 import java.util.*
 import javax.swing.JComponent
@@ -138,6 +141,23 @@ class NotebookCellInlayManager private constructor(
     initialized = true
 
     setupFoldingListener()
+    setupSelectionUI()
+  }
+
+  private fun setupSelectionUI() {
+    editor.caretModel.addCaretListener(object : CaretListener {
+      override fun caretPositionChanged(event: CaretEvent) {
+        updateSelection()
+      }
+    })
+  }
+
+  private fun updateSelection() {
+    val selectionModel = editor.cellSelectionModel ?: error("The selection model is supposed to be installed")
+    val selectedCells = selectionModel.selectedCells.map { it.ordinal }
+    for (cell in cells) {
+      cell.selected = cell.intervalPointer.get()?.ordinal in selectedCells
+    }
   }
 
   private fun setupFoldingListener() {
@@ -183,7 +203,6 @@ class NotebookCellInlayManager private constructor(
             it.show()
           }
         }
-        putHighlighters()
       }
     }, editor.disposable)
   }
@@ -242,33 +261,28 @@ class NotebookCellInlayManager private constructor(
 
   private fun updateConsequentInlays(interestingRange: IntRange) {
     ThreadingAssertions.softAssertReadAccess()
-    editor.notebookCellEditorScrollingPositionKeeper?.saveSelectedCellPosition()
-    val matchingIntervals = notebookCellLines.getMatchingCells(interestingRange)
-    val fullInterestingRange =
-      if (matchingIntervals.isNotEmpty()) matchingIntervals.first().lines.first..matchingIntervals.last().lines.last
-      else interestingRange
+    keepScrollingPositionWhile(editor) {
+      val matchingIntervals = notebookCellLines.getMatchingCells(interestingRange)
+      val fullInterestingRange =
+        if (matchingIntervals.isNotEmpty()) matchingIntervals.first().lines.first..matchingIntervals.last().lines.last
+        else interestingRange
 
-    val existingHighlighters = getMatchingHighlightersForLines(fullInterestingRange)
-    val intervalsToAddHighlightersFor = matchingIntervals.associateByTo(HashMap()) { it.lines }
-    for (highlighter in existingHighlighters) {
-      val lines = editor.document.run { getLineNumber(highlighter.startOffset)..getLineNumber(highlighter.endOffset) }
-      if (intervalsToAddHighlightersFor.remove(lines)?.shouldHaveHighlighter != true) {
-        editor.markupModel.removeHighlighter(highlighter)
+      val existingHighlighters = getMatchingHighlightersForLines(fullInterestingRange)
+      val intervalsToAddHighlightersFor = matchingIntervals.associateByTo(HashMap()) { it.lines }
+      for (highlighter in existingHighlighters) {
+        val lines = editor.document.run { getLineNumber(highlighter.startOffset)..getLineNumber(highlighter.endOffset) }
+        if (intervalsToAddHighlightersFor.remove(lines)?.shouldHaveHighlighter != true) {
+          editor.markupModel.removeHighlighter(highlighter)
+        }
       }
+      addHighlighters(intervalsToAddHighlightersFor.values)
+
+      for (interval in matchingIntervals) {
+        _cells[interval.ordinal].update()
+      }
+
+      inlaysChanged()
     }
-    addHighlighters(intervalsToAddHighlightersFor.values)
-
-    for (interval in matchingIntervals) {
-      _cells[interval.ordinal].update()
-    }
-
-    putHighlighters()
-
-    inlaysChanged()
-  }
-
-  private fun putHighlighters() {
-    NotebookGutterLineMarkerManager().putHighlighters(editor)
   }
 
   private fun getMatchingHighlightersForLines(lines: IntRange): List<RangeHighlighterEx> =

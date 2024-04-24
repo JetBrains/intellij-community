@@ -109,8 +109,6 @@
     <!--suppress PluginXmlCapitalization -->
     <registryKey defaultValue="true" key="use.dependencies.cache.service" restartRequired="true"
                  description="Rescan delta of AdditionalLibraryProvider, IndexableSetContributor, DirectoryIndexExcludePolicy values instead of full project."/>
-    <registryKey defaultValue="true" key="scanning.in.smart.mode" restartRequired="false"
-                 description="Scan project in smart mode under regular progress indicator."/>
     <registryKey defaultValue="true" key="scanning.hide.progress.in.smart.mode" restartRequired="false"
                  description="Hide scanning progress indicator while scanning can continue in smart mode."/>
     <registryKey defaultValue="20" key="scanning.dumb.mode.threshold" restartRequired="true"
@@ -1403,6 +1401,9 @@
     <registryKey key="language.service.status.bar.widget"
                  description="Show Language Services status bar widget"
                  defaultValue="true"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.lang.lsWidget.impl.fus.LanguageServiceWidgetUsagesCollector"/>
+    <applicationService serviceInterface="com.intellij.platform.lang.lsWidget.internal.LanguageServiceWidgetActionsService"
+                        serviceImplementation="com.intellij.platform.lang.lsWidget.impl.LanguageServiceWidgetActionsServiceImpl"/>
     <statusBarWidgetFactory id="LineSeparator" implementation="com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory"
                             order="after Position"/>
     <statusBarWidgetFactory id="Encoding" implementation="com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory"

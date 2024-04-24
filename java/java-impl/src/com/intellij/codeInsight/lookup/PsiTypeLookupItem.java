@@ -45,7 +45,7 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
   private final int myBracketsCount;
   private boolean myIndicateAnonymous;
   private final InsertHandler<PsiTypeLookupItem> myImportFixer;
-  @NotNull private final PsiSubstitutor mySubstitutor;
+  private final @NotNull PsiSubstitutor mySubstitutor;
   private boolean myAddArrayInitializer;
   private String myLocationString = "";
   private final String myForcedPresentableName;
@@ -60,9 +60,8 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     myForcedPresentableName = o instanceof PsiClass && !lookupString.equals(((PsiClass)o).getName()) ? lookupString : null;
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     Object object = getObject();
     PsiType type = object instanceof PsiType
                    ? getSubstitutor().substitute((PsiType)object)
@@ -73,8 +72,7 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     return type;
   }
 
-  @Nullable
-  public String getForcedPresentableName() {
+  public @Nullable String getForcedPresentableName() {
     return myForcedPresentableName;
   }
 
@@ -149,8 +147,7 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     }
   }
 
-  @NotNull
-  public String calcGenerics(@NotNull PsiElement context, InsertionContext insertionContext) {
+  public @NotNull String calcGenerics(@NotNull PsiElement context, InsertionContext insertionContext) {
     if (insertionContext.getCompletionChar() == '<') {
       return "";
     }
@@ -262,8 +259,7 @@ public final class PsiTypeLookupItem extends LookupItem<Object> implements Typed
     return diamond;
   }
 
-  @NotNull
-  private PsiSubstitutor getSubstitutor() {
+  private @NotNull PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
 

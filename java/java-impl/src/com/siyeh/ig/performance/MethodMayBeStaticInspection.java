@@ -43,10 +43,10 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class MethodMayBeStaticInspection extends BaseInspection {
-  @NonNls private static final String IGNORE_DEFAULT_METHODS_ATTR_NAME = "m_ignoreDefaultMethods";
-  @NonNls private static final String ONLY_PRIVATE_OR_FINAL_ATTR_NAME = "m_onlyPrivateOrFinal";
-  @NonNls private static final String IGNORE_EMPTY_METHODS_ATTR_NAME = "m_ignoreEmptyMethods";
-  @NonNls private static final String REPLACE_QUALIFIER_ATTR_NAME = "m_replaceQualifier";
+  private static final @NonNls String IGNORE_DEFAULT_METHODS_ATTR_NAME = "m_ignoreDefaultMethods";
+  private static final @NonNls String ONLY_PRIVATE_OR_FINAL_ATTR_NAME = "m_onlyPrivateOrFinal";
+  private static final @NonNls String IGNORE_EMPTY_METHODS_ATTR_NAME = "m_ignoreEmptyMethods";
+  private static final @NonNls String REPLACE_QUALIFIER_ATTR_NAME = "m_replaceQualifier";
   /**
    * @noinspection PublicField
    */
@@ -83,9 +83,8 @@ public final class MethodMayBeStaticInspection extends BaseInspection {
         return false;
       }
 
-      @NotNull
       @Override
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return InspectionGadgetsBundle.message("change.modifier.quickfix", PsiModifier.STATIC);
       }
     };
@@ -102,8 +101,7 @@ public final class MethodMayBeStaticInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("method.may.be.static.problem.descriptor");
   }
 

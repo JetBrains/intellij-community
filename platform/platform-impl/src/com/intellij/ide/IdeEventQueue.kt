@@ -3,8 +3,8 @@
 
 package com.intellij.ide
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.current
-import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.EventWatcher
@@ -16,15 +16,11 @@ import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDManagerImpl
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ThreadingSupport
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport
 import com.intellij.openapi.application.impl.InvocationUtil
 import com.intellij.openapi.application.impl.RwLockHolder
-import com.intellij.openapi.application.isNewLockEnabled
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
@@ -394,11 +390,13 @@ class IdeEventQueue private constructor() : EventQueue() {
         return
       }
 
-      if (defaultEventWithWrite) {
-        ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(processEventRunnable)
-      }
-      else {
-        processEventRunnable.run()
+      withAttachedClientId(event).use {
+        if (defaultEventWithWrite) {
+          ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(processEventRunnable)
+        }
+        else {
+          processEventRunnable.run()
+        }
       }
     }
     finally {
@@ -837,18 +835,11 @@ class IdeEventQueue private constructor() : EventQueue() {
       }
     }
     eventsPosted.incrementAndGet()
-    // We don't 'attach' current client id to PeerEvent instances for two reasons.
-    // First, they are often posted to EventQueue indirectly (first to sun.awt.PostEventQueue, and then to the EventQueue by
-    // SunToolkit.flushPendingEvents), so current client id might be unrelated to the code that created those events.
-    // Second, just wrapping PeerEvent into a new InvocationEvent loses the information about priority kept in the former,
-    // and changes the overall events' processing order.
-    val passClientId = event is InvocationEvent && event !is PeerEvent
-    if (passClientId && !isCurrentlyUnderLocalId) {
-      // only do wrapping trickery with non-local events to preserve correct behavior -
-      // local events will get dispatched under local ID anyway
-      val clientId = current
-      super.postEvent(InvocationEvent(event.source) { withClientId(clientId).use { dispatchEvent(event) } })
-      return true
+    if (ClientId.propagateAcrossThreads) {
+      attachClientIdIfNeeded(event)?.let {
+        super.postEvent(it)
+        return true
+      }
     }
     if (event is KeyEvent) {
       keyboardEventPosted.incrementAndGet()
@@ -858,6 +849,26 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
     super.postEvent(event)
     return true
+  }
+
+  private fun attachClientIdIfNeeded(event: AWTEvent): AWTEvent? {
+    // We don't 'attach' current client id to PeerEvent instances for two reasons.
+    // First, they are often posted to EventQueue indirectly (first to sun.awt.PostEventQueue, and then to the EventQueue by
+    // SunToolkit.flushPendingEvents), so current client id might be unrelated to the code that created those events.
+    // Second, just wrapping PeerEvent into a new InvocationEvent loses the information about priority kept in the former,
+    // and changes the overall events' processing order.
+    if (event is InvocationEvent && event !is PeerEvent) {
+      val clientId = current
+      return InvocationEvent(event.source) { withClientId(clientId).use { dispatchEvent(event) } }
+    }
+    if (event.id in ComponentEvent.COMPONENT_FIRST..ComponentEvent.COMPONENT_LAST) {
+      return ComponentEventWithClientId((event as ComponentEvent).component, event.id, current)
+    }
+    return null
+  }
+
+  private fun withAttachedClientId(event: AWTEvent): AccessToken {
+    return if (event is ComponentEventWithClientId) withClientId(event.clientId) else AccessToken.EMPTY_ACCESS_TOKEN
   }
 
   @Deprecated("Does nothing currently")
@@ -1227,6 +1238,8 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
     return !dispatch
   }
 }
+
+private class ComponentEventWithClientId(source: Component, id: Int, val clientId: ClientId) : ComponentEvent(source, id)
 
 @Suppress("SpellCheckingInspection")
 private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {

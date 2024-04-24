@@ -16,7 +16,9 @@ import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.compiled.InnerClassSourceStrategy;
 import com.intellij.psi.impl.compiled.StubBuildingVisitor;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LightIdeaTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
@@ -62,6 +64,30 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testInheritFromDollar$1() { doTest(); }
   public void testSealed() { doTest(); }
   public void testCompanyDO() { doTest(); }
+  public void testCompanyDOInDumbMode() {
+    testDumbMode("CompanyDO");
+  }
+
+  public void testFieldWithSimilarAnnotation() {
+    testDumbMode("FieldWithSimilarAnnotation");
+  }
+
+  private void testDumbMode(String testName) {
+    String testDir = getTestDataDir();
+    String clsPath = getClsPath(testName, testDir);
+    String txtPath = getTxtPath(testName, testDir);
+    VirtualFile file = (clsPath.contains("!/") ? StandardFileSystems.jar() : StandardFileSystems.local()).refreshAndFindFileByPath(clsPath);
+    assertNotNull(clsPath, file);
+
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
+      assertSameLinesWithFile(txtPath, ClsFileImpl.decompile(file).toString());
+      PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
+      if (psiFile instanceof PsiCompiledElement compiledElement) {
+        PsiElement mirror = compiledElement.getMirror();
+        assertNotNull(mirror);
+      }
+    });
+  }
 
   public void testTextPsiMismatch() {
     CommonCodeStyleSettings.IndentOptions options = CodeStyle.getSettings(getProject()).getIndentOptions(JavaFileType.INSTANCE);
@@ -187,7 +213,15 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
 
   private static void doTest(String name) {
     String testDir = getTestDataDir();
-    doTest(testDir + "pkg/" + name + ".class", testDir + name + ".txt");
+    doTest(getClsPath(name, testDir), getTxtPath(name, testDir));
+  }
+
+  private static @NotNull String getTxtPath(String name, String testDir) {
+    return testDir + name + ".txt";
+  }
+
+  private static @NotNull String getClsPath(String name, String testDir) {
+    return testDir + "pkg/" + name + ".class";
   }
 
   private static void doTest(String clsPath, String txtPath) {

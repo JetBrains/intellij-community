@@ -9,6 +9,7 @@ import com.intellij.openapi.command.impl.FinishMarkAction
 import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -32,7 +33,6 @@ import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtil
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.findElementAt
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils.showInEditor
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
-import com.intellij.refactoring.suggested.range
 
 class InplaceMethodExtractor(private val editor: Editor,
                              private val range: TextRange,
@@ -110,11 +110,11 @@ class InplaceMethodExtractor(private val editor: Editor,
           editorState.revert()
         }
         .onSuccess {
-          val range = callIdentifierRange?.range ?: return@onSuccess
+          val range = callIdentifierRange?.asTextRange ?: return@onSuccess
           val methodName = editor.document.getText(range)
           val extractedMethod = findElementAt<PsiMethod>(file, methodIdentifierRange) ?: return@onSuccess
           InplaceExtractMethodCollector.executed.log(initialMethodName != methodName)
-          installGotItTooltips(editor, callIdentifierRange?.range, methodIdentifierRange?.range)
+          installGotItTooltips(editor, callIdentifierRange?.asTextRange, methodIdentifierRange?.asTextRange)
           MethodExtractor.sendRefactoringDoneEvent(extractedMethod)
           extractor.replaceDuplicates(editor, extractedMethod)
         }
@@ -176,7 +176,7 @@ class InplaceMethodExtractor(private val editor: Editor,
   }
 
   fun restartInDialog(isLinkUsed: Boolean = false) {
-    val methodRange = callIdentifierRange?.range
+    val methodRange = callIdentifierRange?.asTextRange
     val methodName = if (methodRange != null) editor.document.getText(methodRange) else ""
     InplaceExtractMethodCollector.openExtractDialog.log(project, isLinkUsed)
     TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
@@ -186,7 +186,7 @@ class InplaceMethodExtractor(private val editor: Editor,
 
   private fun restartInplace() {
     val startTime = System.currentTimeMillis()
-    val identifierRange = callIdentifierRange?.range
+    val identifierRange = callIdentifierRange?.asTextRange
     val methodName = if (identifierRange != null) editor.document.getText(identifierRange) else null
     TemplateManagerImpl.getTemplateState(editor)?.gotoEnd(true)
     WriteCommandAction.writeCommandAction(project).withName(ExtractMethodHandler.getRefactoringName()).run<Throwable> {

@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 @TestRoot("jps/graphImplementationTests/testData/incremental")
 public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJpsTest {
     static void setUpTests() {
-        File kotlincFolder = getKotlincFolder("2.0.20-dev-642");
+        File kotlincFolder = getKotlincFolder("2.0.20-dev-1563");
         System.setProperty("jps.kotlin.home", kotlincFolder.getAbsolutePath());
 
         // enable graph implementation
@@ -39,13 +39,16 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         if (compilerVersion == null) {
             return KotlinPluginLayout.getKotlinc();
         }
+
         // Use custom compiler for tests
-        File distJar = KotlinArtifactsDownloader.INSTANCE.downloadArtifactForIdeFromSources(
-                "kotlin-dist-for-ide",
-                compilerVersion
-        );
-        File unpackedDistDir = new File(PathManager.getSystemPath(), "kotlin-dist-for-ide/kotlinc-dist-for-ide-from-sources-testing-custom");
-        new LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar);
+        File unpackedDistDir = new File(PathManager.getSystemPath(), "kotlin-dist-for-ide/kotlinc-dist-for-ide-from-sources-testing-custom/" + compilerVersion);
+        if(!unpackedDistDir.exists()) {
+            File distJar = KotlinArtifactsDownloader.INSTANCE.downloadArtifactForIdeFromSources(
+                    "kotlin-dist-for-ide",
+                    compilerVersion
+            );
+            new LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar);
+        }
         return unpackedDistDir;
     }
 

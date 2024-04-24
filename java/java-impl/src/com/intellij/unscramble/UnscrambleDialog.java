@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -43,9 +43,9 @@ import java.util.List;
 import static com.intellij.util.containers.ContainerUtil.ar;
 
 public class UnscrambleDialog extends DialogWrapper {
-  @NonNls private static final String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
-  @NonNls private static final String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
-  @NonNls private static final String PROPERTY_UNSCRAMBLER_NAME_USED = "UNSCRAMBLER_NAME_USED";
+  private static final @NonNls String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
+  private static final @NonNls String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
+  private static final @NonNls String PROPERTY_UNSCRAMBLER_NAME_USED = "UNSCRAMBLER_NAME_USED";
   private static final Condition<ThreadState> DEADLOCK_CONDITION = state -> state.isDeadlocked();
   private static final String[] IMPORTANT_THREAD_DUMP_WORDS = ar("tid", "nid", "wait", "parking", "prio", "os_prio", "java");
 
@@ -165,8 +165,7 @@ public class UnscrambleDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private UnscrambleSupport getSavedUnscrambler() {
+  private @Nullable UnscrambleSupport getSavedUnscrambler() {
     final String savedUnscramblerName = getPropertyValue(PROPERTY_UNSCRAMBLER_NAME_USED);
     UnscrambleSupport selectedUnscrambler = null;
     for (UnscrambleSupport unscrambleSupport : UnscrambleSupport.EP_NAME.getExtensionList()) {
@@ -177,8 +176,7 @@ public class UnscrambleDialog extends DialogWrapper {
     return selectedUnscrambler;
   }
 
-  @NotNull
-  public static List<String> getSavedLogFileUrls() {
+  public static @NotNull List<String> getSavedLogFileUrls() {
     final List<String> res = new ArrayList<>();
     final String savedUrl = PropertiesComponent.getInstance().getValue(PROPERTY_LOG_FILE_HISTORY_URLS);
     if (savedUrl != null) {
@@ -187,8 +185,7 @@ public class UnscrambleDialog extends DialogWrapper {
     return res;
   }
 
-  @Nullable
-  private UnscrambleSupport getSelectedUnscrambler() {
+  private @Nullable UnscrambleSupport getSelectedUnscrambler() {
     if (!myUseUnscrambler.isSelected()) return null;
     return (UnscrambleSupport)myUnscrambleChooser.getSelectedItem();
   }
@@ -259,8 +256,7 @@ public class UnscrambleDialog extends DialogWrapper {
     PropertiesComponent.getInstance().setValue(name, value);
   }
 
-  @Nullable
-  private @NlsSafe String getPropertyValue(@NotNull String name) {
+  private @Nullable @NlsSafe String getPropertyValue(@NotNull String name) {
     String projectValue = PropertiesComponent.getInstance(myProject).getValue(name);
     if (projectValue != null) {
       return projectValue;
@@ -375,12 +371,11 @@ public class UnscrambleDialog extends DialogWrapper {
     return showUnscrambledText(selectedUnscrambler, myLogFile.getText(), settings, myProject, myStacktraceEditorPanel.getText()) != null;
   }
 
-  @Nullable
-  static <T extends JComponent> RunContentDescriptor showUnscrambledText(@Nullable UnscrambleSupport<T> unscrambleSupport,
-                                                                         String logName,
-                                                                         @Nullable T settings,
-                                                                         Project project,
-                                                                         String textToUnscramble) {
+  static @Nullable <T extends JComponent> RunContentDescriptor showUnscrambledText(@Nullable UnscrambleSupport<T> unscrambleSupport,
+                                                                                   String logName,
+                                                                                   @Nullable T settings,
+                                                                                   Project project,
+                                                                                   String textToUnscramble) {
     String unscrambledTrace = unscrambleSupport == null ? textToUnscramble : unscrambleSupport.unscramble(project,textToUnscramble, logName, settings);
     if (unscrambledTrace == null) return null;
     List<ThreadState> threadStates = ThreadDumpParser.parse(unscrambledTrace);
@@ -413,8 +408,7 @@ public class UnscrambleDialog extends DialogWrapper {
     return "#com.intellij.unscramble.UnscrambleDialog";
   }
 
-  @Nullable
-  private static String getExceptionName(String unscrambledTrace) {
+  private static @Nullable String getExceptionName(String unscrambledTrace) {
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     BufferedReader reader = new BufferedReader(new StringReader(unscrambledTrace));
     for (int i = 0; i < 3; i++) {
@@ -431,8 +425,7 @@ public class UnscrambleDialog extends DialogWrapper {
     return null;
   }
 
-  @Nullable
-  private static String getExceptionAbbreviation(String line) {
+  private static @Nullable String getExceptionAbbreviation(String line) {
     line = StringUtil.trimStart(line.trim(), "Caused by: ");
     int classNameStart = 0;
     int classNameEnd = line.length();

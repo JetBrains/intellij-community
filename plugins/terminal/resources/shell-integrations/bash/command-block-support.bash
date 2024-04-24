@@ -73,15 +73,16 @@ __jetbrains_intellij_escape_json() {
       <<< "$1"
 }
 
-__jetbrains_intellij_prompt_shown() {
-  builtin printf '\e]1341;prompt_shown\a'
-}
+# Store our PS1 value in a variable to reference it in a convenient way
+# Surround 'prompt shown' esc sequence with \[ \] to not count characters inside as part of prompt width
+__JETBRAINS_INTELLIJ_PS1='\[\e]1341;prompt_shown\a\]'
 
 __jetbrains_intellij_configure_prompt() {
-  # Surround 'prompt shown' esc sequence with \[ \] to not count characters inside as part of prompt width
-  PS1="\[$(__jetbrains_intellij_prompt_shown)\]"
-  # do not show right prompt
-  builtin unset RPROMPT
+  if [ "$PS1" != $__JETBRAINS_INTELLIJ_PS1 ]; then
+    # Remember the original prompt to use it in '__jetbrains_intellij_report_prompt_state'
+    __JETBRAINS_INTELLIJ_ORIGINAL_PS1=$PS1
+  fi
+  PS1=$__JETBRAINS_INTELLIJ_PS1
 }
 
 __jetbrains_intellij_debug_log() {
@@ -113,17 +114,17 @@ __jetbrains_intellij_initialized=""
 
 __jetbrains_intellij_command_terminated() {
   builtin local last_exit_code="$?"
+  __jetbrains_intellij_configure_prompt
   if [ -n "${__JETBRAINS_INTELLIJ_GENERATOR_COMMAND-}" ]
   then
     unset __JETBRAINS_INTELLIJ_GENERATOR_COMMAND
     return 0
   fi
 
-  __jetbrains_intellij_configure_prompt
-
   __jetbrains_intellij_report_prompt_state
   if [ -z "$__jetbrains_intellij_initialized" ]; then
     __jetbrains_intellij_initialized='1'
+    __jetbrains_intellij_fix_prompt_command_order
     builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
     __jetbrains_intellij_debug_log 'initialized'
     builtin printf '\e]1341;initialized;shell_info=%s\a' "$(__jetbrains_intellij_encode $shell_info)"
@@ -152,11 +153,25 @@ __jetbrains_intellij_report_prompt_state() {
   then
     conda_env="$CONDA_DEFAULT_ENV"
   fi
-  builtin printf '\e]1341;prompt_state_updated;current_directory=%s;git_branch=%s;virtual_env=%s;conda_env=%s\a' \
+
+  builtin local prompt="$__JETBRAINS_INTELLIJ_ORIGINAL_PS1"
+  builtin local expanded_prompt=""
+  # Prompt expansion was introduced in 4.4 version of Bash
+  if [[ -n "${BASH_VERSINFO-}" ]] && (( BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 4) ))
+  then
+    expanded_prompt=${prompt@P}
+  else
+    # Launch a subshell with a desired prompt, then parse the output
+    expanded_prompt=$(PS1="$prompt" "$BASH" --norc -i </dev/null 2>&1 | sed -n '${s/^\(.*\)exit$/\1/p;}')
+  fi
+
+  builtin printf '\e]1341;prompt_state_updated;current_directory=%s;git_branch=%s;virtual_env=%s;conda_env=%s;original_prompt=%s;original_right_prompt=%s\a' \
     "$(__jetbrains_intellij_encode "${current_directory}")" \
     "$(__jetbrains_intellij_encode "${git_branch}")" \
     "$(__jetbrains_intellij_encode "${virtual_env}")" \
-    "$(__jetbrains_intellij_encode "${conda_env}")"
+    "$(__jetbrains_intellij_encode "${conda_env}")" \
+    "$(__jetbrains_intellij_encode "${expanded_prompt}")" \
+    "" # there is no dedicated variable for right prompt in Bash, so send an empty string
 }
 
 __jetbrains_intellij_collect_shell_info() {
@@ -190,6 +205,55 @@ __jetbrains_intellij_collect_shell_info() {
 "\"bashItTheme\": \"$(__jetbrains_intellij_escape_json $bash_it_theme)\""\
 "}"
   builtin printf '%s' $content_json
+}
+
+# Bash-preexec lib is modifying the PROMPT_COMMAND variable in order to call precmd_functions.
+# But it is placing '__bp_precmd_invoke_cmd' function to the start of the PROMPT_COMMAND,
+# so all other hooks from the plugins (like PS1 updating) are invoked after our precmd_functions.
+# And at the moment of our '__jetbrains_intellij_command_terminated' call, we see an outdated PS1.
+# This function is reordering the functions in the PROMPT_COMMAND placing the Bash-preexec hooks to the end.
+function __jetbrains_intellij_fix_prompt_command_order() {
+  function cleanup_command() {
+    builtin local command="$1"
+    command="${command//@(__bp_precmd_invoke_cmd|__bp_interactive_mode)/}"
+    command="${command//$'\n':$'\n'/$'\n'}"
+    # it is the function from the Bash-preexec
+    __bp_sanitize_string command "$command"
+    if [[ "${command:-:}" == ":" ]]; then
+          command=
+    fi
+    printf '%s' "$command"
+  }
+
+  __jetbrains_intellij_debug_log "Before PROMPT_COMMAND modification: $(declare -p PROMPT_COMMAND)"
+  # PROMPT_COMMAND is an array in Bash >= 5.1, so we need two implementations
+  if [[ -n "${BASH_VERSINFO-}" ]] && (( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 1) )); then
+    # Remove the bash-preexec functions from the PROMPT_COMMAND array
+    for index in "${!PROMPT_COMMAND[@]}"; do
+      builtin local cur_command="${PROMPT_COMMAND[$index]}"
+      cur_command="$(cleanup_command "$cur_command")"
+      if [[ -n $cur_command ]]; then
+        PROMPT_COMMAND[$index]=$cur_command
+      else
+        unset 'PROMPT_COMMAND[$index]'
+      fi
+    done
+    # Add removed functions to the end of the array
+    PROMPT_COMMAND+=('__bp_precmd_invoke_cmd')
+    PROMPT_COMMAND+=('__bp_interactive_mode')
+    # Fix the gaps in the array because of removed items
+    builtin local new_array
+    for i in "${!PROMPT_COMMAND[@]}"; do
+      new_array+=( "${PROMPT_COMMAND[i]}" )
+    done
+    PROMPT_COMMAND=("${new_array[@]}")
+  else
+    PROMPT_COMMAND="$(cleanup_command "$PROMPT_COMMAND")"
+    PROMPT_COMMAND+=$'\n__bp_precmd_invoke_cmd\n__bp_interactive_mode'
+  fi
+
+  unset -f cleanup_command
+  __jetbrains_intellij_debug_log "After PROMPT_COMMAND modification: $(declare -p PROMPT_COMMAND)"
 }
 
 # override clear behaviour to handle it on IDE side and remove the blocks

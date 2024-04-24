@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.icons.AllIcons;
@@ -81,7 +81,7 @@ public final class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   static boolean isVisible() {
-    return ourCurrentHighlighters.size() > 0;
+    return !ourCurrentHighlighters.isEmpty();
   }
 
   private abstract static class AbstractComponentHighlighter extends JPanel implements DropTargetHighlighter {
@@ -131,7 +131,7 @@ public final class Highlighters implements DnDEvent.DropTargetHighlightingType {
       if (!Registry.is("ide.dnd.textHints")) return;
 
       final String result = aEvent.getExpectedDropResult();
-      if (result != null && result.length() > 0) {
+      if (result != null && !result.isEmpty()) {
         RelativePoint point  = null;
         for (DropTargetHighlighter each : ourHightlighters) {
           if (each instanceof AbstractComponentHighlighter) {

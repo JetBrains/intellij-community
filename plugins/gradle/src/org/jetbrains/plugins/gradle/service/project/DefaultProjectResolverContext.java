@@ -8,8 +8,13 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.containers.CollectionFactory;
+import org.gradle.tooling.CancellationToken;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.BuildModel;
@@ -26,6 +31,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.function.Supplier;
 
 /**
  * @author Vladislav.Soroka
@@ -36,7 +42,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @NotNull private final String myProjectPath;
   @Nullable private final GradleExecutionSettings mySettings;
   @NotNull private final ExternalSystemTaskNotificationListener myListener;
-  @NotNull private final CancellationTokenSource myCancellationTokenSource;
+  @NotNull private final GradleProjectResolverIndicator myProjectResolverIndicator;
   private ProjectConnection myConnection;
   @Nullable private GradleIdeaModelHolder myModels;
   private File myGradleUserHome;
@@ -53,7 +59,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     @Nullable GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskNotificationListener listener,
     @Nullable GradlePartialResolverPolicy resolverPolicy,
-    @NotNull CancellationTokenSource cancellationTokenSource
+    @NotNull GradleProjectResolverIndicator projectResolverIndicator
   ) {
     myExternalSystemTaskId = externalSystemTaskId;
     myProjectPath = projectPath;
@@ -61,7 +67,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myConnection = null;
     myListener = listener;
     myPolicy = resolverPolicy;
-    myCancellationTokenSource = cancellationTokenSource;
+    myProjectResolverIndicator = projectResolverIndicator;
   }
 
   public DefaultProjectResolverContext(
@@ -75,7 +81,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
       settings,
       resolverContext.myListener,
       resolverContext.myPolicy,
-      resolverContext.myCancellationTokenSource
+      resolverContext.myProjectResolverIndicator
     );
     resolverContext.copyUserDataTo(this);
   }
@@ -114,26 +120,39 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myConnection = connection;
   }
 
-  @NotNull
-  @Override
-  public CancellationTokenSource getCancellationTokenSource() {
-    return myCancellationTokenSource;
+  public @NotNull ProgressIndicator getProgressIndicator() {
+    return myProjectResolverIndicator;
+  }
+
+  public @NotNull CancellationTokenSource getCancellationTokenSource() {
+    return myProjectResolverIndicator;
   }
 
   @Override
-  public boolean isCancellationRequested() {
-    return myCancellationTokenSource.token().isCancellationRequested();
+  public @NotNull CancellationToken getCancellationToken() {
+    return myProjectResolverIndicator.token();
   }
 
-  @Override
-  public void cancel() {
-    myCancellationTokenSource.cancel();
+  @RequiresBlockingContext
+  public <R> R computeCancellable(@NotNull Supplier<R> action) {
+    var result = new Ref<R>();
+    runCancellable(() -> {
+      result.set(action.get());
+    });
+    return result.get();
   }
 
-  @Override
-  public void checkCancelled() {
-    if (isCancellationRequested()) {
-      throw new ProcessCanceledException();
+  @RequiresBlockingContext
+  public void runCancellable(@NotNull Runnable action) {
+    try {
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        ProgressManager.checkCanceled();
+        action.run();
+      }, myProjectResolverIndicator);
+    }
+    catch (ProcessCanceledException e) {
+      myProjectResolverIndicator.cancel();
+      throw e;
     }
   }
 

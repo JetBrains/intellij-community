@@ -1,9 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.ide.ui.laf.darcula.fillInsideComponentBorder
-import com.intellij.ide.ui.laf.darcula.paintComponentBorder
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.JBInsets
@@ -92,8 +91,8 @@ internal class DarculaSearchFieldWithExtensionBorder : DarculaTextBorder() {
     val r = Rectangle(x, y, width, height)
     val enabled = c.textField.isEnabled && c.textField.isEditable
     JBInsets.removeFrom(r, getBorderInsets(c))
-    fillInsideComponentBorder(g, r, c.background)
-    paintComponentBorder(g, r, DarculaUIUtil.getOutline(c), c.hasFocus(), enabled)
+    DarculaNewUIUtil.fillInsideComponentBorder(g, r, c.background)
+    DarculaNewUIUtil.paintComponentBorder(g, r, DarculaUIUtil.getOutline(c), c.hasFocus(), enabled)
   }
 }
 

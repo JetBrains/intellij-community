@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
+import com.intellij.codeInsight.editorActions.ReferenceCopyPasteProcessor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeLater
@@ -73,7 +74,7 @@ import java.util.*
 import java.util.concurrent.Callable
 import com.intellij.psi.createSmartPointer
 
-class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinReferenceTransferableData>() {
+class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinReferenceTransferableData>(), ReferenceCopyPasteProcessor {
 
     override fun extractTransferableData(content: Transferable): List<BasicKotlinReferenceTransferableData> {
         if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE != CodeInsightSettings.NO) {

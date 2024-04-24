@@ -7,7 +7,7 @@ import java.awt.Graphics
 import java.awt.LayoutManager
 import javax.swing.JPanel
 
-@Deprecated(message = "Moved to `com.intellij.platform.navbar.ide.NavBarRootPaneExtension`", level = DeprecationLevel.ERROR)
+@Deprecated(message = "Moved to `com.intellij.platform.navbar.frontend.NavBarRootPaneExtension`", level = DeprecationLevel.ERROR)
 class NavBarRootPaneExtension {
 
   // used externally

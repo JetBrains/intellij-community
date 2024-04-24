@@ -379,6 +379,10 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         }
     }
 
+    @Deprecated(
+        "Please implement/use the KotlinBuildSystemDependencyManager EP instead.",
+        replaceWith = ReplaceWith("KotlinBuildSystemDependencyManager.findApplicableConfigurator(module)?.addDependency(module, library.withScope(scope))")
+    )
     override fun addLibraryDependency(
         module: Module,
         element: PsiElement,

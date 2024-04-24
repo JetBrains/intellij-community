@@ -201,12 +201,18 @@ private abstract class AbstractListLoadingListener<T>(
     this.cs = cs
 
     cs.launchNow {
-      itemsFlow.collect { resultedItems ->
-        list.emptyText.clear()
-        resultedItems.fold(
-          onSuccess = { items -> onSuccess(items) },
-          onFailure = { exception -> onFailure(exception) }
-        )
+      list.setPaintBusy(true)
+      list.emptyText.clear()
+      try {
+        itemsFlow.collect { resultedItems ->
+          resultedItems.fold(
+            onSuccess = { items -> onSuccess(items) },
+            onFailure = { exception -> onFailure(exception) }
+          )
+        }
+      }
+      finally {
+        list.setPaintBusy(false)
       }
     }
   }

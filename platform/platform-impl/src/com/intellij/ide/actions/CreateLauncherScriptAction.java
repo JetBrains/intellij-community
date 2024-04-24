@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -65,7 +65,7 @@ final class CreateLauncherScriptAction extends DumbAwareAction implements Action
     }
     else {
       var dir = Path.of(PathManager.getBinPath());
-      var name = ApplicationNamesInfo.getInstance().getScriptName() + ".sh";
+      var name = ApplicationNamesInfo.getInstance().getScriptName() + (Boolean.getBoolean("ide.native.launcher") ? "" : ".sh");
       var url = ((HelpManagerImpl)HelpManager.getInstance()).getHelpUrl(TOPIC);
       message = ApplicationBundle.message("cli.launcher.message.unix", dir, name, url);
     }
@@ -83,6 +83,7 @@ final class CreateLauncherScriptAction extends DumbAwareAction implements Action
         ProcessIOExecutorService.INSTANCE.execute(() -> {
           try {
             var launcherName = ApplicationNamesInfo.getInstance().getScriptName();
+            @SuppressWarnings("SpellCheckingInspection")
             var scriptName = switch (launcherName) {
               case "phpstorm" -> "pstorm";
               case "pycharm" -> "charm";

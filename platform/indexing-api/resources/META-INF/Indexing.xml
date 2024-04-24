@@ -22,6 +22,7 @@
     </extensionPoint>
     <extensionPoint name="findModelExtension" interface="com.intellij.find.FindModelExtension" dynamic="true"/>
     <extensionPoint name="codeUsageScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
+    <extensionPoint name="binaryFileSourceProvider" interface="com.intellij.platform.indexing.BinaryFileSourceProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

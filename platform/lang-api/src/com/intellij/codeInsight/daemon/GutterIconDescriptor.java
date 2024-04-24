@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +23,7 @@ public abstract class GutterIconDescriptor {
 
   /**
    * Icon in size 12x12.
-   * See <a href="https://jetbrains.org/intellij/sdk/docs/reference_guide/work_with_icons_and_images.html">Icons and Images</a>.
+   * See <a href="https://plugins.jetbrains.com/docs/intellij/icons.html">Icons</a>.
    */
   public @Nullable Icon getIcon() {
     return null;

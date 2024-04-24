@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
@@ -63,8 +63,7 @@ public final class JavaInjectedFileChangesHandlerProvider implements InjectedFil
 
 class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
 
-  @NotNull
-  private final RangeMarker myAltFullRange;
+  private final @NotNull RangeMarker myAltFullRange;
 
   OldJavaInjectedFileChangesHandler(List<? extends PsiLanguageInjectionHost.Shred> shreds, Editor editor,
                                     Document newDocument,

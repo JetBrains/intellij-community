@@ -29,7 +29,7 @@ public final class ClearTextAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     final Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (component instanceof JTextComponent textComponent) {
-      e.getPresentation().setEnabled(textComponent.getText().length() > 0 && ((JTextComponent)component).isEditable());
+      e.getPresentation().setEnabled(textComponent.getText().length() > 0 && textComponent.isEditable());
     }
     else {
       e.getPresentation().setEnabled(false);

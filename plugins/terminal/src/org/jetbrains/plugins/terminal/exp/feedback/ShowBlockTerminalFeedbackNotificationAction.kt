@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
-class ShowBlockTerminalFeedbackNotificationAction : DumbAwareAction() {
+internal class ShowBlockTerminalFeedbackNotificationAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     @Suppress("TestOnlyProblems")  // it is an internal action for testing
     BlockTerminalFeedbackSurvey().showNotification(e.project!!, forTest = true)

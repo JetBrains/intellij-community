@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.DialogPanel
@@ -8,7 +8,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * See [docs](http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/kotlin_ui_dsl.html).
+ * See [docs](https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl.html).
  *
  * Claims all available space in the container for the columns ([LCFlags.fillX], if `constraints` is passed, `fillX` will be not applied - add it explicitly if need).
  * At least one component need to have a [Row.grow] constraint for it to fill the container.

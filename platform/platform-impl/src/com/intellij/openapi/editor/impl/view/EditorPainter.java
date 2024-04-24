@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.application.AccessToken;
@@ -207,7 +207,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private boolean paintPlaceholderText() {
       CharSequence hintText = myEditor.getPlaceholder();
       EditorComponentImpl editorComponent = myEditor.getContentComponent();
-      if (myDocument.getTextLength() > 0 || hintText == null || hintText.length() == 0 ||
+      if (myDocument.getTextLength() > 0 || hintText == null || hintText.isEmpty() ||
           KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == editorComponent &&
           !myEditor.getShowPlaceholderWhenFocused()) {
         return false;

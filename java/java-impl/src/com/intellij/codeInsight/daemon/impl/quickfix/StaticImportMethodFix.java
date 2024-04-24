@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -25,15 +25,13 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
     super(file, methodCallExpression);
   }
 
-  @NotNull
   @Override
-  protected String getBaseText() {
+  protected @NotNull String getBaseText() {
     return QuickFixBundle.message("static.import.method.text");
   }
 
-  @NotNull
   @Override
-  protected String getMemberPresentableText(@NotNull PsiMethod method) {
+  protected @NotNull String getMemberPresentableText(@NotNull PsiMethod method) {
     return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
                                                                     PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
                                                                     PsiFormatUtilBase.SHOW_FQ_NAME, 0);
@@ -68,21 +66,18 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
   }
 
   @Override
-  @NotNull
-  protected QuestionAction createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
+  protected @NotNull QuestionAction createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
     return new StaticImportMemberQuestionAction<>(project, editor, methodsToImport, myReferencePointer);
   }
 
-  @Nullable
   @Override
-  protected PsiElement getQualifierExpression() {
+  protected @Nullable PsiElement getQualifierExpression() {
     PsiMethodCallExpression element = myReferencePointer.getElement();
     return element != null ? element.getMethodExpression().getQualifierExpression() : null;
   }
 
-  @Nullable
   @Override
-  protected PsiElement resolveRef() {
+  protected @Nullable PsiElement resolveRef() {
     PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)getElement();
     return methodCallExpression != null ? methodCallExpression.resolveMethod() : null;
   }

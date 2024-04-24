@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -17,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -824,7 +824,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
 
     private static boolean hasMultiSelectionModifier(@NotNull MouseEvent e) {
-      return (e.getModifiers() & (SystemInfo.isMac ? META_MASK : CTRL_MASK)) != 0;
+      return (e.getModifiers() & (ClientSystemInfo.isMac() ? META_MASK : CTRL_MASK)) != 0;
     }
 
     @Override

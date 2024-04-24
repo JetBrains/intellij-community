@@ -102,7 +102,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
 
         tryGetScriptDefinitionFast(locationId)?.let { fastPath -> return fastPath }
 
-        warmupDefinitionsCache()
+        getOrLoadDefinitions()
 
         val definition =
             if (isScratchFile(script)) {
@@ -187,8 +187,6 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
             definitions ?: error("'definitions' became null after they weren't")
         }
     }
-
-    private fun warmupDefinitionsCache() = getOrLoadDefinitions()
 
     private fun allDefinitionSourcesContributedToCache(): Boolean = activatedDefinitionSources.containsAll(getSources())
 

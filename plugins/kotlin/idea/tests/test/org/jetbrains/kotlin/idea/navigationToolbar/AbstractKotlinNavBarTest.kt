@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.navigationToolbar
 
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.platform.navbar.compatibility.testFramework.contextNavBarPathStrings
+import com.intellij.platform.navbar.testFramework.contextNavBarPathStrings
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 

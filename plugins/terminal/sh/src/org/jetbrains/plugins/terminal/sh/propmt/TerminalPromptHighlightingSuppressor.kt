@@ -6,7 +6,7 @@ import com.intellij.sh.highlighting.ShOccurrencesHighlightingSuppressor
 import com.intellij.sh.psi.ShFile
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 
-class TerminalPromptHighlightingSuppressor: ShOccurrencesHighlightingSuppressor {
+internal class TerminalPromptHighlightingSuppressor : ShOccurrencesHighlightingSuppressor {
   override fun suppressOccurrencesHighlighting(editor: Editor, file: ShFile): Boolean {
     return editor.isPromptEditor
   }

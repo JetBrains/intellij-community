@@ -42,19 +42,19 @@ public interface IdeaVersion extends DomElement {
 
     @Nullable
     @Override
-    public BuildNumber fromString(@Nullable String s, ConvertContext context) {
+    public BuildNumber fromString(@Nullable String s, @NotNull ConvertContext context) {
       return s == null ? null : BuildNumber.fromStringOrNull(s);
     }
 
     @Nullable
     @Override
-    public String toString(@Nullable BuildNumber number, ConvertContext context) {
+    public String toString(@Nullable BuildNumber number, @NotNull ConvertContext context) {
       return number == null ? null : number.asString();
     }
 
     @Nullable
     @Override
-    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+    public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
       return DevKitBundle.message("inspections.plugin.xml.invalid.build.number", s);
     }
   }

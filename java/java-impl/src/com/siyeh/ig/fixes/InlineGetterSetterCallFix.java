@@ -33,18 +33,15 @@ public class InlineGetterSetterCallFix extends PsiUpdateModCommandQuickFix {
     myGetter = getter;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
     return myGetter
            ? InspectionGadgetsBundle.message("call.to.simple.getter.in.class.inline.quickfix")
            : InspectionGadgetsBundle.message("call.to.simple.setter.in.class.inline.quickfix");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("inline.call.quickfix");
   }
 
@@ -59,7 +56,7 @@ public class InlineGetterSetterCallFix extends PsiUpdateModCommandQuickFix {
     if (field == null) return;
     final String name = field.getName();
     final CommentTracker tracker = new CommentTracker();
-    @NonNls final StringBuilder newText = new StringBuilder();
+    final @NonNls StringBuilder newText = new StringBuilder();
     final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier != null) {
       newText.append(tracker.text(qualifier)).append('.');

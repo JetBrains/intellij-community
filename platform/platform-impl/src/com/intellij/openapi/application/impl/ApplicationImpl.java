@@ -68,7 +68,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
 import static com.intellij.openapi.application.RuntimeFlagsKt.isNewLockEnabled;
-import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
+import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 
 @ApiStatus.Internal
 public final class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx, ReadActionListener, WriteActionListener {
@@ -280,8 +280,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       getLogger().error("Do not call invokeLater when app is not yet fully initialized");
     }
 
-    if (propagateContextOrCancellation()) {
-      Pair<Runnable, Condition<?>> captured = Propagation.capturePropagationAndCancellationContext(runnable, expired);
+    if (propagateContext()) {
+      Pair<Runnable, Condition<?>> captured = Propagation.capturePropagationContext(runnable, expired);
       runnable = captured.getFirst();
       expired = captured.getSecond();
     }
@@ -408,7 +408,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     }
 
     Runnable r =
-      myTransactionGuard.wrapLaterInvocation(AppScheduledExecutorService.capturePropagationAndCancellationContext(runnable), modalityState);
+      myTransactionGuard.wrapLaterInvocation(AppScheduledExecutorService.captureContextCancellationForRunnableThatDoesNotOutliveContextScope(runnable), modalityState);
     LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(r));
   }
 

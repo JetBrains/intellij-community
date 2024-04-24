@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.NamedMethodFilter
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
@@ -22,7 +23,6 @@ import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVaria
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 
 open class KotlinMethodFilter(
@@ -97,15 +97,15 @@ open class KotlinMethodFilter(
 
         val isGeneratedLambda = actualMethodName.isGeneratedIrBackendLambdaMethodName()
         return actualMethodName == targetMethodName ||
-               actualMethodName == "$targetMethodName${JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX}" ||
-               isGeneratedLambda && getMethodNameInCallerFrame(frameProxy) == targetMethodName ||
-               // A correct way here is to memorize the original location (where smart step into was started)
-               // and filter out ranges that contain that original location.
-               // Otherwise, nested inline with the same method name will not work correctly.
-               method.getInlineFunctionAndArgumentVariablesToBordersMap()
-                   .filter { location in it.value }
-                   .any { it.key.isInlinedFromFunction(targetMethodName, isNameMangledInBytecode, methodInfo.isInternalMethod) } ||
-               !isGeneratedLambda && methodInfo.isInternalMethod && internalNameMatches(actualMethodName, targetMethodName)
+                actualMethodName == "$targetMethodName${JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX}" ||
+                isGeneratedLambda && getMethodNameInCallerFrame(frameProxy) == targetMethodName ||
+                // A correct way here is to memorize the original location (where smart step into was started)
+                // and filter out ranges that contain that original location.
+                // Otherwise, nested inline with the same method name will not work correctly.
+                method.getInlineFunctionAndArgumentVariablesToBordersMap()
+                    .filter { location in it.value }
+                    .any { it.key.isInlinedFromFunction(targetMethodName, isNameMangledInBytecode, methodInfo.isInternalMethod) } ||
+                !isGeneratedLambda && methodInfo.isInternalMethod && internalNameMatches(actualMethodName, targetMethodName)
     }
 }
 
@@ -126,7 +126,7 @@ private fun LocalVariable.isInlinedFromFunction(methodName: String, isNameMangle
     if (!variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)) return false
     val inlineMethodName = variableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
     return inlineMethodName == methodName ||
-           isInternalMethod && internalNameMatches(inlineMethodName, methodName)
+            isInternalMethod && internalNameMatches(inlineMethodName, methodName)
 }
 
 private fun getMethodNameInCallerFrame(frameProxy: StackFrameProxyImpl?): String? {

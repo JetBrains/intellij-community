@@ -33,19 +33,19 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     myDelimiters = delimiters;
   }
 
-  protected abstract @Nullable T convertString(final @Nullable String string, final ConvertContext context);
+  protected abstract @Nullable T convertString(final @Nullable String string, @NotNull ConvertContext context);
 
   protected abstract @Nullable String toString(final @Nullable T t);
 
 
-  protected abstract Object[] getReferenceVariants(final ConvertContext context, GenericDomValue<? extends List<T>> genericDomValue);
+  protected abstract Object[] getReferenceVariants(@NotNull ConvertContext context, GenericDomValue<? extends List<T>> genericDomValue);
 
-  protected abstract @Nullable PsiElement resolveReference(final @Nullable T t, final ConvertContext context);
+  protected abstract @Nullable PsiElement resolveReference(final @Nullable T t, @NotNull ConvertContext context);
 
   protected abstract @InspectionMessage String getUnresolvedMessage(String value);
 
   @Override
-  public @NotNull Collection<? extends List<T>> getVariants(final ConvertContext context) {
+  public @NotNull Collection<? extends List<T>> getVariants(final @NotNull ConvertContext context) {
     return Collections.emptyList();
   }
 
@@ -69,7 +69,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
   }
 
   @Override
-  public List<T> fromString(final @Nullable String str, final ConvertContext context) {
+  public List<T> fromString(final @Nullable String str, final @NotNull ConvertContext context) {
     if (str == null) {
       return null;
     }
@@ -85,7 +85,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
   }
 
   @Override
-  public String toString(final List<T> ts, final ConvertContext context) {
+  public String toString(final List<T> ts, final @NotNull ConvertContext context) {
     final StringBuilder buffer = new StringBuilder();
     final char delimiter = getDefaultDelimiter();
     for (T t : ts) {
@@ -123,7 +123,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
   protected @NotNull PsiReference createPsiReference(final PsiElement element,
                                                      int start,
                                                      int end,
-                                                     final ConvertContext context,
+                                                     @NotNull ConvertContext context,
                                                      final GenericDomValue<List<T>> genericDomValue,
                                                      final boolean delimitersOnly) {
 
@@ -150,7 +150,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
 
     public MyPsiReference(final PsiElement element,
                           final TextRange range,
-                          final ConvertContext context,
+                          @NotNull ConvertContext context,
                           final GenericDomValue<List<T>> genericDomValue,
                           final boolean delimitersOnly) {
       this(element, range, context, genericDomValue, true, delimitersOnly);
@@ -158,7 +158,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
 
     public MyPsiReference(final PsiElement element,
                           final TextRange range,
-                          final ConvertContext context,
+                          @NotNull ConvertContext context,
                           final GenericDomValue<List<T>> genericDomValue,
                           boolean soft,
                           final boolean delimitersOnly) {

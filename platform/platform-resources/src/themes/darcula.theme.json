@@ -756,7 +756,11 @@
       "mainToolbarInsets.compact": "1,10,1,10",
       "fileToolbarInsets.compact": "7,10,7,10",
       "gapBetweenBlocks.compact": 4,
-      "leftRightBlockInset.compact": 6
+      "leftRightBlockInset.compact": 6,
+      "BlockBorder": {
+        "selectedActiveColor": "#375FAD",
+        "selectedInactiveColor": "#5A5D63"
+      }
     },
 
     "Tag": {

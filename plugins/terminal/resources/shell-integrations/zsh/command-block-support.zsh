@@ -62,17 +62,6 @@ __jetbrains_intellij_zshaddhistory() {
 	! __jetbrains_intellij_is_generator_command "$1"
 }
 
-__jetbrains_intellij_prompt_shown() {
-  builtin printf '\e]1341;prompt_shown\a'
-}
-
-__jetbrains_intellij_configure_prompt() {
-  PS1="%{$(__jetbrains_intellij_prompt_shown)%}"
-  # do not show right prompt
-  builtin unset RPS1
-  builtin unset RPROMPT
-}
-
 __jetbrains_intellij_command_preexec() {
   if __jetbrains_intellij_is_generator_command "$1"
   then
@@ -100,7 +89,6 @@ __jetbrains_intellij_command_precmd() {
   __jetbrains_intellij_report_prompt_state
   builtin printf '\e]1341;command_finished;exit_code=%s\a' "$LAST_EXIT_CODE"
   builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"
-  __jetbrains_intellij_configure_prompt
 }
 
 __jetbrains_intellij_report_prompt_state() {
@@ -120,11 +108,15 @@ __jetbrains_intellij_report_prompt_state() {
   then
     conda_env="$CONDA_DEFAULT_ENV"
   fi
-  builtin printf '\e]1341;prompt_state_updated;current_directory=%s;git_branch=%s;virtual_env=%s;conda_env=%s\a' \
+  builtin local original_prompt="$(builtin print -rP $PS1 2>/dev/null)"
+  builtin local original_right_prompt="$(builtin print -rP $RPROMPT 2>/dev/null)"
+  builtin printf '\e]1341;prompt_state_updated;current_directory=%s;git_branch=%s;virtual_env=%s;conda_env=%s;original_prompt=%s;original_right_prompt=%s\a' \
     "$(__jetbrains_intellij_encode "${current_directory}")" \
     "$(__jetbrains_intellij_encode "${git_branch}")" \
     "$(__jetbrains_intellij_encode "${virtual_env}")" \
-    "$(__jetbrains_intellij_encode "${conda_env}")"
+    "$(__jetbrains_intellij_encode "${conda_env}")" \
+    "$(__jetbrains_intellij_encode "${original_prompt}")" \
+    "$(__jetbrains_intellij_encode "${original_right_prompt}")"
 }
 
 __jetbrains_intellij_collect_shell_info() {
@@ -179,8 +171,6 @@ clear() {
 add-zsh-hook preexec __jetbrains_intellij_command_preexec
 add-zsh-hook precmd __jetbrains_intellij_command_precmd
 add-zsh-hook zshaddhistory __jetbrains_intellij_zshaddhistory
-
-__jetbrains_intellij_configure_prompt
 
 __jetbrains_intellij_report_prompt_state
 

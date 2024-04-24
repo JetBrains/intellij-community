@@ -59,6 +59,7 @@ internal fun djangoFeatures(source: PromoEventSource): JComponent {
   )
 }
 
+
 internal fun jupyterFeatures(source: PromoEventSource): JComponent {
   return featurePage(
     PyCharmCommunityCustomizationBundle.message("feature.jupyter.description.html",

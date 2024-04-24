@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -19,7 +19,7 @@ import java.util.Objects;
 public class MemberLookupHelper {
   private final PsiMember myMember;
   private final boolean myMergedOverloads;
-  @Nullable private final PsiClass myContainingClass;
+  private final @Nullable PsiClass myContainingClass;
   private boolean myShouldImport;
 
   public MemberLookupHelper(List<? extends PsiMethod> overloads, PsiClass containingClass, boolean shouldImport) {
@@ -37,8 +37,7 @@ public class MemberLookupHelper {
     return myMember;
   }
 
-  @Nullable
-  public PsiClass getContainingClass() {
+  public @Nullable PsiClass getContainingClass() {
     return myContainingClass;
   }
 
@@ -91,8 +90,7 @@ public class MemberLookupHelper {
     }
   }
 
-  @Nullable
-  static PsiType getDeclaredType(PsiMember member, PsiSubstitutor substitutor) {
+  static @Nullable PsiType getDeclaredType(PsiMember member, PsiSubstitutor substitutor) {
     if (member instanceof PsiField field) {
       return substitutor.substitute(field.getType());
     }
@@ -106,8 +104,7 @@ public class MemberLookupHelper {
     return null;
   }
 
-  @Nullable
-  private static PsiType patchGetClass(@NotNull PsiMethod method, @Nullable PsiType type) {
+  private static @Nullable PsiType patchGetClass(@NotNull PsiMethod method, @Nullable PsiType type) {
     if (PsiTypesUtil.isGetClass(method) && type instanceof PsiClassType) {
       PsiType arg = ContainerUtil.getFirstItem(Arrays.asList(((PsiClassType)type).getParameters()));
       PsiType bound = arg instanceof PsiWildcardType ? TypeConversionUtil.erasure(((PsiWildcardType)arg).getExtendsBound()) : null;
@@ -118,8 +115,7 @@ public class MemberLookupHelper {
     return type;
   }
 
-  @NotNull
-  static String getMethodParameterString(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+  static @NotNull String getMethodParameterString(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
     return PsiFormatUtil.formatMethod(method, substitutor,
                                       PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE);
   }

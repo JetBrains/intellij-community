@@ -53,8 +53,7 @@ public final class FlipComparisonIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new FlipComparisonPredicate();
   }
 

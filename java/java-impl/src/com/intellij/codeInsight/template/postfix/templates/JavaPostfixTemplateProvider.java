@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
@@ -74,21 +74,18 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     new StreamPostfixTemplate()
   );
 
-  @NotNull
   @Override
-  public Set<PostfixTemplate> getTemplates() {
+  public @NotNull Set<PostfixTemplate> getTemplates() {
     return myBuiltinTemplates;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "builtin.java";
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return JavaBundle.message("postfix.template.provider.name");
   }
 
@@ -98,7 +95,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   }
 
   @Override
-  public void preExpand(@NotNull final PsiFile file, @NotNull final Editor editor) {
+  public void preExpand(final @NotNull PsiFile file, final @NotNull Editor editor) {
     ThreadingAssertions.assertEventDispatchThread();
     if (isSemicolonNeeded(file, editor)) {
       ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().runUndoTransparentAction(() -> {
@@ -109,12 +106,11 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   }
 
   @Override
-  public void afterExpand(@NotNull final PsiFile file, @NotNull final Editor editor) {
+  public void afterExpand(final @NotNull PsiFile file, final @NotNull Editor editor) {
   }
 
-  @NotNull
   @Override
-  public PsiFile preCheck(final @NotNull PsiFile copyFile, final @NotNull Editor realEditor, final int currentOffset) {
+  public @NotNull PsiFile preCheck(final @NotNull PsiFile copyFile, final @NotNull Editor realEditor, final int currentOffset) {
     Document document = copyFile.getFileDocument();
     CharSequence sequence = document.getCharsSequence();
     StringBuilder fileContentWithSemicolon = new StringBuilder(sequence);
@@ -131,9 +127,8 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     return JavaCompletionContributor.semicolonNeeded(file, startOffset);
   }
 
-  @Nullable
   @Override
-  public PostfixTemplateEditor createEditor(@Nullable PostfixTemplate templateToEdit) {
+  public @Nullable PostfixTemplateEditor createEditor(@Nullable PostfixTemplate templateToEdit) {
     if (templateToEdit == null ||
         templateToEdit instanceof JavaEditablePostfixTemplate &&
         // cannot be editable until there is no UI for editing template variables    
@@ -150,9 +145,8 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     return null;
   }
 
-  @Nullable
   @Override
-  public JavaEditablePostfixTemplate readExternalTemplate(@NotNull String id, @NotNull String name, @NotNull Element template) {
+  public @Nullable JavaEditablePostfixTemplate readExternalTemplate(@NotNull String id, @NotNull String name, @NotNull Element template) {
     TemplateImpl liveTemplate = readExternalLiveTemplate(template, this);
     if (liveTemplate == null) return null;
     Set<JavaPostfixTemplateExpressionCondition> conditions = readExternalConditions(template, JavaPostfixTemplateProvider::readExternal);
@@ -174,8 +168,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     }
   }
 
-  @Nullable
-  private static JavaPostfixTemplateExpressionCondition readExternal(@NotNull Element condition) {
+  private static @Nullable JavaPostfixTemplateExpressionCondition readExternal(@NotNull Element condition) {
     String id = condition.getAttributeValue(PostfixTemplateExpressionCondition.ID_ATTR);
     if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition.ID.equals(id)) {
       return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition();

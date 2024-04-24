@@ -5,9 +5,7 @@ package org.jetbrains.kotlin.idea.goto
 import com.intellij.navigation.GotoRelatedItem
 import com.intellij.navigation.GotoRelatedProvider
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -18,22 +16,18 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 
 class KotlinExpectOrActualGotoRelatedProvider : GotoRelatedProvider() {
     private class ActualOrExpectGotoRelatedItem(element: PsiElement) : GotoRelatedItem(element) {
-        override fun getCustomContainerName(): String? {
-            val module = element?.module ?: return null
-            return KotlinBundle.message("goto.related.provider.in.module.0", module.name)
-        }
+        override fun getCustomContainerName(): String? =
+            element?.module?.let { KotlinBundle.message("goto.related.provider.in.module.0", it.name) }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
     override fun getItems(psiElement: PsiElement): List<GotoRelatedItem> {
         val declaration = psiElement.getParentOfTypeAndBranch<KtNamedDeclaration> { nameIdentifier } ?: return emptyList()
         val targets = when {
-            declaration.isExpectDeclaration() -> allowAnalysisOnEdt { declaration.actualsForExpected() }
-            declaration.isEffectivelyActual() -> allowAnalysisOnEdt {
-                analyze(declaration) {
-                    declaration.getSymbol().getExpectsForActual().mapNotNull { it.psi }
-                }
+            declaration.isExpectDeclaration() -> declaration.actualsForExpected()
+            declaration.isEffectivelyActual() -> analyze(declaration) {
+                declaration.getSymbol().getExpectsForActual().mapNotNull { it.psi }
             }
+
             else -> emptyList()
         }
         return targets.map(::ActualOrExpectGotoRelatedItem)

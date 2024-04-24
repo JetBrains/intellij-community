@@ -98,9 +98,7 @@ import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
+import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -957,9 +955,18 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
           myExtendedInfoComponent.updateElement(selectedValue, this);
         }
       }
+    });
 
-      if (isPreviewEnabled() && myProject != null && selectedValue != null && myUsagePreviewPanel != null) {
-        schedulePreview(selectedValue);
+    myResultsList.addListSelectionListener(new ListSelectionListener() {
+      private Object currentValue = null;
+
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        Object newValue = myResultsList.getSelectedValue();
+        if (isPreviewEnabled() && myProject != null && newValue != null && newValue != currentValue && myUsagePreviewPanel != null) {
+          schedulePreview(newValue);
+          currentValue = newValue;
+        }
       }
     });
 

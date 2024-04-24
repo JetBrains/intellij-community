@@ -2,12 +2,15 @@
 package org.jetbrains.plugins.github.api.util
 
 import com.intellij.openapi.progress.ProgressIndicator
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubApiRequest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubResponsePage
+import org.jetbrains.plugins.github.api.executeSuspend
 import java.io.IOException
 import java.util.function.Predicate
 
+@ApiStatus.Internal
 object GithubApiPagesLoader {
 
   @Throws(IOException::class)
@@ -20,6 +23,14 @@ object GithubApiPagesLoader {
 
   @Throws(IOException::class)
   @JvmStatic
+  suspend fun <T> loadAll(executor: GithubApiRequestExecutor, pagesRequest: Request<T>): List<T> {
+    val result = mutableListOf<T>()
+    loadAll(executor, pagesRequest) { result.addAll(it) }
+    return result
+  }
+
+  @Throws(IOException::class)
+  @JvmStatic
   fun <T> loadAll(executor: GithubApiRequestExecutor,
                   indicator: ProgressIndicator,
                   pagesRequest: Request<T>,
@@ -27,6 +38,19 @@ object GithubApiPagesLoader {
     var request: GithubApiRequest<GithubResponsePage<T>>? = pagesRequest.initialRequest
     while (request != null) {
       val page = executor.execute(indicator, request)
+      pageItemsConsumer(page.items)
+      request = page.nextLink?.let(pagesRequest.urlRequestProvider)
+    }
+  }
+
+  @Throws(IOException::class)
+  @JvmStatic
+  suspend fun <T> loadAll(executor: GithubApiRequestExecutor,
+                          pagesRequest: Request<T>,
+                          pageItemsConsumer: (List<T>) -> Unit) {
+    var request: GithubApiRequest<GithubResponsePage<T>>? = pagesRequest.initialRequest
+    while (request != null) {
+      val page = executor.executeSuspend(request)
       pageItemsConsumer(page.items)
       request = page.nextLink?.let(pagesRequest.urlRequestProvider)
     }

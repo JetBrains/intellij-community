@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -51,9 +51,7 @@ public final class ToArrayCallWithZeroLengthArrayArgumentInspection extends Base
     }
   }
 
-  @NotNull
-  @SuppressWarnings("PublicField")
-  public PreferEmptyArray myMode = DEFAULT_MODE;
+  @SuppressWarnings("PublicField") public @NotNull PreferEmptyArray myMode = DEFAULT_MODE;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
@@ -62,15 +60,13 @@ public final class ToArrayCallWithZeroLengthArrayArgumentInspection extends Base
   }
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiExpression argument = (PsiExpression)infos[1];
     return new ToArrayCallWithZeroLengthArrayArgumentFix(myMode.isEmptyPreferred(argument));
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiExpression argument = (PsiExpression)infos[1];
     return myMode.isEmptyPreferred(argument) ?
            InspectionGadgetsBundle.message("to.array.call.style.problem.descriptor.presized", argument.getText()) :
@@ -125,18 +121,15 @@ public final class ToArrayCallWithZeroLengthArrayArgumentInspection extends Base
       myEmptyPreferred = emptyPreferred;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return myEmptyPreferred ?
              InspectionGadgetsBundle.message("to.array.call.style.quickfix.make.zero") :
              InspectionGadgetsBundle.message("to.array.call.style.quickfix.make.presized");
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("to.array.call.style.quickfix.family.name");
     }
 
@@ -164,7 +157,7 @@ public final class ToArrayCallWithZeroLengthArrayArgumentInspection extends Base
       if (myEmptyPreferred || ExpressionUtils.isSafelyRecomputableExpression(qualifier)) {
         CommentTracker ct = new CommentTracker();
         String sizeClause = myEmptyPreferred ? "0" : collectionText + ".size()";
-        @NonNls final String replacementText = "new " + typeText + '[' + sizeClause + "]";
+        final @NonNls String replacementText = "new " + typeText + '[' + sizeClause + "]";
         ct.replaceAndRestoreComments(argument, replacementText);
         return;
       }

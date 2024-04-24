@@ -53,11 +53,13 @@ internal class SettingsModel(val components: List<ComponentDescriptor>) {
               out.beginObject()
               out.name("name")
               out.value(stateName)
+              out.name("scope")
+              out.value("app") // TODO: Add "project" later for project-level components
               descriptor.pluginDescriptor?.pluginId?.let {
                 out.name("pluginId")
                 out.value(it.idString)
               }
-              out.name("class")
+              out.name("classFqn")
               out.value(descriptor.aClass.name)
               findStorage(descriptor.state)?.let { storage ->
                 out.name("storage")

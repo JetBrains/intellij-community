@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -134,7 +134,7 @@ public final class ChooseActionsDialog extends DialogWrapper {
           myActionsTree.filter(filter, myQuicklists);
           final JTree tree = myActionsTree.getTree();
           TreeUtil.expandAll(tree);
-          if (filter == null || filter.length() == 0) {
+          if (filter == null || filter.isEmpty()) {
             TreeUtil.collapseAll(tree, 0);
             myTreeExpansionMonitor.restore();
           }

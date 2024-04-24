@@ -16,7 +16,10 @@
 package com.siyeh.ig.style;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
@@ -53,8 +56,7 @@ public final class UnnecessaryFullyQualifiedNameInspection extends BaseInspectio
   public boolean ignoreInModuleStatements = true;
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final boolean inSameFile = ((Boolean)infos[0]).booleanValue();
     if (inSameFile) {
       return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.problem.descriptor2");
@@ -81,15 +83,13 @@ public final class UnnecessaryFullyQualifiedNameInspection extends BaseInspectio
       this.inSameFile = inSameFile;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.fix.family.name");
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return inSameFile
              ? InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.remove.quickfix")
              : InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.replace.quickfix");
@@ -139,8 +139,7 @@ public final class UnnecessaryFullyQualifiedNameInspection extends BaseInspectio
       this.fullyQualifiedText = fullyQualifiedText;
     }
 
-    @NotNull
-    public Collection<PsiElement> getShortenedElements() {
+    public @NotNull Collection<PsiElement> getShortenedElements() {
       return Collections.unmodifiableCollection(shortenedElements);
     }
 

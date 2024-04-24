@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.collections;
 
 import com.intellij.codeInsight.Nullability;
@@ -43,9 +43,8 @@ public final class ReplaceWithArraysAsListIntention extends MCIntention {
     return presentation == null ? null : presentation.withPriority(PriorityAction.Priority.HIGH);
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return e -> {
       if (!(e instanceof PsiMethodCallExpression methodCallExpression)) {
         return false;

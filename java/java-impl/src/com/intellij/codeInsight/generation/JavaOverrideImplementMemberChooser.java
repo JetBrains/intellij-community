@@ -43,9 +43,9 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
  * @author Dmitry Batkovich
  */
 public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodMember> {
-  @NonNls public static final String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
-  @NonNls public static final String PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT = "OverrideImplement.overriding.sorted";
-  @NonNls public static final String PROP_GENERATE_JAVADOC_OVERRIDE_IMPLEMENT = "OverrideImplement.generate.javadoc";
+  public static final @NonNls String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
+  public static final @NonNls String PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT = "OverrideImplement.overriding.sorted";
+  public static final @NonNls String PROP_GENERATE_JAVADOC_OVERRIDE_IMPLEMENT = "OverrideImplement.generate.javadoc";
 
   private ToggleAction myMergeAction;
   private final PsiMethodMember[] myAllElements;
@@ -58,18 +58,16 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
   private boolean mySortedByOverriding;
   private JBCheckBox myGenerateJavadocCheckBox;
 
-  @Nullable
-  public static JavaOverrideImplementMemberChooser create(final PsiElement aClass,
-                                                          final boolean toImplement,
-                                                          final Collection<? extends CandidateInfo> candidates,
-                                                          final Collection<? extends CandidateInfo> secondary) {
+  public static @Nullable JavaOverrideImplementMemberChooser create(final PsiElement aClass,
+                                                                    final boolean toImplement,
+                                                                    final Collection<? extends CandidateInfo> candidates,
+                                                                    final Collection<? extends CandidateInfo> secondary) {
     JavaOverrideImplementMemberChooserContainer result = prepare(aClass, toImplement, candidates, secondary);
     if (result == null) return null;
     return create(result);
   }
 
-  @NotNull
-  public static JavaOverrideImplementMemberChooser create(@NotNull JavaOverrideImplementMemberChooserContainer container) {
+  public static @NotNull JavaOverrideImplementMemberChooser create(@NotNull JavaOverrideImplementMemberChooserContainer container) {
     final JavaOverrideImplementMemberChooser javaOverrideImplementMemberChooser =
       new JavaOverrideImplementMemberChooser(container.file(), container.all(), container.onlyPrimary(),
                                              container.lazyElementsWithPercent(),
@@ -94,11 +92,10 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     return javaOverrideImplementMemberChooser;
   }
 
-  @Nullable
-  public static JavaOverrideImplementMemberChooserContainer prepare(PsiElement aClass,
-                                                                    boolean toImplement,
-                                                                    Collection<? extends CandidateInfo> candidates,
-                                                                    Collection<? extends CandidateInfo> secondary) {
+  public static @Nullable JavaOverrideImplementMemberChooserContainer prepare(PsiElement aClass,
+                                                                              boolean toImplement,
+                                                                              Collection<? extends CandidateInfo> candidates,
+                                                                              Collection<? extends CandidateInfo> secondary) {
     final Project project = aClass.getProject();
     final PsiFile file = aClass.getContainingFile();
     if (file == null) {
@@ -271,7 +268,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     }
 
     @Override
-    public boolean isSelected(@NotNull final AnActionEvent e) {
+    public boolean isSelected(final @NotNull AnActionEvent e) {
       return mySortedByOverriding;
     }
 
@@ -281,7 +278,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     }
 
     @Override
-    public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
+    public void setSelected(final @NotNull AnActionEvent e, final boolean state) {
       mySortedByOverriding = state;
       if (state) {
         if (myMerge) {

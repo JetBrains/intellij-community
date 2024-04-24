@@ -19,6 +19,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +42,8 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   private ThreeState myResumeOnHotSwap = ThreeState.UNSURE;
 
   private final EventDispatcher<ThreadListener> myListeners = EventDispatcher.create(ThreadListener.class);
+
+  private volatile boolean myIsEvaluating = false;
 
   public static final Comparator<ThreadReferenceProxyImpl> ourComparator = (th1, th2) -> {
     int res = Boolean.compare(th2.isSuspended(), th1.isSuspended());
@@ -452,6 +455,17 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
 
   public void removeListener(ThreadListener listener) {
     myListeners.removeListener(listener);
+  }
+
+
+  @ApiStatus.Internal
+  public boolean isEvaluating() {
+    return myIsEvaluating;
+  }
+
+  @ApiStatus.Internal
+  public void setEvaluating(boolean evaluating) {
+    myIsEvaluating = evaluating;
   }
 
   public interface ThreadListener extends EventListener{

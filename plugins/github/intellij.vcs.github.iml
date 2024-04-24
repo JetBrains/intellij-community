@@ -78,5 +78,9 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlinx-serialization-compiler-plugin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="library" scope="TEST" name="mockito" level="project" />
+    <orderEntry type="library" scope="TEST" name="mockito.kotlin" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
   </component>
 </module>

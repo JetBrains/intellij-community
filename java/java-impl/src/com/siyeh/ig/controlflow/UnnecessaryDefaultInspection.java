@@ -53,8 +53,7 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
   public boolean onlyReportSwitchExpressions = true;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "unnecessary.default.problem.descriptor");
   }
@@ -75,10 +74,8 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
       super(PsiElement.class);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.default.quickfix");
     }
 
@@ -245,8 +242,7 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
     return null;
   }
 
-  @Nullable
-  private static PsiElement retrieveUnnecessaryDefault(PsiSwitchBlock switchBlock) {
+  private static @Nullable PsiElement retrieveUnnecessaryDefault(PsiSwitchBlock switchBlock) {
     final PsiExpression expression = switchBlock.getExpression();
     if (expression == null) {
       return null;

@@ -31,7 +31,7 @@ import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Compan
 import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter.Companion.isTerminalCommandSearch
 
 @Service(Service.Level.PROJECT)
-class TerminalInlineCompletion(private val scope: CoroutineScope) {
+internal class TerminalInlineCompletion(private val scope: CoroutineScope) {
   fun install(editor: EditorEx) {
     InlineCompletion.install(editor, scope)
   }
@@ -41,7 +41,7 @@ class TerminalInlineCompletion(private val scope: CoroutineScope) {
   }
 }
 
-class TerminalInlineCompletionProvider : InlineCompletionProvider {
+internal class TerminalInlineCompletionProvider : InlineCompletionProvider {
   override val id: InlineCompletionProviderID = InlineCompletionProviderID("TerminalInlineCompletionProvider")
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
     val flow = flow {
@@ -90,7 +90,7 @@ class TerminalInlineCompletionProvider : InlineCompletionProvider {
   }
 }
 
-class TerminalInsertInlineCompletionAction : EditorAction(Handler()), ActionPromoter {
+internal class TerminalInsertInlineCompletionAction : EditorAction(Handler()), ActionPromoter {
   override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
     // promote only if it is a prompt editor, because otherwise it will break the "EditorRight" action invocation in the RemoteDev,
     // because it count this action as enabled by default and 'isEnabledForCaret' check is not happen.

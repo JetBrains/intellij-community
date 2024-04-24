@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.openapi.util.Computable
-import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.search.PsiSearchHelperImpl.CandidateFileInfo
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchSession
@@ -225,8 +225,8 @@ private class Layer<T>(
     return myHelper.processGlobalRequests(globalsIds, progress, scopeProcessors(globals))
   }
 
-  private fun scopeProcessors(globals: Collection<RequestAndProcessors>): Map<WordRequestInfo, Processor<in PsiElement>> {
-    val result = HashMap<WordRequestInfo, Processor<in PsiElement>>()
+  private fun scopeProcessors(globals: Collection<RequestAndProcessors>): Map<WordRequestInfo, Processor<CandidateFileInfo>> {
+    val result = HashMap<WordRequestInfo, Processor<CandidateFileInfo>>()
     for (requestAndProcessors: RequestAndProcessors in globals) {
       progress.checkCanceled()
       result[requestAndProcessors.request] = scopeProcessor(requestAndProcessors)
@@ -234,7 +234,7 @@ private class Layer<T>(
     return result
   }
 
-  private fun scopeProcessor(requestAndProcessors: RequestAndProcessors): Processor<in PsiElement> {
+  private fun scopeProcessor(requestAndProcessors: RequestAndProcessors): Processor<CandidateFileInfo> {
     val (request: WordRequestInfo, processors: RequestProcessors) = requestAndProcessors
     val searcher = StringSearcher(request.word, request.isCaseSensitive, true, false)
     val adapted = MyBulkOccurrenceProcessor(project, processors)

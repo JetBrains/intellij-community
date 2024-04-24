@@ -490,6 +490,12 @@
       "FileHistory.Commit.selectedBranchBackground": "#0D0D40"
     },
 
+    "CombinedDiff": {
+      "BlockBorder": {
+        "selectedActiveColor": "#1AEBFF"
+      }
+    },
+
     "Lesson": {
       "shortcutBackground": "#333638",
       "stepNumberForeground": "#FEFEFE",

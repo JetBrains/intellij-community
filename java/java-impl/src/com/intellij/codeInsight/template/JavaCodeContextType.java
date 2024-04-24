@@ -51,9 +51,8 @@ public abstract class JavaCodeContextType extends TemplateContextType {
    */
   protected abstract boolean isInContext(@NotNull PsiElement element);
 
-  @NotNull
   @Override
-  public SyntaxHighlighter createHighlighter() {
+  public @NotNull SyntaxHighlighter createHighlighter() {
     return new JavaFileHighlighter();
   }
 

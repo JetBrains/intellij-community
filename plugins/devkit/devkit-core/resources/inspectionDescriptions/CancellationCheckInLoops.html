@@ -36,8 +36,8 @@ fun doSomething() {
 }
 </code></pre>
 <p>
-    In blocking context <code>com.intellij.openapi.progress.ProgressManager#checkCanceled</code> should be used,
-    while <code>com.intellij.openapi.progress.CoroutinesKt#checkCancelled</code> should be used in suspending one.
+    In blocking context <code>com.intellij.openapi.progress.ProgressManager.checkCanceled()</code> should be used,
+    while <code>com.intellij.openapi.progress.CoroutinesKt.checkCancelled()</code> should be used in suspending one.
 </p>
 <p>
     See <a href="https://plugins.jetbrains.com/docs/intellij/general-threading-rules.html#background-processes-and-processcanceledexception">Background Processes and ProcessCanceledException</a> in IntelliJ Platform Plugin SDK docs for more details.

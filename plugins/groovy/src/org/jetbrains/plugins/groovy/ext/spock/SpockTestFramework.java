@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.ext.spock;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.psi.JavaPsiFacade;
@@ -19,7 +18,7 @@ import org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework;
 
 import static com.intellij.psi.util.InheritanceUtil.isInheritor;
 
-public final class SpockTestFramework extends GroovyTestFramework implements DumbAware {
+public final class SpockTestFramework extends GroovyTestFramework {
   private static final ExternalLibraryDescriptor SPOCK_DESCRIPTOR = new ExternalLibraryDescriptor("org.spockframework", "spock-core");
 
   @NotNull
@@ -63,9 +62,7 @@ public final class SpockTestFramework extends GroovyTestFramework implements Dum
   @Override
   public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
     if (element == null) return false;
-    return callWithAlternateResolver(element.getProject(), () -> {
-      return SpockUtils.isTestMethod(element);
-    }, false);
+    return SpockUtils.isTestMethod(element);
   }
 
   @Override
@@ -75,22 +72,17 @@ public final class SpockTestFramework extends GroovyTestFramework implements Dum
 
   @Override
   protected boolean isTestClass(PsiClass clazz, boolean canBePotential) {
-    if (clazz == null) return false;
-    return callWithAlternateResolver(clazz.getProject(), () -> {
-      return clazz.getLanguage() == GroovyLanguage.INSTANCE && isInheritor(clazz, SpockUtils.SPEC_CLASS_NAME);
-    }, false);
+    return clazz.getLanguage() == GroovyLanguage.INSTANCE && isInheritor(clazz, SpockUtils.SPEC_CLASS_NAME);
   }
 
-  @Nullable
   private PsiMethod findSpecificMethod(@NotNull PsiClass clazz, String methodName) {
-    return callWithAlternateResolver(clazz.getProject(), () -> {
-      if (!isTestClass(clazz, false)) return null;
+    if (!isTestClass(clazz, false)) return null;
 
-      for (PsiMethod method : clazz.findMethodsByName(methodName, false)) {
-        if (method.getParameterList().isEmpty()) return method;
-      }
-      return null;
-    }, null);
+    for (PsiMethod method : clazz.findMethodsByName(methodName, false)) {
+      if (method.getParameterList().isEmpty()) return method;
+    }
+
+    return null;
   }
 
   @Nullable
@@ -107,9 +99,7 @@ public final class SpockTestFramework extends GroovyTestFramework implements Dum
 
   @Override
   public boolean shouldRunSingleClassAsJUnit5(Project project, GlobalSearchScope scope) {
-    return callWithAlternateResolver(project, () -> {
-      PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(SpockUtils.SPEC_CLASS_NAME, scope);
-      return aClass != null && AnnotationUtil.isAnnotated(aClass, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION, 0);
-    }, false);
+    PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(SpockUtils.SPEC_CLASS_NAME, scope);
+    return aClass != null && AnnotationUtil.isAnnotated(aClass, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION, 0);
   }
 }

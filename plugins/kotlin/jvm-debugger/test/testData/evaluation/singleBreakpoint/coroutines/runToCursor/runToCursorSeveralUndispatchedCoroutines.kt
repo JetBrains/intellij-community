@@ -16,7 +16,7 @@ fun main() = runBlocking {
             // RESULT: 5: I
             // RUN_TO_CURSOR: 1
             val b = 5
-        }   
+        }
     }
     println("End")
 }
@@ -27,3 +27,4 @@ suspend fun foo(i: Int) {
 }
 
 // REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
+// REGISTRY: debugger.always.suspend.thread.before.switch=true

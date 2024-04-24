@@ -79,7 +79,7 @@ class IndexingTestUtil(private val project: Project) {
     if (!shouldWait()) {
       return // TODO: CodeInsightTestFixtureImpl.configureInner via GroovyHighlightUsagesTest
     } else {
-      thisLogger().info("waitNow will be waiting, thread=${Thread.currentThread()}", Throwable())
+      thisLogger().debug("waitNow will be waiting, thread=${Thread.currentThread()}")
     }
 
     if (ApplicationManager.getApplication().isDispatchThread) {
@@ -127,7 +127,7 @@ class IndexingTestUtil(private val project: Project) {
 
   private suspend fun suspendUntilIndexesAreReady() {
     if (shouldWait()) {
-      thisLogger().info("suspendUntilIndexesAreReady will be waiting, thread=${Thread.currentThread()}", Throwable())
+      thisLogger().debug("suspendUntilIndexesAreReady will be waiting, thread=${Thread.currentThread()}")
     }
 
     withTimeout(600.seconds) {
@@ -138,8 +138,7 @@ class IndexingTestUtil(private val project: Project) {
   }
 
   private fun waitUntilFinished() {
-    thisLogger().debug(Throwable("waitUntilFinished, thread=${Thread.currentThread()}, " +
-                                 "WA=${ApplicationManager.getApplication().isWriteAccessAllowed}"))
+    thisLogger().debug("waitUntilFinished, thread=${Thread.currentThread()}, WA=${ApplicationManager.getApplication().isWriteAccessAllowed}")
     if (ApplicationManager.getApplication().isWriteAccessAllowed) {
       waitAfterWriteAction()
     }

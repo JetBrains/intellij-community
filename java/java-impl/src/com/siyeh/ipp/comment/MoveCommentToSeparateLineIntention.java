@@ -42,8 +42,7 @@ public final class MoveCommentToSeparateLineIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new CommentOnLineWithSourcePredicate();
   }
 

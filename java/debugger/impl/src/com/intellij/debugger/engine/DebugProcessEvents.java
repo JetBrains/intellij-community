@@ -65,6 +65,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class DebugProcessEvents extends DebugProcessImpl {
   private static final Logger LOG = Logger.getInstance(DebugProcessEvents.class);
@@ -749,8 +750,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
           //  // As resume() implicitly cleares the filter, the filter must be always applied _before_ any resume() action happens
           //  myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
           //}
-          boolean noStandardSuspendNeeded = requestor instanceof CustomProcessingLocatableEventRequestor customRequestor &&
-                                            customRequestor.customVoteSuspend(suspendContext);
+
+          boolean noStandardSuspendNeeded = specialSuspendProcessing(suspendContext, requestor, suspendManager, thread);
           if (!noStandardSuspendNeeded) {
             suspendManager.voteSuspend(suspendContext);
             showStatusText(DebugProcessEvents.this, event);
@@ -758,6 +759,71 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
       }
     });
+  }
+
+  private static boolean specialSuspendProcessing(@NotNull SuspendContextImpl suspendContext,
+                                                  @NotNull LocatableEventRequestor requestor,
+                                                  @NotNull SuspendManager suspendManager,
+                                                  @NotNull ThreadReference thread) {
+
+    if (suspendContext.myIsCustomSuspendLogic) {
+      suspendManager.voteResume(suspendContext);
+      return true;
+    }
+    boolean noStandardSuspendNeeded;
+    if (DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
+      noStandardSuspendNeeded = specialSuspendProcessingForAlwaysSwitch(suspendContext, requestor, suspendManager, thread);
+    }
+    else {
+      noStandardSuspendNeeded = requestor instanceof CustomProcessingLocatableEventRequestor customRequestor &&
+                                customRequestor.customVoteSuspend(suspendContext);
+    }
+    if (noStandardSuspendNeeded) {
+      suspendContext.myIsCustomSuspendLogic = true;
+    }
+    return noStandardSuspendNeeded;
+  }
+
+  private static boolean specialSuspendProcessingForAlwaysSwitch(@NotNull SuspendContextImpl suspendContext,
+                                                                 @NotNull LocatableEventRequestor requestor,
+                                                                 @NotNull SuspendManager suspendManager,
+                                                                 @NotNull ThreadReference thread) {
+    if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL) {
+      if (!(requestor instanceof SuspendOtherThreadsRequestor)) {
+        LOG.warn("Requestor " + requestor + " performed unsafe suspend-all suspend");
+      }
+      return false;
+    }
+    LOG.assertTrue(suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD);
+
+    if (!DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
+      // just usual suspend-thread stepping
+      return false;
+    }
+
+    Function<SuspendContextImpl, Boolean> afterSwitch = null;
+    if (requestor instanceof CustomProcessingLocatableEventRequestor customRequestor) {
+      afterSwitch = customRequestor.applyAfterContextSwitch();
+    }
+    if (afterSwitch == null) {
+      afterSwitch = c -> true;
+    }
+    boolean noStandardSuspendNeeded;
+    if (ContainerUtil.exists(suspendManager.getEventContexts(), c -> c.mySuspendAllSwitchedContext)) {
+      // Already stopped, so this is "remaining" event. Need to resume the event.
+      noStandardSuspendNeeded = true;
+      if (thread.suspendCount() == 1) {
+        // There are some errors in evaluation-resume-suspend logic
+        LOG.error("This means resuming this thead to the running state");
+      }
+      suspendManager.voteResume(suspendContext);
+      suspendContext.getDebugProcess().notifyStoppedOtherThreads();
+    }
+    else {
+      noStandardSuspendNeeded = SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(suspendContext, afterSwitch);
+    }
+
+    return noStandardSuspendNeeded;
   }
 
   private final AtomicBoolean myNotificationsCoolDown = new AtomicBoolean();

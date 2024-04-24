@@ -1,13 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.collaboration.api.page.ApiPageUtil
+import com.intellij.collaboration.async.awaitCompleted
+import com.intellij.collaboration.async.classAsCoroutineName
+import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.nestedDisposable
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitRemoteBranch
 import git4idea.remote.GitRemoteUrlCoordinates
-import org.jetbrains.plugins.github.api.GHGQLRequests
-import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubApiRequests
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -15,12 +21,8 @@ import org.jetbrains.plugins.github.api.data.GithubUserWithPermissions
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
-import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
-import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
-import java.util.concurrent.CompletableFuture
-import java.util.function.BiFunction
 
-class GHPRRepositoryDataServiceImpl internal constructor(progressManager: ProgressManager,
+class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScope,
                                                          private val requestExecutor: GithubApiRequestExecutor,
                                                          override val remoteCoordinates: GitRemoteUrlCoordinates,
                                                          override val repositoryCoordinates: GHRepositoryCoordinates,
@@ -29,71 +31,104 @@ class GHPRRepositoryDataServiceImpl internal constructor(progressManager: Progre
                                                          override val defaultBranchName: String?,
                                                          override val isFork: Boolean)
   : GHPRRepositoryDataService {
+  private val cs = parentCs.childScope(classAsCoroutineName())
 
   private val serverPath = repositoryCoordinates.serverPath
   private val repoPath = repositoryCoordinates.repositoryPath
 
   init {
-    requestExecutor.addListener(this) {
+    requestExecutor.addListener(cs.nestedDisposable()) {
       resetData()
     }
   }
 
-  private val collaboratorsValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
+  private val collaboratorsRequest: MutableStateFlow<Deferred<List<GithubUserWithPermissions>>> by lazy {
+    MutableStateFlow(doLoadCollaboratorsAsync())
+  }
+
+  private fun doLoadCollaboratorsAsync(): Deferred<List<GithubUserWithPermissions>> = cs.async {
     GithubApiPagesLoader
-      .loadAll(requestExecutor, indicator,
+      .loadAll(requestExecutor,
                GithubApiRequests.Repos.Collaborators.pages(serverPath, repoPath.owner, repoPath.repository))
   }
 
-  override val collaborators: CompletableFuture<List<GHUser>>
-    get() = collaboratorsValue.value.thenApply { list ->
-      list.map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
-    }
-
-  private val teamsValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
-    if (repoOwner !is GHRepositoryOwnerName.Organization) emptyList()
-    else SimpleGHGQLPagesLoader(requestExecutor, {
-      GHGQLRequests.Organization.Team.findAll(serverPath, repoOwner.login, it)
-    }).loadAll(indicator)
+  private val convertedCollaboratorsRequest: Flow<Deferred<List<GHUser>>> by lazy {
+    collaboratorsRequest.mapScoped(true) {
+      async {
+        it.await().map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
+      }
+    }.shareIn(cs, SharingStarted.Eagerly, 1)
   }
 
-  override val teams: CompletableFuture<List<GHTeam>>
-    get() = teamsValue.value
+  override suspend fun loadCollaborators(): List<GHUser> = convertedCollaboratorsRequest.awaitCompleted()
 
-  override val potentialReviewers: CompletableFuture<List<GHPullRequestRequestedReviewer>>
-    get() = collaboratorsValue.value.thenCombine(teams,
-                                                 BiFunction<List<GithubUserWithPermissions>, List<GHTeam>, List<GHPullRequestRequestedReviewer>> { users, teams ->
-                                                   users
-                                                     .filter { it.permissions.isPush }
-                                                     .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) } +
-                                                   teams
-                                                 })
+  private val assigneesRequest: MutableStateFlow<Deferred<List<GHUser>>> by lazy {
+    MutableStateFlow(doLoadIssuesAssigneesAsync())
+  }
 
-  private val assigneesValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
+  private fun doLoadIssuesAssigneesAsync(): Deferred<List<GHUser>> = cs.async {
     GithubApiPagesLoader
-      .loadAll(requestExecutor, indicator,
+      .loadAll(requestExecutor,
                GithubApiRequests.Repos.Assignees.pages(serverPath, repoPath.owner, repoPath.repository))
       .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
   }
 
-  override val issuesAssignees: CompletableFuture<List<GHUser>>
-    get() = assigneesValue.value
+  override suspend fun loadIssuesAssignees(): List<GHUser> = assigneesRequest.awaitCompleted()
+  override fun loadIssuesAssigneesAsync(): Deferred<List<GHUser>> = cs.async { loadIssuesAssignees() }
 
-  private val labelsValue = LazyCancellableBackgroundProcessValue.create(progressManager) { indicator ->
+  private val labelsRequest: MutableStateFlow<Deferred<List<GHLabel>>> by lazy {
+    MutableStateFlow(doLoadLabelsAsync())
+  }
+
+  private fun doLoadLabelsAsync(): Deferred<List<GHLabel>> = cs.async {
     GithubApiPagesLoader
-      .loadAll(requestExecutor, indicator,
+      .loadAll(requestExecutor,
                GithubApiRequests.Repos.Labels.pages(serverPath, repoPath.owner, repoPath.repository))
       .map { GHLabel(it.nodeId, it.url, it.name, it.color) }
   }
 
-  override val labels: CompletableFuture<List<GHLabel>>
-    get() = labelsValue.value
+  override suspend fun loadLabels(): List<GHLabel> = labelsRequest.awaitCompleted()
+  override fun loadLabelsAsync(): Deferred<List<GHLabel>> = cs.async { loadLabels() }
+
+  private val teamsRequest: MutableStateFlow<Deferred<List<GHTeam>>> by lazy {
+    MutableStateFlow(doLoadTeamsAsync())
+  }
+
+  private fun doLoadTeamsAsync(): Deferred<List<GHTeam>> = cs.async {
+    if (repoOwner !is GHRepositoryOwnerName.Organization) emptyList()
+    else ApiPageUtil.createGQLPagesFlow {
+      requestExecutor.executeSuspend(GHGQLRequests.Organization.Team.findAll(serverPath, repoOwner.login, it))
+    }.fold(mutableListOf()) { acc, value ->
+      acc.addAll(value.nodes)
+      acc
+    }
+  }
+
+  private val potentialReviewersRequest: Flow<Deferred<List<GHPullRequestRequestedReviewer>>> by lazy {
+    combine(teamsRequest, collaboratorsRequest) { teamsReq, collaboratorsReq ->
+      // can't await here bc combine transformer is not cancelled on new emissions
+      suspend {
+        val teams = teamsReq.await()
+        val collaboratorsWithWriteAccess = collaboratorsReq.await().filter { it.permissions.isPush }
+          .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
+        teams + collaboratorsWithWriteAccess
+      }
+    }.mapScoped(true) { awaiter ->
+      async {
+        awaiter()
+      }
+    }.shareIn(cs, SharingStarted.Eagerly, 1)
+  }
+
+  override suspend fun loadPotentialReviewers(): List<GHPullRequestRequestedReviewer> = potentialReviewersRequest.awaitCompleted()
+  override fun loadPotentialReviewersAsync(): Deferred<List<GHPullRequestRequestedReviewer>> =
+    cs.async { loadPotentialReviewers() }
 
   override fun resetData() {
-    collaboratorsValue.drop()
-    teamsValue.drop()
-    assigneesValue.drop()
-    labelsValue.drop()
+    collaboratorsRequest.restart(doLoadCollaboratorsAsync())
+    teamsRequest.restart(doLoadTeamsAsync())
+    assigneesRequest.restart(doLoadIssuesAssigneesAsync())
+    labelsRequest.restart(doLoadLabelsAsync())
   }
 
   override fun getDefaultRemoteBranch(): GitRemoteBranch? {
@@ -107,8 +142,11 @@ class GHPRRepositoryDataServiceImpl internal constructor(progressManager: Progre
     return branches.findRemoteBranch("${currentRemote.remote.name}/master")
            ?: branches.findRemoteBranch("${currentRemote.remote.name}/main")
   }
+}
 
-  override fun dispose() {
-    resetData()
+private fun <T> MutableStateFlow<Deferred<T>>.restart(newRequest: Deferred<T>) {
+  update {
+    it.cancel()
+    newRequest
   }
 }

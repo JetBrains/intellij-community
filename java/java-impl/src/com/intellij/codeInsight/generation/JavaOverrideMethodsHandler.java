@@ -30,7 +30,7 @@ public final class JavaOverrideMethodsHandler implements ContextAwareActionHandl
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
     if (aClass == null) return;
 

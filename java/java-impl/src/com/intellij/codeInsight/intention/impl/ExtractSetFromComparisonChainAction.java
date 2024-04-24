@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -172,15 +172,12 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
     };
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaBundle.message("intention.extract.set.from.comparison.chain.family");
   }
 
-  @NotNull
-  private static LinkedHashSet<String> getSuggestions(List<ExpressionToConstantComparison> comparisons) {
+  private static @NotNull LinkedHashSet<String> getSuggestions(List<ExpressionToConstantComparison> comparisons) {
     PsiExpression stringExpression = comparisons.get(0).myExpression;
     Project project = stringExpression.getProject();
     JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
@@ -263,8 +260,7 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
       return new ExpressionToConstantReplacementContext(this, updater);
     }
 
-    @Nullable
-    private PsiElement replace(@NotNull PsiField field) {
+    private @Nullable PsiElement replace(@NotNull PsiField field) {
       Project project = field.getProject();
       PsiClass containingClass = field.getContainingClass();
       if (containingClass == null) return null;
@@ -288,11 +284,11 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
   }
 
   static final class ExpressionToConstantComparison {
-    @NotNull final PsiExpression myComparison;
-    @NotNull final PsiExpression myExpression;
-    @NotNull final PsiExpression myConstant;
-    @NotNull final PsiType myType;
-    @NotNull final String myConstantRepresentation;
+    final @NotNull PsiExpression myComparison;
+    final @NotNull PsiExpression myExpression;
+    final @NotNull PsiExpression myConstant;
+    final @NotNull PsiType myType;
+    final @NotNull String myConstantRepresentation;
 
     ExpressionToConstantComparison(@NotNull PsiExpression comparison,
                                    @NotNull PsiExpression expression,
@@ -322,16 +318,14 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
       return null;
     }
 
-    @Nullable
-    private static ExpressionToConstantComparison fromComparison(PsiExpression candidate, PsiExpression left, PsiExpression right) {
+    private static @Nullable ExpressionToConstantComparison fromComparison(PsiExpression candidate, PsiExpression left, PsiExpression right) {
       if (left == null || right == null) return null;
       ExpressionToConstantComparison fromLeft = tryExtract(candidate, left, right);
       if (fromLeft != null) return fromLeft;
       return tryExtract(candidate, right, left);
     }
 
-    @Nullable
-    private static ExpressionToConstantComparison tryExtract(PsiExpression candidate, PsiExpression constant, PsiExpression nonConstant) {
+    private static @Nullable ExpressionToConstantComparison tryExtract(PsiExpression candidate, PsiExpression constant, PsiExpression nonConstant) {
       String constantValue = tryCast(ExpressionUtils.computeConstantExpression(constant), String.class);
       if (constantValue != null) {
         return new ExpressionToConstantComparison(candidate, nonConstant, constant, constantValue);

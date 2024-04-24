@@ -7,6 +7,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -212,9 +213,18 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
   }
 
   @Override
-  public TextStyle getDefaultStyle() {
-    return new TextStyle(new TerminalColor(() -> getTerminalColorPalette().getDefaultForeground()),
-                         new TerminalColor(() -> getTerminalColorPalette().getDefaultBackground()));
+  public @NotNull TerminalColor getDefaultBackground() {
+    return new TerminalColor(() -> getTerminalColorPalette().getDefaultBackground());
+  }
+
+  @Override
+  public @NotNull TerminalColor getDefaultForeground() {
+    return new TerminalColor(() -> getTerminalColorPalette().getDefaultForeground());
+  }
+
+  @Override
+  public @NotNull TextStyle getDefaultStyle() {
+    return new TextStyle(getDefaultForeground(), getDefaultBackground());
   }
 
   @Override
@@ -296,7 +306,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
    */
   @Deprecated(forRemoval = true)
   public @NotNull TerminalActionPresentation getNewSessionActionPresentation() {
-    return new TerminalActionPresentation("New Session", SystemInfo.isMac
+    return new TerminalActionPresentation("New Session", ClientSystemInfo.isMac()
                                                          ? KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.META_DOWN_MASK)
                                                          : KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
   }
@@ -306,7 +316,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
    */
   @Deprecated(forRemoval = true)
   public @NotNull TerminalActionPresentation getCloseSessionActionPresentation() {
-    return new TerminalActionPresentation("Close Session", SystemInfo.isMac
+    return new TerminalActionPresentation("Close Session", ClientSystemInfo.isMac()
                                                            ? KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.META_DOWN_MASK)
                                                            : KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
   }

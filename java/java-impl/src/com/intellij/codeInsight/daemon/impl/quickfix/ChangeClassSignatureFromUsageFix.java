@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -30,9 +30,8 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
     myParameterList = parameterList;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("change.class.signature.family");
   }
 
@@ -88,10 +87,9 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
     dialog.show();
   }
 
-  @NotNull
-  private static List<TypeParameterInfoView> createTypeParameters(@NotNull JavaCodeFragmentFactory factory,
-                                                                  @NotNull List<? extends PsiTypeParameter> classTypeParameters,
-                                                                  @NotNull List<? extends PsiTypeElement> typeElements) {
+  private static @NotNull List<TypeParameterInfoView> createTypeParameters(@NotNull JavaCodeFragmentFactory factory,
+                                                                           @NotNull List<? extends PsiTypeParameter> classTypeParameters,
+                                                                           @NotNull List<? extends PsiTypeElement> typeElements) {
     final TypeParameterNameSuggester suggester = new TypeParameterNameSuggester(classTypeParameters);
 
     List<TypeParameterInfoView> result = new ArrayList<>();
@@ -164,8 +162,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
       }
     }
 
-    @NotNull
-    private String suggestUnusedName(@NotNull String name) {
+    private @NotNull String suggestUnusedName(@NotNull String name) {
       String unusedName = name;
       int i = 0;
       while (true) {
@@ -176,8 +173,7 @@ public class ChangeClassSignatureFromUsageFix extends BaseIntentionAction {
       }
     }
 
-    @NotNull
-    public String suggest(@NotNull PsiClassType type) {
+    public @NotNull String suggest(@NotNull PsiClassType type) {
       return suggestUnusedName(StringUtil.toUpperCase(type.getClassName().substring(0, 1)));
     }
   }

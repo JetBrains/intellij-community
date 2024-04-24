@@ -1043,6 +1043,63 @@
         <constraint name="ref2" nameOfExprType="com\.jetbrains\.swift\.psi\.types\.SwiftType" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="ref1" nameOfExprType="com\.jetbrains\.swift\.psi\.types\.SwiftType" exprTypeWithinHierarchy="true" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="CompletableFuture methods using default executor" description="If executor isn't specified explicitly, ForkJoinPool is used, which doesn't support the propagation of IntelliJ platform's thread context&#10;(e.g. modality state or remote development client id).&#10;Pass some platform executor as an additional method parameter or wrap the passed task in 'captureThreadContext'." suppressId="CompletableFuture.defaultExecutor" problemDescriptor="Platform's thread context (modality state, rem-dev client id, etc) is lost when the default executor (ForkJoinPool) is used. Pass some platform executor as an additional method parameter or wrap the passed task in 'captureThreadContext'." text="$Instance$.$MethodCall$($Parameter$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" regexp="CompletableFuture" minCount="0" within="" contains="" />
+        <constraint name="MethodCall" regexp="runAsync|supplyAsync" target="true" within="" contains="" />
+        <constraint name="Parameter" regexp="captureThreadContext.*" negateName="true" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="CompletableFuture methods using default executor" text="$Instance$.$MethodCall$($Parameter$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="MethodCall" regexp="runAsync|supplyAsync" target="true" within="" contains="" />
+        <constraint name="Parameter" regexp="captureThreadContext.*" negateName="true" within="" contains="" />
+        <constraint name="Instance" regexp="CompletableFuture" minCount="0" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="CompletableFuture methods using default executor" text="$Instance$.$MethodCall${$Code$}" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="MethodCall" regexp="runAsync|supplyAsync" target="true" within="" contains="" />
+        <constraint name="Code" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Instance" regexp="CompletableFuture" minCount="0" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="CompletableFuture methods using default executor" text="$Instance$.$MethodCall$($Parameter$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="MethodCall" regexp="completeAsync|exceptionallyAsync|exceptionallyComposeAsync|handleAsync|thenAcceptAsync|thenApplyAsync|thenComposeAsync|thenRunAsync|whenCompleteAsync" target="true" within="" contains="" />
+        <constraint name="Parameter" regexp="captureThreadContext.*" negateName="true" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="java\.util\.concurrent\.CompletionStage" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="CompletableFuture methods using default executor" text="$Instance$.$MethodCall$($Parameter1$,$Parameter2$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="java\.util\.concurrent\.CompletionStage" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+        <constraint name="MethodCall" regexp="acceptEitherAsync|applyToEitherAsync|runAfterBothAsync|runAfterEitherAsync|thenAcceptBothAsync|thenCombineAsync" target="true" within="" contains="" />
+        <constraint name="Parameter1" within="" contains="" />
+        <constraint name="Parameter2" regexp="captureThreadContext.*" negateName="true" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="CompletableFuture methods using default executor" text="$Instance$.$MethodCall$($Parameter$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="MethodCall" regexp="completeAsync|exceptionallyAsync|exceptionallyComposeAsync|handleAsync|thenAcceptAsync|thenApplyAsync|thenComposeAsync|thenRunAsync|whenCompleteAsync" target="true" within="" contains="" />
+        <constraint name="Parameter" regexp="captureThreadContext.*" negateName="true" within="" contains="" />
+        <constraint name="Instance" minCount="0" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="CompletableFuture methods using default executor" text="$Instance$.$MethodCall${$Code$}" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="MethodCall" regexp="completeAsync|exceptionallyAsync|exceptionallyComposeAsync|handleAsync|thenAcceptAsync|thenApplyAsync|thenComposeAsync|thenRunAsync|whenCompleteAsync" target="true" within="" contains="" />
+        <constraint name="Instance" minCount="0" within="" contains="" />
+        <constraint name="Code" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="CompletableFuture methods using default executor" text="$Instance$.$MethodCall$($Parameter1$,$Parameter2$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="MethodCall" regexp="acceptEitherAsync|applyToEitherAsync|runAfterBothAsync|runAfterEitherAsync|thenAcceptBothAsync|thenCombineAsync" target="true" within="" contains="" />
+        <constraint name="Instance" minCount="0" within="" contains="" />
+        <constraint name="Parameter1" within="" contains="" />
+        <constraint name="Parameter2" regexp="captureThreadContext.*" negateName="true" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="CompletableFuture methods using default executor" text="$Instance$.$MethodCall$($Parameter$){$Code$}" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="MethodCall" regexp="acceptEitherAsync|applyToEitherAsync|runAfterBothAsync|runAfterEitherAsync|thenAcceptBothAsync|thenCombineAsync" target="true" within="" contains="" />
+        <constraint name="Instance" within="" contains="" />
+        <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
+        <constraint name="Code" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Consider explicit delete when file is not needed any more" text="$file$.deleteOnExit()" recursive="false" caseInsensitive="true" type="JAVA">
         <constraint name="file" nameOfExprType="java.io.File" within="" contains="" />
       </searchConfiguration>

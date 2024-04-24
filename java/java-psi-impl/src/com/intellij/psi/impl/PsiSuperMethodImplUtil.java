@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,17 +55,15 @@ public final class PsiSuperMethodImplUtil {
     return MethodSignatureUtil.convertMethodSignaturesToMethods(outputMethods);
   }
 
-  @NotNull
-  public static List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(@NotNull PsiMethod method,
-                                                                                                boolean checkAccess) {
+  public static @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(@NotNull PsiMethod method,
+                                                                                                         boolean checkAccess) {
     if (!canHaveSuperMethod(method, checkAccess, true)) return Collections.emptyList();
     return findSuperMethodSignatures(method, null, true);
   }
 
-  @NotNull
-  private static List<MethodSignatureBackedByPsiMethod> findSuperMethodSignatures(@NotNull PsiMethod method,
-                                                                                  PsiClass parentClass,
-                                                                                  boolean allowStaticMethod) {
+  private static @NotNull List<MethodSignatureBackedByPsiMethod> findSuperMethodSignatures(@NotNull PsiMethod method,
+                                                                                           PsiClass parentClass,
+                                                                                           boolean allowStaticMethod) {
     return new ArrayList<>(SuperMethodsSearch.search(new SuperMethodsSearch.SearchParameters(method, parentClass, true, allowStaticMethod, true)).findAll());
   }
 
@@ -77,8 +75,7 @@ public final class PsiSuperMethodImplUtil {
     return parentClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(parentClass.getQualifiedName());
   }
 
-  @Nullable
-  public static PsiMethod findDeepestSuperMethod(@NotNull PsiMethod method) {
+  public static @Nullable PsiMethod findDeepestSuperMethod(@NotNull PsiMethod method) {
     if (!canHaveSuperMethod(method, true, false)) return null;
     return DeepestSuperMethodsSearch.search(method).findFirst();
   }
@@ -89,14 +86,13 @@ public final class PsiSuperMethodImplUtil {
     return collection.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static Map<MethodSignature, HierarchicalMethodSignature> buildMethodHierarchy(@NotNull PsiClass aClass,
-                                                                                        @Nullable String nameHint,
-                                                                                        @NotNull PsiSubstitutor substitutor,
-                                                                                        final boolean includePrivates,
-                                                                                        @NotNull final Set<? super PsiClass> visited,
-                                                                                        boolean isInRawContext,
-                                                                                        GlobalSearchScope resolveScope) {
+  private static @NotNull Map<MethodSignature, HierarchicalMethodSignature> buildMethodHierarchy(@NotNull PsiClass aClass,
+                                                                                                 @Nullable String nameHint,
+                                                                                                 @NotNull PsiSubstitutor substitutor,
+                                                                                                 final boolean includePrivates,
+                                                                                                 final @NotNull Set<? super PsiClass> visited,
+                                                                                                 boolean isInRawContext,
+                                                                                                 GlobalSearchScope resolveScope) {
     ProgressManager.checkCanceled();
     Map<MethodSignature, HierarchicalMethodSignature> result = new LinkedHashMap<>(
       new EqualityPolicy<MethodSignature>() {
@@ -330,8 +326,7 @@ public final class PsiSuperMethodImplUtil {
    * - NOT_MERGE_SUPER if it cannot be used as a super method. See  {@link PsiSuperMethodImplUtil#putInMap(PsiClass, Map, Map, HierarchicalMethodSignature, MethodSignature)}
    * - FORCE_MERGE if this method must be applied as a super method not taking into account its return type
    */
-  @NotNull
-  private static MergeSuperType solveMergeSuperType(@NotNull PsiClass aClass,
+  private static @NotNull MergeSuperType solveMergeSuperType(@NotNull PsiClass aClass,
                                                     @NotNull MethodSignatureBackedByPsiMethod hierarchicalMethodSignature,
                                                     @NotNull MethodSignatureBackedByPsiMethod superSignatureHierarchical) {
     PsiMethod superMethod = superSignatureHierarchical.getMethod();
@@ -375,8 +370,7 @@ public final class PsiSuperMethodImplUtil {
     return MergeSuperType.NOT_MERGE_SUPER;
   }
 
-  @NotNull
-  private static HierarchicalMethodSignatureImpl copy(@NotNull HierarchicalMethodSignature hi) {
+  private static @NotNull HierarchicalMethodSignatureImpl copy(@NotNull HierarchicalMethodSignature hi) {
     HierarchicalMethodSignatureImpl hierarchicalMethodSignature = new HierarchicalMethodSignatureImpl(hi);
     for (HierarchicalMethodSignature his : hi.getSuperSignatures()) {
       hierarchicalMethodSignature.addSuperSignature(copy(his));
@@ -384,19 +378,16 @@ public final class PsiSuperMethodImplUtil {
     return hierarchicalMethodSignature;
   }
 
-  @NotNull
-  public static Collection<HierarchicalMethodSignature> getVisibleSignatures(@NotNull PsiClass aClass) {
+  public static @NotNull Collection<HierarchicalMethodSignature> getVisibleSignatures(@NotNull PsiClass aClass) {
     Map<MethodSignature, HierarchicalMethodSignature> map = getSignaturesMap(aClass);
     return map.values();
   }
 
-  @NotNull
-  public static HierarchicalMethodSignature getHierarchicalMethodSignature(@NotNull PsiMethod method) {
+  public static @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature(@NotNull PsiMethod method) {
     return getHierarchicalMethodSignature(method, method.getResolveScope());
   }
 
-  @NotNull
-  public static HierarchicalMethodSignature getHierarchicalMethodSignature(@NotNull PsiMethod method, @NotNull GlobalSearchScope resolveScope) {
+  public static @NotNull HierarchicalMethodSignature getHierarchicalMethodSignature(@NotNull PsiMethod method, @NotNull GlobalSearchScope resolveScope) {
     Map<GlobalSearchScope, HierarchicalMethodSignature> signatures = CachedValuesManager.getCachedValue(method, () -> {
       ConcurrentMap<GlobalSearchScope, HierarchicalMethodSignature> map = ConcurrentFactoryMap.createMap(scope -> {
         PsiClass aClass = method.getContainingClass();

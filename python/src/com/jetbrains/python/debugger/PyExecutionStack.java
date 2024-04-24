@@ -49,11 +49,11 @@ public class PyExecutionStack extends XExecutionStack {
       return;
     }
 
-    ApplicationManager.getApplication().invokeLater(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       List<PyStackFrameInfo> frames = myThreadInfo.getFrames();
       if (frames != null && firstFrameIndex <= frames.size() && !container.isObsolete()) {
         List<PyStackFrame> xFrames = new LinkedList<>();
-        for (int i = firstFrameIndex; i < frames.size(); i++) {
+        for (int i = firstFrameIndex; i < frames.size() && !container.isObsolete(); i++) {
           xFrames.add(convert(myDebugProcess, frames.get(i)));
         }
         container.addStackFrames(xFrames, true);

@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui
 
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.ide.ui.laf.darcula.paintComponentBorder
 import com.intellij.openapi.ui.ErrorBorderCapable
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -26,7 +26,7 @@ internal class DarculaSpinnerBorderNew : Border, UIResource, ErrorBorderCapable 
     val r = Rectangle(x, y, width, height)
     JBInsets.removeFrom(r, getBorderInsets(c))
     val isFocused = DarculaSpinnerBorder.isFocused(c)
-    paintComponentBorder(g, r, DarculaUIUtil.getOutline(c as JComponent), isFocused, c.isEnabled())
+    DarculaNewUIUtil.paintComponentBorder(g, r, DarculaUIUtil.getOutline(c as JComponent), isFocused, c.isEnabled())
   }
 
   override fun getBorderInsets(c: Component): Insets {

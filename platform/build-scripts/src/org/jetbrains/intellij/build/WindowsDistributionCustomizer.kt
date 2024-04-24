@@ -59,7 +59,7 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Enables the use of the new cross-platform launcher (which loads launch data from `product-info.json` instead of the embedded resource table).
    */
-  var useXPlatLauncher = false
+  var useXPlatLauncher = true
 
   /**
    * Name of the root directory in Windows .zip archive

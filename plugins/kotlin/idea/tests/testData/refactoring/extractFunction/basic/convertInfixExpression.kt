@@ -2,7 +2,8 @@
 // PARAM_TYPES: kotlin.String.(kotlin.String) -> kotlin.Unit
 
 fun foo(x : String.(String) -> Unit) {
-    "A" <selection>x</selection> "B"
+    "A".<selection>x</selection>("B")
 }
 
+// KT-67620
 // IGNORE_K2

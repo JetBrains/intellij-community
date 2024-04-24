@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
@@ -113,10 +114,10 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, DataProvider {
   private static final KeyStroke ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
-  private static final KeyStroke ENTER_WITH_MODIFIERS = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
-                                                                                                  ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK);
   private static final KeyStroke REPLACE_ALL = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
   private static final KeyStroke RESET_FILTERS = KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
+  private /* non-static */ final KeyStroke ENTER_WITH_MODIFIERS =
+    KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ClientSystemInfo.isMac() ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK);
 
   private static final String SERVICE_KEY = "find.popup";
   private static final String SPLITTER_SERVICE_KEY = "find.popup.splitter";

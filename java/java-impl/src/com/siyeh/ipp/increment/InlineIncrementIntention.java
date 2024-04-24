@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.increment;
 
 import com.intellij.openapi.project.Project;
@@ -54,9 +54,8 @@ public final class InlineIncrementIntention extends MCIntention {
     }
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return InlineIncrementIntention::isApplicableTo;
   }
 
@@ -74,9 +73,8 @@ public final class InlineIncrementIntention extends MCIntention {
     return false;
   }
 
-  @Nullable
   @Contract("_, null -> null")
-  private static Occurrence findSingleReadOccurrence(@NotNull PsiExpressionStatement statement, @Nullable PsiVariable variable) {
+  private static @Nullable Occurrence findSingleReadOccurrence(@NotNull PsiExpressionStatement statement, @Nullable PsiVariable variable) {
     if (variable == null) return null;
     final PsiElement parent = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class, PsiLambdaExpression.class);
     if (parent instanceof PsiCodeBlock) {
@@ -102,8 +100,7 @@ public final class InlineIncrementIntention extends MCIntention {
     return null;
   }
 
-  @Nullable
-  private static PsiVariable resolveSimpleVariableReference(@NotNull PsiReferenceExpression expression) {
+  private static @Nullable PsiVariable resolveSimpleVariableReference(@NotNull PsiReferenceExpression expression) {
     final PsiExpression qualifierExpression = expression.getQualifierExpression();
     if (qualifierExpression == null ||
         qualifierExpression instanceof PsiThisExpression ||
@@ -114,8 +111,7 @@ public final class InlineIncrementIntention extends MCIntention {
     return null;
   }
 
-  @NotNull
-  public static ControlFlow getControlFlow(@NotNull PsiElement body) {
+  public static @NotNull ControlFlow getControlFlow(@NotNull PsiElement body) {
     try {
       final LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
       return ControlFlowFactory.getControlFlow(body, policy, ControlFlowOptions.NO_CONST_EVALUATE);

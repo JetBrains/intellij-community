@@ -184,7 +184,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   private void registerToolbarListeners(JComponent actualComponent, LayoutActionsFloatingToolbar toolbar) {
-    StartupUiUtil.addAwtListener(new MyMouseListener(toolbar), AWTEvent.MOUSE_MOTION_EVENT_MASK, toolbar);
+    StartupUiUtil.addAwtListener(AWTEvent.MOUSE_MOTION_EVENT_MASK, toolbar, new MyMouseListener(toolbar));
     final var actualEditor = UIUtil.findComponentOfType(actualComponent, EditorComponentImpl.class);
     if (actualEditor != null) {
       final var editorKeyListener = new KeyAdapter() {

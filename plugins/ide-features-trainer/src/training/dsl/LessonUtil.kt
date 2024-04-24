@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.LogicalPosition
@@ -37,7 +38,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
@@ -257,7 +257,7 @@ object LessonUtil {
   fun rawEnter(): String = rawKeyStroke(KeyEvent.VK_ENTER)
 
   fun rawCtrlEnter(): String {
-    return if (SystemInfo.isMac) {
+    return if (ClientSystemInfo.isMac()) {
       rawKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK))
     }
     else {

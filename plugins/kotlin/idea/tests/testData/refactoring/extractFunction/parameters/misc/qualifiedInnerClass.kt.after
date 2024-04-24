@@ -1,0 +1,18 @@
+class Foo {
+    inner class Printer {
+        fun print() {}
+    }
+}
+
+class Caller {
+    fun fooPrinter(foo: Foo) {
+        __dummyTestFun__(foo)
+    }
+
+    private fun __dummyTestFun__(foo: Foo) {
+        val printer = foo.Printer()
+        printer.print()
+    }
+}
+
+// IGNORE_K1

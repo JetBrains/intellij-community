@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -28,7 +28,7 @@ public final class RootFileElement extends FileElement {
 
   public RootFileElement(@NotNull List<VirtualFile> files, String name, boolean showFileSystemRoots) {
     super(files.size() == 1 ? files.get(0) : null, name);
-    myFiles = files.size() == 0 && showFileSystemRoots ? null : files;
+    myFiles = files.isEmpty() && showFileSystemRoots ? null : files;
   }
 
   public Object[] getChildren() {

@@ -2,6 +2,7 @@
 package com.intellij.java.execution.filters;
 
 import com.intellij.execution.filters.*;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -1295,6 +1296,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
         HyperlinkInfo info = result.getFirstHyperlinkInfo();
         assertNotNull(info);
         info.navigate(getProject());
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
         LogicalPosition actualPos = editor.getCaretModel().getLogicalPosition();
         assertEquals(new LogicalPosition(row - 1, column - 1), actualPos);
       }

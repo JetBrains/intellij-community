@@ -5,4 +5,5 @@ fun foo(x : String, y : String.() -> Unit) {
     x.<selection>y</selection>()
 }
 
+// KT-67620
 // IGNORE_K2

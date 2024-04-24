@@ -83,6 +83,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/ConstructorVarParameter.kt");
     }
 
+    @TestMetadata("DataClass.kt")
+    public void testDataClass() throws Exception {
+        runTest("testData/editor/quickDoc/DataClass.kt");
+    }
+
     @TestMetadata("DefinitelyNonNullType.kt")
     public void testDefinitelyNonNullType() throws Exception {
         runTest("testData/editor/quickDoc/DefinitelyNonNullType.kt");

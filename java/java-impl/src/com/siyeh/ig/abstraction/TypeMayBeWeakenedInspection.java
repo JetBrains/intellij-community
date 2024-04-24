@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -67,7 +67,7 @@ public final class TypeMayBeWeakenedInspection extends BaseInspection {
   protected @NotNull String buildErrorString(Object... infos) {
     final PsiElement element = (PsiElement)infos[0];
     @SuppressWarnings("unchecked") final Collection<PsiClass> weakerClasses = (Collection<PsiClass>)infos[1];
-    @NonNls final StringBuilder builder = new StringBuilder();
+    final @NonNls StringBuilder builder = new StringBuilder();
     final Iterator<PsiClass> iterator = weakerClasses.iterator();
     if (iterator.hasNext()) {
       builder.append('\'').append(getClassName(iterator.next())).append('\'');
@@ -120,8 +120,7 @@ public final class TypeMayBeWeakenedInspection extends BaseInspection {
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static List<String> getInheritors(@NotNull PsiClass from, @NotNull PsiClass to) {
+  private static @NotNull List<String> getInheritors(@NotNull PsiClass from, @NotNull PsiClass to) {
     List<String> candidates = new ArrayList<>();
     String fromName = getClassName(from);
     if (fromName != null) {
@@ -144,20 +143,16 @@ public final class TypeMayBeWeakenedInspection extends BaseInspection {
       myCandidates = candidates;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       if (myCandidates.size() == 1) {
         return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stopper.single", myCandidates.get(0));
       }
       return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stopper");
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.family");
     }
 
@@ -250,14 +245,12 @@ public final class TypeMayBeWeakenedInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", fqClassName);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.weaken.type.family");
     }
 
@@ -327,10 +320,9 @@ public final class TypeMayBeWeakenedInspection extends BaseInspection {
     return new TypeMayBeWeakenedVisitor();
   }
 
-  @NotNull
-  private static PsiClass tryReplaceWithParentStopper(@NotNull PsiClass fromIncl,
-                                                      @NotNull PsiClass toIncl,
-                                                      @NotNull Collection<String> stopClasses) {
+  private static @NotNull PsiClass tryReplaceWithParentStopper(@NotNull PsiClass fromIncl,
+                                                               @NotNull PsiClass toIncl,
+                                                               @NotNull Collection<String> stopClasses) {
     for (PsiClass superClass : InheritanceUtil.getSuperClasses(fromIncl)) {
       if (!superClass.isInheritor(toIncl, true)) continue;
       if (stopClasses.contains(getClassName(superClass))) {
@@ -424,8 +416,7 @@ public final class TypeMayBeWeakenedInspection extends BaseInspection {
       registerVariableError(variable, variable, weakestClasses, originClass, isOnTheFly());
     }
 
-    @NotNull
-    private Collection<PsiClass> computeWeakestClasses(@NotNull PsiElement element, @NotNull PsiClass originClass) {
+    private @NotNull Collection<PsiClass> computeWeakestClasses(@NotNull PsiElement element, @NotNull PsiClass originClass) {
       Collection<PsiClass> weakestClasses =
         WeakestTypeFinder.calculateWeakestClassesNecessary(element, true);
       weakestClasses.remove(ClassUtils.findObjectClass(element));

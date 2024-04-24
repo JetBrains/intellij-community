@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -24,9 +24,8 @@ public final class ObscureThrownExceptionsIntention extends MCIntention {
     return IntentionPowerPackBundle.message("obscure.thrown.exceptions.intention.family.name");
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new ObscureThrownExceptionsPredicate();
   }
 
@@ -46,8 +45,7 @@ public final class ObscureThrownExceptionsIntention extends MCIntention {
     new CommentTracker().replaceAndRestoreComments(referenceList, newReferenceList);
   }
 
-  @Nullable
-  public static PsiClass findCommonSuperClass(PsiClassType... types) {
+  public static @Nullable PsiClass findCommonSuperClass(PsiClassType... types) {
     if (types.length == 0) {
       return null;
     }

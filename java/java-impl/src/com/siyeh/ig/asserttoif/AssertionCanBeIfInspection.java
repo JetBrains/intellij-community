@@ -37,9 +37,8 @@ import java.util.Set;
 
 public final class AssertionCanBeIfInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return getDisplayName();
   }
 
@@ -80,10 +79,8 @@ public final class AssertionCanBeIfInspection extends BaseInspection {
   }
 
   private static class AssertToIfFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("assert.can.be.if.quickfix");
     }
 

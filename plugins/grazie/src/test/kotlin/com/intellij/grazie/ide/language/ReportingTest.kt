@@ -40,6 +40,18 @@ class ReportingTest : BasePlatformTestCase() {
     myFixture.configureByText("a.txt", "I have a (new apple here.")
     val info = assertOneElement(myFixture.doHighlighting().filter { it.inspectionToolId == inspection.id })
     assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*Incorrect:.*" +
+                                                          "He lived in a <strong>\\(</strong>large house" +
+                                                          ".*Correct:.*" +
+                                                          "He lived in a <strong>\\(</strong>large house" +
+                                                          ".*")))
+  }
+
+  fun `test unpaired quotes tooltip`() {
+    val inspection = GrazieInspection()
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("a.txt", "I have a \"new apple here.")
+    val info = assertOneElement(myFixture.doHighlighting().filter { it.inspectionToolId == inspection.id })
+    assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*Incorrect:.*" +
                                                           "I'm over here, she said" +
                                                           ".*Correct:.*" +
                                                           "I'm over here,.*&quot;.*she said" +

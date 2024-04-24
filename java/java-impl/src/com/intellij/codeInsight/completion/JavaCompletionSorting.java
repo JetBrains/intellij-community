@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -126,8 +126,7 @@ public final class JavaCompletionSorting {
     return null;
   }
 
-  @Nullable
-  private static LookupElementWeigher dispreferPreviousChainCalls(PsiElement position) {
+  private static @Nullable LookupElementWeigher dispreferPreviousChainCalls(PsiElement position) {
     Object2IntMap<PsiMethod> previousChainCalls = new Object2IntOpenHashMap<>();
     if (position.getParent() instanceof PsiReferenceExpression ref) {
       PsiMethodCallExpression qualifier = getCallQualifier(ref);
@@ -156,8 +155,7 @@ public final class JavaCompletionSorting {
     };
   }
 
-  @Nullable
-  private static PsiMethodCallExpression getCallQualifier(PsiReferenceExpression ref) {
+  private static @Nullable PsiMethodCallExpression getCallQualifier(PsiReferenceExpression ref) {
     return ObjectUtils.tryCast(ref.getQualifier(), PsiMethodCallExpression.class);
   }
 
@@ -173,8 +171,7 @@ public final class JavaCompletionSorting {
     return JavaSmartCompletionContributor.getExpectedTypes(parameters);
   }
 
-  @Nullable
-  private static LookupElementWeigher recursion(CompletionParameters parameters, final ExpectedTypeInfo[] expectedInfos) {
+  private static @Nullable LookupElementWeigher recursion(CompletionParameters parameters, final ExpectedTypeInfo[] expectedInfos) {
     final PsiElement position = parameters.getPosition();
     final PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class, true, PsiClass.class);
     final PsiReferenceExpression reference = expression != null ? expression.getMethodExpression() : PsiTreeUtil.getParentOfType(position, PsiReferenceExpression.class);
@@ -183,8 +180,7 @@ public final class JavaCompletionSorting {
     return new RecursionWeigher(position, parameters.getCompletionType(), reference, expression, expectedInfos);
   }
 
-  @Nullable
-  private static LookupElementWeigher preferStatics(PsiElement position, final ExpectedTypeInfo[] infos) {
+  private static @Nullable LookupElementWeigher preferStatics(PsiElement position, final ExpectedTypeInfo[] infos) {
     if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class) != null) {
       return null;
     }
@@ -199,9 +195,8 @@ public final class JavaCompletionSorting {
     }
 
     return new LookupElementWeigher("statics") {
-      @NotNull
       @Override
-      public Integer weigh(@NotNull LookupElement element) {
+      public @NotNull Integer weigh(@NotNull LookupElement element) {
         JavaConstructorCallElement call = element.as(JavaConstructorCallElement.class);
         Object o = call != null ? call.getConstructedClass() : element.getObject();
 
@@ -267,8 +262,7 @@ public final class JavaCompletionSorting {
     return preferByMemberName(expectedMemberName, itemType);
   }
 
-  @NotNull
-  private static ExpectedTypeMatching preferByMemberName(@Nullable String expectedMemberName, @Nullable PsiType itemType) {
+  private static @NotNull ExpectedTypeMatching preferByMemberName(@Nullable String expectedMemberName, @Nullable PsiType itemType) {
     if (expectedMemberName != null) {
       PsiClass itemClass = PsiUtil.resolveClassInClassTypeOnly(itemType);
       if (itemClass != null) {
@@ -371,9 +365,8 @@ public final class JavaCompletionSorting {
       myLocation = new CompletionLocation(myParameters);
     }
 
-    @NotNull
     @Override
-    public MyResult weigh(@NotNull LookupElement item) {
+    public @NotNull MyResult weigh(@NotNull LookupElement item) {
       final Object object = item.getObject();
 
       if (object instanceof PsiClass) {
@@ -482,9 +475,8 @@ public final class JavaCompletionSorting {
       super("nonGeneric");
     }
 
-    @NotNull
     @Override
-    public Integer weigh(@NotNull LookupElement element) {
+    public @NotNull Integer weigh(@NotNull LookupElement element) {
       final Object object = element.getObject();
       return object instanceof PsiMethod &&
              !FunctionalExpressionCompletionProvider.isFunExprItem(element) &&
@@ -497,9 +489,8 @@ public final class JavaCompletionSorting {
       super("nonVoid");
     }
 
-    @NotNull
     @Override
-    public Integer weigh(@NotNull LookupElement element) {
+    public @NotNull Integer weigh(@NotNull LookupElement element) {
       TypedLookupItem item = element.as(TypedLookupItem.class);
       return item != null && element.getObject() instanceof PsiMethod && PsiTypes.voidType().equals(item.getType()) ? 1 : 0;
     }
@@ -524,9 +515,8 @@ public final class JavaCompletionSorting {
       super("simple");
     }
 
-    @NotNull
     @Override
-    public Integer weigh(@NotNull LookupElement element) {
+    public @NotNull Integer weigh(@NotNull LookupElement element) {
       final PsiTypeLookupItem lookupItem = element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY);
       if (lookupItem != null) {
         return lookupItem.getBracketsCount() * 10 + (lookupItem.isAddArrayInitializer() ? 1 : 0);
@@ -606,8 +596,7 @@ public final class JavaCompletionSorting {
       myExpectedMemberName = calcExpectedMemberNameByParentCall(position);
     }
 
-    @Nullable
-    private static String calcExpectedMemberNameByParentCall(PsiElement position) {
+    private static @Nullable String calcExpectedMemberNameByParentCall(PsiElement position) {
       if (position.getParent() instanceof PsiJavaCodeReferenceElement) {
         PsiElement grand = position.getParent().getParent();
         if (grand instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)grand).getQualifier() == position.getParent()) {
@@ -617,9 +606,8 @@ public final class JavaCompletionSorting {
       return null;
     }
 
-    @NotNull
     @Override
-    public ExpectedTypeMatching weigh(@NotNull LookupElement item) {
+    public @NotNull ExpectedTypeMatching weigh(@NotNull LookupElement item) {
       if (item.getObject() instanceof PsiClass && !myConstructorPossible) {
         PsiType itemType = JavaCompletionUtil.getLookupElementType(item);
         if (itemType != null) {
@@ -639,7 +627,7 @@ public final class JavaCompletionSorting {
     }
   }
 
-  private static abstract class ExpectedTypeBasedWeigher extends LookupElementWeigher {
+  private abstract static class ExpectedTypeBasedWeigher extends LookupElementWeigher {
     final ExpectedTypeInfo[] myExpectedTypes;
     private final JavaCodeStyleManager myCodeStyleManager;
 
@@ -667,9 +655,8 @@ public final class JavaCompletionSorting {
       super(project, "nameEnd", expectedTypes);
     }
 
-    @NotNull
     @Override
-    public Integer weigh(@NotNull LookupElement element) {
+    public @NotNull Integer weigh(@NotNull LookupElement element) {
       final String name = getLookupObjectName(element.getObject());
       return -getNameEndMatchingDegree(name, myExpectedTypes);
     }
@@ -680,9 +667,8 @@ public final class JavaCompletionSorting {
       super(project, "sameWords", expectedTypes);
     }
 
-    @NotNull
     @Override
-    public Integer weigh(@NotNull LookupElement element) {
+    public @NotNull Integer weigh(@NotNull LookupElement element) {
       final Object object = element.getObject();
 
       final String name = getLookupObjectName(object);
@@ -708,9 +694,8 @@ public final class JavaCompletionSorting {
       super(project, "shorter", expectedTypes);
     }
 
-    @NotNull
     @Override
-    public Integer weigh(@NotNull LookupElement element) {
+    public @NotNull Integer weigh(@NotNull LookupElement element) {
       final Object object = element.getObject();
       final String name = getLookupObjectName(object);
 
@@ -733,9 +718,8 @@ public final class JavaCompletionSorting {
       myPlace = place;
     }
 
-    @NotNull
     @Override
-    public Boolean weigh(@NotNull LookupElement element) {
+    public @NotNull Boolean weigh(@NotNull LookupElement element) {
       Object object = element.getObject();
       if (object instanceof PsiMethod method && element.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) == null) {
         PsiClass containingClass = method.getContainingClass();

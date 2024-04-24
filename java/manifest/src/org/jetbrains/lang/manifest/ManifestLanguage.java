@@ -32,7 +32,7 @@ import com.intellij.lang.Language;
 public class ManifestLanguage extends Language {
   public static final ManifestLanguage INSTANCE = new ManifestLanguage();
 
-  public ManifestLanguage() {
+  private ManifestLanguage() {
     super("Manifest");
   }
 }

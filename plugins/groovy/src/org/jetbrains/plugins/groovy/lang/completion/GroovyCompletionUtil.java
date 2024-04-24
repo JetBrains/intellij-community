@@ -186,7 +186,7 @@ public final class GroovyCompletionUtil {
 
     final PsiElement pparent = parent.getParent();
     if (!(pparent instanceof GrVariableDeclaration variableDeclaration)) return false;
-    if (((GrVariableDeclaration)pparent).isTuple()) return false;
+    if (variableDeclaration.isTuple()) return false;
 
     if (variableDeclaration.getTypeElementGroovy() != null) return false;
 
@@ -364,7 +364,7 @@ public final class GroovyCompletionUtil {
                                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE));
     }
     else if (element instanceof PsiClass psiClass) {
-      String tailText = getPackageText((PsiClass)element);
+      String tailText = getPackageText(psiClass);
       if ((substitutor == null || substitutor.getSubstitutionMap().isEmpty()) && psiClass.getTypeParameters().length > 0) {
         tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), psiTypeParameter -> psiTypeParameter.getName(), "," + (showSpaceAfterComma(psiClass) ? " " : "")) + ">" + tailText;
       }

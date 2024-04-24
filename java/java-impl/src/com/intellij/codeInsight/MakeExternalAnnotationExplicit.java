@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -30,10 +30,8 @@ import java.util.List;
 
 public final class MakeExternalAnnotationExplicit implements ModCommandAction {
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.make.external.annotations.explicit");
   }
 

@@ -16,10 +16,14 @@ import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.psi.stubs.StubIndexExtension
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag
+import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
+import com.intellij.util.indexing.PersistentDirtyFilesQueue.readProjectDirtyFilesQueue
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
@@ -98,11 +102,23 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
                             snapshot is FbiSnapshot.RebuildRequired ||
                             FbiSnapshot.Impl.isRescanningRequired(snapshot as FbiSnapshot.Impl, FbiSnapshot.Impl.capture()))
         if (runRescanning) {
+          fileBasedIndex.waitUntilIndicesAreInitialized()
           beforeIndexTasksStarted?.run()
           cleanupProcessedFlag(reason)
           for (project in ProjectUtil.getOpenProjects()) {
-            UnindexedFilesScanner(project, reason, Registry.`is`("scanning.hide.progress.in.smart.mode", true))
-              .queue()
+            val orphanQueue = fileBasedIndex.orphanDirtyFileIdsFromLastSession.let {
+              if (it != null) it
+              else {
+                LOG.error("Orphan dirty files queue is not yet initialized")
+                OrphanDirtyFilesQueue(IntArrayList(), 0L)
+              }
+            }
+            val projectQueueFile = project.getQueueFile()
+            val projectDirtyFilesQueue = readProjectDirtyFilesQueue(projectQueueFile, ManagingFS.getInstance().creationTimestamp)
+            fileBasedIndex.dirtyFiles.getProjectDirtyFiles(project)?.addFiles(projectDirtyFilesQueue.fileIds)
+            fileBasedIndex.setLastSeenIndexInOrphanQueue(project, projectDirtyFilesQueue.lastSeenIndexInOrphanQueue)
+            val indexesCleanupJob = scanAndIndexProjectAfterOpen(project, orphanQueue, projectDirtyFilesQueue, startSuspended = false, allowSkippingScanning = false, project.coroutineScope, "On FileBasedIndexTumbler.turnOn (reason=$reason)")
+            indexesCleanupJob.forgetProjectDirtyFilesOnCompletion(fileBasedIndex, project, projectDirtyFilesQueue, orphanQueue.untrimmedSize)
           }
           LOG.info("Index rescanning has been started after `$reason`")
         }

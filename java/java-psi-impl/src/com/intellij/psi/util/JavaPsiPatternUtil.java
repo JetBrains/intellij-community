@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -105,8 +105,7 @@ public final class JavaPsiPatternUtil {
    * @return extracted pattern variable or null if the pattern is incomplete or unknown
    */
   @Contract(value = "null -> null", pure = true)
-  @Nullable
-  public static PsiPatternVariable getPatternVariable(@Nullable PsiCaseLabelElement pattern) {
+  public static @Nullable PsiPatternVariable getPatternVariable(@Nullable PsiCaseLabelElement pattern) {
     if (pattern instanceof PsiTypeTestPattern) {
       return ((PsiTypeTestPattern)pattern).getPatternVariable();
     }
@@ -117,8 +116,7 @@ public final class JavaPsiPatternUtil {
   }
 
   @Contract(value = "null -> null", pure = true)
-  @Nullable
-  public static PsiPrimaryPattern getTypedPattern(@Nullable PsiCaseLabelElement element) {
+  public static @Nullable PsiPrimaryPattern getTypedPattern(@Nullable PsiCaseLabelElement element) {
     if (element instanceof PsiDeconstructionPattern) {
       return ((PsiDeconstructionPattern)element);
     }
@@ -169,8 +167,7 @@ public final class JavaPsiPatternUtil {
    * @return type of variable in pattern, or null if pattern is incomplete
    */
   @Contract(value = "null -> null", pure = true)
-  @Nullable
-  public static PsiType getPatternType(@Nullable PsiCaseLabelElement pattern) {
+  public static @Nullable PsiType getPatternType(@Nullable PsiCaseLabelElement pattern) {
     PsiTypeElement typeElement = getPatternTypeElement(pattern);
     if (typeElement == null) return null;
     return typeElement.getType();
@@ -195,8 +192,7 @@ public final class JavaPsiPatternUtil {
     return isUnconditionalForType(pattern, type, false) && !isGuarded(pattern);
   }
 
-  @Nullable
-  public static PsiPrimaryPattern findUnconditionalPattern(@Nullable PsiCaseLabelElement pattern) {
+  public static @Nullable PsiPrimaryPattern findUnconditionalPattern(@Nullable PsiCaseLabelElement pattern) {
     if (pattern == null || isGuarded(pattern)) return null;
     if (pattern instanceof PsiDeconstructionPattern || pattern instanceof PsiTypeTestPattern || pattern instanceof PsiUnnamedPattern) {
       return (PsiPrimaryPattern)pattern;
@@ -309,8 +305,7 @@ public final class JavaPsiPatternUtil {
   }
 
   @Contract(pure = true)
-  @Nullable
-  public static PsiRecordComponent getRecordComponentForPattern(@NotNull PsiPattern pattern) {
+  public static @Nullable PsiRecordComponent getRecordComponentForPattern(@NotNull PsiPattern pattern) {
     PsiDeconstructionList deconstructionList = ObjectUtils.tryCast(pattern.getParent(), PsiDeconstructionList.class);
     if (deconstructionList == null) return null;
     @NotNull PsiPattern @NotNull [] patterns = deconstructionList.getDeconstructionComponents();
@@ -421,10 +416,9 @@ public final class JavaPsiPatternUtil {
     }
   }
 
-  @NotNull
-  private static PsiPatternVariable createFakePatternVariable(@NotNull PsiPattern pattern,
-                                                              @NotNull PsiTypeElement typeElement,
-                                                              @NotNull PsiType type) {
+  private static @NotNull PsiPatternVariable createFakePatternVariable(@NotNull PsiPattern pattern,
+                                                                       @NotNull PsiTypeElement typeElement,
+                                                                       @NotNull PsiType type) {
     Project project = pattern.getProject();
     PsiElementFactory factory = PsiElementFactory.getInstance(project);
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
@@ -537,8 +531,7 @@ public final class JavaPsiPatternUtil {
     }
   }
 
-  @Nullable
-  private static Object evaluateConstant(@Nullable PsiExpression expression) {
+  private static @Nullable Object evaluateConstant(@Nullable PsiExpression expression) {
     if (expression == null) return null;
     return JavaPsiFacade.getInstance(expression.getProject()).getConstantEvaluationHelper()
       .computeConstantExpression(expression, false);

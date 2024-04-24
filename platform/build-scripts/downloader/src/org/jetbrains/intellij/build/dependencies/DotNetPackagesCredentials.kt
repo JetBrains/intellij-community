@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.tryGetSingleChildElement
 import org.w3c.dom.Element
 import org.xml.sax.SAXException
 import java.io.File
@@ -64,10 +65,9 @@ object DotNetPackagesCredentials {
     }
     val documentBuilder = BuildDependenciesUtil.createDocumentBuilder()
     val document = documentBuilder.parse(nuGetConfig)
-    val packageSourceCredentialsElement = BuildDependenciesUtil.tryGetSingleChildElement(document.documentElement,
-                                                                                         "packageSourceCredentials")
+    val packageSourceCredentialsElement = document.documentElement.tryGetSingleChildElement("packageSourceCredentials")
                                           ?: return false
-    val dotNetSpaceBuild = BuildDependenciesUtil.tryGetSingleChildElement(packageSourceCredentialsElement, "dotnet_build_space")
+    val dotNetSpaceBuild = packageSourceCredentialsElement.tryGetSingleChildElement("dotnet_build_space")
                            ?: return false
     var isUsernameSet = false
     var isPasswordSet = false

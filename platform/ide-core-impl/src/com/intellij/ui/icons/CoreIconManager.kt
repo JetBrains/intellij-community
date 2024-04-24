@@ -40,7 +40,7 @@ import javax.swing.Icon
 class CoreIconManager : IconManager, CoreAwareIconManager {
   override fun getPlatformIcon(id: PlatformIcons): Icon {
     return when (id) {
-      PlatformIcons.Public -> AllIcons.Nodes.Public
+      PlatformIcons.Public -> AllIcons.Nodes.C_public
       PlatformIcons.Private -> AllIcons.Nodes.C_private
       PlatformIcons.Protected -> AllIcons.Nodes.C_protected
       PlatformIcons.Local -> AllIcons.Nodes.C_plocal

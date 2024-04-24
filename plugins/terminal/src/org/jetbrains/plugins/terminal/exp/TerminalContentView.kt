@@ -7,7 +7,7 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import javax.swing.JComponent
 
-interface TerminalContentView : Disposable {
+internal interface TerminalContentView : Disposable {
   val component: JComponent
 
   val preferredFocusableComponent: JComponent

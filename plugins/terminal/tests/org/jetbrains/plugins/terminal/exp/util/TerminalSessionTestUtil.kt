@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 
-object TerminalSessionTestUtil {
+internal object TerminalSessionTestUtil {
   fun startBlockTerminalSession(project: Project,
                                 shellPath: String,
                                 parentDisposable: Disposable,

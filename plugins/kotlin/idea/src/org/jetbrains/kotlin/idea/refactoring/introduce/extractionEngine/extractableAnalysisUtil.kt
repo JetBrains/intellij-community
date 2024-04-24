@@ -58,6 +58,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.resolveTopLevelClass
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.error.ErrorUtils
+import org.jetbrains.kotlin.types.typeUtil.isNothing
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
@@ -403,6 +404,7 @@ class KotlinTypeDescriptor(private val data: ExtractionData) : TypeDescriptor<Ko
 
     override val booleanType: KotlinType = module.builtIns.booleanType
     override val unitType: KotlinType = module.builtIns.unitType
+    override val nothingType: KotlinType = module.builtIns.nothingType
     override val nullableAnyType: KotlinType = module.builtIns.nullableAnyType
 
     override fun createListType(argTypes: List<KotlinType>): KotlinType {
@@ -660,6 +662,8 @@ private fun ExtractionData.createOutputDescriptor(pseudocode: Pseudocode, localI
     return OutputDescriptor(
         defaultResultExpression = defaultResultExpressions.singleOrNull(),
         typeOfDefaultFlow = typeOfDefaultFlow,
+        implicitReturn = null,
+        lastExpressionHasNothingType = expressions.lastOrNull()?.let { bindingContext.getType(it)?.isNothing() } == true,
         valuedReturnExpressions = valuedReturnExpressions,
         returnValueType = returnValueType,
         jumpExpressions = jumpExits.map { it.element as KtExpression },

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2024 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * and should be executed inside the IDE process.
  *
  * @deprecated starting from IDEA 15 compilers need to be executed inside a separate (external) build process, see
- * <a href="http://www.jetbrains.org/intellij/sdk/docs/reference_guide/frameworks_and_external_apis/external_builder_api.html">this guide</a>
+ * <a href="https://plugins.jetbrains.com/docs/intellij/external-builder-api.html">this guide</a>
  * for details. Implementations of this class aren't used by the IDE (except those which implement {@link Validator} or {@link SourceInstrumentingCompiler}).
  */
 @Deprecated

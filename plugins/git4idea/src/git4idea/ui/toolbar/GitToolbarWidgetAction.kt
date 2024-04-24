@@ -1,12 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.toolbar
 
+import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.groupContainsAction
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -15,7 +22,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.wm.impl.ExpandableComboAction
+import com.intellij.openapi.wm.impl.ListenableToolbarComboButton
 import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 import com.intellij.ui.util.maximumWidth
 import git4idea.GitVcs
 import git4idea.branch.GitBranchSyncStatus
@@ -70,6 +79,21 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return super.createCustomComponent(presentation, place).apply { maximumWidth = Int.MAX_VALUE }
+  }
+
+  override fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton {
+    return GitToolbarComboButton(model)
+  }
+
+  class GitToolbarComboButton(model: ToolbarComboButtonModel) : ListenableToolbarComboButton(model) {
+    override fun installListeners(project: Project?, disposable: Disposable) {
+      if (project == null) return
+      project.messageBus.connect(disposable).subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, VcsRepositoryMappingListener {
+        runInEdt(ModalityState.nonModal()) {
+          updateWidgetAction()
+        }
+      })
+    }
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {

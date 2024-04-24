@@ -14,8 +14,6 @@ import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.Nls;
@@ -90,8 +88,6 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
     if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
     String text = "(" + type.getCanonicalText(false) + ")value";
     PsiTypeCastExpression typeCast = (PsiTypeCastExpression)factory.createExpressionFromText(text, original);
-    typeCast = (PsiTypeCastExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(typeCast);
-    typeCast = (PsiTypeCastExpression)CodeStyleManager.getInstance(project).reformat(typeCast);
 
     if (expression instanceof PsiConditionalExpression) {
       // we'd better cast one branch of ternary expression if we can

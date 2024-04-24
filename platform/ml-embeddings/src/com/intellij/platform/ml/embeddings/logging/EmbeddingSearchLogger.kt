@@ -51,12 +51,14 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
     SEARCH_FINISHED.log(project, buildList {
       add(MODEL_VERSION.with(Registry.stringValue("intellij.platform.ml.embeddings.model.version")))
       add(USED_MEMORY_MB.with(
-        when (index) {
-          Index.ACTIONS -> ActionEmbeddingsStorage.getInstance().index.estimateMemoryUsage()
-          Index.FILES -> FileEmbeddingsStorage.getInstance(project!!).index.estimateMemoryUsage()
-          Index.CLASSES -> ClassEmbeddingsStorage.getInstance(project!!).index.estimateMemoryUsage()
-          Index.SYMBOLS -> SymbolEmbeddingStorage.getInstance(project!!).index.estimateMemoryUsage()
-        }.toDouble() / BYTES_IN_MEGABYTE
+        roundDouble(
+          when (index) {
+            Index.ACTIONS -> ActionEmbeddingsStorage.getInstance().index.estimateMemoryUsage()
+            Index.FILES -> FileEmbeddingsStorage.getInstance(project!!).index.estimateMemoryUsage()
+            Index.CLASSES -> ClassEmbeddingsStorage.getInstance(project!!).index.estimateMemoryUsage()
+            Index.SYMBOLS -> SymbolEmbeddingStorage.getInstance(project!!).index.estimateMemoryUsage()
+          }.toDouble() / BYTES_IN_MEGABYTE
+        )
       ))
       add(VECTOR_COUNT.with(
         when (index) {

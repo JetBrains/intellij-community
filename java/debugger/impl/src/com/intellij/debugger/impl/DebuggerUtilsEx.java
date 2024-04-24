@@ -1110,27 +1110,48 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     if (!intersects(lineRange, lambda)) return null;
     PsiElement body = lambda.getBody();
     if (body == null || !intersects(lineRange, body)) return null;
+
     if (body instanceof PsiCodeBlock) {
       PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
-      if (statements.length > 0) {
-        for (PsiStatement statement : statements) {
-          // return first statement starting on the line
-          if (lineRange.contains(statement.getTextOffset())) {
-            return statement;
-          }
-          // otherwise check all children
-          else if (intersects(lineRange, statement)) {
-            for (PsiElement element : SyntaxTraverser.psiTraverser(statement)) {
-              if (lineRange.contains(element.getTextOffset())) {
-                return element;
-              }
-            }
-          }
+      if (statements.length == 0) {
+        // empty lambda
+        LOG.assertTrue(lineRange.contains(body.getTextOffset()));
+        return body;
+      }
+      for (PsiStatement statement : statements) {
+        // return first statement starting on the line
+        var found = getFirstElementOnTheLine(lineRange, statement);
+        if (found != null) {
+          return found;
         }
-        return null;
       }
     }
-    return body;
+    else {
+      // check expression body
+      var found = getFirstElementOnTheLine(lineRange, body);
+      if (found != null) {
+        return found;
+      }
+    }
+
+    return null;
+  }
+
+  private static PsiElement getFirstElementOnTheLine(TextRange lineRange, PsiElement element) {
+    if (lineRange.contains(element.getTextOffset())) {
+      return element;
+    }
+
+    // otherwise check all children
+    if (intersects(lineRange, element)) {
+      for (PsiElement child : SyntaxTraverser.psiTraverser(element)) {
+        if (lineRange.contains(child.getTextOffset())) {
+          return child;
+        }
+      }
+    }
+
+    return null;
   }
 
   public static boolean inTheMethod(@NotNull SourcePosition pos, @NotNull PsiElement method) {

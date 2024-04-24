@@ -91,7 +91,7 @@ public final class GenerateToStringActionHandlerImpl implements GenerateToString
         doExecuteAction(project, clazz, null);
     }
 
-    private static void doExecuteAction(@NotNull final Project project, @NotNull final PsiClass clazz, final Editor editor) {
+    private static void doExecuteAction(final @NotNull Project project, final @NotNull PsiClass clazz, final Editor editor) {
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(clazz)) {
             return;
         }
@@ -158,9 +158,8 @@ public final class GenerateToStringActionHandlerImpl implements GenerateToString
         LOG.debug("+++ doExecuteAction - END +++");
     }
 
-  @Nullable
-  private static List<PsiElementClassMember<?>> sortedSelection(PsiElementClassMember<?>[] dialogMembers,
-                                                                MemberChooser<PsiElementClassMember<?>> chooser) {
+  private static @Nullable List<PsiElementClassMember<?>> sortedSelection(PsiElementClassMember<?>[] dialogMembers,
+                                                                          MemberChooser<PsiElementClassMember<?>> chooser) {
     List<PsiElementClassMember<?>> selectedElements = chooser.getSelectedElements();
     if (selectedElements == null) {
       return null;
@@ -198,8 +197,7 @@ public final class GenerateToStringActionHandlerImpl implements GenerateToString
         return GenerationUtil.combineToClassMemberList(filteredFields, filteredMethods);
     }
 
-    @Nullable
-    private static PsiClass getSubjectClass(Editor editor, final PsiFile file) {
+    private static @Nullable PsiClass getSubjectClass(Editor editor, final PsiFile file) {
         if (file == null) return null;
 
         int offset = editor.getCaretModel().getOffset();
@@ -277,8 +275,7 @@ public final class GenerateToStringActionHandlerImpl implements GenerateToString
                   final TemplatesPanel ui = new TemplatesPanel(project);
                   Configurable composite = new TabbedConfigurable() {
                         @Override
-                        @NotNull
-                        protected List<Configurable> createConfigurables() {
+                        protected @NotNull List<Configurable> createConfigurables() {
                             List<Configurable> res = new ArrayList<>();
                             res.add(new GenerateToStringConfigurable(project));
                             res.add(ui);

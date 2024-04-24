@@ -60,6 +60,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/branched/introduceWhenSubject")
             model("${idea}/inspectionsLocal/usePropertyAccessSyntax")
             model("${idea}/inspectionsLocal/redundantUnitReturnType")
+            model("${idea}/inspectionsLocal/canBeParameter")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
         /**

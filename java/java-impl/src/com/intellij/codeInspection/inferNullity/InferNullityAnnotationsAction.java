@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inferNullity;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -66,7 +66,7 @@ import java.util.*;
 
 public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   private static final String SUGGEST_ANNOTATION_DEPENDENCY = "java.suggest.annotation.dependency";
-  @NonNls private static final String ANNOTATE_LOCAL_VARIABLES = "checkbox.annotate.local.variables";
+  private static final @NonNls String ANNOTATE_LOCAL_VARIABLES = "checkbox.annotate.local.variables";
   private final LazyInitializer.@NotNull LazyValue<InferNullityAdditionalUi> myUi = LazyInitializer.create(InferNullityAdditionalUi::new);
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager
     .getInstance()
@@ -77,7 +77,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
+  protected void analyze(final @NotNull Project project, final @NotNull AnalysisScope scope) {
     PropertiesComponent.getInstance().setValue(ANNOTATE_LOCAL_VARIABLES, isAnnotateLocalVariables());
 
     final ProgressManager progressManager = ProgressManager.getInstance();
@@ -87,7 +87,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     final String defaultNullable = NullableNotNullManager.getInstance(project).getDefaultNullable();
     final int[] fileCount = new int[]{0};
     if (!progressManager.runProcessWithProgressSynchronously(() -> scope.accept(new PsiElementVisitor() {
-      final private Set<Module> processed = new HashSet<>();
+      private final Set<Module> processed = new HashSet<>();
 
       @Override
       public void visitFile(@NotNull PsiFile file) {
@@ -142,8 +142,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     }
   }
 
-  public static Promise<Void> addAnnotationsDependency(@NotNull final Project project,
-                                                       @NotNull final Set<? extends Module> modulesWithoutAnnotations,
+  public static Promise<Void> addAnnotationsDependency(final @NotNull Project project,
+                                                       final @NotNull Set<? extends Module> modulesWithoutAnnotations,
                                                        @NotNull String annoFQN, final @NlsContexts.DialogTitle @NotNull String title) {
     final Library annotationsLib = LibraryUtil.findLibraryByClass(annoFQN, project);
     if (annotationsLib != null) {
@@ -172,10 +172,9 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     return Promises.rejectedPromise();
   }
 
-  @NotNull
-  private static OkCancelDialogBuilder createDependencyDialog(@NlsContexts.DialogTitle @NotNull String title,
-                                                              @NlsContexts.DialogMessage @NotNull String message,
-                                                              @NotNull Project project) {
+  private static @NotNull OkCancelDialogBuilder createDependencyDialog(@NlsContexts.DialogTitle @NotNull String title,
+                                                                       @NlsContexts.DialogMessage @NotNull String message,
+                                                                       @NotNull Project project) {
     return MessageDialogBuilder.okCancel(title, message)
       .icon(Messages.getErrorIcon())
       .doNotAsk(new DoNotAskOption.Adapter() {
@@ -187,8 +186,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       .yesText(JavaBundle.message("button.add.dependency"));
   }
 
-  protected UsageInfo @Nullable [] findUsages(@NotNull final Project project,
-                                              @NotNull final AnalysisScope scope,
+  protected UsageInfo @Nullable [] findUsages(final @NotNull Project project,
+                                              final @NotNull AnalysisScope scope,
                                               final int fileCount) {
     final NullityInferrer inferrer = new NullityInferrer(isAnnotateLocalVariables(), project);
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -198,7 +197,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
         int myFileCount;
 
         @Override
-        public void visitFile(@NotNull final PsiFile file) {
+        public void visitFile(final @NotNull PsiFile file) {
           myFileCount++;
           final VirtualFile virtualFile = file.getVirtualFile();
           final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
@@ -329,8 +328,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
                                         JavaBundle.message("action.title.infer.nullity.annotations"), false);
   }
 
-  @NotNull
-  private Factory<UsageSearcher> rerunFactory(@NotNull final Project project, @NotNull final AnalysisScope scope) {
+  private @NotNull Factory<UsageSearcher> rerunFactory(final @NotNull Project project, final @NotNull AnalysisScope scope) {
     return () -> new UsageInfoSearcherAdapter() {
       @Override
       protected UsageInfo @NotNull [] findUsages() {

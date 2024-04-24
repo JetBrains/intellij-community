@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -78,8 +78,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     }
   }
 
-  @NotNull
-  private static Collection<IntentionAction> createClassActions(@NotNull PsiJavaCodeReferenceElement ref) {
+  private static @NotNull Collection<IntentionAction> createClassActions(@NotNull PsiJavaCodeReferenceElement ref) {
     Collection<IntentionAction> result = new ArrayList<>();
     PsiElement refParent = ref.getParent();
     if (refParent != null && refParent.getParent() instanceof PsiDeconstructionPattern) {
@@ -131,8 +130,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     return result;
   }
 
-  @NotNull
-  private static Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
+  private static @NotNull Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
     Collection<IntentionAction> result = new ArrayList<>();
     boolean isQualified = refExpr.isQualified();
     VariableKind kind = getKind(refExpr);
@@ -156,8 +154,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     return result;
   }
 
-  @Nullable
-  private static VariableKind getKind(@NotNull PsiReferenceExpression refExpr) {
+  private static @Nullable VariableKind getKind(@NotNull PsiReferenceExpression refExpr) {
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
     String reference = refExpr.getText();
 
@@ -186,8 +183,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
   }
 
   @Override
-  @NotNull
-  public Class<PsiJavaCodeReferenceElement> getReferenceClass() {
+  public @NotNull Class<PsiJavaCodeReferenceElement> getReferenceClass() {
     return PsiJavaCodeReferenceElement.class;
   }
 }

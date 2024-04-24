@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.psi.*;
@@ -24,8 +24,7 @@ public interface JavaChangeInfo extends ChangeInfo {
 
   CanonicalTypes.Type getNewReturnType();
    
-  @Nullable
-  default String getOldReturnType() {
+  default @Nullable String getOldReturnType() {
     PsiType type = getMethod().getReturnType();
     return type != null ? type.getCanonicalText() : null;
   }

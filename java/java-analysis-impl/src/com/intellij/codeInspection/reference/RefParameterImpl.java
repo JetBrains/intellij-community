@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class RefParameterImpl extends RefJavaElementImpl implements RefParameter {
+public final class RefParameterImpl extends RefJavaElementImpl implements RefParameter {
   private static final int USED_FOR_READING_MASK = 0b01_00000000_00000000; // 17th bit
   private static final int USED_FOR_WRITING_MASK = 0b10_00000000_00000000; // 18th bit
 

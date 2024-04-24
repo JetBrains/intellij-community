@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.core.JavaPsiBundle;
@@ -57,8 +57,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   }
 
   @Override
-  @NotNull
-  public String getType(@NotNull PsiElement element) {
+  public @NotNull String getType(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
       return IndexingBundle.message("terms.directory");
     }
@@ -81,8 +80,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   }
 
   @Override
-  @NotNull
-  public String getDescriptiveName(@NotNull final PsiElement element) {
+  public @NotNull String getDescriptiveName(final @NotNull PsiElement element) {
     if (ThrowSearchUtil.isSearchable(element)) {
       return ThrowSearchUtil.getSearchableTypeName(element);
     }
@@ -165,8 +163,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   }
 
   @Override
-  @NotNull
-  public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
+  public @NotNull String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     if (element instanceof PsiDirectory) {
       return getPackageName((PsiDirectory)element, false);
     }

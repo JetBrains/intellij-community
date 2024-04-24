@@ -49,7 +49,6 @@ class MLModelPredictionBranching<T : SessionTree.ChildrenContainer<M, DescribedT
     verifyExactTiersSet(nestedLevelCallParameters, callParameters.tiers, "call parameters")
     val levelAdditionalTiers = nestedLevelScheme.additional
 
-
     return if (collector.levelPositioning.lowerTiers.size == 1) {
       val nestedCollector = collector.nestPrediction(safeCallParameters, levelMainEnvironment, levelAdditionalTiers)
       MLModelPrediction(mlModel, nestedCollector)

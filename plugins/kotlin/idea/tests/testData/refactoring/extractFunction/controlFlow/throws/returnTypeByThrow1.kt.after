@@ -1,0 +1,9 @@
+fun main(args: Array<String>) {
+    val a = args.getOrNull(0) ?: nothing()
+
+    println(a.length)
+}
+
+private fun nothing(): Nothing {
+    throw IllegalStateException("Call me with two arguments")
+}

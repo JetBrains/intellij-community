@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
-import com.intellij.lang.java.lexer.JavaLexer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.text.NameUtilCore
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -70,8 +70,8 @@ class KotlinNameSuggester(
         fun shouldEscape(name: String): Boolean {
             return (escapeKotlinHardKeywords && name in KOTLIN_HARD_KEYWORDS)
                     || (escapeKotlinSoftKeywords && name in KOTLIN_SOFT_KEYWORDS)
-                    || (escapeJavaHardKeywords && JavaLexer.isKeyword(name, LanguageLevel.HIGHEST))
-                    || (escapeJavaSoftKeywords && JavaLexer.isSoftKeyword(name, LanguageLevel.HIGHEST))
+                    || (escapeJavaHardKeywords && PsiUtil.isKeyword(name, LanguageLevel.HIGHEST))
+                    || (escapeJavaSoftKeywords && PsiUtil.isSoftKeyword(name, LanguageLevel.HIGHEST))
         }
 
         fun escape(name: String): List<String> = escaper(name)

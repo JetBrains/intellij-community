@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.presentation.java;
 
 import com.intellij.core.JavaPsiBundle;
@@ -22,8 +22,7 @@ public final class JavaPresentationUtil {
   private JavaPresentationUtil() {
   }
 
-  @NotNull
-  public static ColoredItemPresentation getMethodPresentation(@NotNull final PsiMethod psiMethod) {
+  public static @NotNull ColoredItemPresentation getMethodPresentation(final @NotNull PsiMethod psiMethod) {
     return new ColoredItemPresentation() {
       @Override
       public String getPresentableText() {
@@ -58,8 +57,7 @@ public final class JavaPresentationUtil {
     };
   }
 
-  @NotNull
-  public static ItemPresentation getFieldPresentation(@NotNull final PsiField psiField) {
+  public static @NotNull ItemPresentation getFieldPresentation(final @NotNull PsiField psiField) {
     return new ColoredItemPresentation() {
       @Override
       public String getPresentableText() {
@@ -90,8 +88,7 @@ public final class JavaPresentationUtil {
     };
   }
 
-  @Nullable
-  private static String getJavaSymbolContainerText(@NotNull final PsiElement element) {
+  private static @Nullable String getJavaSymbolContainerText(final @NotNull PsiElement element) {
     final String result;
     PsiElement container = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
 

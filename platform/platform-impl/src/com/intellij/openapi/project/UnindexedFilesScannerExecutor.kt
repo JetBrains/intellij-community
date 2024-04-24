@@ -3,8 +3,6 @@ package com.intellij.openapi.project
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsContexts.ProgressText
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.SystemProperties
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,15 +27,7 @@ interface UnindexedFilesScannerExecutor {
     fun getInstance(project: Project): UnindexedFilesScannerExecutor = project.service<UnindexedFilesScannerExecutor>()
 
     @JvmStatic
-    fun shouldScanInSmartMode(): Boolean {
-      val registryValue = Registry.get("scanning.in.smart.mode")
-      return if (registryValue.isChangedFromDefault) {
-        registryValue.asBoolean()
-      }
-      else {
-        SystemProperties.getBooleanProperty("scanning.in.smart.mode", true)
-      }
-    }
+    fun shouldScanInSmartMode(): Boolean = true
 
     fun <T: MergeableQueueTask<T>> unwrapTask(task: MergingTaskQueue.QueuedTask<T>): T {
       return task.task

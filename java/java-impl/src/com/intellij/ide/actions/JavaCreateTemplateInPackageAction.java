@@ -73,7 +73,7 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
       ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaBundle.message("progress.title.looking.for.jdk"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          SdkLookupUtil.findAndSetupSdk(project, indicator, JavaSdk.getInstance(), sdk -> {
+          SdkLookupUtil.lookupAndSetupSdkBlocking(project, indicator, JavaSdk.getInstance(), sdk -> {
             JavaSdkUtil.applyJdkToProject(project, sdk);
             Notifications.Bus.notify(new Notification("Setup SDK", JavaBundle.message("notification.content.was.set.up", sdk.getVersionString()), NotificationType.INFORMATION).addAction(
               new NotificationAction(JavaBundle.message("notification.content.change.jdk")) {
@@ -90,7 +90,6 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
                     .showPopup(e);
                 }
               }));
-            return null;
           });
         }
       });

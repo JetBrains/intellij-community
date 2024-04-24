@@ -39,12 +39,12 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
     showPopup(e);
   }
 
-  private void showPopup(final AnActionEvent e) {
+  private void showPopup(@NotNull AnActionEvent e) {
     final DefaultActionGroup group = new DefaultActionGroup();
     fillActions(group);
 
     if (group.getChildrenCount() == 1 && isSilentlyChooseSingleOption()) {
-      final AnAction[] children = group.getChildren(null);
+      AnAction[] children = group.getChildren(e.getActionManager());
       children[0].actionPerformed(e);
       return;
     }

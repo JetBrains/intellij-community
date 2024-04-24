@@ -93,7 +93,7 @@ class SystemLanguage private constructor() {
             val root = JDOMUtil.load(path)
             for (plugin in root.getChildren("plugin")) {
               val language = plugin.getAttributeValue("language")
-              if (locale.language == language) {
+              if (locale.language == language || locale.language.startsWith(language)) {
                 pluginId = plugin.getAttributeValue("id")
                 pluginSize = plugin.getAttributeValue("size")
                 pluginUrl = plugin.text

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -59,8 +59,7 @@ public final class ClassInnerStuffCache {
     return copy(CachedValuesManager.getProjectPsiDependentCache(myClass, __ -> calcRecordComponents()));
   }
 
-  @Nullable
-  public PsiField findFieldByName(String name, boolean checkBases) {
+  public @Nullable PsiField findFieldByName(String name, boolean checkBases) {
     if (checkBases) {
       return PsiClassImplUtil.findFieldByName(myClass, name, true);
     }
@@ -78,8 +77,7 @@ public final class ClassInnerStuffCache {
     }
   }
 
-  @Nullable
-  public PsiClass findInnerClassByName(String name, boolean checkBases) {
+  public @Nullable PsiClass findInnerClassByName(String name, boolean checkBases) {
     if (checkBases) {
       return PsiClassImplUtil.findInnerByName(myClass, name, true);
     }
@@ -99,8 +97,7 @@ public final class ClassInnerStuffCache {
     return PsiKeyword.SEALED.equals(myClass.getName()) && PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, myClass);
   }
 
-  @Nullable
-  private PsiMethod getValueOfMethod() {
+  private @Nullable PsiMethod getValueOfMethod() {
     return myClass.isEnum() && !isAnonymousClass()
            ? internMember(CachedValuesManager.getProjectPsiDependentCache(myClass, ClassInnerStuffCache::makeValueOfMethod))
            : null;
@@ -120,8 +117,7 @@ public final class ClassInnerStuffCache {
     return ArrayUtil.mergeCollections(own, ext, PsiField.ARRAY_FACTORY);
   }
 
-  @NotNull
-  private <T extends PsiMember> List<T> internMembers(List<T> members) {
+  private @NotNull <T extends PsiMember> List<T> internMembers(List<T> members) {
     return ContainerUtil.map(members, this::internMember);
   }
 
@@ -160,8 +156,7 @@ public final class ClassInnerStuffCache {
     return header == null ? PsiRecordComponent.EMPTY_ARRAY : header.getRecordComponents();
   }
 
-  @NotNull
-  private Map<String, PsiField> getFieldsMap() {
+  private @NotNull Map<String, PsiField> getFieldsMap() {
     Map<String, PsiField> cachedFields = new HashMap<>();
     for (PsiField field : myClass.getOwnFields()) {
       String name = field.getName();
@@ -176,8 +171,7 @@ public final class ClassInnerStuffCache {
     });
   }
 
-  @NotNull
-  private Map<String, PsiMethod[]> getMethodsMap() {
+  private @NotNull Map<String, PsiMethod[]> getMethodsMap() {
     List<PsiMethod> ownMethods = myClass.getOwnMethods();
     return ConcurrentFactoryMap.createMap(name -> {
       return JBIterable
@@ -189,8 +183,7 @@ public final class ClassInnerStuffCache {
     });
   }
 
-  @NotNull
-  private Map<String, PsiClass> getInnerClassesMap() {
+  private @NotNull Map<String, PsiClass> getInnerClassesMap() {
     Map<String, PsiClass> cachedInners = new HashMap<>();
     for (PsiClass psiClass : myClass.getOwnInnerClasses()) {
       String name = psiClass.getName();
@@ -255,8 +248,7 @@ public final class ClassInnerStuffCache {
       return type;
     }
 
-    @NotNull
-    private LightModifierList createModifierList() {
+    private @NotNull LightModifierList createModifierList() {
       return new LightModifierList(myManager, getLanguage(), PsiModifier.PUBLIC, PsiModifier.STATIC) {
         @Override
         public PsiElement getParent() {
@@ -265,8 +257,7 @@ public final class ClassInnerStuffCache {
       };
     }
 
-    @NotNull
-    private LightParameterListBuilder createParameterList() {
+    private @NotNull LightParameterListBuilder createParameterList() {
       LightParameterListBuilder parameters = new LightParameterListBuilder(myManager, getLanguage());
       if (myKind == EnumMethodKind.ValueOf) {
         PsiClassType string = PsiType.getJavaLangString(myManager, GlobalSearchScope.allScope(getProject()));

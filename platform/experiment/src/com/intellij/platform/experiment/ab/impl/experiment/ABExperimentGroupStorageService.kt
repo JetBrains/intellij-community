@@ -76,7 +76,7 @@ internal class ABExperimentGroupStorageService : PersistentStateComponent<ABExpe
     val isPopularIDE = ABExperiment.isPopularIDE()
 
     for (newOption in newOptions) {
-      val groupCount = newOption.getGroupSizeForIde(isPopularIDE).count
+      val groupCount = newOption.getGroupSizeForIde(isPopularIDE).groupCount
       for (i in 0 until groupCount) {
         val freeGroupKey = groupNumberToExperimentOptionId.entries.find { entry ->
           entry.value == OPTION_ID_FREE_GROUP.value
@@ -107,7 +107,7 @@ internal class ABExperimentGroupStorageService : PersistentStateComponent<ABExpe
     var counter = 0
 
     for (option in options) {
-      val optionGroupsCount = option.getGroupSizeForIde(isPopularIDE).count
+      val optionGroupsCount = option.getGroupSizeForIde(isPopularIDE).groupCount
       for (groupNumber in counter.rangeUntil(counter + optionGroupsCount)) {
         LOG.debug { "Assign experiment option ${option.id} to group $groupNumber." }
         initialGroupNumberToExperimentOptionId[groupNumber] = option.id.value

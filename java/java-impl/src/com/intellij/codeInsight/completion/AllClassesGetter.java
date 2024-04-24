@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -96,7 +96,7 @@ public final class AllClassesGetter {
     }
 
     @Override
-    public void handleInsert(@NotNull final InsertionContext context, @NotNull final JavaPsiClassReferenceElement item) {
+    public void handleInsert(final @NotNull InsertionContext context, final @NotNull JavaPsiClassReferenceElement item) {
       _handleInsert(context, item);
       item.getTailType().processTail(context.getEditor(), context.getEditor().getCaretModel().getOffset());
     }
@@ -111,10 +111,10 @@ public final class AllClassesGetter {
     }
   };
 
-  public static void processJavaClasses(@NotNull final CompletionParameters parameters,
-                                        @NotNull final PrefixMatcher prefixMatcher,
+  public static void processJavaClasses(final @NotNull CompletionParameters parameters,
+                                        final @NotNull PrefixMatcher prefixMatcher,
                                         final boolean filterByScope,
-                                        @NotNull final Consumer<? super PsiClass> consumer) {
+                                        final @NotNull Consumer<? super PsiClass> consumer) {
     final PsiElement context = parameters.getPosition();
     final Project project = context.getProject();
     final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(project);
@@ -122,7 +122,7 @@ public final class AllClassesGetter {
     processJavaClasses(prefixMatcher, project, scope, new LimitedAccessibleClassPreprocessor(parameters, filterByScope, c->{consumer.consume(c); return true;}));
   }
 
-  public static void processJavaClasses(@NotNull final PrefixMatcher prefixMatcher,
+  public static void processJavaClasses(final @NotNull PrefixMatcher prefixMatcher,
                                         @NotNull Project project,
                                         @NotNull GlobalSearchScope scope,
                                         @NotNull Processor<? super PsiClass> processor) {
@@ -137,8 +137,8 @@ public final class AllClassesGetter {
     AllClassesSearchExecutor.processClassesByNames(project, scope, sorted, processor);
   }
 
-  public static boolean isAcceptableInContext(@NotNull final PsiElement context,
-                                              @NotNull final PsiClass psiClass,
+  public static boolean isAcceptableInContext(final @NotNull PsiElement context,
+                                              final @NotNull PsiClass psiClass,
                                               final boolean filterByScope, final boolean pkgContext) {
     ProgressManager.checkCanceled();
 
@@ -152,8 +152,8 @@ public final class AllClassesGetter {
     return JavaCompletionUtil.isSourceLevelAccessible(context, psiClass, pkgContext);
   }
 
-  public static JavaPsiClassReferenceElement createLookupItem(@NotNull final PsiClass psiClass,
-                                               final InsertHandler<JavaPsiClassReferenceElement> insertHandler) {
+  public static JavaPsiClassReferenceElement createLookupItem(final @NotNull PsiClass psiClass,
+                                                              final InsertHandler<JavaPsiClassReferenceElement> insertHandler) {
     final JavaPsiClassReferenceElement item = new JavaPsiClassReferenceElement(psiClass);
     item.setInsertHandler(insertHandler);
     return item;

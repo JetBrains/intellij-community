@@ -61,7 +61,7 @@ public final class PsiMethodUtil {
         if (containingClass.isInterface() && !instanceMainMethodsEnabled(containingClass)) {
           continue;
         }
-        if (mainMethod.hasModifierProperty(PsiModifier.STATIC) && !inheritedStaticMainEnabled(containingClass)) {
+        if (containingClass.isInterface() && mainMethod.hasModifierProperty(PsiModifier.STATIC) && !inheritedStaticMainEnabled(containingClass)) {
           continue;
         }
       }

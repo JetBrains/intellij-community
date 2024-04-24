@@ -7,9 +7,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
 public final class JvmAnalysisBundle extends DynamicBundle {
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
+  }
+
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
+    return ourInstance.getLazyMessage(key, params);
   }
 
   @NonNls public static final String BUNDLE = "messages.JvmAnalysisBundle";

@@ -24,10 +24,12 @@ import com.intellij.util.applyIf
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.k2ScriptingEnabled
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
@@ -88,7 +90,9 @@ abstract class ScriptClassRootsUpdater(
             }
         })
 
-        performUpdate(synchronous = false)
+        if (!k2ScriptingEnabled()) {
+            performUpdate(synchronous = false)
+        }
     }
 
     val classpathRoots: ScriptClassRootsCache
@@ -119,7 +123,9 @@ abstract class ScriptClassRootsUpdater(
     }
 
     fun invalidateAndCommit() {
-        update { invalidate() }
+        if (!k2ScriptingEnabled()) {
+            update { invalidate() }
+        }
     }
 
     /**
@@ -292,22 +298,24 @@ abstract class ScriptClassRootsUpdater(
         filesToAddOrUpdate: List<VirtualFile>,
         filesToRemove: List<VirtualFile>
     ) {
-      if (project.isDisposed) return
+        if (project.isDisposed) return
 
-      val builderSnapshot = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).getBuilderSnapshot()
-      builderSnapshot.syncScriptEntities(project, filesToAddOrUpdate, filesToRemove) // time-consuming call
-      val replacement = builderSnapshot.getStorageReplacement()
+        if (k2ScriptingEnabled()) return
 
-      runInEdt(ModalityState.nonModal()) {
-        val replaced = runWriteAction {
-          if (project.isDisposed) false
-          else (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).replaceProjectModel(replacement)
+        val builderSnapshot = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).getBuilderSnapshot()
+        builderSnapshot.syncScriptEntities(project, filesToAddOrUpdate, filesToRemove) // time-consuming call
+        val replacement = builderSnapshot.getStorageReplacement()
+
+        runInEdt(ModalityState.nonModal()) {
+            val replaced = runWriteAction {
+                if (project.isDisposed) false
+                else (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).replaceProjectModel(replacement)
+            }
+            if (!replaced) {
+                // initiate update once again
+                applyDiffToModelAsync(filesToAddOrUpdate, filesToRemove)
+            }
         }
-        if (!replaced) {
-          // initiate update once again
-          applyDiffToModelAsync(filesToAddOrUpdate, filesToRemove)
-        }
-      }
     }
 
     private fun recreateRootsCacheAndDiff(): ScriptClassRootsCache.Updates {
@@ -316,7 +324,7 @@ abstract class ScriptClassRootsUpdater(
             val new = recreateRootsCache()
             if (cache.compareAndSet(old, new)) {
                 afterUpdate()
-                return new.diff(project, lastSeen)
+                return new.diff(lastSeen)
             }
         }
     }
@@ -330,7 +338,7 @@ abstract class ScriptClassRootsUpdater(
                     old.sdks.rebuild(project, null)
                 } else {
                     var sdks = old.sdks
-                    for(sdk in remove) {
+                    for (sdk in remove) {
                         sdks = sdks.rebuild(project, sdk)
                     }
                     sdks

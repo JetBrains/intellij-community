@@ -37,9 +37,8 @@ public final class ThrowablePrintedToSystemOutInspection extends BaseInspection 
         );
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final String fieldName = (String)infos[0];
     final String methodName = (String)infos[1];
     return InspectionGadgetsBundle.message("throwable.printed.to.system.out.problem.descriptor", fieldName, methodName);
@@ -86,7 +85,7 @@ public final class ThrowablePrintedToSystemOutInspection extends BaseInspection 
 
   public static @Nullable ExceptionIsPrintedToSystemOutResult getExceptionIsPrintedToSystemOutResult(@NotNull PsiMethodCallExpression expression) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     if (!"print".equals(methodName) && !"println".equals(methodName)) {
       return null;
     }
@@ -112,7 +111,7 @@ public final class ThrowablePrintedToSystemOutInspection extends BaseInspection 
     if (!(target instanceof PsiField field)) {
       return null;
     }
-    @NonNls final String fieldName = field.getName();
+    final @NonNls String fieldName = field.getName();
     if (!HardcodedMethodConstants.OUT.equals(fieldName) && !HardcodedMethodConstants.ERR.equals(fieldName)) {
       return null;
     }

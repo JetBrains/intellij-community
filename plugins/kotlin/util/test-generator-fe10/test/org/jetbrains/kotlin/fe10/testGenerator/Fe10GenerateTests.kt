@@ -329,7 +329,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("copyright/tests", category = GroupCategory.CODE_INSIGHT) {
+    testGroup("copyright/tests", category = CODE_INSIGHT) {
         testClass<AbstractUpdateKotlinCopyrightTest> {
             model("update", pattern = KT_OR_KTS, testMethodName = "doTest")
         }
@@ -356,7 +356,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests", category = GroupCategory.HIGHLIGHTING) {
+    testGroup("idea/tests", category = HIGHLIGHTING) {
         testClass<AbstractKotlinHighlightVisitorTest>(commonSuite = false) {
             model("checker", isRecursive = false, pattern = KT.withPrecondition(excludedFirPrecondition))
             model("checker/regression", pattern = KT.withPrecondition(excludedFirPrecondition))
@@ -406,7 +406,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("kdoc/highlighting")
         }
     }
-    testGroup("idea/tests", category = GroupCategory.CODE_INSIGHT) {
+    testGroup("idea/tests", category = CODE_INSIGHT) {
         testClass<AbstractK1PsiUnifierTest> {
             model("unifier")
         }
@@ -434,7 +434,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests", category = GroupCategory.QUICKFIXES) {
+    testGroup("idea/tests", category = QUICKFIXES) {
         testClass<AbstractK1QuickFixTest> {
             model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kts?$"))
         }
@@ -448,7 +448,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests", category = GroupCategory.NAVIGATION) {
+    testGroup("idea/tests", category = NAVIGATION) {
         testClass<AbstractGotoSuperTest> {
             model("navigation/gotoSuper", pattern = TEST, isRecursive = false)
         }
@@ -526,7 +526,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     }
 
-    testGroup("idea/tests", category = GroupCategory.CODE_INSIGHT) {
+    testGroup("idea/tests", category = CODE_INSIGHT) {
         testClass<AbstractSurroundWithTest> {
             model("codeInsight/surroundWith/if", testMethodName = "doTestWithIfSurrounder")
             model("codeInsight/surroundWith/ifElse", testMethodName = "doTestWithIfElseSurrounder")
@@ -594,7 +594,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests", category = GroupCategory.CODE_INSIGHT) {
+    testGroup("idea/tests", category = CODE_INSIGHT) {
         testClass<AbstractHierarchyTest> {
             model("hierarchy/class/type", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTypeClassHierarchyTest")
             model("hierarchy/class/super", pattern = DIRECTORY, isRecursive = false, testMethodName = "doSuperClassHierarchyTest")
@@ -655,7 +655,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests", category = GroupCategory.INLINE_REFACTORING) {
+    testGroup("idea/tests", category = INLINE_REFACTORING) {
         testClass<AbstractInlineTest> {
             model("refactoring/inline", pattern = KT_WITHOUT_DOTS, excludedDirectories = listOf("withFullJdk"))
         }
@@ -780,7 +780,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests", category = GroupCategory.MOVE_REFACTORING) {
+    testGroup("idea/tests", category = MOVE_REFACTORING) {
         testClass<AbstractMoveTest> {
             model("refactoring/changePackage", pattern = TEST, flatten = true)
             model("refactoring/movePackage", pattern = TEST, flatten = true)
@@ -858,7 +858,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests", category = GroupCategory.RENAME_REFACTORING) {
+    testGroup("idea/tests", category = RENAME_REFACTORING) {
         testClass<AbstractRenameTest> {
             model("refactoring/rename", pattern = TEST, flatten = true)
         }
@@ -872,7 +872,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests", category = GroupCategory.CODE_INSIGHT) {
+    testGroup("idea/tests", category = CODE_INSIGHT) {
         testClass<AbstractKotlinProjectViewTest> {
             model("projectView", pattern = TEST)
         }
@@ -913,7 +913,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests", category = GroupCategory.HIGHLIGHTING) {
+    testGroup("idea/tests", category = HIGHLIGHTING) {
         testClass<AbstractCustomHighlightUsageHandlerTest>("org.jetbrains.kotlin.idea.highlighter.HighlightExitPointsTestGenerated") {
             model("exitPoints")
         }
@@ -968,7 +968,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests", category = GroupCategory.CODE_INSIGHT) {
+    testGroup("idea/tests", category = CODE_INSIGHT) {
         testClass<AbstractShortenRefsTest> {
             model("shortenRefs", pattern = KT_WITHOUT_DOTS)
         }
@@ -1079,7 +1079,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests", category = GroupCategory.UNCATEGORIZED) {
+    testGroup("idea/tests", category = UNCATEGORIZED) {
         testClass<AbstractCommonDecompiledTextTest> {
             model("decompiler/decompiledText", pattern = Patterns.forRegex("""^([^\.]+)$"""))
         }
@@ -1127,20 +1127,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
     testGroup("idea/tests", category = REFACTORING) {
-        testClass<AbstractExtractionTest> {
-            model("refactoring/introduceVariable", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceVariableTest")
-            model("refactoring/extractFunction", pattern = KT_OR_KTS, testMethodName = "doExtractFunctionTest", excludedDirectories = listOf("inplace"))
-            model("refactoring/introduceProperty", pattern = KT_OR_KTS, testMethodName = "doIntroducePropertyTest")
-            model("refactoring/introduceParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceSimpleParameterTest")
-            model("refactoring/introduceLambdaParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceLambdaParameterTest")
-            model("refactoring/introduceJavaParameter", pattern = JAVA, testMethodName = "doIntroduceJavaParameterTest")
-            model("refactoring/introduceTypeParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceTypeParameterTest")
-            model("refactoring/introduceTypeAlias", pattern = KT_OR_KTS, testMethodName = "doIntroduceTypeAliasTest")
-            model("refactoring/introduceConstant", pattern = KT_OR_KTS, testMethodName = "doIntroduceConstantTest")
-            model("refactoring/extractSuperclass", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractSuperclassTest")
-            model("refactoring/extractInterface", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractInterfaceTest")
-        }
-
         testClass<AbstractPullUpTest> {
             model("refactoring/pullUp/k2k", pattern = KT, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")
             model("refactoring/pullUp/k2j", pattern = KT, flatten = true, testClassName = "K2J", testMethodName = "doKotlinTest")
@@ -1154,7 +1140,23 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("scripting-support", category = GroupCategory.SCRIPTS) {
+    testGroup("idea/tests", category = EXTRACT_REFACTORING) {
+        testClass<AbstractExtractionTest> {
+            model("refactoring/introduceVariable", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceVariableTest")
+            model("refactoring/extractFunction", pattern = KT_OR_KTS, testMethodName = "doExtractFunctionTest", excludedDirectories = listOf("inplace"))
+            model("refactoring/introduceProperty", pattern = KT_OR_KTS, testMethodName = "doIntroducePropertyTest")
+            model("refactoring/introduceParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceSimpleParameterTest")
+            model("refactoring/introduceLambdaParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceLambdaParameterTest")
+            model("refactoring/introduceJavaParameter", pattern = JAVA, testMethodName = "doIntroduceJavaParameterTest")
+            model("refactoring/introduceTypeParameter", pattern = KT_OR_KTS, testMethodName = "doIntroduceTypeParameterTest")
+            model("refactoring/introduceTypeAlias", pattern = KT_OR_KTS, testMethodName = "doIntroduceTypeAliasTest")
+            model("refactoring/introduceConstant", pattern = KT_OR_KTS, testMethodName = "doIntroduceConstantTest")
+            model("refactoring/extractSuperclass", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractSuperclassTest")
+            model("refactoring/extractInterface", pattern = KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doExtractInterfaceTest")
+        }
+    }
+
+    testGroup("scripting-support", category = SCRIPTS) {
         testClass<AbstractScratchRunActionTest> {
             model("scratch", pattern = KTS, testMethodName = "doScratchCompilingTest", testClassName = "ScratchCompiling", isRecursive = false)
             model("scratch", pattern = KTS, testMethodName = "doScratchReplTest", testClassName = "ScratchRepl", isRecursive = false)
@@ -1174,7 +1176,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests", category = GroupCategory.SCRIPTS) {
+    testGroup("idea/tests", category = SCRIPTS) {
         testClass<AbstractIdeReplCompletionTest> {
             model("repl/completion")
         }
@@ -1378,7 +1380,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("j2k/k1.new/tests", testDataPath = "../../shared/tests/testData", category = GroupCategory.J2K) {
+    testGroup("j2k/k1.new/tests", testDataPath = "../../shared/tests/testData", category = J2K) {
         testClass<AbstractNewJavaToKotlinConverterSingleFileTest> {
             model("newJ2k", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
@@ -1404,7 +1406,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("j2k/k1.new/tests", category = GroupCategory.J2K) {
+    testGroup("j2k/k1.new/tests", category = J2K) {
         testClass<AbstractCommonConstraintCollectorTest>(commonSuite = false) {
             model("inference/common")
         }

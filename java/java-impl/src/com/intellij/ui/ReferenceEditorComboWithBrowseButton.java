@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -15,14 +15,14 @@ import java.util.List;
 public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseButton<EditorComboBox> implements TextAccessor {
   public ReferenceEditorComboWithBrowseButton(final ActionListener browseActionListener,
                                               final String text,
-                                              @NotNull final Project project,
+                                              final @NotNull Project project,
                                               boolean toAcceptClasses, final String recentsKey) {
     this(browseActionListener, text, project, toAcceptClasses, JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE, recentsKey);
   }
 
   public ReferenceEditorComboWithBrowseButton(final ActionListener browseActionListener,
                                               final String text,
-                                              @NotNull final Project project,
+                                              final @NotNull Project project,
                                               boolean toAcceptClasses,
                                               final JavaCodeFragment.VisibilityChecker visibilityChecker, final String recentsKey) {
     super(new EditorComboBox(JavaReferenceEditorUtil.createDocument(StringUtil.isEmpty(text) ? "" : text, project, toAcceptClasses, visibilityChecker), project, JavaFileType.INSTANCE),

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.annotation;
 
 import com.intellij.codeInsight.*;
@@ -36,9 +36,8 @@ public final class AnnotateOverriddenMethodsIntention extends BaseElementAtCaret
     return IntentionPowerPackBundle.message("annotate.overridden.methods.intention.family.name");
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return m_text == null ? "" : m_text;
   }
 

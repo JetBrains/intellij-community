@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.PathManager;
@@ -326,6 +326,12 @@ public final class PathManagerEx {
       throw new IllegalStateException("Classes root " + root + " doesn't exist");
     }
     if (!root.isDirectory()) {
+      String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
+      if (relevantJarsRoot != null && root.toPath().toAbsolutePath().startsWith(relevantJarsRoot)) {
+        // .../idea-compile-parts-v2/test/intellij.java.compiler.tests/$sha256.jar
+        String moduleName = root.getParentFile().getName();
+        return getCommunityModules().contains(moduleName) ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
+      }
       //this means that clazz is located in a library; perhaps we should throw exception here
       return FileSystemLocation.ULTIMATE;
     }

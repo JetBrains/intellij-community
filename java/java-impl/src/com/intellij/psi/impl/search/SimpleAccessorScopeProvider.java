@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.XHtmlFileType;
@@ -11,8 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class SimpleAccessorScopeProvider implements CustomPropertyScopeProvider {
   @Override
-  @NotNull
-  public SearchScope getScope(@NotNull final Project project) {
+  public @NotNull SearchScope getScope(final @NotNull Project project) {
     return GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(project),
                                                            StdFileTypes.JSP, StdFileTypes.JSPX,
                                                            XmlFileType.INSTANCE, XHtmlFileType.INSTANCE);

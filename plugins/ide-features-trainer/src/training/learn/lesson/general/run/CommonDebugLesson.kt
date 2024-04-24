@@ -213,7 +213,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
       text(LessonsBundle.message("debug.workflow.use.watches",
                                  strong(TaskBundle.message("debugger.watches")),
-                                 LessonUtil.rawKeyStroke(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE),
+                                 LessonUtil.rawKeyStroke(XDebuggerEvaluationDialog.getAddWatchKeystroke()),
                                  icon(AllIcons.Debugger.AddToWatch)))
       text(LessonsBundle.message("debug.workflow.use.watches.shortcut", action(it),
                                  strong(TaskBundle.message("debugger.watches")), shortcut))

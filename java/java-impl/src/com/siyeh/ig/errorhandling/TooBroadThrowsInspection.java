@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,14 +37,12 @@ public final class TooBroadThrowsInspection extends BaseInspection {
   public int hiddenExceptionsThreshold = 10;
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "OverlyBroadThrowsClause";
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final List<SmartTypePointer> typesMasked = (List<SmartTypePointer>)infos[0];
     final PsiType type = typesMasked.get(0).getType();
     String typesMaskedString = type != null ? type.getPresentableText() : "";
@@ -78,9 +76,8 @@ public final class TooBroadThrowsInspection extends BaseInspection {
       checkbox("ignoreThrown", InspectionGadgetsBundle.message("overly.broad.throws.clause.ignore.thrown.option")));
   }
 
-  @NotNull
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     final Collection<SmartTypePointer> maskedExceptions = (Collection<SmartTypePointer>)infos[0];
     final Boolean originalNeeded = (Boolean)infos[1];
     return new AddThrowsClauseFix(maskedExceptions, originalNeeded.booleanValue());
@@ -107,8 +104,7 @@ public final class TooBroadThrowsInspection extends BaseInspection {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       if (originalNeeded) {
         return InspectionGadgetsBundle.message("overly.broad.throws.clause.quickfix1");
       }
@@ -117,9 +113,8 @@ public final class TooBroadThrowsInspection extends BaseInspection {
       }
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("add.throws.clause.fix.family.name");
     }
 

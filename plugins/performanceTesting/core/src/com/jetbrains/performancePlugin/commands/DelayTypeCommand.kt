@@ -1,9 +1,12 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.internal.performance.LatencyRecord
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.actionSystem.LatencyListener
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.openapi.util.Ref
@@ -21,8 +24,8 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Command types text with some delay between typing.
  * Text and delay are being set as parameters.
- * Syntax: %delayType <delay in ms>|<Text to type>
- * Example: %delayType 150|Sample text for typing scenario
+ * Syntax: %delayType <delay in ms>|<Text to type>[|<calculate analyzes time>[|<disable write protection>]]
+ * Example: %delayType 150|Sample text for typing scenario[|true[|true]]
  */
 class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
 
@@ -36,6 +39,7 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
     val delay = delayText[0].toLong()
     val text = delayText[1]
     val calculateAnalyzesTime = delayText.size > 2 && delayText[2].toBoolean()
+    val disableWriteProtection = delayText.size > 3 && delayText[3].toBoolean()
 
     val latencyRecorder = LatencyRecord()
     val applicationConnection = ApplicationManager.getApplication().messageBus.connect()
@@ -62,14 +66,19 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
             withContext(Dispatchers.EDT) {
               span.addEvent("Calling find target second time in DelayTypeCommand")
               val typingTarget = findTypingTarget(context.project)
-              if (typingTarget != null) {
-                span.addEvent("Typing ${text[i]}")
-                typingTarget.type(text[i].toString())
+              if (typingTarget == null) {
+                throw Exception("Focus was lost during typing. Current focus is in: " +
+                                (KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner?.javaClass ?: "null"))
               }
-              else {
-                throw Exception("Focus was lost during typing. Current focus is in: " + (KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner?.javaClass
-                                                                                         ?: "null"))
+              if (disableWriteProtection) {
+                val editor = (typingTarget as? DataProvider)?.let { CommonDataKeys.EDITOR.getData(it) }
+                if (editor == null) {
+                  throw Exception("Cannot find Editor")
+                }
+                NonProjectFileWritingAccessProvider.allowWriting(listOf(editor.virtualFile))
               }
+              span.addEvent("Typing ${text[i]}")
+              typingTarget.type(text[i].toString())
             }
           }
         }

@@ -21,6 +21,7 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.readZipFile
@@ -141,7 +142,7 @@ private fun copyZipReplacing(origin: Path, entries: Map<String, Path>, context: 
 
 internal fun signingOptions(contentType: String, context: BuildContext): PersistentMap<String, String> {
   val certificateID = context.proprietaryBuildTools.macOsCodesignIdentity?.value
-  check(certificateID != null || !context.signMacOsBinaries) {
+  check(certificateID != null || context.isStepSkipped(BuildOptions.MAC_SIGN_STEP)) {
     "Missing certificate ID"
   }
   val entitlements = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts/entitlements.xml")

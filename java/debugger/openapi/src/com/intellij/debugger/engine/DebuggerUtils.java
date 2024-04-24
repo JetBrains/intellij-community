@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -46,6 +47,14 @@ public abstract class DebuggerUtils {
   public static final Set<String> ourPrimitiveTypeNames = Set.of(
     "byte", "short", "int", "long", "float", "double", "boolean", "char"
   );
+
+  public static boolean isAlwaysSuspendThreadBeforeSwitch() {
+    return Registry.is("debugger.always.suspend.thread.before.switch");
+  }
+
+  public static boolean isEnabledConsistencyChecks() {
+    return Registry.is("debugger.enable.engine.consistency.checks");
+  }
 
   public static void cleanupAfterProcessFinish(DebugProcess debugProcess) {
     debugProcess.putUserData(TO_STRING_METHOD_KEY, null);

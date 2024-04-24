@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.application.options.*;
@@ -28,9 +28,8 @@ import static com.intellij.application.options.JavaDocFormattingPanel.*;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
 public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-  @NotNull
   @Override
-  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
+  public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(settings, modelSettings, JavaLanguage.INSTANCE.getDisplayName()) {
       @Override
       protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
@@ -43,15 +42,13 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
     };
   }
 
-  @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+  public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new JavaCodeStyleSettings(settings);
   }
 
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return JavaLanguage.INSTANCE;
   }
 
@@ -390,8 +387,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
 
 
   @Override
-  @NotNull
-  public DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
+  public @NotNull DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
     return new DocCommentSettings() {
       private final JavaCodeStyleSettings mySettings =
         rootSettings.getCustomSettings(JavaCodeStyleSettings.class);
@@ -426,9 +422,8 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
 
   }
 
-  @Nullable
   @Override
-  public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+  public @Nullable CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
     if (PackageEntryTable.class.isAssignableFrom(field.getType())) {
       return new JavaPackageEntryTableAccessor(codeStyleObject, field);
     }
@@ -458,8 +453,7 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
     }
 
     @Override
-    @Nullable
-    public List<String> get() {
+    public @Nullable List<String> get() {
       return mySettings.getRepeatAnnotations();
     }
 
@@ -468,9 +462,8 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       return CodeStylePropertiesUtil.getValueList(string);
     }
 
-    @Nullable
     @Override
-    protected String valueToString(@NotNull List<String> value) {
+    protected @Nullable String valueToString(@NotNull List<String> value) {
       return CodeStylePropertiesUtil.toCommaSeparatedString(value);
     }
 

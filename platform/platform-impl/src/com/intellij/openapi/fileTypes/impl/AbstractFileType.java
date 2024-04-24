@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.FileTypeRegistrar;
@@ -262,7 +262,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
 
     for (final String keyword : strings) {
       if (!keyword.contains(SEMICOLON)) {
-        if (keywordsAttribute.length() != 0) keywordsAttribute.append(SEMICOLON);
+        if (!keywordsAttribute.isEmpty()) keywordsAttribute.append(SEMICOLON);
         keywordsAttribute.append(keyword);
       }
       else {
@@ -271,7 +271,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
         keywordsElement.addContent(e);
       }
     }
-    if (keywordsAttribute.length() != 0) {
+    if (!keywordsAttribute.isEmpty()) {
       keywordsElement.setAttribute(ELEMENT_KEYWORDS, keywordsAttribute.toString());
     }
     highlightingElement.addContent(keywordsElement);

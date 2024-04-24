@@ -2,222 +2,249 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
-import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
-import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
-import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.async.awaitCancelling
+import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.diff.util.Side
-import com.intellij.execution.process.ProcessIOExecutorService
-import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.messages.MessageBus
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReviewDTO
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
-import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
-import java.util.concurrent.CompletableFuture
 
-class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
-                                 private val changesProvider: GHPRChangesDataProvider,
-                                 private val pullRequestId: GHPRIdentifier,
-                                 private val messageBus: MessageBus)
-  : GHPRReviewDataProvider, Disposable {
+private val LOG = logger<GHPRReviewDataProviderImpl>()
+
+internal class GHPRReviewDataProviderImpl(parentCs: CoroutineScope,
+                                          private val reviewService: GHPRReviewService,
+                                          private val changesProvider: GHPRChangesDataProvider,
+                                          private val pullRequestId: GHPRIdentifier,
+                                          private val messageBus: MessageBus)
+  : GHPRReviewDataProvider {
+
+  private val cs = parentCs.childScope(classAsCoroutineName())
 
   override val pendingReviewComment: MutableStateFlow<String> = MutableStateFlow("")
 
-  private val pendingReviewRequestValue = LazyCancellableBackgroundProcessValue.create {
-    reviewService.loadPendingReview(it, pullRequestId).thenApply { it?.toModel() }
-  }
-
-  private val reviewThreadsRequestValue = LazyCancellableBackgroundProcessValue.create {
-    reviewService.loadReviewThreads(it, pullRequestId)
-  }
-
-  override fun loadPendingReview() = pendingReviewRequestValue.value
-
-  override fun resetPendingReview() = pendingReviewRequestValue.drop()
-
-  override fun loadReviewThreads() = reviewThreadsRequestValue.value
-
-  override fun resetReviewThreads() = reviewThreadsRequestValue.drop()
-
-  override fun createReview(progressIndicator: ProgressIndicator,
-                            event: GHPullRequestReviewEvent?,
-                            body: String?,
-                            commitSha: String?,
-                            threads: List<GHPullRequestDraftReviewThread>?): CompletableFuture<GHPullRequestPendingReview> {
-    val future = reviewService.createReview(progressIndicator, pullRequestId, event, body, commitSha, threads)
-      .thenApply { it.toModel() }
-      .notifyReviews()
-    if (event == null) {
-      pendingReviewRequestValue.overrideProcess(future.successOnEdt { it })
-    }
-    return if (threads.isNullOrEmpty()) future else future.dropReviews()
-  }
-
-  override suspend fun createReview(event: GHPullRequestReviewEvent, body: String?): GHPullRequestPendingReview =
-    reviewService.createReview(EmptyProgressIndicator(), pullRequestId, event, body)
-      .notifyReviews().dropReviews().asDeferred().awaitCancelling().toModel()
-
-  override suspend fun submitReview(reviewId: String, event: GHPullRequestReviewEvent, body: String?) {
-    val future = reviewService.submitReview(EmptyProgressIndicator(), pullRequestId, reviewId, event, body)
-    withContext(Dispatchers.Main.immediate) {
-      pendingReviewRequestValue.overrideProcess(future.successOnEdt { null })
-    }
-    future.dropReviews().notifyReviews().asDeferred().awaitCancelling()
-  }
-
-  override suspend fun deleteReview(reviewId: String) {
-    val future = reviewService.deleteReview(EmptyProgressIndicator(), pullRequestId, reviewId)
-    withContext(Dispatchers.Main.immediate) {
-      pendingReviewRequestValue.combineResult(future) { pendingReview, _ ->
-        if (pendingReview != null && pendingReview.id == reviewId) null else pendingReview
-      }
-    }
-    future.dropReviews().notifyReviews().asDeferred().awaitCancelling()
-  }
-
-  override fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<String> =
-    reviewService.updateReviewBody(progressIndicator, reviewId, newText).successOnEdt {
-      messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewUpdated(reviewId, newText)
-      it.body
-    }
-
-
   override fun canComment() = reviewService.canComment()
 
-  override fun addComment(progressIndicator: ProgressIndicator,
-                          reviewId: String,
-                          body: String,
-                          commitSha: String,
-                          fileName: String,
-                          side: Side,
-                          line: Int): CompletableFuture<out GHPullRequestReviewComment> {
-    return changesProvider.loadPatchFromMergeBase(progressIndicator, commitSha, fileName)
-      .thenComposeAsync(
-        { patch ->
-          check(patch != null && patch is TextFilePatch) { "Cannot find diff between $commitSha and merge base" }
-          val position = PatchHunkUtil.findDiffFileLineIndex(patch, side to line)
-                         ?: error("Can't map file line to diff")
-          reviewService.addComment(progressIndicator, reviewId, body, commitSha, fileName, position)
-        }, ProcessIOExecutorService.INSTANCE)
-      .completionOnEdt {
-        pendingReviewRequestValue.combineResult(CompletableFuture.completedFuture(Unit)) { review, _ ->
-          review?.copy(commentsCount = review.commentsCount + 1)
-        }
+  private val threadsLoader = LoaderWithMutableCache(cs) { reviewService.loadReviewThreads(pullRequestId) }
+  override val threadsNeedReloadSignal = threadsLoader.updatedSignal
+
+  override suspend fun loadThreads(): List<GHPullRequestReviewThread> = threadsLoader.load()
+  override suspend fun signalThreadsNeedReload() = threadsLoader.clearCache()
+
+
+  private val reviewLoader = LoaderWithMutableCache(cs) { reviewService.loadPendingReview(pullRequestId)?.toModel() }
+  override val pendingReviewNeedsReloadSignal = reviewLoader.updatedSignal
+
+  override suspend fun loadPendingReview(): GHPullRequestPendingReview? = reviewLoader.load()
+  override suspend fun signalPendingReviewNeedsReload() = reviewLoader.clearCache()
+
+  // TODO: load created threads and add to the loaded
+  override suspend fun createReview(event: GHPullRequestReviewEvent?,
+                                    body: String?,
+                                    commitSha: String?,
+                                    threads: List<GHPullRequestDraftReviewThread>?): GHPullRequestPendingReview {
+    val review = reviewService.createReview(pullRequestId, event, body, commitSha, threads).toModel()
+    withContext(NonCancellable) {
+      if (event == null) {
+        reviewLoader.overrideResult(review)
       }
-      .dropReviews().notifyReviews()
-  }
-
-  override fun addComment(progressIndicator: ProgressIndicator,
-                          replyToCommentId: String,
-                          body: String): CompletableFuture<out GHPullRequestReviewComment> {
-    return pendingReviewRequestValue.value.thenCompose {
-      val reviewId = it?.id
-      if (reviewId == null) {
-        // not having a review will produce a security error
-        reviewService.createReview(progressIndicator, pullRequestId).thenCompose { review ->
-          reviewService.addComment(progressIndicator, pullRequestId, review.id, replyToCommentId, body).thenCompose { comment ->
-            reviewService.submitReview(progressIndicator, pullRequestId, review.id, GHPullRequestReviewEvent.COMMENT, null)
-              .thenApply {
-                comment
-              }
-          }
-        }
+      if (!threads.isNullOrEmpty()) {
+        signalThreadsNeedReload()
       }
-      else {
-        reviewService.addComment(progressIndicator, pullRequestId, reviewId, replyToCommentId, body)
-      }.completionOnEdt {
-        pendingReviewRequestValue.combineResult(CompletableFuture.completedFuture(Unit)) { review, _ ->
-          review?.copy(commentsCount = review.commentsCount + 1)
-        }
-      }.dropReviews().notifyReviews()
-    }
-  }
-
-  override fun deleteComment(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<out Any> {
-    val future = reviewService.deleteComment(progressIndicator, pullRequestId, commentId)
-
-    pendingReviewRequestValue.overrideProcess(future.handleOnEdt { result, error ->
-      if (error != null || (result?.state != GHPullRequestReviewState.PENDING || result.comments.totalCount != 0)) {
+      withContext(Dispatchers.Main) {
         messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewsChanged()
-        resetPendingReview()
       }
-      null
-    })
-    reviewThreadsRequestValue.combineResult(future) { list, _ -> removeComment(list, commentId) }
-    return future
-  }
-
-  override fun updateComment(progressIndicator: ProgressIndicator, commentId: String, newText: String)
-    : CompletableFuture<GHPullRequestReviewComment> {
-    val future = reviewService.updateComment(progressIndicator, pullRequestId, commentId, newText)
-
-    reviewThreadsRequestValue.combineResult(future) { list, newComment -> updateCommentBody(list, commentId, newComment.body) }
-    return future
-  }
-
-  override fun createThread(progressIndicator: ProgressIndicator,
-                            reviewId: String, body: String, line: Int, side: Side, startLine: Int, fileName: String)
-    : CompletableFuture<GHPullRequestReviewThread> {
-    val future = reviewService.addThread(progressIndicator, reviewId, body, line, side, startLine, fileName)
-
-    reviewThreadsRequestValue.combineResult(future) { threads, thread -> threads + thread }
-    return future.completionOnEdt { resetPendingReview() }.notifyReviews()
-  }
-
-  override fun resolveThread(progressIndicator: ProgressIndicator, id: String): CompletableFuture<GHPullRequestReviewThread> {
-    val future = reviewService.resolveThread(progressIndicator, pullRequestId, id)
-    reviewThreadsRequestValue.combineResult(future) { list, thread ->
-      list.map { if (it.id == thread.id) thread else it }
     }
-    return future
+    return review
   }
 
-  override fun unresolveThread(progressIndicator: ProgressIndicator, id: String): CompletableFuture<GHPullRequestReviewThread> {
-    val future = reviewService.unresolveThread(progressIndicator, pullRequestId, id)
-    reviewThreadsRequestValue.combineResult(future) { list, thread ->
-      list.map { if (it.id == thread.id) thread else it }
+  override suspend fun createReview(event: GHPullRequestReviewEvent, body: String?): GHPullRequestPendingReview {
+    val review = reviewService.createReview(pullRequestId, event, body).toModel()
+    withContext(NonCancellable) {
+      withContext(Dispatchers.Main) {
+        messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewsChanged()
+      }
     }
-    return future
+    return review
   }
 
-  private fun <T> CompletableFuture<T>.notifyReviews(): CompletableFuture<T> =
-    completionOnEdt {
-      messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewsChanged()
+  // TODO: change loaded threads statuses
+  override suspend fun submitReview(reviewId: String, event: GHPullRequestReviewEvent, body: String?) {
+    reviewService.submitReview(pullRequestId, reviewId, event, body)
+    withContext(NonCancellable) {
+      signalThreadsNeedReload()
+      withContext(Dispatchers.Main) {
+        messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewsChanged()
+      }
     }
+  }
 
-  private fun <T> CompletableFuture<T>.dropReviews(): CompletableFuture<T> =
-    completionOnEdt {
-      reviewThreadsRequestValue.drop()
+  // TODO: remove loaded threads
+  override suspend fun deleteReview(reviewId: String) {
+    reviewService.deleteReview(pullRequestId, reviewId)
+    withContext(NonCancellable) {
+      updateReview(reviewId) { null }
+      signalThreadsNeedReload()
+      withContext(Dispatchers.Main) {
+        messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewsChanged()
+      }
     }
+  }
 
-  override fun addReviewThreadsListener(disposable: Disposable, listener: () -> Unit) =
-    reviewThreadsRequestValue.addDropEventListener(disposable, listener)
+  override suspend fun updateReviewBody(reviewId: String, newText: String): String {
+    val review = reviewService.updateReviewBody(reviewId, newText)
+    withContext(NonCancellable) {
+      withContext(Dispatchers.Main) {
+        messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewUpdated(reviewId, newText)
+      }
+    }
+    return review.body
+  }
 
-  override fun addPendingReviewListener(disposable: Disposable, listener: () -> Unit) =
-    pendingReviewRequestValue.addDropEventListener(disposable, listener)
+  override suspend fun addComment(reviewId: String,
+                                  body: String,
+                                  commitSha: String,
+                                  fileName: String,
+                                  side: Side,
+                                  line: Int): GHPullRequestReviewComment {
+    val patch = changesProvider.loadPatchFromMergeBase(commitSha, fileName)
+    check(patch != null && patch is TextFilePatch) { "Cannot find diff between $commitSha and merge base" }
+    val position = PatchHunkUtil.findDiffFileLineIndex(patch, side to line) ?: error("Can't map file line to diff")
+    val comment = reviewService.addComment(reviewId, body, commitSha, fileName, position)
+    withContext(NonCancellable) {
+      updateReview(reviewId) { it.copy(commentsCount = it.commentsCount + 1) }
+      signalThreadsNeedReload()
+      withContext(Dispatchers.Main) {
+        messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewsChanged()
+      }
+    }
+    return comment
+  }
 
-  override fun dispose() {
-    pendingReviewRequestValue.drop()
-    reviewThreadsRequestValue.drop()
+  // TODO: add comment to a loaded thread
+  override suspend fun addComment(replyToCommentId: String, body: String): GHPullRequestReviewComment {
+    val reviewId = loadPendingReview()?.id
+    val comment = if (reviewId == null) {
+      // not having a review will produce a security error
+      val review = reviewService.createReview(pullRequestId)
+      val comment = reviewService.addComment(pullRequestId, review.id, replyToCommentId, body)
+      reviewService.submitReview(pullRequestId, review.id, GHPullRequestReviewEvent.COMMENT, null)
+      comment
+    }
+    else {
+      val comment = reviewService.addComment(pullRequestId, reviewId, replyToCommentId, body)
+      withContext(NonCancellable) {
+        updateReview(reviewId) { it.copy(commentsCount = it.commentsCount + 1) }
+      }
+      comment
+    }
+    withContext(NonCancellable) {
+      signalThreadsNeedReload()
+      withContext(Dispatchers.Main) {
+        messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewsChanged()
+      }
+    }
+    return comment
+  }
+
+  override suspend fun deleteComment(commentId: String) {
+    val commentReview = reviewService.deleteComment(pullRequestId, commentId)
+    withContext(NonCancellable) {
+      // if deleted from current pending review, potentially clear the review
+      updateReview(commentReview.id) { commentReview.takeIf { (it.comments.totalCount ?: 0) > 0 }?.toModel() }
+      updateThreads { removeComment(it, commentId) }
+      signalPendingReviewNeedsReload()
+    }
+  }
+
+  override suspend fun updateComment(commentId: String, newText: String): GHPullRequestReviewComment {
+    val comment = reviewService.updateComment(pullRequestId, commentId, newText)
+    withContext(NonCancellable) {
+      updateThreads { updateCommentBody(it, commentId, comment.body) }
+    }
+    return comment
+  }
+
+  override suspend fun createThread(reviewId: String, body: String, line: Int, side: Side, startLine: Int, fileName: String)
+    : GHPullRequestReviewThread {
+    try {
+      val thread = reviewService.addThread(reviewId, body, line, side, startLine, fileName)
+      withContext(NonCancellable) {
+        updateThreads { it + thread }
+        updateReview(reviewId) { it.copy(commentsCount = it.commentsCount + 1) }
+      }
+      return thread
+    }
+    finally {
+      withContext(Dispatchers.Main) {
+        messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewsChanged()
+      }
+    }
+  }
+
+  override suspend fun resolveThread(id: String): GHPullRequestReviewThread {
+    val thread = reviewService.resolveThread(pullRequestId, id)
+    withContext(NonCancellable) {
+      updateThreads { list -> list.map { if (it.id == thread.id) thread else it } }
+    }
+    return thread
+  }
+
+  override suspend fun unresolveThread(id: String): GHPullRequestReviewThread {
+    val thread = reviewService.unresolveThread(pullRequestId, id)
+    withContext(NonCancellable) {
+      updateThreads { list -> list.map { if (it.id == thread.id) thread else it } }
+    }
+    return thread
+  }
+
+  private suspend fun updateReview(updater: (GHPullRequestPendingReview?) -> GHPullRequestPendingReview?) {
+    reviewLoader.updateLoaded {
+      try {
+        updater(it)
+      }
+      catch (e: Exception) {
+        LOG.warn("Failed to update pending review data after mutation", e)
+        it
+      }
+    }
+  }
+
+  private suspend fun updateReview(reviewId: String, updater: (GHPullRequestPendingReview) -> GHPullRequestPendingReview?) {
+    updateReview { if (it?.id == reviewId) updater(it) else it }
+  }
+
+  private suspend fun updateThreads(updater: (List<GHPullRequestReviewThread>) -> List<GHPullRequestReviewThread>) {
+    threadsLoader.updateLoaded {
+      try {
+        updater(it)
+      }
+      catch (e: Exception) {
+        LOG.warn("Failed to update review threads data after mutation", e)
+        it
+      }
+    }
   }
 }
 
-private fun GHPullRequestPendingReviewDTO.toModel(): GHPullRequestPendingReview =
+@VisibleForTesting
+internal fun GHPullRequestPendingReviewDTO.toModel(): GHPullRequestPendingReview =
   GHPullRequestPendingReview(id, state, comments.totalCount ?: 0)
 
 private fun updateCommentBody(threads: List<GHPullRequestReviewThread>, commentId: String, newBody: String) =

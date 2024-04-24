@@ -36,7 +36,7 @@ internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : Ko
                 holder.add(builder.create())
             }
         }
-        expression.getSmartCastInfo()?.let { info ->
+        expression.getSmartCastInfo()?.takeIf { it.isStable }?.let { info ->
             val builder = HighlightingFactory.highlightName(
               getSmartCastTarget(expression),
               KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -419,8 +419,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Insets iPad = null;
     Border border = null;
     boolean enabled = true;
-    if (c instanceof SimpleColoredComponent) {
-      SimpleColoredComponent cc = (SimpleColoredComponent)c;
+    if (c instanceof SimpleColoredComponent cc) {
       iPad = cc.getIpad();
       border = cc.getBorder();
       enabled = cc.isEnabled();
@@ -432,8 +431,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         cc.setIcon(OffsetIcon.getOriginalIcon(icon));
       }
     }
-    else if (c instanceof JLabel) {
-      JLabel cc = (JLabel)c;
+    else if (c instanceof JLabel cc) {
       border = cc.getBorder();
       cc.setBorder(JBUI.Borders.empty());
       icon = cc.getIcon();
@@ -455,8 +453,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         }
       }
     }
-    else if (c instanceof JComponent) {
-      JComponent cc = (JComponent)c;
+    else if (c instanceof JComponent cc) {
       border = cc.getBorder();
       cc.setBorder(JBUI.Borders.empty());
     }
@@ -468,20 +465,17 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       ((JComponent)c).setOpaque(true);
     }
 
-    if (c instanceof SimpleColoredComponent) {
-      SimpleColoredComponent cc = (SimpleColoredComponent)c;
+    if (c instanceof SimpleColoredComponent cc) {
       cc.setIpad(iPad);
       cc.setIcon(icon);
       cc.setBorder(border);
       cc.setEnabled(enabled);
     }
-    else if (c instanceof JLabel) {
-      JLabel cc = (JLabel)c;
+    else if (c instanceof JLabel cc) {
       cc.setBorder(border);
       cc.setIcon(icon);
     }
-    else if (c instanceof JComponent) {
-      JComponent cc = (JComponent)c;
+    else if (c instanceof JComponent cc) {
       cc.setBorder(border);
     }
   }

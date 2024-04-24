@@ -38,6 +38,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.psi.types.PyTypeParameterMapping.Option;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -345,8 +346,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return null;
   }
 
-  @Nullable
-  public static PyExpression getReturnTypeAnnotation(@NotNull PyFunction function, TypeEvalContext context) {
+  @ApiStatus.Internal
+  public static @Nullable PyExpression getReturnTypeAnnotation(@NotNull PyFunction function, TypeEvalContext context) {
     final PyExpression returnAnnotation = getAnnotationValue(function, context);
     if (returnAnnotation != null) {
       return returnAnnotation;
@@ -1207,8 +1208,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return ContainerUtil.exists(names, qualifiedNames::contains);
   }
 
-  @Nullable
-  private static PyExpression getAnnotationValue(@NotNull PyAnnotationOwner owner, @NotNull TypeEvalContext context) {
+  @ApiStatus.Internal
+  public static @Nullable PyExpression getAnnotationValue(@NotNull PyAnnotationOwner owner, @NotNull TypeEvalContext context) {
     if (context.maySwitchToAST(owner)) {
       final PyAnnotation annotation = owner.getAnnotation();
       if (annotation != null) {

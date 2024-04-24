@@ -43,8 +43,7 @@ public final class LambdaParameterHidingMemberVariableInspection extends BaseIns
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "LambdaParameterHidesMemberVariable";
   }
 
@@ -54,8 +53,7 @@ public final class LambdaParameterHidingMemberVariableInspection extends BaseIns
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     return InspectionGadgetsBundle.message("lambda.parameter.hides.member.variable.problem.descriptor", aClass.getName());
   }

@@ -321,8 +321,9 @@ open class ProjectRootManagerComponent(
     return recursivePaths to flatPaths
   }
 
-  private fun collectModuleWatchRoots(recursivePaths: MutableSet<String>, flatPaths: MutableSet<String>, logRoots: Boolean) {
-    fun collectUrls(urls: Array<String>, logDescriptor: String) {
+  private fun collectModuleWatchRoots(recursivePaths: MutableSet<String>, flatPaths: MutableSet<String>, logAllowed: Boolean) {
+    val logRoots = logAllowed && WATCH_ROOTS_LOG.isTraceEnabled
+    fun collectUrls(urls: Array<String>, logDescriptor: () -> String) {
       val recursive = if (logRoots) CollectionFactory.createFilePathSet() else recursivePaths
       val flat = if (logRoots) CollectionFactory.createFilePathSet() else flatPaths
 
@@ -334,7 +335,7 @@ open class ProjectRootManagerComponent(
       }
 
       if (logRoots) {
-        WATCH_ROOTS_LOG.trace { "    ${logDescriptor}: ${recursive}, ${flat}" }
+        WATCH_ROOTS_LOG.trace { "    ${logDescriptor()}: ${recursive}, ${flat}" }
         recursivePaths += recursive
         flatPaths += flat
       }
@@ -343,11 +344,11 @@ open class ProjectRootManagerComponent(
     for (module in ModuleManager.getInstance(project).modules) {
       if (logRoots) WATCH_ROOTS_LOG.trace { "  module ${module}" }
       val rootManager = ModuleRootManager.getInstance(module)
-      collectUrls(rootManager.contentRootUrls, "content")
+      collectUrls(rootManager.contentRootUrls) { "content" }
       rootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().forEach { entry ->
         if (entry is LibraryOrSdkOrderEntry) {
           for (type in OrderRootType.getAllTypes()) {
-            collectUrls(entry.getRootUrls(type), "${entry} [${type}]")
+            collectUrls(entry.getRootUrls(type)) { "${entry} [${type}]" }
           }
         }
         true

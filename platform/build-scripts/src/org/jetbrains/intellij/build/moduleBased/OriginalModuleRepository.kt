@@ -6,12 +6,15 @@ import com.intellij.platform.runtime.product.ProductModules
 import com.intellij.platform.runtime.product.serialization.RawProductModules
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
+import java.nio.file.Path
 
 /**
  * Provide access to the original runtime module repository generated during compilation.
  * Module descriptors point to output directories with class-files and library JARs in the local Maven repository.
  */
 interface OriginalModuleRepository {
+  val repositoryPath: Path
+
   val rawRepositoryData: RawRuntimeModuleRepositoryData
   
   val repository: RuntimeModuleRepository

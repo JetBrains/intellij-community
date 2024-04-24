@@ -28,7 +28,7 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 public class IdeaPluginPackageConverter extends PsiPackageConverter {
 
   @Override
-  public PsiPackage fromString(@Nullable String s, ConvertContext context) {
+  public PsiPackage fromString(@Nullable String s, @NotNull ConvertContext context) {
     final GlobalSearchScope scope = getResolveScope(context.getInvocationElement());
     if (scope == null) return null;
 

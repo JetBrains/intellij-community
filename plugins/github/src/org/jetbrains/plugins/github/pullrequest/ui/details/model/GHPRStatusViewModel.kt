@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -13,7 +14,8 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRStateDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.mergeabilityStateComputationFlow
 
 interface GHPRStatusViewModel : CodeReviewStatusViewModel {
   val viewerDidAuthor: Boolean
@@ -29,8 +31,8 @@ private val LOG = logger<GHPRStatusViewModel>()
 class GHPRStatusViewModelImpl(
   parentCs: CoroutineScope,
   private val project: Project,
-  detailsState: StateFlow<GHPullRequest>,
-  stateData: GHPRStateDataProvider
+  detailsData: GHPRDetailsDataProvider,
+  detailsState: StateFlow<GHPullRequest>
 ) : GHPRStatusViewModel {
   private val cs = parentCs.childScope()
 
@@ -39,8 +41,9 @@ class GHPRStatusViewModelImpl(
   override val isDraft: Flow<Boolean> = detailsState.map { it.isDraft }
     .modelFlow(cs, LOG)
 
-  override val mergeabilityState: Flow<GHPRMergeabilityState?> = stateData.mergeabilityState.map { it.getOrNull() }
-    .modelFlow(cs, LOG)
+  override val mergeabilityState: Flow<GHPRMergeabilityState?> =
+    detailsData.mergeabilityStateComputationFlow.mapNotNull { it.getOrNull() }
+      .modelFlow(cs, LOG)
 
   override val hasConflicts: SharedFlow<Boolean> = mergeabilityState.map { mergeability ->
     mergeability?.hasConflicts ?: false

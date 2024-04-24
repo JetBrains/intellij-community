@@ -6,7 +6,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import com.intellij.diagnostic.MacOSDiagnosticReportDirectories
-import com.intellij.diagnostic.PerformanceWatcher.Companion.getInstance
+import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.CollectZippedLogsAction
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector
@@ -38,6 +38,7 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
@@ -58,13 +59,14 @@ object LogPacker {
   @RequiresBackgroundThread
   @Throws(IOException::class)
   suspend fun packLogs(project: Project?): Path = withContext(Dispatchers.IO) {
-    getInstance().dumpThreads("", false, false)
-
     val logs = PathManager.getLogDir()
     val caches = PathManager.getSystemDir()
     if (Files.isSameFile(logs, caches)) {
       throw IOException("cannot collect logs, because log directory set to be the same as the 'system' one: $logs")
     }
+
+    PerformanceWatcher.getInstance().dumpThreads("", false, false)
+    (Logger.getFactory() as? LoggerFactory)?.flushHandlers()
 
     val productName = ApplicationNamesInfo.getInstance().productName.lowercase()
     val date = SimpleDateFormat("yyyyMMdd-HHmmss").format(Date())
@@ -72,17 +74,28 @@ object LogPacker {
     try {
       Compressor.Zip(archive).use { zip ->
         coroutineContext.ensureActive()
-        val lf = Logger.getFactory()
-        if (lf is LoggerFactory) {
-          lf.flushHandlers()
-        }
 
         LogProvider.EP.extensionList.firstOrNull()?.let { logProvider ->
           logProvider.getAdditionalLogFiles(project).forEach { entry ->
-            for (file in entry.files) {
-              if (file.exists()) {
-                val entryName = if (entry.entryName.isNotEmpty()) "${entry.entryName}/${file.name}" else ""
-                zip.addDirectory(entryName, file)
+            for (dir in entry.files) {
+              if (dir.exists()) {
+                val dirPrefix = if (entry.entryName.isNotEmpty()) "${entry.entryName}/${dir.name}" else ""
+                if (dir == PathManager.getLogDir()) {
+                  // OT files are added/removed every minute, so they need special treatment
+                  zip.filter { _, file -> file?.name?.startsWith("open-telemetry-") == false }
+                  zip.addDirectory(dirPrefix, dir)
+                  zip.filter(null)
+                  dir.listDirectoryEntries("open-telemetry-*").forEach { file ->
+                    val entryName = if (dirPrefix.isNotEmpty()) "${dirPrefix}/${file.name}" else file.name
+                    try {
+                      zip.addFile(entryName, file)
+                    }
+                    catch (_: NoSuchFileException) { }
+                  }
+                }
+                else {
+                  zip.addDirectory(dirPrefix, dir)
+                }
               }
             }
           }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -38,7 +38,7 @@ import java.util.Objects;
 
 public class VariableLookupItem extends LookupItem<PsiVariable> implements TypedLookupItem, StaticallyImportable {
   private static final String EQ = " = ";
-  @Nullable private final MemberLookupHelper myHelper;
+  private final @Nullable MemberLookupHelper myHelper;
   private final Color myColor;
   private final String myTailText;
   private final boolean myNegatable;
@@ -99,8 +99,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     return this;
   }
 
-  @Nullable
-  private String getInitializerText(PsiVariable var) {
+  private @Nullable String getInitializerText(PsiVariable var) {
     if (myColor != null || !var.hasModifierProperty(PsiModifier.FINAL) || !var.hasModifierProperty(PsiModifier.STATIC)) return null;
     if (PlainDescriptor.hasInitializationHacks(var)) return null;
 
@@ -121,8 +120,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     return PsiFieldImpl.getDetachedInitializer(var);
   }
 
-  @Nullable
-  private static Color getInitializerColor(@NotNull PsiVariable var) {
+  private static @Nullable Color getInitializerColor(@NotNull PsiVariable var) {
     if (!JavaColorProvider.isColorType(var.getType())) return null;
 
     PsiExpression expression = getInitializer(var);
@@ -136,13 +134,11 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return getSubstitutor().substitute(getObject().getType());
   }
 
-  @NotNull
-  public PsiSubstitutor getSubstitutor() {
+  public @NotNull PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
 

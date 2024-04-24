@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -18,8 +18,7 @@ import java.util.function.Function;
 
 public final class NonCodeAnnotationGenerator {
 
-  @NotNull
-  public static MultiMap<PsiModifierListOwner, AnnotationDocGenerator> getSignatureNonCodeAnnotations(PsiModifierListOwner owner) {
+  public static @NotNull MultiMap<PsiModifierListOwner, AnnotationDocGenerator> getSignatureNonCodeAnnotations(PsiModifierListOwner owner) {
     MultiMap<PsiModifierListOwner, AnnotationDocGenerator> generators = MultiMap.createLinked();
     final Project project = owner.getProject();
     ExternalAnnotationsManager externalManager = ExternalAnnotationsManager.getInstance(project);
@@ -39,8 +38,7 @@ public final class NonCodeAnnotationGenerator {
     return generators;
   }
 
-  @NotNull
-  private static List<PsiModifierListOwner> getSignatureOwners(PsiModifierListOwner owner) {
+  private static @NotNull List<PsiModifierListOwner> getSignatureOwners(PsiModifierListOwner owner) {
     List<PsiModifierListOwner> allOwners = new ArrayList<>();
     allOwners.add(owner);
     if (owner instanceof PsiMethod method) {
@@ -49,8 +47,7 @@ public final class NonCodeAnnotationGenerator {
     return allOwners;
   }
 
-  @NotNull
-  public static @Nls String getNonCodeHeaderAvailable(Collection<AnnotationDocGenerator> values) {
+  public static @NotNull @Nls String getNonCodeHeaderAvailable(Collection<AnnotationDocGenerator> values) {
     boolean hasExternal = ContainerUtil.exists(values, AnnotationDocGenerator::isExternal);
     boolean hasInferred = ContainerUtil.exists(values, AnnotationDocGenerator::isInferred);
 

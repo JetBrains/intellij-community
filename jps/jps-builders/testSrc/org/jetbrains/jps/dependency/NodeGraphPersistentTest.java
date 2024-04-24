@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,7 +26,7 @@ public class NodeGraphPersistentTest extends BasePlatformTestCase {
       NodeSource bSrc = createNodeSource("B");
 
       // This should be executed before compiler run
-      Delta delta = graph.createDelta(Arrays.asList(aSrc, bSrc), null);
+      Delta delta = graph.createDelta(Arrays.asList(aSrc, bSrc), null, false);
       JvmClass jvmClassNode = JvmClassTestUtil.createJvmClassNode();
 
       // Analyze after compiler
@@ -58,7 +58,7 @@ public class NodeGraphPersistentTest extends BasePlatformTestCase {
       NodeSource aSrc = createNodeSource("A");
       NodeSource bSrc = createNodeSource("B");
 
-      Delta initialDelta = graph.createDelta(Arrays.asList(aSrc, bSrc), null);
+      Delta initialDelta = graph.createDelta(Arrays.asList(aSrc, bSrc), null, false);
       JvmClass clsNodeA = new JvmClass(JVMFlags.EMPTY, "", "com.ppp.aClass", "out/modA/cls", "", "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), null, Collections.emptyList(), Collections.emptyList());
       initialDelta.associate(clsNodeA, List.of(aSrc));
       JvmClass clsNodeB = new JvmClass(JVMFlags.EMPTY, "", "com.ppp.aClass", "out/modB/cls", "", "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), null, Collections.emptyList(), Collections.emptyList());
@@ -82,7 +82,7 @@ public class NodeGraphPersistentTest extends BasePlatformTestCase {
       assertEquals(new HashSet<>(List.of(aSrc, bSrc)), associatedSources);
 
       // emulate contents of aSrc changed and now a node with different changeID is associated with this source
-      Delta delta = graph.createDelta(Arrays.asList(aSrc), null);
+      Delta delta = graph.createDelta(Arrays.asList(aSrc), null, false);
       JvmClass clsNodeAChanged = new JvmClass(JVMFlags.EMPTY, "", "com.ppp.aChangedClass", "out/modA/cls", "", "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), null, Collections.emptyList(), Collections.emptyList());
       delta.associate(clsNodeAChanged, List.of(aSrc));
       DifferentiateResult changes = graph.differentiate(delta, DifferentiateParametersBuilder.create().calculateAffected(false).get());

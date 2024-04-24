@@ -1657,12 +1657,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression lExpr = operands[0];
     lExpr.accept(this);
     PsiType lType = lExpr.getType();
+    addImplicitToStringThrows(op, lType);
 
     for (int i = 1; i < operands.length; i++) {
       PsiExpression rExpr = operands[i];
       PsiType rType = rExpr.getType();
 
       acceptBinaryRightOperand(op, lExpr, lType, rExpr, rType);
+      addImplicitToStringThrows(op, rType);
       PsiType resType = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, op, true);
       DfaAnchor anchor = i == operands.length - 1 ? new JavaExpressionAnchor(expression) :
                          new JavaPolyadicPartAnchor(expression, i);
@@ -1670,6 +1672,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
       lExpr = rExpr;
       lType = resType;
+    }
+  }
+
+  private void addImplicitToStringThrows(@NotNull IElementType op, PsiType type) {
+    if (myTrapTracker.shouldHandleException() && op.equals(JavaTokenType.PLUS) && 
+        !TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(type) && !TypeUtils.isJavaLangString(type)) {
+      addThrows(List.of());
     }
   }
 

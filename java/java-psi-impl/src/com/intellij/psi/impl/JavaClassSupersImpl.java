@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,11 +20,10 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
   private static final Logger LOG = Logger.getInstance(JavaClassSupersImpl.class);
 
   @Override
-  @Nullable
-  public PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
-                                                 @NotNull PsiClass derivedClass,
-                                                 @NotNull GlobalSearchScope scope,
-                                                 @NotNull PsiSubstitutor derivedSubstitutor) {
+  public @Nullable PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
+                                                           @NotNull PsiClass derivedClass,
+                                                           @NotNull GlobalSearchScope scope,
+                                                           @NotNull PsiSubstitutor derivedSubstitutor) {
     if (InheritanceImplUtil.hasObjectQualifiedName(superClass)) return PsiSubstitutor.EMPTY;
     List<PsiType> bounds = null;
     if (superClass instanceof InferenceVariable) {
@@ -84,11 +83,10 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
     return null;
   }
 
-  @Nullable
-  private static PsiSubstitutor getSuperSubstitutorWithCaching(@NotNull PsiClass superClass,
-                                                               @NotNull PsiClass derivedClass,
-                                                               @NotNull GlobalSearchScope resolveScope,
-                                                               @NotNull PsiSubstitutor derivedSubstitutor) {
+  private static @Nullable PsiSubstitutor getSuperSubstitutorWithCaching(@NotNull PsiClass superClass,
+                                                                         @NotNull PsiClass derivedClass,
+                                                                         @NotNull GlobalSearchScope resolveScope,
+                                                                         @NotNull PsiSubstitutor derivedSubstitutor) {
     PsiSubstitutor substitutor = ScopedClassHierarchy.getSuperClassSubstitutor(derivedClass, resolveScope, superClass);
     if (substitutor == null) return null;
     if (PsiUtil.isRawSubstitutor(derivedClass, derivedSubstitutor)) return createRawSubstitutor(superClass);
@@ -96,13 +94,11 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
     return composeSubstitutors(derivedSubstitutor, substitutor, superClass);
   }
 
-  @NotNull
-  static PsiSubstitutor createRawSubstitutor(@NotNull PsiClass superClass) {
+  static @NotNull PsiSubstitutor createRawSubstitutor(@NotNull PsiClass superClass) {
     return JavaPsiFacade.getElementFactory(superClass.getProject()).createRawSubstitutor(superClass);
   }
 
-  @NotNull
-  private static PsiSubstitutor composeSubstitutors(PsiSubstitutor outer, PsiSubstitutor inner, PsiClass onClass) {
+  private static @NotNull PsiSubstitutor composeSubstitutors(PsiSubstitutor outer, PsiSubstitutor inner, PsiClass onClass) {
     PsiSubstitutor answer = PsiSubstitutor.EMPTY;
     Map<PsiTypeParameter, PsiType> outerMap = outer.getSubstitutionMap();
     Map<PsiTypeParameter, PsiType> innerMap = inner.getSubstitutionMap();
@@ -131,8 +127,7 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
    * Some type parameters (e.g. {@link InferenceVariable} change their supers at will,
    * so caching the hierarchy is impossible.
    */
-  @Nullable
-  private static PsiSubstitutor processTypeParameter(PsiTypeParameter parameter,
+  private static @Nullable PsiSubstitutor processTypeParameter(PsiTypeParameter parameter,
                                                      GlobalSearchScope scope,
                                                      PsiClass superClass,
                                                      Set<? super PsiTypeParameter> visited,
@@ -195,8 +190,7 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
   }
 
   @SuppressWarnings("StringConcatenationInLoop")
-  @NotNull
-  private static String classInfo(@NotNull PsiClass aClass) {
+  private static @NotNull String classInfo(@NotNull PsiClass aClass) {
     String s = aClass.getQualifiedName() + "(" + aClass.getClass().getName() + "; " + PsiUtilCore.getVirtualFile(aClass) + ");\n";
     s += "    extends: ";
     for (PsiClassType type : aClass.getExtendsListTypes()) {

@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.Unmappable;
-import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;

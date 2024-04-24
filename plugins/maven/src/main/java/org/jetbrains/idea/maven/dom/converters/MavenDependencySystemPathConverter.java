@@ -35,7 +35,7 @@ import java.util.Collections;
 
 public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFile> implements CustomReferenceConverter {
   @Override
-  public PsiFile fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public PsiFile fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     if (s == null) return null;
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(s);
     if (f == null) return null;
@@ -43,14 +43,14 @@ public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFi
   }
 
   @Override
-  public String toString(@Nullable PsiFile file, ConvertContext context) {
+  public String toString(@Nullable PsiFile file, @NotNull ConvertContext context) {
     if (file == null) return null;
     return file.getVirtualFile().getPath();
   }
 
   @Override
   @NotNull
-  public Collection<PsiFile> getVariants(ConvertContext context) {
+  public Collection<PsiFile> getVariants(@NotNull ConvertContext context) {
     return Collections.emptyList();
   }
 

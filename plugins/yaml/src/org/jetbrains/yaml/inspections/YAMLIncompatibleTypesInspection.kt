@@ -10,16 +10,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.parents
 import com.intellij.util.SmartList
 import com.intellij.util.asSafely
 import com.intellij.util.containers.FactoryMap
-import com.intellij.util.containers.headTailOrNull
-import com.intellij.util.containers.sequenceOfNotNull
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import org.jetbrains.annotations.Nls
 import org.jetbrains.yaml.YAMLBundle
-import org.jetbrains.yaml.meta.model.*
+import org.jetbrains.yaml.meta.model.YamlMetaType
+import org.jetbrains.yaml.meta.model.YamlStringType
 import org.jetbrains.yaml.psi.*
 
 internal class YAMLIncompatibleTypesInspection : LocalInspectionTool() {
@@ -27,17 +25,12 @@ internal class YAMLIncompatibleTypesInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val schemaObject = JsonSchemaService.Impl.get(holder.project).getSchemaObject(holder.file)
     if (schemaObject != null) return PsiElementVisitor.EMPTY_VISITOR
-    return YamlIncompatibleTypesVisitor(holder, isOnTheFly, session)
+    return YamlIncompatibleTypesVisitor(holder, session)
   }
 }
 
 private class YamlIncompatibleTypesVisitor(private val holder: ProblemsHolder,
-                                           private val isOnTheFly: Boolean,
                                            private val session: LocalInspectionToolSession) : YamlPsiElementVisitor() {
-
-  private val types = sequenceOf(YamlBooleanType.getSharedInstance(),
-                                 YamlNumberType.getInstance(false),
-                                 YamlStringType.getInstance(), YamlAnything.getInstance())
 
   override fun visitScalar(scalar: YAMLScalar) {
     val estimatedType = estimatedType(scalar) ?: return
@@ -65,14 +58,6 @@ private class YamlIncompatibleTypesVisitor(private val holder: ProblemsHolder,
     super.visitScalar(scalar)
   }
 
-  private fun isValid(meta: YamlMetaType, value: YAMLValue): Boolean {
-    val problemsHolder = ProblemsHolder(holder.manager, holder.file, isOnTheFly)
-    meta.validateValue(value, problemsHolder)
-    return !problemsHolder.hasResults()
-  }
-
-  private fun estimatedType(scalar: YAMLScalar) = types.firstOrNull { isValid(it, scalar) }
-
   private fun getMostPopularTypeForSiblings(value: YAMLValue): YamlMetaType? {
     val topSeq = value.parentOfType<YAMLSequence>() ?: return null
     return session.memoizeWith2Keys(STRUCTURAL_SIBLINGS_TYPE_KEY, topSeq, getKeysInBetween(value, topSeq)) { seq, ks ->
@@ -94,31 +79,6 @@ private fun <T1, T2, R> UserDataHolder.memoizeWith2Keys(storageKey: Key<Map<T1, 
   return cache[val1]?.get(val2)
 }
 
-private fun getKeysInBetween(value: YAMLValue, topSeq: YAMLSequence): List<String> =
-  value.parents(false).takeWhile { it !== topSeq }.filterIsInstance<YAMLKeyValue>().map { it.keyText }.toList().reversed()
-
-private fun findStructuralSiblings(value: YAMLValue): Sequence<YAMLValue> {
-  val topSeq = value.parentOfType<YAMLSequence>() ?: return emptySequence()
-  return findStructuralSiblings(topSeq, getKeysInBetween(value, topSeq))
-}
-
-private fun findStructuralSiblings(topSeq: YAMLSequence, keys: List<String>): Sequence<YAMLValue> {
-  if (keys.isEmpty()) return topSeq.items.asSequence().mapNotNull { it.value }
-
-  fun collect(root: YAMLKeyValue, keys: List<String>): Sequence<YAMLValue> {
-    val (head, tail) = keys.headTailOrNull() ?: return emptySequence()
-    if (root.keyText != head) return emptySequence()
-
-    return when (val v = root.value) {
-      is YAMLSequenceItem -> v.keysValues.asSequence().flatMap { collect(it, tail) }
-      is YAMLMapping -> v.keyValues.asSequence().flatMap { collect(it, tail) }
-      is YAMLKeyValue -> collect(v, tail)
-      else -> if (tail.isEmpty()) sequenceOfNotNull(v) else emptySequence()
-    }
-  }
-
-  return topSeq.items.asSequence().flatMap { it.keysValues }.flatMap { collect(it, keys) }
-}
 
 private class YAMLAddQuotesToSiblingsQuickFix(baseElement: YAMLValue, private val singleQuote: Boolean = false) :
   LocalQuickFixAndIntentionActionOnPsiElement(baseElement) {

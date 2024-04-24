@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.options.ex;
 
@@ -40,7 +40,7 @@ public final class GlassPanel extends JComponent {
 
   public void paintSpotlight(final Graphics g, final JComponent surfaceComponent) {
     Dimension size = surfaceComponent.getSize();
-    if (myLightComponents.size() > 0) {
+    if (!myLightComponents.isEmpty()) {
       int stroke = 2;
 
       final Rectangle visibleRect = myPanel.getVisibleRect();

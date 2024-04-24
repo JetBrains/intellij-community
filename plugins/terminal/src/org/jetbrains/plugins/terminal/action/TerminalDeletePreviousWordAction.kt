@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.DocumentUtil
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedEditorAction
+import kotlin.math.max
 
 /**
  * Deletes the word before the caret position.
@@ -14,7 +16,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalPromotedEditorAction
  * 1. If it is a letter or digit, then remove letters or digits until the delimiter.
  * 2. If it is a delimiter, then remove delimiters until a letter or digit and then remove letters or digits until the delimiter.
  */
-class TerminalDeletePreviousWordAction : TerminalPromotedEditorAction(Handler()), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalDeletePreviousWordAction : TerminalPromotedEditorAction(Handler()), ActionRemoteBehaviorSpecification.Disabled {
   private class Handler : TerminalPromptEditorActionHandler() {
     override fun executeAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
       val caretOffset = editor.caretModel.offset.takeIf { it > 0 } ?: return  // caret at the start, nothing to delete
@@ -28,8 +30,10 @@ class TerminalDeletePreviousWordAction : TerminalPromotedEditorAction(Handler())
         text.indexOfLastBefore(letterOrDigitIndex) { !it.isLetterOrDigit() }
       }
 
+      val promptModel = editor.terminalPromptModel ?: error("TerminalPromptModel should be in the context")
       DocumentUtil.writeInRunUndoTransparentAction {
-        editor.document.deleteString(delimiterIndex + 1, caretOffset)
+        val startOffset = max(delimiterIndex + 1, promptModel.commandStartOffset)
+        editor.document.deleteString(startOffset, caretOffset)
       }
     }
 

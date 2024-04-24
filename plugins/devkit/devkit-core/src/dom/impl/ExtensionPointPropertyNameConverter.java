@@ -28,13 +28,13 @@ import java.util.List;
 public class ExtensionPointPropertyNameConverter extends ResolvingConverter<PsiField> {
 
   @Override
-  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+  public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
     return DevKitBundle.message("plugin.xml.convert.extension.property.cannot.resolve", s);
   }
 
   @NotNull
   @Override
-  public Collection<? extends PsiField> getVariants(ConvertContext context) {
+  public Collection<? extends PsiField> getVariants(@NotNull ConvertContext context) {
     PsiClass aClass = getEPBeanClass(context);
     if (aClass == null) return Collections.emptyList();
     List<PsiField> result = new ArrayList<>();
@@ -61,7 +61,7 @@ public class ExtensionPointPropertyNameConverter extends ResolvingConverter<PsiF
 
   @Nullable
   @Override
-  public PsiField fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public PsiField fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     if (s == null) return null;
     PsiClass value = getEPBeanClass(context);
     if (value == null) return null;
@@ -107,7 +107,7 @@ public class ExtensionPointPropertyNameConverter extends ResolvingConverter<PsiF
 
   @Nullable
   @Override
-  public String toString(@Nullable PsiField field, ConvertContext context) {
+  public String toString(@Nullable PsiField field, @NotNull ConvertContext context) {
     return field == null ? null : field.getName();
   }
 

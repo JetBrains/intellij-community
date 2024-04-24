@@ -5,6 +5,7 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.XmlDomBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CharacterValueConverter extends Converter<String> {
@@ -18,7 +19,7 @@ public class CharacterValueConverter extends Converter<String> {
 
 
   @Override
-  public String fromString(@Nullable @NonNls String s, final ConvertContext context) {
+  public String fromString(@Nullable @NonNls String s, final @NotNull ConvertContext context) {
     if (s == null) return null;
 
     if (myAllowEmpty && s.trim().length() == 0) return s;
@@ -40,12 +41,12 @@ public class CharacterValueConverter extends Converter<String> {
   }
 
   @Override
-  public String toString(@Nullable String s, final ConvertContext context) {
+  public String toString(@Nullable String s, final @NotNull ConvertContext context) {
     return s;
   }
 
   @Override
-  public String getErrorMessage(final @Nullable String s, final ConvertContext context) {
+  public String getErrorMessage(final @Nullable String s, final @NotNull ConvertContext context) {
    return XmlDomBundle.message("dom.converter.format.exception", s, "char");
   }
 }

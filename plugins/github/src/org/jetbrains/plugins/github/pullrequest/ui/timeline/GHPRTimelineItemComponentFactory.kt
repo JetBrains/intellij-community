@@ -12,6 +12,7 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -169,11 +170,12 @@ class GHPRTimelineItemComponentFactory(private val timelineVm: GHPRTimelineViewM
       add(createReviewStatus(review))
     }
     val actionsPanel = HorizontalListPanel(8).apply {
-      if (review.canEdit && !review.bodyHtml.value.isEmpty()) {
-        add(CodeReviewCommentUIUtil.createEditButton {
-          review.editBody()
-        })
-      }
+      add(CodeReviewCommentUIUtil.createEditButton {
+        review.editBody()
+      }.apply {
+        bindVisibilityIn(cs, review.canEdit)
+        bindDisabledIn(cs, review.isBusy)
+      })
     }
     val reviewItem = createTimelineItem(avatarIconsProvider, review.author, review.createdAt, contentPanel, actionsPanel)
 

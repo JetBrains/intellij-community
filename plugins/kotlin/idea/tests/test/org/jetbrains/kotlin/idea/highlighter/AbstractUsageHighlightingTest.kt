@@ -6,11 +6,11 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.refactoring.suggested.range
 import com.intellij.testFramework.ExpectedHighlightingData
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
@@ -34,7 +34,7 @@ abstract class AbstractUsageHighlightingTest : KotlinLightCodeInsightFixtureTest
         HighlightUsagesHandler.invoke(project, editor, myFixture.file)
 
         val ranges =
-            myFixture.editor.markupModel.allHighlighters.filter { isUsageHighlighting(it) }.mapNotNull { it.range } +
+            myFixture.editor.markupModel.allHighlighters.filter { isUsageHighlighting(it) }.mapNotNull { it.asTextRange } +
                     (myFixture.file.findElementAt(myFixture.editor.caretModel.offset - 1)?.parent?.let {
             val usages = IdentifierHighlighterPass.getUsages(it, myFixture.file, false)
             usages

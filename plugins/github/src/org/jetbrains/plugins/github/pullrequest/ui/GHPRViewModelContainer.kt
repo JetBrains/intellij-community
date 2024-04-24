@@ -83,7 +83,7 @@ internal class GHPRViewModelContainer(
 
   init {
     cs.launchNow {
-      dataProvider.stateData.stateChangeSignal.collectLatest {
+      dataProvider.detailsData.stateChangeSignal.collectLatest {
         projectVm.refreshPrOnCurrentBranch()
       }
     }

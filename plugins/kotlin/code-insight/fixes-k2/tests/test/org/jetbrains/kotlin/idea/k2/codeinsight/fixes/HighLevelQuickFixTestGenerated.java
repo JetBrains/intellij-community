@@ -4636,30 +4636,8 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/dataClassPrivateConstructor")
-    public static class DataClassPrivateConstructor extends AbstractHighLevelQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
+    public abstract static class DataClassPrivateConstructor extends AbstractHighLevelQuickFixTest {
 
-        @TestMetadata("AddConsistentCopyVisibilityAnnotation.kt")
-        public void testAddConsistentCopyVisibilityAnnotation() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/dataClassPrivateConstructor/AddConsistentCopyVisibilityAnnotation.kt");
-        }
-
-        @TestMetadata("DataClassConsistentCopyAndExposedCopyAreIncompatibleAnnotations.kt")
-        public void testDataClassConsistentCopyAndExposedCopyAreIncompatibleAnnotations() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/dataClassPrivateConstructor/DataClassConsistentCopyAndExposedCopyAreIncompatibleAnnotations.kt");
-        }
-
-        @TestMetadata("DataClassConsistentCopyWrongAnnotationTarget.kt")
-        public void testDataClassConsistentCopyWrongAnnotationTarget() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/dataClassPrivateConstructor/DataClassConsistentCopyWrongAnnotationTarget.kt");
-        }
-
-        @TestMetadata("RemoveRedundantConsistentCopyVisibilityAnnotation.kt")
-        public void testRemoveRedundantConsistentCopyVisibilityAnnotation() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/dataClassPrivateConstructor/RemoveRedundantConsistentCopyVisibilityAnnotation.kt");
-        }
     }
 
 
@@ -5372,6 +5350,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("notPossible.kt")
         public void testNotPossible() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly/notPossible.kt");
+        }
+
+        @TestMetadata("objectDeclaration.kt")
+        public void testObjectDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly/objectDeclaration.kt");
         }
 
         @TestMetadata("outer.kt")

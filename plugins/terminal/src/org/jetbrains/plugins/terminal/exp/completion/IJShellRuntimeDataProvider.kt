@@ -15,7 +15,7 @@ import org.jetbrains.plugins.terminal.exp.CommandFinishedEvent
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import java.time.Duration
 
-class IJShellRuntimeDataProvider(
+internal class IJShellRuntimeDataProvider(
   private val session: BlockTerminalSession,
   private val shellCommandExecutor: ShellCommandExecutor
 ) : ShellRuntimeDataProvider {

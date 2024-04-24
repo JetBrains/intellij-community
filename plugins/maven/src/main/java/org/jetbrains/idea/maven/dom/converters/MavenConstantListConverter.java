@@ -40,26 +40,26 @@ public abstract class MavenConstantListConverter extends ResolvingConverter<Stri
   }
 
   @Override
-  public String fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public String fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     if (!myStrict) return s;
     return getValues(context).contains(s) ? s : null;
   }
 
   @Override
-  public String toString(@Nullable String s, ConvertContext context) {
+  public String toString(@Nullable String s, @NotNull ConvertContext context) {
     return s;
   }
 
   @Override
   @NotNull
-  public Collection<String> getVariants(ConvertContext context) {
+  public Collection<String> getVariants(@NotNull ConvertContext context) {
     return getValues(context);
   }
 
   protected abstract Collection<@NlsSafe String> getValues(@NotNull ConvertContext context);
 
   @Override
-  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+  public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
     return new HtmlBuilder()
       .append(MavenDomBundle.message("specified.value.is.not.acceptable.here"))
       .append(HtmlChunk.br())

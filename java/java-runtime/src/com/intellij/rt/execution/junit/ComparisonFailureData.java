@@ -2,19 +2,20 @@
 package com.intellij.rt.execution.junit;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.nio.file.Files;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ComparisonFailureData {
+
+  public static final String JUNIT_3_COMPARISON_FAILURE = "junit.framework.ComparisonFailure";
+  public static final String JUNIT_4_COMPARISON_FAILURE = "org.junit.ComparisonFailure";
 
   private static final String ASSERTION_CLASS_NAME = "java.lang.AssertionError";
   private static final String ASSERTION_FAILED_CLASS_NAME = "junit.framework.AssertionFailedError";
@@ -24,11 +25,9 @@ public class ComparisonFailureData {
   public static final String OPENTEST4J_FILE_INFO = "org.opentest4j.FileInfo";
   public static final Charset OPENTEST4J_FILE_CONTENT_CHARSET = StandardCharsets.UTF_8;
 
-  private static final List<String> COMPARISON_FAILURES = Arrays.asList("org.junit.ComparisonFailure", "org.junit.ComparisonFailure");
-
   private final String myExpected;
   private final String myActual;
-  private final String myFilePath;
+  private final String myExpectedFilePath;
   private final String myActualFilePath;
 
   private static final Map<Class<?>, Field> EXPECTED = new HashMap<>();
@@ -36,7 +35,8 @@ public class ComparisonFailureData {
 
   static {
     try {
-      for (String failure : COMPARISON_FAILURES) init(failure);
+      init(JUNIT_3_COMPARISON_FAILURE);
+      init(JUNIT_4_COMPARISON_FAILURE);
     }
     catch (Throwable ignored) { }
   }
@@ -53,35 +53,35 @@ public class ComparisonFailureData {
   }
 
   public ComparisonFailureData(AssertionValue expected, AssertionValue actual) {
-    this(expected.text, actual.text, actual.path, expected.path);
+    this(expected.text, actual.text, expected.path, actual.path);
   }
 
   public ComparisonFailureData(String expected, String actual) {
     this(expected, actual, null);
   }
 
-  public ComparisonFailureData(String expected, String actual, String filePath) {
-    this(expected, actual, filePath, null);
+  public ComparisonFailureData(String expected, String actual, String expectedFilePath) {
+    this(expected, actual, expectedFilePath, null);
   }
 
-  public ComparisonFailureData(String expected, String actual, String filePath, String actualFilePath) {
+  public ComparisonFailureData(String expected, String actual, String expectedFilePath, String actualFilePath) {
     myExpected = expected;
     myActual = actual;
-    myFilePath = filePath != null ? new File(filePath).getAbsolutePath() : null;
+    myExpectedFilePath = expectedFilePath != null ? new File(expectedFilePath).getAbsolutePath() : null;
     myActualFilePath = actualFilePath != null ? new File(actualFilePath).getAbsolutePath() : null;
   }
 
   public static void registerSMAttributes(ComparisonFailureData notification,
                                           String trace,
                                           String failureMessage,
-                                          Map attrs,
+                                          Map<String, String> attrs,
                                           Throwable throwable) {
     registerSMAttributes(notification, trace, failureMessage, attrs, throwable, "Comparison Failure: ", "expected:<");
   }
 
   public static void registerSMAttributes(ComparisonFailureData notification, String trace,
                                           String failureMessage,
-                                          Map attrs,
+                                          Map<String, String> attrs,
                                           Throwable throwable,
                                           String comparisonFailurePrefix,
                                           final String expectedPrefix) {
@@ -106,17 +106,17 @@ public class ComparisonFailureData {
         attrs.put("message", comparisonFailureMessage);
       }
 
-      final String filePath = notification.getFilePath();
+      final String expectedFilePath = notification.getExpectedFilePath();
       final String actualFilePath = notification.getActualFilePath();
       final String expected = notification.getExpected();
       final String actual = notification.getActual();
 
-      int fullLength = (filePath == null && expected != null ? expected.length() : 0) +
+      int fullLength = (expectedFilePath == null && expected != null ? expected.length() : 0) +
                        (actualFilePath == null && actual != null ? actual.length() : 0) +
                        details.length() +
                        comparisonFailureMessage.length() + 100;
-      if (filePath != null) {
-        attrs.put("expectedFile", filePath);
+      if (expectedFilePath != null) {
+        attrs.put("expectedFile", expectedFilePath);
       }
       else {
         writeDiffSide(attrs, "expected", expected, fullLength);
@@ -145,7 +145,7 @@ public class ComparisonFailureData {
     attrs.put("details", details);
   }
 
-  private static void writeDiffSide(Map attrs, final String expectedOrActualPrefix, final String text, int fullLength) {
+  private static void writeDiffSide(Map<String, String> attrs, final String expectedOrActualPrefix, final String text, int fullLength) {
     String property = System.getProperty("idea.test.cyclic.buffer.size");
 
     int threshold;
@@ -160,7 +160,7 @@ public class ComparisonFailureData {
       try {
         //noinspection SSBasedInspection
         File tempFile = File.createTempFile(expectedOrActualPrefix, "");
-        try (OutputStream stream = new FileOutputStream(tempFile)) {
+        try (OutputStream stream = Files.newOutputStream(tempFile.toPath())) {
           stream.write(text.getBytes(StandardCharsets.UTF_8), 0, text.length());
         }
         attrs.put(expectedOrActualPrefix + "File", tempFile.getAbsolutePath());
@@ -172,7 +172,7 @@ public class ComparisonFailureData {
     attrs.put(expectedOrActualPrefix, text);
   }
 
-  public static boolean isAssertionError(Class throwableClass) {
+  public static boolean isAssertionError(Class<?> throwableClass) {
     if (throwableClass == null) return false;
     final String throwableClassName = throwableClass.getName();
     if (throwableClassName.equals(ASSERTION_CLASS_NAME) || 
@@ -183,8 +183,23 @@ public class ComparisonFailureData {
     return isAssertionError(throwableClass.getSuperclass());
   }
 
-  public String getFilePath() {
-    return myFilePath;
+  public static boolean isComparisonFailure(Class<?> aClass) {
+    if (aClass == null) return false;
+    final String throwableClassName = aClass.getName();
+    if (JUNIT_3_COMPARISON_FAILURE.equals(throwableClassName)) {
+      return true;
+    }
+    if (JUNIT_4_COMPARISON_FAILURE.equals(throwableClassName)) {
+      return true;
+    }
+    if (OPENTEST4J_ASSERTION.equals(throwableClassName)) {
+      return true;
+    }
+    return isComparisonFailure(aClass.getSuperclass());
+  }
+
+  public String getExpectedFilePath() {
+    return myExpectedFilePath;
   }
 
   public String getActualFilePath() {
@@ -227,6 +242,7 @@ public class ComparisonFailureData {
     return null;
   }
 
+  @SuppressWarnings("deprecation")
   private static ComparisonFailureData createFileComparisonFailure(Throwable assertion) {
     if (assertion instanceof FileComparisonFailure) {
       final FileComparisonFailure comparisonFailure = (FileComparisonFailure)assertion;

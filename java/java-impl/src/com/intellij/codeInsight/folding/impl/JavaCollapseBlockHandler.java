@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.psi.JavaTokenType;
@@ -11,9 +9,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 public final class JavaCollapseBlockHandler extends CollapseBlockHandlerImpl {
-  @Nullable
   @Override
-  protected PsiElement findParentBlock(@Nullable PsiElement element) {
+  protected @Nullable PsiElement findParentBlock(@Nullable PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
   }
 

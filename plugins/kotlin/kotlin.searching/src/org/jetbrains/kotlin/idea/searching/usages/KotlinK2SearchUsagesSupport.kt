@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCall
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -189,12 +188,13 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                                     analyze(declaration) {
                                         fun KtType.containsClassType(clazz: KtClassOrObject?): Boolean {
                                             if (clazz == null) return false
-                                            return this is KtNonErrorClassType && (clazz.isEquivalentTo(classSymbol.psi) == true || ownTypeArguments.any { arg ->
-                                                when (arg) {
-                                                    is KtStarTypeProjection -> false
-                                                    is KtTypeArgumentWithVariance -> arg.type.containsClassType(clazz)
-                                                }
-                                            })
+                                            return this is KtNonErrorClassType && (clazz.isEquivalentTo(classSymbol.psi) ||
+                                                    ownTypeArguments.any { arg ->
+                                                        when (arg) {
+                                                            is KtStarTypeProjection -> false
+                                                            is KtTypeArgumentWithVariance -> arg.type.containsClassType(clazz)
+                                                        }
+                                                    })
                                         }
 
                                         declaration.getReturnKtType().containsClassType(classPointer.element)

@@ -4,13 +4,14 @@ package org.jetbrains.kotlin.idea.gradleJava.scripting.importing
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider
+import com.intellij.openapi.progress.blockingContext
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelResolverCommon
 import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptModelProvider
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
-import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 class KotlinDslScriptModelResolver : KotlinDslScriptModelResolverCommon() {
@@ -29,23 +30,28 @@ class KotlinDslScriptModelResolver : KotlinDslScriptModelResolverCommon() {
     }
 }
 
-class KotlinDslScriptModelContributor : ProjectModelContributor {
-    override fun accept(resolverCtx: ProjectResolverContext) {
-        for (buildModel in resolverCtx.allBuilds) {
-            for (projectModel in buildModel.projects) {
-                val projectIdentifier = projectModel.projectIdentifier.projectPath
-                if (projectIdentifier == ":") {
-                    val gradleVersion = resolverCtx.projectGradleVersion
-                    if (gradleVersion != null && kotlinDslScriptsModelImportSupported(gradleVersion)) {
-                        val model = resolverCtx.getProjectModel(projectModel, KotlinDslScriptsModel::class.java)
-                        if (model != null) {
-                            if (!processScriptModel(resolverCtx, model, projectIdentifier)) {
-                                continue
+class KotlinDslScriptSyncContributor : GradleSyncContributor {
+
+    override val name: String = "Kotlin DSL Script"
+
+    override suspend fun onModelFetchCompleted(resolverContext: ProjectResolverContext) {
+        blockingContext {
+            for (buildModel in resolverContext.allBuilds) {
+                for (projectModel in buildModel.projects) {
+                    val projectIdentifier = projectModel.projectIdentifier.projectPath
+                    if (projectIdentifier == ":") {
+                        val gradleVersion = resolverContext.projectGradleVersion
+                        if (gradleVersion != null && kotlinDslScriptsModelImportSupported(gradleVersion)) {
+                            val model = resolverContext.getProjectModel(projectModel, KotlinDslScriptsModel::class.java)
+                            if (model != null) {
+                                if (!processScriptModel(resolverContext, model, projectIdentifier)) {
+                                    continue
+                                }
                             }
                         }
-                    }
 
-                    saveGradleBuildEnvironment(resolverCtx)
+                        saveGradleBuildEnvironment(resolverContext)
+                    }
                 }
             }
         }

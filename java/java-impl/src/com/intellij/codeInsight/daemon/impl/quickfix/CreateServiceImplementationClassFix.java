@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
@@ -72,17 +72,13 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     }
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
+  public @Nls @NotNull String getText() {
     return QuickFixBundle.message("create.service.implementation.fix.name", myImplementationClassName);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.service.implementation.fix.family.name");
   }
 
@@ -156,8 +152,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
                                                "\n}");
   }
 
-  @Nullable
-  private static PsiClass findClassInModule(@NotNull String className, @NotNull Module module) {
+  private static @Nullable PsiClass findClassInModule(@NotNull String className, @NotNull Module module) {
     Project project = module.getProject();
     ModulesScope scope = new ModulesScope(Collections.singleton(module), project);
     return JavaPsiFacade.getInstance(project).findClass(className, scope);
@@ -204,9 +199,8 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
       return null;
     }
 
-    @Nullable
     @Override
-    protected JComponent createNorthPanel() {
+    protected @Nullable JComponent createNorthPanel() {
       PanelGridBuilder builder = UI.PanelFactory.grid();
       builder.add(UI.PanelFactory.panel(mySubclassButton).withLabel(JavaBundle.message("label.implementation")))
              .add(UI.PanelFactory.panel(myProviderButton));
@@ -216,14 +210,12 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
       return builder.createPanel();
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return mySubclassButton;
     }
 
-    @Nullable
-    public PsiDirectory getRootDir() {
+    public @Nullable PsiDirectory getRootDir() {
       return (PsiDirectory)myRootDirCombo.getSelectedItem();
     }
 

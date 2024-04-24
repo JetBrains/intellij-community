@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityKt;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -511,7 +512,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   }
 
   private void registerCustomKeyboardActions() {
-    int mask = SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
+    int mask = ClientSystemInfo.isMac() ? InputEvent.META_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
 
     registerKeyboardAction(__ -> focusEditor(), KeyStroke.getKeyStroke(KeyEvent.VK_T, mask));
 

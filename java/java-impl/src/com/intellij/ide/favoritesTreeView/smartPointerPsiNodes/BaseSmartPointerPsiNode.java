@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.favoritesTreeView.smartPointerPsiNodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -32,16 +32,14 @@ abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPointer> ext
   }
 
   @Override
-  @NotNull
-  public final Collection<AbstractTreeNode<?>> getChildren() {
+  public final @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     PsiElement value = getPsiElement();
     if (value == null) return new ArrayList<>();
     LOG.assertTrue(value.isValid());
     return getChildrenImpl();
   }
 
-  @NotNull
-  protected abstract Collection<AbstractTreeNode<?>> getChildrenImpl();
+  protected abstract @NotNull Collection<AbstractTreeNode<?>> getChildrenImpl();
 
   private boolean isMarkReadOnly() {
     final Object parentValue = getParentValue();

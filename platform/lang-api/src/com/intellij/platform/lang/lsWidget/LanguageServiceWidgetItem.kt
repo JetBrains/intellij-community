@@ -8,10 +8,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.lang.lsWidget.internal.LanguageServiceWidgetActionsService
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.LayeredIcon.Companion.layeredIcon
 import org.jetbrains.annotations.ApiStatus
@@ -93,6 +93,7 @@ class OpenSettingsAction(
 ) : AnAction(text, null, icon), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.project?.let { ShowSettingsUtil.getInstance().showSettingsDialog(e.project, settingsPageClass) }
+    val project = e.project ?: return
+    LanguageServiceWidgetActionsService.getInstance().openWidgetItemRelatedSettings(project, settingsPageClass)
   }
 }

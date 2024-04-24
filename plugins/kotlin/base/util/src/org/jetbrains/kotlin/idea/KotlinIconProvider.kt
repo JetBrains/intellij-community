@@ -123,7 +123,7 @@ abstract class KotlinIconProvider : IconProvider(), DumbAware {
                 null
             }
 
-            return icon?.let(IconManager.getInstance()::getPlatformIcon) ?: PlatformIcons.PUBLIC_ICON
+            return (icon ?: com.intellij.ui.PlatformIcons.Public).let(IconManager.getInstance()::getPlatformIcon)
         }
 
         private fun PsiFile.scriptIcon(): Icon = when {

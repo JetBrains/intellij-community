@@ -39,4 +39,10 @@ public final class CachingTreePath extends TreePath {
   public int getPathCount() {
     return myPathCount;
   }
+
+  static @Nullable CachingTreePath ensureCaching(@Nullable TreePath path) {
+    if (path == null) return null;
+    if (path instanceof CachingTreePath cachingTreePath) return cachingTreePath;
+    return new CachingTreePath(ensureCaching(path.getParentPath()), path.getLastPathComponent());
+  }
 }

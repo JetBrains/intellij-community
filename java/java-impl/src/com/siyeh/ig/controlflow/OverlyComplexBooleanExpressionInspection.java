@@ -50,8 +50,7 @@ public final class OverlyComplexBooleanExpressionInspection extends BaseInspecti
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final Integer termCount = (Integer)infos[0];
     return InspectionGadgetsBundle.message("overly.complex.boolean.expression.problem.descriptor", termCount);
   }

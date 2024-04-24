@@ -105,7 +105,7 @@ public final class AppExecutorUtil {
   }
 
   @ApiStatus.Internal
-  public static boolean propagateContextOrCancellation() {
-    return (Propagation.isPropagateThreadContext() || Propagation.isPropagateCancellation());
+  public static boolean propagateContext() {
+    return Propagation.isPropagateThreadContext();
   }
 }

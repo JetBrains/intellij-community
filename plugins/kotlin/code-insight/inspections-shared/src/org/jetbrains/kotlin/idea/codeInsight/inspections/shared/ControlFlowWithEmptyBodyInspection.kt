@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.isCalling
+import org.jetbrains.kotlin.idea.codeinsight.utils.plus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -79,7 +79,7 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
             if (!body.isEmptyBodyOrNull()) return
 
             val isCallingControlFlowFunctions = analyze(expression) {
-                expression.isCalling(sequenceOf(CONTROL_FLOW_FQ_NAME))
+                expression.isCalling(sequenceOf(KOTLIN_ALSO_FQ_NAME))
             }
             if (!isCallingControlFlowFunctions) return
 
@@ -103,5 +103,4 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
     }
 }
 
-private val CONTROL_FLOW_FQ_NAME: FqName = StandardNames.BUILT_INS_PACKAGE_FQ_NAME
-    .child(Name.identifier("also"))
+private val KOTLIN_ALSO_FQ_NAME: FqName = StandardNames.BUILT_INS_PACKAGE_FQ_NAME + "also"

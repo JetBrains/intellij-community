@@ -31,7 +31,7 @@ private const val version = 1
  * But it's better to do it explicitly.
  */
 fun deletePersistentIndexableFilesFilters() {
-  FileUtil.deleteRecursively(filtersDir)
+  FileUtil.deleteWithRenaming(filtersDir)
 }
 
 internal class PersistentProjectIndexableFilesFilterFactory : ProjectIndexableFilesFilterFactory() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.lang.ASTNode;
@@ -21,27 +21,23 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
+  public @NotNull PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
     return psiClass;
   }
 
-  @NotNull
   @Override
-  public PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
+  public @NotNull PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
     return module;
   }
 
-  @NotNull
   @Override
-  public PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
+  public @NotNull PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
     return clsFile;
   }
 
-  @NotNull
   @Override
-  public LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
+  public @NotNull LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
     return PsiUtil.getLanguageLevel(myProject);
   }
 
@@ -65,8 +61,7 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 }

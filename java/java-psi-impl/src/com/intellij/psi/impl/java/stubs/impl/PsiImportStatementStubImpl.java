@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.JavaPsiFacade;
@@ -56,8 +56,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
   }
 
   @Override
-  @Nullable
-  public PsiJavaCodeReferenceElement getReference() {
+  public @Nullable PsiJavaCodeReferenceElement getReference() {
     PsiJavaCodeReferenceElement ref = dereference(myReference);
     if (ref == null) {
       ref = isStatic() ? getStaticReference() : getRegularReference();
@@ -77,8 +76,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     return flags;
   }
 
-  @Nullable
-  private PsiJavaCodeReferenceElement getStaticReference() {
+  private @Nullable PsiJavaCodeReferenceElement getStaticReference() {
     final PsiJavaCodeReferenceElement refElement = createReference();
     if (refElement == null) return null;
     if (isOnDemand() && refElement instanceof PsiJavaCodeReferenceElementImpl) {
@@ -87,8 +85,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     return refElement;
   }
 
-  @Nullable
-  private PsiJavaCodeReferenceElement getRegularReference() {
+  private @Nullable PsiJavaCodeReferenceElement getRegularReference() {
     final PsiJavaCodeReferenceElement refElement = createReference();
     if (refElement == null) return null;
     ((PsiJavaCodeReferenceElementImpl)refElement).setKindWhenDummy(
@@ -97,8 +94,7 @@ public class PsiImportStatementStubImpl extends StubBase<PsiImportStatementBase>
     return refElement;
   }
 
-  @Nullable
-  private PsiJavaCodeReferenceElement createReference() {
+  private @Nullable PsiJavaCodeReferenceElement createReference() {
     final String refText = getImportReferenceText();
     if (refText == null) return null;
 

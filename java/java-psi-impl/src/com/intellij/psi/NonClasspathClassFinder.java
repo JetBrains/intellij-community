@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.diagnostic.PluginException;
@@ -56,8 +56,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     LowMemoryWatcher.register(() -> clearCache(), extensionDisposable);
   }
 
-  @NotNull
-  protected PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
+  protected @NotNull PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
     PackageDirectoryCache cache = myCache;
     if (cache == null) {
       List<VirtualFile> roots = calcClassRoots();
@@ -89,7 +88,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
   @Override
-  public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
+  public PsiClass findClass(final @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     final Ref<PsiClass> result = Ref.create();
     processDirectories(StringUtil.getPackageName(qualifiedName), scope, dir -> {
       VirtualFile virtualFile = findChild(dir, StringUtil.getShortName(qualifiedName), myFileExtensions);
@@ -126,9 +125,8 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
 
-  @NotNull
   @Override
-  public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+  public @NotNull Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     final Set<String> result = new HashSet<>();
     processDirectories(psiPackage.getQualifiedName(), scope, dir -> {
       for (final VirtualFile file : dir.getChildren()) {
@@ -153,9 +151,9 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
   @Override
-  public boolean processPackageDirectories(@NotNull final PsiPackage psiPackage,
+  public boolean processPackageDirectories(final @NotNull PsiPackage psiPackage,
                                            @NotNull GlobalSearchScope scope,
-                                           @NotNull final Processor<? super PsiDirectory> consumer,
+                                           final @NotNull Processor<? super PsiDirectory> consumer,
                                            boolean includeLibrarySources) {
     return processDirectories(psiPackage.getQualifiedName(), scope, dir -> {
       final PsiDirectory psiDirectory = psiPackage.getManager().findDirectory(dir);
@@ -165,7 +163,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
 
   private boolean processDirectories(@NotNull String qualifiedName,
                                      @NotNull GlobalSearchScope scope,
-                                     @NotNull final Processor<? super VirtualFile> processor) {
+                                     final @NotNull Processor<? super VirtualFile> processor) {
     //TODO use some generic approach
     if (scope instanceof EverythingGlobalScope) {
       scope = ALL_SCOPE;
@@ -196,8 +194,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     return psiClass == null ? PsiClass.EMPTY_ARRAY : new PsiClass[]{psiClass};
   }
 
-  @NotNull
-  public static GlobalSearchScope addNonClasspathScope(@NotNull Project project, @NotNull GlobalSearchScope base) {
+  public static @NotNull GlobalSearchScope addNonClasspathScope(@NotNull Project project, @NotNull GlobalSearchScope base) {
     List<GlobalSearchScope> nonClasspathScopes = new SmartList<>();
     for (PsiElementFinder finder : EP.getExtensions(project)) {
       if (finder instanceof NonClasspathClassFinder) {
@@ -217,10 +214,9 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     return myManager;
   }
 
-  @Nullable
-  private static VirtualFile findChild(@NotNull VirtualFile root,
-                                       @NotNull String relPath,
-                                       String @NotNull [] extensions) {
+  private static @Nullable VirtualFile findChild(@NotNull VirtualFile root,
+                                                 @NotNull String relPath,
+                                                 String @NotNull [] extensions) {
     VirtualFile file = null;
     for (String extension : extensions) {
       file = root.findChild(relPath + '.' + extension);

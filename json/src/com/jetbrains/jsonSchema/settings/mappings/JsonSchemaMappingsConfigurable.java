@@ -75,7 +75,7 @@ public final class JsonSchemaMappingsConfigurable extends MasterDetailsComponent
       JsonBundle.messagePointer("action.DumbAware.JsonSchemaMappingsConfigurable.description.add"),
       IconUtil.getAddIcon()) {
       {
-        registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
+        registerCustomShortcutSet(CommonShortcuts.getInsert(), myTree);
       }
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {

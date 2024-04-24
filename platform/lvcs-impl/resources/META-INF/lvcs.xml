@@ -21,6 +21,7 @@
     <group id="LocalHistory" class="com.intellij.history.integration.ui.actions.LocalHistoryGroup" popup="true">
       <reference ref="LocalHistory.ShowHistory"/>
       <reference ref="LocalHistory.ShowSelectionHistory"/>
+      <separator/>
       <reference ref="LocalHistory.ShowProjectHistory"/>
       <reference ref="RecentChanges"/>
       <reference ref="LocalHistory.PutLabel"/>

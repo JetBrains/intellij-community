@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.psi.*;
@@ -11,19 +11,16 @@ import org.jetbrains.annotations.Nullable;
 public final class HighlightMessageUtil {
   private HighlightMessageUtil() { }
 
-  @Nullable
-  public static String getSymbolName(@NotNull PsiElement symbol) {
+  public static @Nullable String getSymbolName(@NotNull PsiElement symbol) {
     return getSymbolName(symbol, PsiSubstitutor.EMPTY);
   }
 
-  @Nullable
-  public static String getSymbolName(@NotNull PsiElement symbol, @NotNull PsiSubstitutor substitutor) {
+  public static @Nullable String getSymbolName(@NotNull PsiElement symbol, @NotNull PsiSubstitutor substitutor) {
     int options = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES | PsiFormatUtilBase.USE_INTERNAL_CANONICAL_TEXT;
     return getSymbolName(symbol, substitutor, options);
   }
 
-  @Nullable
-  public static String getSymbolName(@NotNull PsiElement symbol, @NotNull PsiSubstitutor substitutor, int parameterOptions) {
+  public static @Nullable String getSymbolName(@NotNull PsiElement symbol, @NotNull PsiSubstitutor substitutor, int parameterOptions) {
     String symbolName = null;
 
     if (symbol instanceof PsiClass) {

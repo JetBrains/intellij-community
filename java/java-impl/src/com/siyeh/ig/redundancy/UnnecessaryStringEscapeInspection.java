@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -35,9 +35,8 @@ public final class UnnecessaryStringEscapeInspection extends BaseInspection impl
 
   public boolean reportChars = false;
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.string.escape.problem.descriptor", infos[1]);
   }
 
@@ -61,10 +60,8 @@ public final class UnnecessaryStringEscapeInspection extends BaseInspection impl
       myText = text;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.string.escape.quickfix");
     }
 
@@ -129,8 +126,7 @@ public final class UnnecessaryStringEscapeInspection extends BaseInspection impl
       return newExpression.toString();
     }
 
-    @NotNull
-    private static String buildNewTextBlockText(String text, int indent) {
+    private static @NotNull String buildNewTextBlockText(String text, int indent) {
       final StringBuilder newExpression = new StringBuilder();
       int offset = 0;
       int end = text.endsWith("\"\"\"") ? text.length() - 3 : text.length() - 2;
@@ -138,7 +134,7 @@ public final class UnnecessaryStringEscapeInspection extends BaseInspection impl
       while (start >= 0) {
         newExpression.append(text, offset, start);
         offset = start + 2;
-        @NonNls final String escape = text.substring(start, offset);
+        final @NonNls String escape = text.substring(start, offset);
         if ("\\n".equals(escape)) {
           newExpression.append('\n').append(StringUtil.repeatSymbol(' ', indent));
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -98,7 +98,7 @@ public final class DataPointHolderConversionIntention extends PsiUpdateModComman
   
   
 
-  private static DataPointsHolder extractDataPointsHolder(@NotNull final PsiIdentifier element) {
+  private static DataPointsHolder extractDataPointsHolder(final @NotNull PsiIdentifier element) {
     final PsiElement maybeHolder = element.getParent();
     if (!(maybeHolder instanceof PsiMethod || maybeHolder instanceof PsiField)) {
       return null;
@@ -111,7 +111,7 @@ public final class DataPointHolderConversionIntention extends PsiUpdateModComman
   private record DataPointsHolder(PsiMember holder, PsiAnnotation annotation) {
   }
 
-  private static boolean isConvertible(@NotNull final PsiMember member) {
+  private static boolean isConvertible(final @NotNull PsiMember member) {
     if (!(member instanceof PsiMethod method)) {
       return ((PsiField)member).getInitializer() != null;
     }
@@ -131,9 +131,8 @@ public final class DataPointHolderConversionIntention extends PsiUpdateModComman
     };
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return IntentionPowerPackBundle.message("convert.datapoints.fix.family.name");
   }
 }

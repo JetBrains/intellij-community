@@ -10,11 +10,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
-class LayoutsGroup : DefaultActionGroup() {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-  override fun update(e: AnActionEvent) { }
-}
-
 class CustomLayoutsActionGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   private val childrenCache = NamedLayoutListBasedCache<AnAction>(emptyList(), 0) {
@@ -41,12 +36,20 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorS
     @NlsSafe private val layoutName: String
   ) : ActionGroup(ActionsBundle.message("group.CustomLayoutActionsGroup.text"), true), DumbAware, Toggleable {
 
-    private val children = arrayOf<AnAction>(
-      Apply(layoutName),
+    private val commonChildren = listOf<AnAction>(
       RenameLayoutAction(layoutName),
       Separator(),
       Delete(layoutName),
     )
+
+    private val currentLayoutChildren = (listOf<AnAction>(
+      Restore(),
+      Save(layoutName),
+    ) + commonChildren).toTypedArray()
+
+    private val nonCurrentLayoutChildren = (listOf<AnAction>(
+      Apply(layoutName),
+    ) + commonChildren).toTypedArray()
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -56,7 +59,13 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorS
       Toggleable.setSelected(e.presentation, manager.activeLayoutName == layoutName)
     }
 
-    override fun getChildren(e: AnActionEvent?): Array<AnAction> = children
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> =
+      if (manager.activeLayoutName == layoutName) {
+        currentLayoutChildren
+      }
+      else {
+        nonCurrentLayoutChildren
+      }
 
     private class Apply(private val layoutName: String) : DumbAwareAction() {
       init {
@@ -71,18 +80,20 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorS
         layoutManager.activeLayoutName = layoutName
         ToolWindowManagerEx.getInstanceEx(project).setLayout(layoutManager.getLayoutCopy())
       }
+    }
 
+    private class Restore : AnActionWrapper(ActionManager.getInstance().getAction("RestoreDefaultLayout")) {
       override fun update(e: AnActionEvent) {
         super.update(e)
-        e.presentation.text = if (manager.activeLayoutName == layoutName) {
-          ActionsBundle.message("action.CustomLayoutActionsGroup.Restore.text")
-        }
-        else {
-          ActionsBundle.message("action.CustomLayoutActionsGroup.Apply.text")
-        }
-        e.presentation.description = ActionsBundle.message("action.RestoreNamedLayout.description", layoutName)
+        e.presentation.isVisible = true // overrides RestoreDefaultLayoutAction
+        e.presentation.text = ActionsBundle.message("action.CustomLayoutActionsGroup.Restore.text")
       }
+    }
 
+    private class Save(layoutName: String) : StoreNamedLayoutAction(layoutName) {
+      init {
+        templatePresentation.text = ActionsBundle.message("action.CustomLayoutActionsGroup.Save.text")
+      }
     }
 
     private class Delete(layoutName: String) : DeleteNamedLayoutAction(layoutName) {

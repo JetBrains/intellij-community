@@ -6,8 +6,10 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.json.pointer.JsonPointerPosition
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.*
 import com.intellij.util.containers.Stack
@@ -92,20 +94,15 @@ private fun NestedCompletionMoveData.performMove(completedRange: CompletedRange,
                                                  completedElement: PsiElement,
                                                  editor: Editor,
                                                  file: PsiFile) {
-  // if the document had been fine-tuned between the insertion and the move, we need to recompute the range
-  val pointer = SmartPointerManager.getInstance(file.project).createSmartPsiFileRangePointer(file, TextRange(completedRange.startOffset, completedRange.endOffsetExclusive))
-  PsiDocumentManager.getInstance(file.project).doPostponedOperationsAndUnblockDocument(editor.document)
-  val elementRange = pointer.range?.let { CompletedRange(it.startOffset, it.endOffset) } ?: completedRange
-
   val caretModel = editor.caretModel
   val text = editor.document.charsSequence
 
-  val oldCaretState = caretModel.tryCaptureCaretState(editor, relativeOffset = elementRange.startOffset)
+  val oldCaretState = caretModel.tryCaptureCaretState(editor, relativeOffset = completedRange.startOffset)
 
   val fileIndent = treeWalker.indentOf(file)
   val (additionalCaretOffset, fullTextWithoutCorrectingNewline) = createTextWrapper(treeWalker, wrappingPath)
     .wrapText(
-      around = text.substring(elementRange.toIntRange()),
+      around = text.substring(completedRange.toIntRange()),
       caretOffset = oldCaretState?.relativeCaretPosition,
       destinationIndent = destination?.let {
         treeWalker.indentOf(it) +
@@ -116,13 +113,15 @@ private fun NestedCompletionMoveData.performMove(completedRange: CompletedRange,
       fileIndent = fileIndent,
     )
 
-  val startOfLine = elementRange.startOffset.movedToStartOfLine(text)
-  val endOfLine = elementRange.endOffsetExclusive.movedToEndOfLine(text)
+  val startOfLine = completedRange.startOffset.movedToStartOfLine(text)
+  val endOfLine = completedRange.endOffsetExclusive.movedToEndOfLine(text)
   val takePrecedingNewline = startOfLine > 0
   val takeSucceedingNewline = !takePrecedingNewline && endOfLine < editor.document.lastIndex
   val fullText = fullTextWithoutCorrectingNewline
     .letIf(takePrecedingNewline) { '\n' + it }
     .letIf(takeSucceedingNewline) { it + '\n' }
+
+  PsiDocumentManager.getInstance(file.project).doPostponedOperationsAndUnblockDocument(editor.document)
 
   editor.document.applyChangesOrdered(
     documentChangeAt(startOfLine) {

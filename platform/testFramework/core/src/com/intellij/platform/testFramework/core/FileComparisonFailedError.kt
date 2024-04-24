@@ -8,7 +8,7 @@ import org.opentest4j.ValueWrapper
 import java.io.File
 import java.nio.charset.StandardCharsets
 
-class FileComparisonFailedError @JvmOverloads constructor(
+open class FileComparisonFailedError @JvmOverloads constructor(
   message: String?,
   expected: String,
   actual: String,

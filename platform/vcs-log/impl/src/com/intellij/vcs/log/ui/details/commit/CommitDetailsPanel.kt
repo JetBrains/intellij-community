@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.details.commit
 
 import com.intellij.ide.IdeTooltipManager
@@ -24,7 +24,6 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsRef
-import com.intellij.vcs.log.ui.RootIcon
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.*
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation
 import com.intellij.vcs.log.util.VcsLogUiUtil
@@ -387,7 +386,7 @@ private class RootColorPanel(private val parent: HashAndAuthorPanel) : Wrapper(p
 
   fun setRoot(rootColor: CommitDetailsPanel.RootColor?) {
     if (rootColor != null) {
-      icon = RootIcon.createAndScale(rootColor.color)
+      icon = CheckboxIcon.createAndScale(rootColor.color)
       tooltipText = rootColor.root.path
     }
     else {

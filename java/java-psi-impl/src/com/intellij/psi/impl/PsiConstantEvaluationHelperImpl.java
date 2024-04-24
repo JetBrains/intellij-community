@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.psi.*;
@@ -27,7 +27,7 @@ public class PsiConstantEvaluationHelperImpl extends PsiConstantEvaluationHelper
   }
 
   @Override
-  public Object computeExpression(@NotNull final PsiExpression expression, final boolean throwExceptionOnOverflow, @Nullable final AuxEvaluator auxEvaluator) {
+  public Object computeExpression(final @NotNull PsiExpression expression, final boolean throwExceptionOnOverflow, final @Nullable AuxEvaluator auxEvaluator) {
     ConstantExpressionEvaluator expressionEvaluator = LanguageConstantExpressionEvaluator.INSTANCE.forLanguage(expression.getLanguage());
     if (expressionEvaluator != null) {
       return expressionEvaluator.computeExpression(expression, throwExceptionOnOverflow, auxEvaluator);

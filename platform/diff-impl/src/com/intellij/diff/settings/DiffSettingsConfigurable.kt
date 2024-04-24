@@ -59,6 +59,10 @@ class DiffSettingsConfigurable : BoundSearchableConfigurable(
             .bindSelected(textSettings::isAutoApplyNonConflictedChanges)
         }
         row {
+          checkBox(message("settings.automatically.resolve.imports.conflicts"))
+            .bindSelected(textSettings::isAutoResolveImportConflicts)
+        }
+        row {
           checkBox(message("settings.highlight.modified.lines.in.gutter"))
             .bindSelected(textSettings::isEnableLstGutterMarkersInMerge)
         }

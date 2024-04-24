@@ -54,8 +54,7 @@ public final class OverlyComplexArithmeticExpressionInspection extends BaseInspe
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("overly.complex.arithmetic.expression.problem.descriptor");
   }
 

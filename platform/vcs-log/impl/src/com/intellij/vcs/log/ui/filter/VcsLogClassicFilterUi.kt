@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.SearchFieldWithExtension
@@ -19,10 +20,7 @@ import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.VcsLogDataPack
-import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.VcsLogUserFilter
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogActionIds
@@ -30,6 +28,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.filter.FilterModel.SingleFilterModel
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx.VcsLogFilterListener
+import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.xml.util.XmlStringUtil
@@ -47,40 +46,46 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
                                  private val colorManager: VcsLogColorManager,
                                  filters: VcsLogFilterCollection?,
                                  parentDisposable: Disposable) : VcsLogFilterUiEx {
-  private var dataPack: VcsLogDataPack
+  private var dataPack: VcsLogDataPack = VisiblePack.EMPTY
+  private var visibleRoots: Collection<VirtualFile>? = null
 
   protected val branchFilterModel: BranchFilterModel
   protected val userFilterModel: SingleFilterModel<VcsLogUserFilter>
   protected val dateFilterModel: DateFilterModel
   protected val structureFilterModel: FileFilterModel
   protected val textFilterModel: TextFilterModel
+  protected val parentFilterModel: ParentFilterModel
 
   private val textFilterField: VcsLogTextFilterField
 
   private val filterListenerDispatcher = EventDispatcher.create(VcsLogFilterListener::class.java)
 
   init {
-    dataPack = VisiblePack.EMPTY
-
-    val dataPackGetter = Supplier { dataPack }
-    branchFilterModel = BranchFilterModel(dataPackGetter, logData.storage, logData.roots, uiProperties, filters)
+    branchFilterModel = BranchFilterModel(::dataPack, logData.storage, logData.roots, ::visibleRoots, uiProperties, filters)
     userFilterModel = UserFilterModel(uiProperties, filters)
     dateFilterModel = DateFilterModel(uiProperties, filters)
     structureFilterModel = FileFilterModel(logData.logProviders.keys, uiProperties, filters)
     textFilterModel = TextFilterModel(uiProperties, filters, parentDisposable)
+    parentFilterModel = ParentFilterModel(uiProperties, logData.logProviders, ::visibleRoots, filters)
 
     val field = TextFilterField(textFilterModel, parentDisposable)
     val toolbar = createTextActionsToolbar(field.textEditor)
     textFilterField = MyVcsLogTextFilterField(SearchFieldWithExtension(toolbar.component, field))
 
-    val models = arrayOf(branchFilterModel, userFilterModel, dateFilterModel, structureFilterModel, textFilterModel)
+    val models = arrayOf(branchFilterModel, userFilterModel, dateFilterModel, structureFilterModel, textFilterModel, parentFilterModel)
     for (model in models) {
       model.addSetFilterListener {
         filterConsumer.accept(getFilters())
         filterListenerDispatcher.multicaster.onFiltersChanged()
-        branchFilterModel.onStructureFilterChanged(structureFilterModel.rootFilter, structureFilterModel.structureFilter)
+        onStructureFilterChanged(structureFilterModel.rootFilter, structureFilterModel.structureFilter)
       }
     }
+  }
+
+  private fun onStructureFilterChanged(rootFilter: VcsLogRootFilter?, structureFilter: VcsLogStructureFilter?) {
+    visibleRoots = if (rootFilter != null || structureFilter != null)
+      VcsLogUtil.getAllVisibleRoots(logData.roots, rootFilter, structureFilter)
+    else null
   }
 
   override fun updateDataPack(newDataPack: VcsLogDataPack) {
@@ -137,6 +142,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
       addAll(structureFilterModel.filtersList)
       add(dateFilterModel.getFilter())
       add(userFilterModel.getFilter())
+      add(parentFilterModel.getFilter())
     }.filterNotNull()
     return VcsLogFilterObject.collection(*filters.toTypedArray())
   }
@@ -148,6 +154,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
     textFilterModel.setFilter(collection)
     dateFilterModel.setFilter(collection.get(VcsLogFilterCollection.DATE_FILTER))
     userFilterModel.setFilter(collection.get(VcsLogFilterCollection.USER_FILTER))
+    parentFilterModel.setFilter(collection.get(VcsLogFilterCollection.PARENT_FILTER))
   }
 
   protected open fun createBranchComponent(): AnAction? {
@@ -175,7 +182,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
   }
 
   protected fun createGraphComponent(): AnAction? {
-    return ActionManager.getInstance().getAction(VcsLogActionIds.GRAPH_OPTIONS_GROUP)
+    return VcsLogGraphOptionsChooserGroup(parentFilterModel)
   }
 
   override fun addFilterListener(listener: VcsLogFilterListener) {

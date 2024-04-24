@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 
-class TerminalCtrlCActionsPromoter : ActionPromoter {
+internal class TerminalCtrlCActionsPromoter : ActionPromoter {
   /**
    * On Windows and Linux these actions have the same shortcut - Ctrl+C.
    * So, it is required to properly prioritize them.

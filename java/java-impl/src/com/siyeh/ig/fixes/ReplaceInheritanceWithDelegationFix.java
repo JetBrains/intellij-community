@@ -23,14 +23,12 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceInheritanceWithDelegationFix extends RefactoringInspectionGadgetsFix {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("replace.inheritance.with.delegation.quickfix");
   }
 
-  @NotNull
   @Override
-  public RefactoringActionHandler getHandler() {
+  public @NotNull RefactoringActionHandler getHandler() {
     return JavaRefactoringActionHandlerFactory.getInstance().createInheritanceToDelegationHandler();
   }
 }

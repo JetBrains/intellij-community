@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -21,9 +21,8 @@ import java.util.Set;
 
 public final class LambdaBodyCanBeCodeBlockInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return getDisplayName();
   }
 
@@ -37,9 +36,8 @@ public final class LambdaBodyCanBeCodeBlockInspection extends BaseInspection {
     return new OneLineLambda2CodeBlockVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new OneLineLambda2CodeBlockFix();
   }
 
@@ -61,10 +59,8 @@ public final class LambdaBodyCanBeCodeBlockInspection extends BaseInspection {
       }
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("lambda.body.can.be.code.block.quickfix");
     }
   }

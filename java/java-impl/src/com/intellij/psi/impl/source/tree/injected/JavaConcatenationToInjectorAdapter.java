@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.injection.MultiHostInjector;
@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 public final class JavaConcatenationToInjectorAdapter extends ConcatenationInjectorManager.BaseConcatenation2InjectorAdapter implements MultiHostInjector {
@@ -51,8 +50,7 @@ public final class JavaConcatenationToInjectorAdapter extends ConcatenationInjec
   }
 
   @Override
-  @NotNull
-  public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+  public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return LITERALS;
   }
   private static final List<Class<? extends PsiElement>> LITERALS = List.of(PsiLiteralExpression.class, PsiFragment.class);

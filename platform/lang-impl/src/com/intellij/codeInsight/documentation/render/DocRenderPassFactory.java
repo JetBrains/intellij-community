@@ -17,12 +17,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -137,7 +139,7 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
   public static final class Items implements Iterable<Item> {
     private final Map<TextRange, Item> myItems = new LinkedHashMap<>();
 
-    boolean isEmpty() {
+    public boolean isEmpty() {
       return myItems.isEmpty();
     }
 
@@ -157,9 +159,9 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
     }
   }
 
-  static final class Item {
-    final TextRange textRange;
-    final @Nls String textToRender;
+  public static final class Item {
+    public final TextRange textRange;
+    public final @Nls String textToRender;
 
     private Item(@NotNull TextRange textRange, @Nullable @Nls String textToRender) {
       this.textRange = textRange;

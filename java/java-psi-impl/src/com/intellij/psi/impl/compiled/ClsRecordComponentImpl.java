@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -29,9 +29,8 @@ public final class ClsRecordComponentImpl extends ClsRepositoryPsiElement<PsiRec
     return null;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return getStub().getName();
   }
 
@@ -41,20 +40,17 @@ public final class ClsRecordComponentImpl extends ClsRepositoryPsiElement<PsiRec
   }
 
   @Override
-  @NotNull
-  public PsiTypeElement getTypeElement() {
+  public @NotNull PsiTypeElement getTypeElement() {
     return myType.getValue();
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return getTypeElement().getType();
   }
 
   @Override
-  @NotNull
-  public PsiModifierList getModifierList() {
+  public @NotNull PsiModifierList getModifierList() {
     final StubElement<PsiModifierList> child = getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
     assert child != null;
     return child.getPsi();
@@ -120,14 +116,12 @@ public final class ClsRecordComponentImpl extends ClsRepositoryPsiElement<PsiRec
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return new LocalSearchScope(getParent());
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     PsiClass clsClass = getContainingClass();
     if (clsClass != null) {
       PsiClass psiClass = ObjectUtils.tryCast(clsClass.getNavigationElement(), PsiClass.class);

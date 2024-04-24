@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -97,15 +97,13 @@ public class JavaModuleRenameListener implements ModuleListener {
       suggestAllNames(module.getName(), newName);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Title)
     @Override
-    public String getDialogTitle() {
+    public @Nls(capitalization = Nls.Capitalization.Title) String getDialogTitle() {
       return JavaRefactoringBundle.message("auto.rename.module.dialog.title");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override
-    public String getDialogDescription() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) String getDialogDescription() {
       return JavaRefactoringBundle.message("auto.rename.module.dialog.description");
     }
 

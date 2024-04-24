@@ -220,6 +220,16 @@
       "since": "2023.3"
     },
     {
+      "key": "CombinedDiff.BlockBorder.selectedActiveColor",
+      "description": "Active border color around current (selected) Combined (All in One) Diff block",
+      "since": "2023.3"
+    },
+    {
+      "key": "CombinedDiff.BlockBorder.selectedInactiveColor",
+      "description": "Inactive border color around current (selected) Combined (All in One) Diff block",
+      "since": "2023.3"
+    },
+    {
       "key": "ComboPopup.border",
       "description": "Combo box drop-down menu. Format: \"top, left, bottom, right, hex\", e.g. “1,1,1,1,FFFFFF\". Size in pixels"
     },

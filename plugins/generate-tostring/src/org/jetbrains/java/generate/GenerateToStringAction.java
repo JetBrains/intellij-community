@@ -35,9 +35,8 @@ public class GenerateToStringAction extends BaseGenerateAction implements DumbAw
     super(new GenerateToStringActionHandlerImpl());
   }
 
-  @Nullable
   @Override
-  protected PsiClass getTargetClass(Editor editor, PsiFile file) {
+  protected @Nullable PsiClass getTargetClass(Editor editor, PsiFile file) {
     PsiClass targetClass = super.getTargetClass(editor, file);
     if (targetClass != null) return targetClass;
     if (file instanceof PsiJavaFile javaFile) {

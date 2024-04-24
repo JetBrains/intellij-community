@@ -26,11 +26,16 @@ public final class DeltaImpl extends GraphImpl implements Delta {
   private final Set<NodeSource> myBaseSources;
   private final Set<NodeSource> myDeletedSources;
   
-  public DeltaImpl(Set<NodeSource> baseSources, Iterable<NodeSource> deletedSources) throws IOException {
+  DeltaImpl(Iterable<NodeSource> baseSources, Iterable<NodeSource> deletedSources) throws IOException {
     super(Containers.MEMORY_CONTAINER_FACTORY);
     addIndex(new SubclassesIndex(Containers.MEMORY_CONTAINER_FACTORY));
-    myBaseSources = Collections.unmodifiableSet(baseSources);
-    myDeletedSources = Collections.unmodifiableSet(Iterators.collect(deletedSources, new HashSet<>()));
+    myBaseSources = Collections.unmodifiableSet(baseSources instanceof Set? (Set<? extends NodeSource>)baseSources : Iterators.collect(baseSources, new HashSet<>()));
+    myDeletedSources = Collections.unmodifiableSet(deletedSources instanceof Set? (Set<? extends NodeSource>)deletedSources : Iterators.collect(deletedSources, new HashSet<>()));
+  }
+
+  @Override
+  public boolean isSourceOnly() {
+    return false;
   }
 
   @Override

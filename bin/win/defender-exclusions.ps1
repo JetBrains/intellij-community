@@ -27,7 +27,9 @@ try {
             return $true
           }
         }
-      } catch [System.Management.Automation.ItemNotFoundException] { }
+      } catch [System.Management.Automation.ItemNotFoundException] {
+      } catch [System.Management.Automation.DriveNotFoundException] {
+      }
     }
 
     return $false

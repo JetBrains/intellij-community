@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
@@ -147,7 +147,7 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
    * @return the indent that is either the passed indent, or a new indent that goes after the last leading asterisk.
    */
   @Contract(pure = true)
-  private static @Range(from = 0, to = Integer.MAX_VALUE) int getIndentSize(@NotNull final String line, int indent) {
+  private static @Range(from = 0, to = Integer.MAX_VALUE) int getIndentSize(final @NotNull String line, int indent) {
     final int ownLineIndent = CharArrayUtil.shiftForward(line, 0, " *");
 
     final String maxPossibleIndent = line.substring(0, ownLineIndent);

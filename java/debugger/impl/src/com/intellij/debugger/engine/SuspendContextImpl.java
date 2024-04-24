@@ -47,7 +47,11 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   protected final Set<ThreadReferenceProxyImpl> myNotExecutableThreads = new HashSet<>();
 
-  private final EventSet myEventSet;
+  // There may be several events for the same break-point. So let's use custom processing if any of them is wanted it.
+  protected boolean myIsCustomSuspendLogic = false;
+  protected boolean mySuspendAllSwitchedContext = false;
+
+  private EventSet myEventSet;
   private volatile boolean myIsResumed;
 
   private final ConcurrentLinkedQueue<SuspendContextCommandImpl> myPostponedCommands = new ConcurrentLinkedQueue<>();
@@ -80,6 +84,11 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     mySuspendPolicy = suspendPolicy;
     myVotesToVote = eventVotes;
     myEventSet = set;
+  }
+
+  protected void setEventSet(EventSet eventSet) {
+    LOG.assertTrue(myEventSet == null);
+    myEventSet = eventSet;
   }
 
   public void setThread(@Nullable ThreadReference thread) {

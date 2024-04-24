@@ -68,14 +68,12 @@ public final class BadExceptionThrownInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ProhibitedExceptionThrown";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
     final String exceptionName = type.getPresentableText();
     return InspectionGadgetsBundle.message(

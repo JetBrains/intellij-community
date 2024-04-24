@@ -1,7 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
@@ -40,9 +43,8 @@ public final class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalIn
                                                                instanceCall(JAVA_UTIL_MAP, "isEmpty").parameterCount(0));
   private static final CallMatcher STRING_IS_EMPTY = instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
@@ -175,8 +177,7 @@ public final class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalIn
       };
     }
 
-    @Nullable
-    static RangeConstraint create(TextRange textRange, PsiExpression expr, LongRangeSet set) {
+    static @Nullable RangeConstraint create(TextRange textRange, PsiExpression expr, LongRangeSet set) {
       SpecialField field = null;
       PsiReferenceExpression ref = expr instanceof PsiReferenceExpression ? (PsiReferenceExpression)expr :
                                    expr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expr).getMethodExpression() : null;
@@ -203,17 +204,13 @@ public final class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalIn
       myReplacement = replacement;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", myReplacement);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.excessive.range.check.fix.family.name");
     }
 

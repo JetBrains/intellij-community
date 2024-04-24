@@ -19,6 +19,7 @@ import javax.swing.JComponent
 import javax.swing.border.AbstractBorder
 import javax.swing.plaf.basic.BasicButtonUI
 
+@Deprecated("PY-71646: for removal after PY-66455 considered stable")
 class JupyterCellBorderButton(
   val editor: EditorEx,
   private val action: AnAction

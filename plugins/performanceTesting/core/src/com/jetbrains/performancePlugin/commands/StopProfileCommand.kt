@@ -12,7 +12,7 @@ import com.jetbrains.performancePlugin.profilers.ProfilersController
  * Syntax: %stopProfile [parameters]
  * Example: %stopProfile collapsed,flamegraph,traces=5000
  */
-internal class StopProfileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+class StopProfileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX: String = CMD_PREFIX + "stopProfile"
   }

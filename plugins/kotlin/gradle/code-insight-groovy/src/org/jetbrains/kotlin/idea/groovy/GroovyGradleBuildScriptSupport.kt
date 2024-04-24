@@ -300,7 +300,7 @@ class GroovyBuildScriptManipulator(
             scope.toGradleCompileScope(scriptFile.isAndroidModule()),
             libraryDescriptor.libraryGroupId,
             libraryDescriptor.libraryArtifactId,
-            libraryDescriptor.maxVersion
+            libraryDescriptor.preferredVersion ?: libraryDescriptor.maxVersion ?: libraryDescriptor.minVersion
         )
 
         if (targetModule != null && usesNewMultiplatform()) {

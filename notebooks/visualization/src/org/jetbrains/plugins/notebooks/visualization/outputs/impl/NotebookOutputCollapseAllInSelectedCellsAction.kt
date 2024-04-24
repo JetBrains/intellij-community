@@ -8,7 +8,6 @@ import com.intellij.util.asSafely
 import org.jetbrains.plugins.notebooks.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputInlayController
 import org.jetbrains.plugins.notebooks.visualization.outputs.collapsingComponents
-import java.awt.event.MouseEvent
 
 internal class NotebookOutputCollapseAllAction private constructor() : ToggleAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -22,8 +21,6 @@ internal class NotebookOutputCollapseAllAction private constructor() : ToggleAct
     !allCollapsingComponents(e).any { it.isSeen }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    markScrollingPositionBeforeOutputCollapseToggle(e)
-
     for (component in allCollapsingComponents(e)) {
       component.isSeen = !state
     }
@@ -50,8 +47,6 @@ internal class NotebookOutputCollapseAllInSelectedCellsAction private constructo
     !getSelectedCollapsingComponents(e).any { it.isSeen }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    markScrollingPositionBeforeOutputCollapseToggle(e)
-
     for(component in getSelectedCollapsingComponents(e)) {
       component.isSeen = !state
     }
@@ -78,8 +73,6 @@ internal class NotebookOutputCollapseAllInCellAction private constructor() : Tog
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    markScrollingPositionBeforeOutputCollapseToggle(e)
-
     getCollapsingComponents(e)?.forEach {
       it.isSeen = !state
     }
@@ -98,7 +91,6 @@ internal class NotebookOutputCollapseSingleInCellAction private constructor() : 
     getExpectedComponent(e)?.isSeen?.let { !it } ?: false
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    markScrollingPositionBeforeOutputCollapseToggle(e)
     getExpectedComponent(e)?.isSeen = !state
   }
 
@@ -133,45 +125,3 @@ private val AnActionEvent.notebookCellInlayManager: NotebookCellInlayManager?
 
 private val AnActionEvent.notebookEditor: EditorImpl?
   get() = notebookCellInlayManager?.editor
-
-private fun markScrollingPositionBeforeOutputCollapseToggle(e: AnActionEvent) {
-  val cell = e.dataContext.getData(NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY) ?: return
-  val editor = e.notebookCellInlayManager?.editor ?: return
-  val notebookCellEditorScrollingPositionKeeper = editor.notebookCellEditorScrollingPositionKeeper ?: return
-
-  val outputsCellVisible = isLineVisible(editor, cell.lines.last)
-  if (!outputsCellVisible) {
-    val cellOutputInlays = editor.inlayModel.getBlockElementsInRange(editor.document.getLineEndOffset(cell.lines.last), editor.document.getLineEndOffset(cell.lines.last))
-    val visibleArea = editor.scrollingModel.visibleAreaOnScrollingFinished
-
-    for (i in (cellOutputInlays.size - 1) downTo 1) {
-      val inlay = cellOutputInlays[i]
-      val bounds = inlay.bounds ?: continue
-      val outputTopIsAboveScreen = bounds.y < visibleArea.y
-      val outputBottomIsOnOrBelowScreen = bounds.y + bounds.height > visibleArea.y
-      val outputCanFit = bounds.height < visibleArea.height
-      if (outputTopIsAboveScreen) {
-        if ((outputBottomIsOnOrBelowScreen) && outputCanFit) {
-          val inputEvent = e.inputEvent
-          val additionalShift: Int
-          if (inputEvent is MouseEvent) {
-            // Adjust scrolling so, that the collapsed output is under the mouse pointer
-            additionalShift = inputEvent.y - bounds.y - editor.lineHeight
-          } else {
-            // Adjust scrolling so, that the collapsed output is visible on the screen
-            additionalShift = visibleArea.y - bounds.y + editor.lineHeight
-          }
-
-          notebookCellEditorScrollingPositionKeeper.savePosition(cell.lines.last, additionalShift)
-          return
-        }
-        else {
-          val topVisibleLine: Int = editor.xyToLogicalPosition(visibleArea.location).line
-          notebookCellEditorScrollingPositionKeeper.savePosition(topVisibleLine)
-          return
-        }
-      }
-    }
-  }
-  notebookCellEditorScrollingPositionKeeper.savePosition(cell.lines.first)
-}

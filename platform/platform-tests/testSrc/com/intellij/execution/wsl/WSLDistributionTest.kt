@@ -13,12 +13,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.platform.ijent.*
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.registerOrReplaceServiceInstance
 import com.intellij.testFramework.replaceService
 import com.intellij.util.containers.orNull
 import com.intellij.util.io.Ksuid
@@ -66,8 +66,8 @@ class WSLDistributionTest {
     WSLUtil.setSystemCompatible(true)
   }
 
-  @Test
-  fun `no sudden changes in WSLCommandLineOptions`() {
+  @TestTemplate
+  fun `no sudden changes in WSLCommandLineOptions`(strategy: WslTestStrategy) {
     val options = WSLCommandLineOptions()
     val defaultValues = WSLCommandLineOptions::class.memberProperties
       .map { property ->
@@ -76,6 +76,11 @@ class WSLDistributionTest {
       }
       .sorted()
       .joinToString("\n")
+
+    val launchWithWslExe = when (strategy) {
+      WslTestStrategy.Legacy -> true
+      WslTestStrategy.Ijent -> false
+    }
 
     withClue("""
       Changes in WSLCommandLineOptions should be performed cautiously. 
@@ -89,7 +94,7 @@ class WSLDistributionTest {
         myExecuteCommandInLoginShell = true
         myExecuteCommandInShell = true
         myInitShellCommands = []
-        myLaunchWithWslExe = false
+        myLaunchWithWslExe = $launchWithWslExe
         myPassEnvVarsUsingInterop = false
         myRemoteWorkingDirectory = null
         mySleepTimeoutSec = 0.0
@@ -564,8 +569,8 @@ private val executeResultMock by lazy {
 
 private class WslTestStrategyExtension
   : TestTemplateInvocationContextProvider,
-    TestInstancePreConstructCallback,
-    TestInstancePreDestroyCallback {
+    AfterEachCallback,
+    BeforeEachCallback {
 
   override fun supportsTestTemplate(extension: ExtensionContext): Boolean =
     extension.testMethod.orNull()
@@ -578,17 +583,26 @@ private class WslTestStrategyExtension
   override fun provideTestTemplateInvocationContexts(extension: ExtensionContext): Stream<TestTemplateInvocationContext> =
     WslTestStrategy.entries.map { MyTestTemplateInvocationContext(it) as TestTemplateInvocationContext }.stream()
 
-  override fun preDestroyTestInstance(extensionContext: ExtensionContext) {
-    val value = when (extensionContext.getStore(ExtensionContext.Namespace.GLOBAL).get(WslTestStrategy::class.java) as WslTestStrategy?) {
-      null -> false
-      WslTestStrategy.Legacy -> false
-      WslTestStrategy.Ijent -> true
-    }
-    Registry.get("wsl.use.remote.agent.for.launch.processes").setValue(value)
+  override fun beforeEach(context: ExtensionContext) {
+    val disposable = Disposer.newDisposable()
+    context.getStore(ExtensionContext.Namespace.GLOBAL).put(this to Disposable::class.java, disposable)
+
+    ApplicationManager.getApplication().registerOrReplaceServiceInstance(
+      WslIjentAvailabilityService::class.java,
+      object : WslIjentAvailabilityService {
+        override fun runWslCommandsViaIjent(): Boolean =
+          when (context.getStore(ExtensionContext.Namespace.GLOBAL).get(WslTestStrategy::class.java) as WslTestStrategy?) {
+            null -> false
+            WslTestStrategy.Legacy -> false
+            WslTestStrategy.Ijent -> true
+          }
+      },
+      disposable,
+    )
   }
 
-  override fun preConstructTestInstance(testInstanceFactoryContext: TestInstanceFactoryContext, extension: ExtensionContext) {
-    Registry.get("wsl.use.remote.agent.for.launch.processes").resetToDefault()
+  override fun afterEach(context: ExtensionContext) {
+    Disposer.dispose(context.getStore(ExtensionContext.Namespace.GLOBAL).get(this to Disposable::class.java) as Disposable)
   }
 
   private class MyTestTemplateInvocationContext(

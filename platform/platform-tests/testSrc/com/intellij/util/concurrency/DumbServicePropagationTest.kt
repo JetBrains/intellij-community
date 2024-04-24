@@ -91,7 +91,7 @@ class DumbServicePropagationTest : BasePlatformTestCase() {
   }
 
   @IgnoreJUnit3(reason = "Dumb service currently does not propagate cancellation.")
-  fun ignoreDumbTaskIsAwaited() = doPropagationApplicationTest(propagateCancellation = true) {
+  fun ignoreDumbTaskIsAwaited() = doPropagationApplicationTest {
     val dumbSemaphore = Semaphore(1)
     val queueingComplete = Semaphore(1)
     disposeOnTearDown(Disposable { // do not give up semaphore in case of test failure
@@ -112,7 +112,7 @@ class DumbServicePropagationTest : BasePlatformTestCase() {
     job.join()
   }
 
-  fun testRunWhenSmartIsAwaited() = doPropagationApplicationTest(propagateCancellation = true) {
+  fun testRunWhenSmartIsAwaited() = doPropagationApplicationTest {
     val semaphore = Semaphore(1)
     disposeOnTearDown(Disposable { // do not give up semaphore in case of test failure
       semaphore.up()
@@ -134,7 +134,7 @@ class DumbServicePropagationTest : BasePlatformTestCase() {
   }
 
   @IgnoreJUnit3(reason = "Dumb service currently does not propagate cancellation.")
-  fun ignoreDoubleScheduledTaskIsEaten() = doPropagationApplicationTest(propagateCancellation = true) {
+  fun ignoreDoubleScheduledTaskIsEaten() = doPropagationApplicationTest {
     var job by AtomicReference<Job>(null)
     var invocationCounter by AtomicReference(0)
     val tasksAreScheduled = CountDownLatch(1)
@@ -160,7 +160,7 @@ class DumbServicePropagationTest : BasePlatformTestCase() {
     TestCase.assertEquals(1, invocationCounter)
   }
 
-  fun testCancellationPropagationOfSmartNBRA() = doPropagationApplicationTest(propagateCancellation = true) {
+  fun testCancellationPropagationOfSmartNBRA() = doPropagationApplicationTest {
     // spawn dumb mode
     blockingContext {
       dumbService.queueTask(object : DumbModeTask() {

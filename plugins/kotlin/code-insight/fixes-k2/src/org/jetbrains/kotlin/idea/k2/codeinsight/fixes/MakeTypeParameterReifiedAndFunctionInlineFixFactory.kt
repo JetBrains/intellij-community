@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -24,28 +22,22 @@ internal object MakeTypeParameterReifiedAndFunctionInlineFixFactory {
         val typeParameter = function.typeParameterList?.parameters?.firstOrNull {
             it.getSymbol() == (diagnostic.type as? KtTypeParameterType)?.symbol
         } ?: return@ModCommandBased emptyList()
-        val elementContext = ElementContext(typeParameter.createSmartPointer())
-        listOf(MakeTypeParameterReifiedAndFunctionInlineFix(function, elementContext))
+        listOf(MakeTypeParameterReifiedAndFunctionInlineFix(typeParameter))
     }
 
-    private data class ElementContext(
-        val typeParameter: SmartPsiElementPointer<KtTypeParameter>,
-    )
-
     private class MakeTypeParameterReifiedAndFunctionInlineFix(
-        element: KtNamedFunction,
-        elementContext: ElementContext,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtNamedFunction, ElementContext>(element, elementContext) {
+        element: KtTypeParameter,
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtTypeParameter, Unit>(element, Unit) {
 
         override fun invoke(
             actionContext: ActionContext,
-            element: KtNamedFunction,
-            elementContext: ElementContext,
+            element: KtTypeParameter,
+            elementContext: Unit,
             updater: ModPsiUpdater,
         ) {
-            val typeParameter = updater.getWritable(elementContext.typeParameter.element) ?: return
-            element.addModifier(KtTokens.INLINE_KEYWORD)
-            typeParameter.addModifier(KtTokens.REIFIED_KEYWORD)
+            val function = element.getStrictParentOfType<KtNamedFunction>() ?: return
+            function.addModifier(KtTokens.INLINE_KEYWORD)
+            element.addModifier(KtTokens.REIFIED_KEYWORD)
         }
 
         override fun getFamilyName(): String = KotlinBundle.message("make.type.parameter.reified.and.function.inline")

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.Disposable;
@@ -95,27 +95,23 @@ public final class ControlFlowFactory implements Disposable {
     }
   }
 
-  @NotNull
-  public ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy) throws AnalysisCanceledException {
+  public @NotNull ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy) throws AnalysisCanceledException {
     return doGetControlFlow(element, policy, ControlFlowOptions.create(true, true, true));
   }
 
-  @NotNull
-  public ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy, boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
+  public @NotNull ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy, boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
     return doGetControlFlow(element, policy, ControlFlowOptions.create(true, evaluateConstantIfCondition, true));
   }
 
-  @NotNull
-  public static ControlFlow getControlFlow(@NotNull PsiElement element,
-                                           @NotNull ControlFlowPolicy policy,
-                                           @NotNull ControlFlowOptions options) throws AnalysisCanceledException {
+  public static @NotNull ControlFlow getControlFlow(@NotNull PsiElement element,
+                                                    @NotNull ControlFlowPolicy policy,
+                                                    @NotNull ControlFlowOptions options) throws AnalysisCanceledException {
     return getInstance(element.getProject()).doGetControlFlow(element, policy, options);
   }
 
-  @NotNull
-  private ControlFlow doGetControlFlow(@NotNull PsiElement element,
-                                       @NotNull ControlFlowPolicy policy,
-                                       @NotNull ControlFlowOptions options) throws AnalysisCanceledException {
+  private @NotNull ControlFlow doGetControlFlow(@NotNull PsiElement element,
+                                                @NotNull ControlFlowPolicy policy,
+                                                @NotNull ControlFlowOptions options) throws AnalysisCanceledException {
     if (!element.isPhysical()) {
       return new ControlFlowAnalyzer(element, policy, options).buildControlFlow();
     }
@@ -130,11 +126,10 @@ public final class ControlFlowFactory implements Disposable {
     return controlFlow;
   }
 
-  @NotNull
-  private static ControlFlowContext createContext(@NotNull ControlFlowOptions options,
-                                                  @NotNull ControlFlowPolicy policy,
-                                                  @NotNull ControlFlow controlFlow,
-                                                  final long modificationCount) {
+  private static @NotNull ControlFlowContext createContext(@NotNull ControlFlowOptions options,
+                                                           @NotNull ControlFlowPolicy policy,
+                                                           @NotNull ControlFlow controlFlow,
+                                                           final long modificationCount) {
     return new ControlFlowContext(options, policy, modificationCount, controlFlow);
   }
 
@@ -149,8 +144,7 @@ public final class ControlFlowFactory implements Disposable {
     cached.addIfAbsent(controlFlowContext);
   }
 
-  @NotNull
-  private ConcurrentList<ControlFlowContext> getOrCreateCachedFlowsForElement(@NotNull PsiElement element) {
+  private @NotNull ConcurrentList<ControlFlowContext> getOrCreateCachedFlowsForElement(@NotNull PsiElement element) {
     return cachedFlows.computeIfAbsent(element, __ -> ContainerUtil.createConcurrentList());
   }
 

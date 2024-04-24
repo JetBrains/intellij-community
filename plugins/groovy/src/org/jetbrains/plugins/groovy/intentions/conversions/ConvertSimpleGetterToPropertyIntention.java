@@ -77,7 +77,7 @@ public final class ConvertSimpleGetterToPropertyIntention extends GrPsiUpdateInt
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
         PsiElement parent = element.getParent();
-        if (!(parent instanceof GrMethod method) || ((GrMethod)parent).getNameIdentifierGroovy() != element) return false;
+        if (!(parent instanceof GrMethod method) || method.getNameIdentifierGroovy() != element) return false;
 
         GrOpenBlock block = method.getBlock();
         if (block == null) return false;

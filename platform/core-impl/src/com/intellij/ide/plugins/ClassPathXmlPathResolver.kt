@@ -65,12 +65,6 @@ internal class ClassPathXmlPathResolver(
     }
 
     if (resource == null) {
-      if (path == "intellij.profiler.clion") {
-        val descriptor = RawPluginDescriptor()
-        descriptor.`package` = "com.intellij.profiler.clion"
-        return descriptor
-      }
-
       val log = logger<ClassPathXmlPathResolver>()
       val moduleName = path.removeSuffix(".xml")
       if (isRunningFromSources && path.startsWith("intellij.") && dataLoader.emptyDescriptorIfCannotResolve) {

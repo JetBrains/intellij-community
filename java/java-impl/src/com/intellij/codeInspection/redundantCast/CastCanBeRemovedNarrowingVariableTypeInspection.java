@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -21,9 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitTypeCastExpression(@NotNull PsiTypeCastExpression cast) {
@@ -75,9 +74,8 @@ public final class CastCanBeRemovedNarrowingVariableTypeInspection extends Abstr
       return JavaBundle.message("inspection.cast.can.be.removed.narrowing.variable.type.fix.name", myVariableName, myType);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.cast.can.be.removed.narrowing.variable.type.fix.family.name");
     }
 

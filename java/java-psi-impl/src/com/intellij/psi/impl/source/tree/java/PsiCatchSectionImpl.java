@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -54,8 +54,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
   }
 
   @Override
-  @NotNull
-  public List<PsiType> getPreciseCatchTypes() {
+  public @NotNull List<PsiType> getPreciseCatchTypes() {
     final PsiParameter parameter = getParameter();
     if (parameter == null) return Collections.emptyList();
 
@@ -68,7 +67,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     );
   }
 
-  private List<PsiType> computePreciseCatchTypes(@Nullable final PsiParameter parameter) {
+  private List<PsiType> computePreciseCatchTypes(final @Nullable PsiParameter parameter) {
     if (parameter == null) {
       return ContainerUtil.emptyList();
     }
@@ -142,7 +141,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
   }
 
   // do not use control flow here to avoid dead loop
-  private static boolean isCatchParameterEffectivelyFinal(final PsiParameter parameter, @Nullable final PsiCodeBlock catchBlock) {
+  private static boolean isCatchParameterEffectivelyFinal(final PsiParameter parameter, final @Nullable PsiCodeBlock catchBlock) {
     final boolean[] result = {true};
     if (catchBlock != null) {
       catchBlock.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -160,20 +159,17 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
   }
 
   @Override
-  @NotNull
-  public PsiTryStatement getTryStatement() {
+  public @NotNull PsiTryStatement getTryStatement() {
     return (PsiTryStatement)getParent();
   }
 
   @Override
-  @Nullable
-  public PsiJavaToken getLParenth() {
+  public @Nullable PsiJavaToken getLParenth() {
     return (PsiJavaToken)findChildByRole(ChildRole.CATCH_BLOCK_PARAMETER_LPARENTH);
   }
 
   @Override
-  @Nullable
-  public PsiJavaToken getRParenth() {
+  public @Nullable PsiJavaToken getRParenth() {
     return (PsiJavaToken)findChildByRole(ChildRole.CATCH_BLOCK_PARAMETER_RPARENTH);
   }
 

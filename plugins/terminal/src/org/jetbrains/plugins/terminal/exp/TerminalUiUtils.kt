@@ -4,6 +4,8 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.HyperlinkWithPopupMenuInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
+import com.intellij.ide.ui.AntialiasingType
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
@@ -13,11 +15,14 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.FontInfo
+import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
@@ -26,6 +31,7 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
+import com.intellij.util.DocumentUtil
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -37,7 +43,9 @@ import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
+import com.jediterm.terminal.model.CharBuffer
 import com.jediterm.terminal.ui.AwtTransformers
+import com.jediterm.terminal.util.CharUtils
 import org.intellij.lang.annotations.MagicConstant
 import java.awt.Color
 import java.awt.Component
@@ -47,12 +55,14 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.awt.font.FontRenderContext
+import java.awt.geom.Dimension2D
 import java.util.concurrent.CompletableFuture
 import javax.swing.JScrollPane
 import javax.swing.KeyStroke
 import kotlin.math.max
 
-object TerminalUiUtils {
+internal object TerminalUiUtils {
   fun createOutputEditor(document: Document, project: Project, settings: JBTerminalSystemSettingsProviderBase): EditorImpl {
     val editor = EditorFactory.getInstance().createEditor(document, project, EditorKind.CONSOLE) as EditorImpl
     editor.isScrollToCaret = false
@@ -115,10 +125,10 @@ object TerminalUiUtils {
     return CustomShortcutSet(keyStroke)
   }
 
-  fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension): TermSize {
+  fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension2D): TermSize {
     val width = componentSize.width / charSize.width
     val height = componentSize.height / charSize.height
-    return ensureTermMinimumSize(TermSize(width, height))
+    return ensureTermMinimumSize(TermSize(width.toInt(), height.toInt()))
   }
 
   private fun ensureTermMinimumSize(size: TermSize): TermSize {
@@ -248,8 +258,29 @@ object TerminalUiUtils {
   const val YELLOW_COLOR_INDEX: Int = 3
 }
 
+internal fun Editor.getCharSize(): Dimension2D {
+  val baseContext = FontInfo.getFontRenderContext(contentComponent)
+  val context = FontRenderContext(baseContext.transform,
+                                  AntialiasingType.getKeyForCurrentScope(true),
+                                  UISettings.editorFractionalMetricsHint)
+  val fontMetrics = FontInfo.getFontMetrics(colorsScheme.getFont(EditorFontType.PLAIN), context)
+  val width = FontLayoutService.getInstance().charWidth2D(fontMetrics, ' '.code)
+  return Dimension2DDouble(width.toDouble(), lineHeight.toDouble())
+}
+
+private class Dimension2DDouble(private var width: Double, private var height: Double) : Dimension2D() {
+  override fun getWidth(): Double = width
+
+  override fun getHeight(): Double = height
+
+  override fun setSize(width: Double, height: Double) {
+    this.width = width
+    this.height = height
+  }
+}
+
 @RequiresBlockingContext
-fun invokeLater(expired: (() -> Boolean)? = null,
+internal fun invokeLater(expired: (() -> Boolean)? = null,
                 modalityState: ModalityState = ModalityState.defaultModalityState(),
                 runnable: Runnable) {
   if (expired != null) {
@@ -262,4 +293,18 @@ fun invokeLater(expired: (() -> Boolean)? = null,
   }
 }
 
-fun Editor.getDisposed(): () -> Boolean = { this.isDisposed }
+internal fun Editor.getDisposed(): () -> Boolean = { this.isDisposed }
+
+internal inline fun <reified T> Document.executeInBulk(crossinline block: () -> T): T {
+  var result: T? = null
+  DocumentUtil.executeInBulk(this) {
+    result = block()
+  }
+  return result!!
+}
+
+/** @return the string without second part of double width character if any */
+internal fun CharBuffer.normalize(): String {
+  val s = this.toString()
+  return if (s.contains(CharUtils.DWC)) s.filterTo(StringBuilder(s.length - 1)) { it != CharUtils.DWC }.toString() else s
+}

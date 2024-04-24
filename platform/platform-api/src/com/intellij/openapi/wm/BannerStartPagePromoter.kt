@@ -10,6 +10,8 @@ import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
@@ -33,11 +35,12 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     headerPanel.add(createHeader())
     headerPanel.add(Box.createHorizontalGlue())
 
-    val hPanel: JPanel = object : BackgroundRoundedPanel(JBUI.scale(16)) {
-      override fun addNotify() {
-        super.addNotify()
-        onBannerShown()
-      }
+    val hPanel: JPanel = BackgroundRoundedPanel(JBUI.scale(16)).also {
+      UiNotifyConnector.installOn(it, object : Activatable {
+        override fun showNotify() {
+          onBannerShown()
+        }
+      })
     }
 
     closeAction?.let { closeAction ->

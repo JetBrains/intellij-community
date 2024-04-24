@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl.FileIdIndexedStorage;
@@ -126,7 +125,8 @@ public final class PersistentFSRecordAccessor {
         "parentId=" + parentId + ", flags=" + flags + ", nameId= " + nameId + ", " +
         "attributeId=" + attributeRecordId + ", contentId=" + contentId + ", " +
         "length=" + length + ", timestamp=" + timestamp + ", " +
-        "modCount=" + modCount + " (globalModCount: " + records.getGlobalModCount() + ")"
+        "modCount=" + modCount + " (globalModCount: " + records.getGlobalModCount() + "), " +
+        "wasClosedProperly=" + records.wasClosedProperly()
       );
 
       FSRecords.LOG.error(exception);

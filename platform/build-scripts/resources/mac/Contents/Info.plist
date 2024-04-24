@@ -48,7 +48,7 @@
     <string>public.app-category.developer-tools</string>
     <key>LSArchitecturePriority</key>
     <array>
-      @@architectures@@
+      <string>@@architecture@@</string>
     </array>
     <key>LSRequiresNativeExecution</key>
     <string>YES</string>
@@ -59,30 +59,6 @@
     <true/>
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
-
-    <key>JVMOptions</key>
-    <dict>
-      <key>ClassPath</key>
-      <string>@@class_path@@</string>
-      <key>JVMVersion</key>
-      <string>1.8*,1.8+</string>
-      <key>MainClass</key>
-      <string>@@main_class_name@@</string>
-      <key>ErrorFile</key>
-      <string>@@xx_error_file@@</string>
-      <key>HeapDump</key>
-      <string>@@xx_heap_dump@@</string>
-      <key>Options</key>
-      <array>
-        @@vm_options@@
-      </array>
-      <key>Properties</key>
-      <dict>
-        @@vm_properties@@
-        <key>idea.home.path</key>
-        <string>$APP_PACKAGE/Contents</string>
-      </dict>
-    </dict>
 
     <key>NSCameraUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to the device's camera.</string>

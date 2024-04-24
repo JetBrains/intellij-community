@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,9 +34,8 @@ public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspecti
   }
 
   @SuppressWarnings("DialogTitleCapitalization")
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     if ((Boolean)infos[1]) {
       return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.exists.problem.descriptor");
     }
@@ -51,8 +50,7 @@ public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspecti
   private static class DeletePackageDotHtmlFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.delete.quickfix");
     }
 
@@ -73,8 +71,7 @@ public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspecti
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.convert.quickfix");
     }
 
@@ -109,8 +106,7 @@ public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspecti
       updater.moveCaretTo(packageInfoFile);
     }
 
-    @NotNull
-    private static String buildCommentText(String packageInfoText) {
+    private static @NotNull String buildCommentText(String packageInfoText) {
       final StringBuilder commentText = new StringBuilder("/**\n");
       final String[] lines = StringUtil.splitByLines(packageInfoText);
       boolean appended = false;
@@ -126,8 +122,7 @@ public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspecti
       return commentText.toString();
     }
 
-    @NotNull
-    static String getPackageInfoText(XmlFile xmlFile) {
+    static @NotNull String getPackageInfoText(XmlFile xmlFile) {
       final XmlTag rootTag = xmlFile.getRootTag();
       if (rootTag != null) {
         final PsiElement[] children = rootTag.getChildren();
@@ -135,7 +130,7 @@ public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspecti
           if (!(child instanceof HtmlTag htmlTag)) {
             continue;
           }
-          @NonNls final String name = htmlTag.getName();
+          final @NonNls String name = htmlTag.getName();
           if ("body".equalsIgnoreCase(name)) {
             final XmlTagValue value = htmlTag.getValue();
             return value.getText();
@@ -154,7 +149,7 @@ public final class PackageDotHtmlMayBePackageInfoInspection extends BaseInspecti
       if (!(file instanceof XmlFile)) {
         return;
       }
-      @NonNls final String fileName = file.getName();
+      final @NonNls String fileName = file.getName();
       if (!"package.html".equals(fileName)) {
         return;
       }

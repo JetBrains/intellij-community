@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.java.JavaBundle;
@@ -41,8 +41,7 @@ public class SetVariableTypeFix extends PsiUpdateModCommandAction<PsiVariable> {
     return myTypePointer.getType() == null ? null : Presentation.of(getText());
   }
 
-  @NotNull
-  protected @Nls String getText() {
+  protected @NotNull @Nls String getText() {
     return JavaBundle.message("intention.name.set.variable.type", myTypeText);
   }
 

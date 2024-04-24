@@ -352,6 +352,12 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
     doTest();
   }
+  
+  public void testJsr305CheckForNullAsQualifierNickname() {
+    addJavaxNullabilityAnnotations(myFixture);
+    addJavaxDefaultNullabilityAnnotations(myFixture);
+    doTest();
+  }
 
   public void testNullabilityDefaultVsMethodImplementing() {
     addJavaxDefaultNullabilityAnnotations(myFixture);
@@ -396,16 +402,24 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     fixture.addClass("package javax.annotation.meta;" +
                      "public enum When { ALWAYS, UNKNOWN, MAYBE, NEVER }");
 
-    fixture.addClass("package javax.annotation;" +
-                     "import javax.annotation.meta.*;" +
-                     "public @interface Nonnull {" +
-                     "  When when() default When.ALWAYS;" +
-                     "}");
-    fixture.addClass("package javax.annotation;" +
-                     "import javax.annotation.meta.*;" +
-                     "@TypeQualifierNickname " +
-                     "@Nonnull(when = When.UNKNOWN) " +
-                     "public @interface Nullable {}");
+    fixture.addClass("""
+                       package javax.annotation;
+                       import javax.annotation.meta.*;
+                       public @interface Nonnull {
+                         When when() default When.ALWAYS;
+                       }""");
+    fixture.addClass("""
+                       package javax.annotation;
+                       import javax.annotation.meta.*;
+                       @TypeQualifierNickname
+                       @Nonnull(when = When.MAYBE)
+                       public @interface CheckForNull {}""");
+    fixture.addClass("""
+                       package javax.annotation;
+                       import javax.annotation.meta.*;
+                       @TypeQualifierNickname
+                       @Nonnull(when = When.UNKNOWN)
+                       public @interface Nullable {}""");
   }
 
   public void testCustomTypeQualifierDefault() {

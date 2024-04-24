@@ -104,7 +104,7 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
    * @param rootModel Model.
    * @param version   Framework version.
    */
-  protected void onFacetCreated(final F facet, final ModifiableRootModel rootModel, final FrameworkVersion version) {
+  protected void onFacetCreated(@NotNull final F facet, @NotNull final ModifiableRootModel rootModel, final FrameworkVersion version) {
   }
 
   protected void onLibraryAdded(final F facet, final @NotNull Library library) {

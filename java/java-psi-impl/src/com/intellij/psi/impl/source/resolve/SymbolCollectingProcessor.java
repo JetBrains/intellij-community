@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.util.Key;
@@ -62,8 +62,7 @@ public class SymbolCollectingProcessor implements PsiScopeProcessor, ElementClas
       myFileContext = fileContext;
     }
 
-    @NotNull
-    public PsiNamedElement getElement() {
+    public @NotNull PsiNamedElement getElement() {
       return myElement;
     }
 

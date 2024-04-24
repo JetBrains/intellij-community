@@ -311,9 +311,8 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       return OK;
     }
 
-    @NlsContexts.Tooltip
     @Override
-    public String getTooltipText(MemberInfo member) {
+    public @NlsContexts.Tooltip String getTooltipText(MemberInfo member) {
       return myTooltipManager.getTooltip(member);
     }
   }

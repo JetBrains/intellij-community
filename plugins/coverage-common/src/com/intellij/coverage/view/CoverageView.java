@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
@@ -28,7 +29,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -157,9 +157,15 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     speedSearch.setClearSearchOnNavigateNoMatch(true);
     PopupHandler.installPopupMenu(myTable, createPopupGroup(), "CoverageViewPopup");
 
-    myTable.getTree().registerKeyboardAction(e -> resetView(), KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK), JComponent.WHEN_FOCUSED);
+    myTable.getTree().registerKeyboardAction(e -> resetView(),
+                                             KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH,
+                                                                    ClientSystemInfo.isMac() ? InputEvent.META_DOWN_MASK
+                                                                                             : InputEvent.CTRL_DOWN_MASK),
+                                             JComponent.WHEN_FOCUSED);
     myTable.getTree().getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_DRILL_DOWN);
-    myTable.getTree().getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK), ACTION_DRILL_DOWN);
+    myTable.getTree().getInputMap(WHEN_FOCUSED).put(
+      KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, ClientSystemInfo.isMac() ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK),
+      ACTION_DRILL_DOWN);
     myTable.getTree().getActionMap().put(ACTION_DRILL_DOWN, new AbstractAction() {
       @Override
       public void actionPerformed(final ActionEvent e) {

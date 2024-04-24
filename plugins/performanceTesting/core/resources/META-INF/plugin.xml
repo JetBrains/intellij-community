@@ -37,6 +37,7 @@
 
   <extensionPoints>
     <extensionPoint interface="com.jetbrains.performancePlugin.CommandProvider" name="commandProvider" dynamic="true"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.PerformancePlaybackRunner" name="playbackRunnerProvider" dynamic="true"/>
     <extensionPoint interface="com.jetbrains.performancePlugin.RunCallbackHandler" name="runCallbackHandler"/>
     <extensionPoint interface="com.jetbrains.performancePlugin.profilers.SnapshotOpener" name="snapshotOpener" dynamic="true"/>
     <extensionPoint interface="com.jetbrains.performancePlugin.profilers.Profiler" name="profiler" dynamic="true"/>
@@ -91,5 +92,6 @@
   <extensions defaultExtensionNs="com.jetbrains.performancePlugin">
     <commandProvider implementation="com.jetbrains.performancePlugin.BaseCommandProvider"/>
     <runCallbackHandler implementation="com.jetbrains.performancePlugin.BaseRunCallbackHandler"/>
+    <playbackRunnerProvider implementation="com.jetbrains.performancePlugin.LocalPlaybackRunner" />
   </extensions>
 </idea-plugin>

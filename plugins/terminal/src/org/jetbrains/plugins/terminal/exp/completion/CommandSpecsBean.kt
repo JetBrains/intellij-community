@@ -4,10 +4,9 @@ package org.jetbrains.plugins.terminal.exp.completion
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.xmlb.annotations.Attribute
 
-class CommandSpecsBean : PluginAware {
+internal class CommandSpecsBean : PluginAware {
   /** Path of the short command specs JSON file inside JAR */
   @Attribute("path")
   lateinit var path: String

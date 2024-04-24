@@ -16,3 +16,4 @@ fun main() = runBlocking {
 }
 
 // REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
+// REGISTRY: debugger.always.suspend.thread.before.switch=true

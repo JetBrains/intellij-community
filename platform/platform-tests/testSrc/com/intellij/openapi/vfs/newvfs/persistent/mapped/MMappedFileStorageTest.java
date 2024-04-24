@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 
-import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
-import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
-import com.intellij.util.io.dev.mmapped.MMappedFileStorage.RegionAllocationAtomicityLock;
-import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.Page;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.RegionAllocationAtomicityLock;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

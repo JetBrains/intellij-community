@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -23,15 +23,13 @@ import java.util.List;
 public final class ContractConverter {
   private ContractConverter() {}
 
-  @Nullable
-  public static PsiAnnotation convertContract(@NotNull PsiMethod method, @NotNull JavaChangeInfo info) throws ContractConversionException {
+  public static @Nullable PsiAnnotation convertContract(@NotNull PsiMethod method, @NotNull JavaChangeInfo info) throws ContractConversionException {
     return convertContract(method, info.getOldParameterNames(), info.getNewParameters());
   }
 
-  @Nullable
-  public static PsiAnnotation convertContract(@NotNull PsiMethod method,
-                                              String @NotNull [] oldParameterNames,
-                                              JavaParameterInfo @NotNull [] newParameters) throws ContractConversionException {
+  public static @Nullable PsiAnnotation convertContract(@NotNull PsiMethod method,
+                                                        String @NotNull [] oldParameterNames,
+                                                        JavaParameterInfo @NotNull [] newParameters) throws ContractConversionException {
     PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
     if (annotation == null || AnnotationUtil.isInferredAnnotation(annotation)) return null;
     if (AnnotationUtil.isExternalAnnotation(annotation)) {
@@ -66,11 +64,10 @@ public final class ContractConverter {
     return JavaMethodContractUtil.updateContract(annotation, result);
   }
 
-  @NotNull
-  private static StandardMethodContract convertContract(@NotNull StandardMethodContract contract,
-                                                        int @NotNull [] newToOldIndex,
-                                                        int @NotNull [] oldToNewIndex,
-                                                        String @NotNull [] oldParameterNames) throws ContractConversionException {
+  private static @NotNull StandardMethodContract convertContract(@NotNull StandardMethodContract contract,
+                                                                 int @NotNull [] newToOldIndex,
+                                                                 int @NotNull [] oldToNewIndex,
+                                                                 String @NotNull [] oldParameterNames) throws ContractConversionException {
     if (contract.getParameterCount() != oldToNewIndex.length) {
       // invalid contract
       throw new ContractConversionException(JavaRefactoringBundle.message("changeSignature.contract.converter.invalid.clause", contract));

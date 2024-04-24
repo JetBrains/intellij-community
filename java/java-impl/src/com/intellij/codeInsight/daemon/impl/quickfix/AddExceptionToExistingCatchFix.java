@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -95,10 +95,8 @@ public final class AddExceptionToExistingCatchFix extends PsiBasedModCommandActi
     return Presentation.of(context.getMessage());
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.exception.to.existing.catch.family");
   }
 
@@ -112,8 +110,7 @@ public final class AddExceptionToExistingCatchFix extends PsiBasedModCommandActi
       myExceptions = exceptions;
     }
 
-    @Nullable
-    static Context from(@NotNull PsiElement element) {
+    static @Nullable Context from(@NotNull PsiElement element) {
       if (!element.isValid() || element instanceof PsiMethodReferenceExpression) return null;
       boolean multiCatchAvailable = PsiUtil.isAvailable(JavaFeature.MULTI_CATCH, element);
       List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.getOwnUnhandledExceptions(element));
@@ -132,8 +129,7 @@ public final class AddExceptionToExistingCatchFix extends PsiBasedModCommandActi
       return new Context(sections, unhandledExceptions);
     }
 
-    @NotNull
-    private static List<PsiTryStatement> getTryStatements(@NotNull PsiElement element) {
+    private static @NotNull List<PsiTryStatement> getTryStatements(@NotNull PsiElement element) {
       PsiElement current = element;
       PsiElement parent = element.getParent();
       List<PsiTryStatement> parents = new SmartList<>();

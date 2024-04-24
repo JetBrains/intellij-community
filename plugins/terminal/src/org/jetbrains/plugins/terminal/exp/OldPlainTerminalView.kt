@@ -14,8 +14,9 @@ import javax.swing.JComponent
 /**
  * Once [PlainTerminalView] is feature-rich and stable enough, it will replace [OldPlainTerminalView].
  */
-class OldPlainTerminalView(project: Project, settings: JBTerminalSystemSettingsProvider,
-                           terminalTitle: TerminalTitle) : TerminalContentView {
+internal class OldPlainTerminalView(project: Project,
+                                    settings: JBTerminalSystemSettingsProvider,
+                                    terminalTitle: TerminalTitle) : TerminalContentView {
 
   private val widget: ShellTerminalWidget
 

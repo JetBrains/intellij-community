@@ -6,7 +6,7 @@ import com.intellij.lang.Language;
 public class PropertiesLanguage extends Language {
   public static final PropertiesLanguage INSTANCE = new PropertiesLanguage();
 
-  public PropertiesLanguage() {
+  private PropertiesLanguage() {
     super("Properties", "text/properties");
   }
 }

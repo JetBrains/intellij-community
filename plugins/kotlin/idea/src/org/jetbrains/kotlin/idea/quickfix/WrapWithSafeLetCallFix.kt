@@ -6,13 +6,14 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.intentions.canBeReplacedWithInvokeCall
@@ -58,6 +59,7 @@ class WrapWithSafeLetCallFix(
         val underLetExpression = when {
             receiverExpression != null && !canBeReplacedWithInvokeCall ->
                 psiFactory.createExpressionByPattern("$0.$1", receiverExpression, element)
+
             else -> element
         }
         val wrapped = when (name) {
@@ -108,16 +110,19 @@ class WrapWithSafeLetCallFix(
                     expectedType = diagnosticWithParameters.a
                     actualType = diagnosticWithParameters.b
                 }
+
                 Errors.TYPE_MISMATCH_WARNING -> {
                     val diagnosticWithParameters = Errors.TYPE_MISMATCH_WARNING.cast(diagnostic)
                     expectedType = diagnosticWithParameters.a
                     actualType = diagnosticWithParameters.b
                 }
+
                 ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS -> {
                     val diagnosticWithParameters = ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.cast(diagnostic)
                     expectedType = diagnosticWithParameters.a
                     actualType = diagnosticWithParameters.b
                 }
+
                 else -> return null
             }
 

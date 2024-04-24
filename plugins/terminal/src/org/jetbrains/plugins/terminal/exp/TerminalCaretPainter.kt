@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
 import kotlin.math.floor
 
-class TerminalCaretPainter(
+internal class TerminalCaretPainter(
   private val caretModel: TerminalCaretModel,
   private val outputModel: TerminalOutputModel,
   selectionModel: TerminalSelectionModel,

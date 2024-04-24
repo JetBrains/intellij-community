@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.OwnershipInfo;
-import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;

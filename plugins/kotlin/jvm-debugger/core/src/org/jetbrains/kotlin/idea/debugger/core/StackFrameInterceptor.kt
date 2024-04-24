@@ -11,10 +11,10 @@ import com.sun.jdi.Location
 import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineFilter
 
 interface StackFrameInterceptor {
-    fun createStackFrame(
+    fun createStackFrames(
         frame: StackFrameProxyImpl,
         debugProcess: DebugProcessImpl
-    ): XStackFrame?
+    ): List<XStackFrame>?
 
     companion object {
         @JvmStatic

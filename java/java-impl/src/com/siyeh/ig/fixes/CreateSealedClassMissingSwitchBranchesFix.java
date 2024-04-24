@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.openapi.project.Project;
@@ -14,8 +14,7 @@ import java.util.*;
 import java.util.function.Function;
 
 public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwitchBranchesFix {
-  @NotNull
-  private final List<String> myAllNames;
+  private final @NotNull List<String> myAllNames;
 
   public CreateSealedClassMissingSwitchBranchesFix(@NotNull PsiSwitchBlock block, Set<String> names, @NotNull List<String> allNames) {
     super(block, names);
@@ -33,8 +32,7 @@ public class CreateSealedClassMissingSwitchBranchesFix extends CreateMissingSwit
     return ContainerUtil.map(myAllNames, name -> mapToConvert.getOrDefault(name, name));
   }
 
-  @NotNull
-  private Map<String, String> getConversionNewTypeWithGeneric(@NotNull PsiSwitchBlock switchBlock) {
+  private @NotNull Map<String, String> getConversionNewTypeWithGeneric(@NotNull PsiSwitchBlock switchBlock) {
     HashMap<String, String> mapToConvert = new HashMap<>();
     PsiExpression expression = switchBlock.getExpression();
     if (expression == null) {

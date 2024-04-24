@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
@@ -68,8 +68,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return new MyReference(PsiElement.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private PsiReference getReferenceInScope(PsiClass scope, PsiElement element) {
+  private @Nullable PsiReference getReferenceInScope(PsiClass scope, PsiElement element) {
     final String name = element.getText();
     final String[] signature = getSignature();
 
@@ -127,8 +126,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return element != null ? element.getTextRange().getStartOffset() : getTextRange().getEndOffset();
   }
 
-  @Nullable
-  public PsiElement getNameElement() {
+  public @Nullable PsiElement getNameElement() {
     final ASTNode name = findChildByType(DOC_TAG_VALUE_TOKEN);
     return name != null ? SourceTreeToPsiMap.treeToPsiNotNull(name) : null;
   }
@@ -158,8 +156,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return ArrayUtilRt.toStringArray(types);
   }
 
-  @Nullable
-  private PsiClass getScope(){
+  private @Nullable PsiClass getScope(){
     if (getFirstChildNode().getElementType() == JavaDocElementType.DOC_REFERENCE_HOLDER) {
       final PsiElement firstChildPsi = SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode().getFirstChildNode());
       if (firstChildPsi instanceof PsiJavaCodeReferenceElement) {
@@ -269,8 +266,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     }
 
     @Override
-    @NotNull
-    public JavaResolveResult advancedResolve(boolean incompleteCode) {
+    public @NotNull JavaResolveResult advancedResolve(boolean incompleteCode) {
       return myReferredElements.length != 1 ? JavaResolveResult.EMPTY
                                             : new CandidateInfo(myReferredElements[0], PsiSubstitutor.EMPTY);
     }
@@ -293,8 +289,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     }
 
     @Override
-    @NotNull
-    public String getCanonicalText() {
+    public @NotNull String getCanonicalText() {
       final PsiElement nameElement = getNameElement();
       assert nameElement != null;
       return nameElement.getText();
@@ -401,9 +396,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return false;
     }
 
-    @NotNull
     @Override
-    public TextRange getRangeInElement() {
+    public @NotNull TextRange getRangeInElement() {
       final ASTNode sharp = findChildByType(DOC_TAG_VALUE_SHARP_TOKEN);
       if (sharp == null) return new TextRange(0, getTextLength());
       final PsiElement nextSibling = SourceTreeToPsiMap.treeToPsiNotNull(sharp).getNextSibling();
@@ -415,9 +409,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return new TextRange(getTextLength(), getTextLength());
     }
 
-    @NotNull
     @Override
-    public PsiElement getElement() {
+    public @NotNull PsiElement getElement() {
       return PsiDocMethodOrFieldRef.this;
     }
   }

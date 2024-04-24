@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.export;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -50,7 +50,11 @@ public final class InspectionTreeHtmlWriter {
   private void serializeTreeToHtml() {
     HTMLExportUtil.writeFile(myOutputDir, "index.html", myTree.getContext().getProject(), w -> {
       appendHeader(w);
-      w.append("<div style=\"width:100%;\"><div style=\"float:left; width:50%;\"><h4>Inspection tree:</h4>");
+      w.append("""
+                 <div style="width:100%;">
+                 <div style="float:left; width:50%;">
+                 <h4>Inspection tree:</h4>
+                 """);
       InspectionTreeTailRenderer<IOException> tailRenderer = new InspectionTreeTailRenderer<>(myTree.getContext()) {
         @Override
         protected void appendText(String text, SimpleTextAttributes attributes) throws IOException {
@@ -62,42 +66,51 @@ public final class InspectionTreeHtmlWriter {
           w.append(escapeNonBreakingSymbols(text));
         }
       };
-      InspectionTreeModel model = myTree.getInspectionTreeModel();
-      traverseInspectionTree(model.getRoot(), (n) -> {
+      w.append("\n<ol class=\"tree\">");
+      traverseInspectionTree(myTree.getInspectionTreeModel().getRoot(), n -> {
         int nodeId = System.identityHashCode(n);
-        w
-          .append("<li><label for=\"")
+        w.append("\n<li><label for=\"")
           .append(String.valueOf(nodeId))
           .append("\">")
           .append(convertNodeToHtml(n))
           .append("&nbsp;<span class=\"grayout\">");
         tailRenderer.appendTailText(n);
-        w.append("</span></label><input type=\"checkbox\" ");
-        if (n instanceof InspectionRootNode) {
-          w.append("checked");
+        w.append("</span></label><input type=\"checkbox\"");
+        if (isChecked(n)) {
+          w.append(" checked");
         }
-        w.append(" onclick=\"navigate(").append(String.valueOf(nodeId)).append(")\" ");
-        w.append(" id=\"").append(String.valueOf(nodeId)).append("\" />");
+        w.append(" onclick=\"navigate(").append(String.valueOf(nodeId)).append(")\"");
+        w.append(" id=\"").append(String.valueOf(nodeId)).append("\">");
         if (n instanceof SuppressableInspectionTreeNode) {
           RefEntity e = ((SuppressableInspectionTreeNode)n).getElement();
           if (e != null) {
-            w
-              .append("<div id=\"d")
-              .append(String.valueOf(nodeId))
-              .append("\" style=\"display:none\">");
+            w.append("\n<div id=\"d").append(String.valueOf(nodeId)).append("\" style=\"display:none\">");
             StringBuilder buf = new StringBuilder();
             ((SuppressableInspectionTreeNode)n).getPresentation().getComposer().compose(buf, e);
             w.append(buf.toString());
             w.append("</div>");
           }
         }
-        w.append("<ol class=\"tree\">");
-      }, (n) -> w.append("</ol></li>"));
-      w.append("</div><div style=\"float:left; width:50%;\"><h4>Problem description:</h4>" +
-               "<div id=\"preview\">Select a problem element in tree</div></div><div></body></html>");
+        w.append("\n<ol class=\"tree\">");
+      }, n -> w.append("\n</ol>"));
+      w.append("""
+                 
+                 </ol>
+                 </div>
+                 <div style="float:left; width:50%;">
+                   <h4>Problem description:</h4>
+                   <div id="preview">Select a problem element in tree</div>
+                 </div>
+                 </div>
+                 </body>
+                 </html>""");
     });
 
     InspectionTreeHtmlExportResources.copyInspectionReportResources(myOutputDir);
+  }
+
+  private static boolean isChecked(InspectionTreeNode node) {
+    return node instanceof InspectionRootNode || node.getChildCount() == 1 && isChecked(node.getParent());
   }
 
   private static void traverseInspectionTree(InspectionTreeNode node,
@@ -115,7 +128,7 @@ public final class InspectionTreeHtmlWriter {
 
   private String convertNodeToHtml(InspectionTreeNode node) {
     if (node instanceof InspectionRootNode) {
-      return "<b>'" + escapeNonBreakingSymbols(node) + "' project</b>";
+      return "<b>" + escapeNonBreakingSymbols(node) + "</b>";
     }
     else if (node instanceof ProblemDescriptionNode) {
       final CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)node).getDescriptor();
@@ -138,18 +151,14 @@ public final class InspectionTreeHtmlWriter {
       final StringBuilder sb = new StringBuilder();
       sb.append("<span style=\"margin:1px;");
       if (color != null) {
-        sb.append("background:#");
-        sb.append(color);
+        sb.append("background:#").append(color);
       }
-      sb.append("\">");
-      sb.append(warningLevelName);
-      sb.append("</span>&nbsp;");
-      sb.append(escapeNonBreakingSymbols(node));
+      sb.append("\">").append(warningLevelName).append("</span>&nbsp;").append(escapeNonBreakingSymbols(node));
       return sb.toString();
     }
     else if (node instanceof RefElementNode) {
       String type = myManager.getType(Objects.requireNonNull(((RefElementNode)node).getElement()));
-      return type + "&nbsp;<b>" + node.toString() + "</b>";
+      return type + "&nbsp;<b>" + escapeNonBreakingSymbols(node) + "</b>";
     }
     else if (node instanceof InspectionNode) {
       return "<b>" + escapeNonBreakingSymbols(node) + "</b>&nbsp;inspection";
@@ -164,16 +173,22 @@ public final class InspectionTreeHtmlWriter {
 
   private static void appendHeader(@NotNull Writer writer) throws IOException {
     String title = ApplicationNamesInfo.getInstance().getFullProductName() + " inspection report";
-    writer.append("<html><head>" +
-                  "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\">" +
-                  "<meta name=\"author\" content=\"JetBrains\">" +
-                  "<script type=\"text/javascript\" src=\"script.js\"></script>" +
-                  "<link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\"/>" +
-                  "<title>")
+    writer.append("""
+                    <html>
+                    <head>
+                      <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+                      <meta name="author" content="JetBrains">
+                      <script type="text/javascript" src="script.js"></script>
+                      <link rel="stylesheet" type="text/css" href="styles.css"/>
+                      <title>""")
       .append(title)
-      .append("</title></head><body><h3>")
+      .append("""
+                  </title>
+                </head>
+                <body>
+                <h3>""")
       .append(title)
-      .append(":</h3>");
+      .append(":</h3>\n");
   }
 
   private static String escapeNonBreakingSymbols(@NotNull Object source) {

@@ -54,8 +54,7 @@ public final class IOResourceInspection extends ResourceInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "IOResourceOpenedButNotSafelyClosed";
   }
 

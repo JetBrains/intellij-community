@@ -11,7 +11,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
@@ -545,9 +544,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @NotNull
   public InclusionModel getInclusionModel() {
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
-      LOG.error(new Throwable("Access is allowed from Event Dispatch Thread (EDT) only"));
-    }
     return myInclusionModel;
   }
 

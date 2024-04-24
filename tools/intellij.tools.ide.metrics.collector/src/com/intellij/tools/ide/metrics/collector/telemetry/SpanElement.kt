@@ -26,6 +26,9 @@ data class SpanElement(
   @JvmField val tags: List<Pair<String, String>>,
 )
 
+val SpanElement.finishTimestamp: Long
+  get() = startTimestamp + duration
+
 internal fun toSpanElement(span: SpanData): SpanElement {
   val tags = getTags(span)
   return SpanElement(

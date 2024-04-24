@@ -9,6 +9,9 @@ interface InclusionModel {
   fun getInclusionState(item: Any): ThreeStateCheckBox.State
   fun isInclusionEmpty(): Boolean
 
+  /**
+   * Modifications are allowed from EDT only
+   */
   fun addInclusion(items: Collection<Any>)
   fun removeInclusion(items: Collection<Any>)
   fun setInclusion(items: Collection<Any>)

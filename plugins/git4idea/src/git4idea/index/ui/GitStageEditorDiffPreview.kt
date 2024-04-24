@@ -1,41 +1,43 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
+import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.EditorTabPreview
-import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
+import git4idea.index.GitStageTracker
 import git4idea.index.actions.updateStageDiffAvailability
+import javax.swing.JComponent
 
 class GitStageEditorDiffPreview(
-  private val changeViewProcessor: GitStageDiffPreview,
-  private val tree: ChangesTree
-) : EditorTabPreview(changeViewProcessor) {
+  val stageTree: GitStageTree,
+  val tracker: GitStageTracker,
+  val toolbarSizeReferent: JComponent,
+  val activate: () -> Unit
+) : TreeHandlerEditorDiffPreview(stageTree, GitStageDiffPreviewHandler) {
 
-  override fun hasContent(): Boolean {
-    return changeViewProcessor.currentChange != null
+  override fun createViewer(): DiffEditorViewer {
+    val processor = GitStageDiffRequestProcessor(stageTree, tracker, true)
+    processor.setToolbarVerticalSizeReferent(toolbarSizeReferent)
+    return processor
   }
 
   override fun updateDiffAction(event: AnActionEvent) {
     updateStageDiffAvailability(event)
   }
 
-  override fun getCurrentName(): String {
-    return changeViewProcessor.currentChangeName?.let { changeName -> VcsBundle.message("commit.editor.diff.preview.title", changeName) }
-           ?: VcsBundle.message("commit.editor.diff.preview.empty.title")
+  override fun getEditorTabName(wrapper: ChangeViewDiffRequestProcessor.Wrapper?): String {
+    return wrapper?.presentableName?.let { changeName ->
+      VcsBundle.message("commit.editor.diff.preview.title", changeName)
+    } ?: VcsBundle.message("commit.editor.diff.preview.empty.title")
   }
 
-  override fun skipPreviewUpdate(): Boolean {
-    return super.skipPreviewUpdate() || tree != IdeFocusManager.getInstance(project).focusOwner
+  override fun returnFocusToTree() {
+    activate()
   }
 
-  internal fun processDoubleClickOrEnter(isDoubleClick: Boolean): Boolean {
-    val isPreviewAllowed = if (isDoubleClick) isPreviewOnDoubleClickAllowed() else isPreviewOnEnterAllowed()
-    return isPreviewAllowed && performDiffAction()
-  }
-
-  override fun isPreviewOnDoubleClickAllowed(): Boolean = VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
-  override fun isPreviewOnEnterAllowed(): Boolean = VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
+  override fun isPreviewOnDoubleClick(): Boolean = VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
+  override fun isPreviewOnEnter(): Boolean = VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
 }

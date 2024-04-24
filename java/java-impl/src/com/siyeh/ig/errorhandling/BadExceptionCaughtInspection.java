@@ -71,14 +71,12 @@ public final class BadExceptionCaughtInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "ProhibitedExceptionCaught";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("bad.exception.caught.problem.descriptor");
   }
 

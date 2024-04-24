@@ -11,7 +11,8 @@ import com.intellij.usageView.UsageInfo
 class JavaAutomaticTestMethodRenamerFactory : AutomaticTestMethodRenamerFactory() {
   override fun isApplicable(element: PsiElement): Boolean {
     if (element !is PsiMethod) return false
-    return !TestFrameworks.getInstance().isTestMethod(element)
+    val clazz = element.containingClass ?: return false
+    return !TestFrameworks.getInstance().isTestClass(clazz)
   }
 
   override fun isEnabled(): Boolean = JavaRefactoringSettings.getInstance().isRenameTestMethods

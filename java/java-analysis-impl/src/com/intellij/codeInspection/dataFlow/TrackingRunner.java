@@ -509,7 +509,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       if (other instanceof RangeDfaProblemType rangeProblem &&
           myTemplate.equals(rangeProblem.myTemplate) &&
           Objects.equals(myType, rangeProblem.myType)) {
-        return new RangeDfaProblemType(myTemplate, myRangeSet.join(((RangeDfaProblemType)other).myRangeSet), myType);
+        return new RangeDfaProblemType(myTemplate, myRangeSet.join(rangeProblem.myRangeSet), myType);
       }
       return super.tryMerge(other);
     }

@@ -38,7 +38,7 @@ class ExternalSystemJdkNonblockingUtilTest : ExternalSystemJdkNonblockingUtilTes
       .onSdkNameResolved { assertSdkInfo(createResolvingSdkInfo(it!!), null) }
       .onSdkResolved { assertSdkInfo(it!!, null) }
       .executeLookup()
-    waitForLookup()
+    sdkLookupProvider.waitForLookup()
     assertSdkInfo(sdk, null)
 
     assertUnexpectedSdksRegistration {
@@ -48,7 +48,7 @@ class ExternalSystemJdkNonblockingUtilTest : ExternalSystemJdkNonblockingUtilTes
         .onSdkNameResolved { assertSdkInfo(createResolvingSdkInfo(it!!), null) }
         .onSdkResolved { assertSdkInfo(it!!, null) }
         .executeLookup()
-      waitForLookup()
+      sdkLookupProvider.waitForLookup()
       assertSdkInfo(sdk, null)
     }
 
@@ -59,7 +59,7 @@ class ExternalSystemJdkNonblockingUtilTest : ExternalSystemJdkNonblockingUtilTes
         .onSdkNameResolved { assertSdkInfo(createResolvingSdkInfo(it!!), null) }
         .onSdkResolved { assertSdkInfo(it!!, null) }
         .executeLookup()
-      waitForLookup()
+      sdkLookupProvider.waitForLookup()
       assertSdkInfo(TestSdkGenerator.getCurrentSdk(), null)
       assertNotSame(sdk, TestSdkGenerator.getCurrentSdk())
     }

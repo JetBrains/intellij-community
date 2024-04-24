@@ -1565,6 +1565,7 @@ c:com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
 - doCancelAction():V
 - p:doOKAction():V
 - evaluationDone():V
+- s:getAddWatchKeystroke():javax.swing.KeyStroke
 - p:getDimensionServiceKey():java.lang.String
 - getExpression():com.intellij.xdebugger.XExpression
 - p:getHelpId():java.lang.String

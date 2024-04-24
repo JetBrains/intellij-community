@@ -22,18 +22,19 @@ import java.nio.file.Path
 import kotlin.io.path.pathString
 
 class OriginalModuleRepositoryImpl(private val context: CompilationContext) : OriginalModuleRepository {
-  private val repositoryForCompiledModulesPath: Path
+  override val repositoryPath: Path
+  
   override val rawRepositoryData: RawRuntimeModuleRepositoryData
 
   init {
     CompilationTasks.create(context).generateRuntimeModuleRepository()
 
-    repositoryForCompiledModulesPath = context.classesOutputDirectory.resolve(JAR_REPOSITORY_FILE_NAME)
-    if (!repositoryForCompiledModulesPath.exists()) {
-      context.messages.error("Runtime module repository wasn't generated during compilation: $repositoryForCompiledModulesPath doesn't exist")
+    repositoryPath = context.classesOutputDirectory.resolve(JAR_REPOSITORY_FILE_NAME)
+    if (!repositoryPath.exists()) {
+      context.messages.error("Runtime module repository wasn't generated during compilation: $repositoryPath doesn't exist")
     }
     rawRepositoryData = try {
-      RuntimeModuleRepositorySerialization.loadFromJar(repositoryForCompiledModulesPath)
+      RuntimeModuleRepositorySerialization.loadFromJar(repositoryPath)
     }
     catch (e: MalformedRepositoryException) {
       context.messages.error("Failed to load runtime module repository: ${e.message}", e)
@@ -61,7 +62,7 @@ class OriginalModuleRepositoryImpl(private val context: CompilationContext) : Or
   }
 
   override val repository: RuntimeModuleRepository by lazy { 
-    RuntimeModuleRepositorySerialization.loadFromRawData(repositoryForCompiledModulesPath, rawRepositoryData)
+    RuntimeModuleRepositorySerialization.loadFromRawData(repositoryPath, rawRepositoryData)
   }
 }
 

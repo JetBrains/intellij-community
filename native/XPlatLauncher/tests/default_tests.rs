@@ -131,18 +131,16 @@ mod tests {
     #[test]
     fn product_env_vm_options_loading_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
-        let temp_file = test.create_temp_file("_product_env.vm_options", "-Xmx256m\n-Done.user.option=whatever\n");
+        let temp_file = test.create_temp_file("_product_env.vm_options", "-Done.user.option=whatever\n");
         let env = HashMap::from([("XPLAT_VM_OPTIONS", temp_file.to_str().unwrap())]);
 
         let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().with_env(&env).assert_status()).dump();
 
-        assert_vm_option_presence(&dump, "-Xmx256m");
         assert_vm_option_presence(&dump, "-Done.user.option=whatever");
+        assert_vm_option_presence(&dump, "-XX:+UseG1GC");
+        assert_vm_option_presence(&dump, "-Dsun.io.useCanonCaches=false");
         assert_vm_option_presence(&dump, "-Didea.vendor.name=JetBrains");
         assert_vm_option_presence(&dump, &jvm_property!("jb.vmOptionsFile", temp_file.to_str().unwrap()));
-
-        assert_vm_option_absence(&dump, "-XX:+UseG1GC");
-        assert_vm_option_absence(&dump, "-Dsun.io.useCanonCaches=false");
     }
 
     #[test]

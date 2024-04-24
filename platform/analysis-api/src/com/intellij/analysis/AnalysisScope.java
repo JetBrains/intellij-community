@@ -30,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -673,6 +674,11 @@ public class AnalysisScope {
 
   public void setFilter(@NotNull GlobalSearchScope filter) {
     myFilter = filter;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable GlobalSearchScope getFilter() {
+    return myFilter;
   }
 
   @Override

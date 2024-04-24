@@ -6,10 +6,10 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.ui.UIUtil
 import training.dsl.*
 import training.learn.LearnBundle
@@ -35,7 +35,7 @@ class GotoActionLesson(private val sample: LessonSample,
         text(LessonsBundle.message("goto.action.use.find.action.1",
                                    LessonUtil.actionName(it), action(it)))
 
-        if (SystemInfoRt.isMac) {
+        if (ClientSystemInfo.isMac()) {
           text(LessonsBundle.message("goto.action.mac.workaround", LessonUtil.actionName(it), FIND_ACTION_WORKAROUND))
         }
 

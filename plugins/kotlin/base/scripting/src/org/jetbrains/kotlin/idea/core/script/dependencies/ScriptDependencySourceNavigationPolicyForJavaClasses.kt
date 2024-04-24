@@ -7,7 +7,7 @@ import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.compiled.*
 import com.intellij.psi.util.MethodSignatureUtil
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ScriptDependencySourceNavigationPolicyForJavaClasses : ClsCustomNavigationPolicy {
@@ -37,12 +37,12 @@ class ScriptDependencySourceNavigationPolicyForJavaClasses : ClsCustomNavigation
         val project = file.project
         val sourceFileName = file.classes.firstOrNull()?.safeAs<ClsClassImpl>()?.sourceFileName ?: return null
 
-      if (virtualFile !in ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFilesScope()) return null
+        if (virtualFile !in ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope()) return null
 
         val packageName = file.packageName
         val relativePath = if (packageName.isEmpty()) sourceFileName else packageName.replace('.', '/') + '/' + sourceFileName
 
-        for (root in ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSources().filter { it.isValid }) {
+        for (root in (ScriptDependencyAware.getInstance(project).getAllScriptDependenciesSources() ?: emptyList()).filter { it.isValid }) {
             val sourceFile = root.findFileByRelativePath(relativePath)
             if (sourceFile != null && sourceFile.isValid) {
                 val sourcePsi = file.manager.findFile(sourceFile)

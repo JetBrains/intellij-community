@@ -4,19 +4,13 @@ package org.jetbrains.plugins.gitlab.mergerequest
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.util.CollectableSerializablePersistentStateComponent
 import com.intellij.openapi.components.*
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
-import git4idea.remote.hosting.knownRepositories
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.serialization.Serializable
-import org.jetbrains.plugins.gitlab.GitLabProjectsManager
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
-import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 @Service(Service.Level.PROJECT)
 @State(name = "GitLabMergeRequestsSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
-internal class GitLabMergeRequestsPreferences(private val project: Project)
+internal class GitLabMergeRequestsPreferences
   : CollectableSerializablePersistentStateComponent<GitLabMergeRequestsPreferences.SettingsState>(SettingsState()) {
 
   @Serializable
@@ -29,21 +23,11 @@ internal class GitLabMergeRequestsPreferences(private val project: Project)
     val changesGrouping: Set<String> = setOf(ChangesGroupingSupport.DIRECTORY_GROUPING, ChangesGroupingSupport.MODULE_GROUPING)
   )
 
-  var selectedRepoAndAccount: Pair<GitLabProjectMapping, GitLabAccount>?
-    get() {
-      val (url, accountId) = state.selectedUrlAndAccountId ?: return null
-      val repo = project.service<GitLabProjectsManager>().knownRepositories.find {
-        it.remote.url == url
-      } ?: return null
-      val account = service<GitLabAccountManager>().accountsState.value.find {
-        it.id == accountId
-      } ?: return null
-      return repo to account
-    }
+  var selectedUrlAndAccountId: Pair<String, String>?
+    get() = state.selectedUrlAndAccountId
     set(value) {
       updateStateAndEmit {
-        val saved = value?.let { (repo, account) -> repo.remote.url to account.id }
-        it.copy(selectedUrlAndAccountId = saved)
+        it.copy(selectedUrlAndAccountId = value)
       }
     }
 

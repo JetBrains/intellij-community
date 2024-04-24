@@ -57,7 +57,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * @see <a href="https://jetbrains.org/intellij/sdk/docs/basics/testing_plugins/testing_plugins.html">Testing Plugins</a>.
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins</a>.
  * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
  */
 public interface CodeInsightTestFixture extends IdeaProjectTestFixture {

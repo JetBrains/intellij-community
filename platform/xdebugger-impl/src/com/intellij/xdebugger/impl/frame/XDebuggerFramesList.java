@@ -294,6 +294,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       setSeparatorFont(list.getFont());
       myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      result.getAccessibleContext().setAccessibleName(myOriginalRenderer.getAccessibleContext().getAccessibleName());
       var itemComponent = getItemComponent();
       if (itemComponent instanceof SelectablePanel selectablePanel) {
         Color stackFrameColor = value instanceof XStackFrame stackFrame ? getFrameBgColor(stackFrame) : null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.Nullability;
@@ -42,9 +42,8 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
         .description(HtmlChunk.raw(JavaBundle.message("inspection.notnull.field.not.initialized.option.setup.description"))));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitField(@NotNull PsiField field) {

@@ -48,7 +48,7 @@ data class ExtractableCodeDescriptor(
 ) : IExtractableCodeDescriptor<KtType> {
     override val name: String get() = suggestedNames.firstOrNull() ?: ""
 
-    override val duplicates: List<DuplicateInfo<KtType>> = emptyList()
+    override val duplicates: List<DuplicateInfo<KtType>> by lazy { findDuplicates() }
 
     private val isUnitReturn: Boolean = analyze(context) { returnType.isUnit }
 
