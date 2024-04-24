@@ -4468,8 +4468,3 @@ com.intellij.openapi.vcs.ex.VisibleRangeMerger$FlagsProvider
 - a:getFlags(com.intellij.openapi.vcs.ex.Range):java.lang.Object
 - a:mergeFlags(java.lang.Object,java.lang.Object):java.lang.Object
 - shouldIgnoreInnerRanges(java.lang.Object):Z
-f:icons.PlatformDiffImplIcons
-- sf:Diff_frame128:javax.swing.Icon
-- sf:Diff_frame32:javax.swing.Icon
-- sf:Diff_frame64:javax.swing.Icon
-- <init>():V

@@ -6,11 +6,9 @@ com.intellij.ide.plugins.cl.PluginAwareClassLoader
 - a:getFiles():java.util.Collection
 - a:getLoadedClassCount():J
 - a:getPackagePrefix():java.lang.String
-- a:getPluginCoroutineScope():kotlinx.coroutines.CoroutineScope
 - a:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 - a:getPluginId():com.intellij.openapi.extensions.PluginId
 - a:getState():I
-- a:tryLoadingClass(java.lang.String,Z):java.lang.Class
 *e:com.intellij.openapi.client.ClientKind
 - java.lang.Enum
 - sf:ALL:com.intellij.openapi.client.ClientKind

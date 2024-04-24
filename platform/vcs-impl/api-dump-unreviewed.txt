@@ -45,7 +45,6 @@ f:com.intellij.codeInsight.actions.VcsFacadeImpl
 - isFileUnderVcs(com.intellij.psi.PsiFile):java.lang.Boolean
 - markFilesDirty(com.intellij.openapi.project.Project,java.util.List):V
 - runHeavyModificationTask(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,java.lang.Runnable):V
-f:com.intellij.codeInsight.completion.ml.VcsFeatureProviderKt
 f:com.intellij.codeInsight.daemon.VcsSilentChangeVetoer
 - <init>():V
 - canChangeFileSilently(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.util.ThreeState
@@ -8147,9 +8146,6 @@ c:com.intellij.peer.impl.VcsContextFactoryImpl
 - createFilePathOn(java.io.File,Z):com.intellij.openapi.vcs.FilePath
 - createFilePathOnNonLocal(java.lang.String,Z):com.intellij.openapi.vcs.FilePath
 - createLocalChangeList(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeList
-f:com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
-- sf:Vcs:javax.swing.Icon
-- <init>():V
 c:com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceProvider
 - com.intellij.psi.PsiReferenceProvider
 - <init>():V

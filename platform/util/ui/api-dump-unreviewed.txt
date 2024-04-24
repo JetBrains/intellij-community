@@ -1199,7 +1199,6 @@ f:com.intellij.icons.AllIcons$Vcs
 - sf:Shelve:javax.swing.Icon
 - sf:ShelveSilent:javax.swing.Icon
 - sf:ShowUnversionedFiles:javax.swing.Icon
-- sf:Stash:javax.swing.Icon
 - sf:Unshelve:javax.swing.Icon
 - sf:UnshelveSilent:javax.swing.Icon
 - <init>():V
