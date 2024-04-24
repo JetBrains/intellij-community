@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
 import com.intellij.cce.core.Session
@@ -87,7 +87,7 @@ open class BasicFileReportGenerator(
     }
   }
 
-  private fun getSpan(session: Session?, text: String, lookupOrder: Int): String =
+  protected open fun getSpan(session: Session?, text: String, lookupOrder: Int): String =
     createHTML().span("completion ${
       ReportColors.getColor(
         session,

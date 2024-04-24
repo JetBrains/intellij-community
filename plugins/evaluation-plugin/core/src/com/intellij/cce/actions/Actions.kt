@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.actions
 
 import com.google.gson.*
@@ -7,7 +7,7 @@ import java.lang.reflect.Type
 
 sealed class Action(val type: ActionType) {
   enum class ActionType {
-    MOVE_CARET, CALL_FEATURE, PRINT_TEXT, DELETE_RANGE, RENAME
+    MOVE_CARET, CALL_FEATURE, PRINT_TEXT, DELETE_RANGE, SELECT_RANGE, RENAME
   }
 
   object JsonAdapter : JsonDeserializer<Action>, JsonSerializer<Action> {
@@ -17,6 +17,7 @@ sealed class Action(val type: ActionType) {
         ActionType.CALL_FEATURE -> context.deserialize(json, CallFeature::class.java)
         ActionType.PRINT_TEXT -> context.deserialize(json, PrintText::class.java)
         ActionType.DELETE_RANGE -> context.deserialize(json, DeleteRange::class.java)
+        ActionType.SELECT_RANGE -> context.deserialize(json, SelectRange::class.java)
         ActionType.RENAME -> context.deserialize(json, Rename::class.java)
       }
     }
@@ -39,5 +40,7 @@ data class CallFeature(val expectedText: String, val offset: Int, val nodeProper
 data class PrintText(val text: String) : Action(ActionType.PRINT_TEXT)
 
 data class DeleteRange(val begin: Int, val end: Int) : Action(ActionType.DELETE_RANGE)
+
+data class SelectRange(val begin: Int, val end: Int) : Action(ActionType.SELECT_RANGE)
 
 data class TextRange(val start: Int, val end: Int)

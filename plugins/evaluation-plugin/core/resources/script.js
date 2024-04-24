@@ -122,7 +122,11 @@ function updatePopup(sessionDiv) {
   popup.setAttribute("class", "autocomplete-items")
   const prefixDiv = document.createElement("DIV")
   prefixDiv.setAttribute("style", "background-color: lightgrey;")
-  prefixDiv.innerHTML = `prefix: &quot;${lookup["prefix"]}&quot;; latency: ${lookup["latency"]}`
+  if ("aia_user_prompt" in lookup["additionalInfo"]) {
+    prefixDiv.innerHTML = `user prompt: &quot;${lookup["additionalInfo"]["aia_user_prompt"]}&quot;; latency: ${lookup["latency"]}`
+  } else {
+    prefixDiv.innerHTML = `prefix: &quot;${lookup["prefix"]}&quot;; latency: ${lookup["latency"]}`
+  }
   popup.appendChild(prefixDiv)
   const needAddFeatures = sessionDiv.classList.contains("suggestions")
   closeAllLists()
