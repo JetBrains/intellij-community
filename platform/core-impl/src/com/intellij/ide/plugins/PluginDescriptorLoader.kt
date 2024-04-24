@@ -1027,7 +1027,7 @@ private fun loadDescriptorFromResource(
         val subDescriptorFile = module.configFile ?: "${module.name}.xml"
         val subRaw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null)
         val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
-        if (pathResolver.isRunningFromSources && subDescriptor.packagePrefix == null) {
+        if ((pathResolver.isRunningFromSources || isUnitTestMode) && subDescriptor.packagePrefix == null) {
           // no package in run from sources - load module from main classpath
           subDescriptor.jarFiles = Collections.emptyList()
         }
