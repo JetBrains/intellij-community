@@ -15,7 +15,9 @@ public interface SelfKiller {
   /**
    * Send some signal to the process that indicates some soft termination. For example, SIGINT.
    * <p>
-   * If this method returns false, the caller must destroy the process in a less gentle way, like SIGTERM or SIGKILL.
+   * The method returns false if an attempt to destroy the process gracefully failed, or if it's not possible to destroy the process
+   * gracefully at all and there was no actual attempt. In that case, the caller should try to destroy the process in a less gentle way
+   * using {@link Process#destroy()}.
    */
   @ApiStatus.Experimental
   default boolean tryDestroyGracefully() {
