@@ -496,9 +496,6 @@ internal class SmoothRobot : Robot {
       val mouseReleasedEvent = MouseEvent(window, MouseEvent.MOUSE_RELEASED, System.currentTimeMillis(), 0,
                                           clickPoint.x, clickPoint.y, 1, false, awtMouseButton)
       eventQueue.postEvent(mouseReleasedEvent)
-      val mouseClickedEvent = MouseEvent(window, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0,
-                                         clickPoint.x, clickPoint.y, 1, false, awtMouseButton)
-      eventQueue.postEvent(mouseClickedEvent)
     }
   }
 
