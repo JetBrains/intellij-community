@@ -1059,6 +1059,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/insertBeforeDuplicates.kt");
         }
 
+        @TestMetadata("literalAsParameter.kt")
+        public void testLiteralAsParameter() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/literalAsParameter.kt");
+        }
+
         @TestMetadata("multipleOutputValuesMatching.kt")
         public void testMultipleOutputValuesMatching() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/duplicates/multipleOutputValuesMatching.kt");

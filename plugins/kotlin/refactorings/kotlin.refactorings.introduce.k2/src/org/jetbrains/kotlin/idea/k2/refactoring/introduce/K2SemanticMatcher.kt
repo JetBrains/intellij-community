@@ -94,10 +94,10 @@ object K2SemanticMatcher {
             }
         }
 
-        val matchingContext = MatchingContext(substitution = substitution)
+        val matchingContext = MatchingContext(parameterSubstitution = substitution)
 
-        target.elements.forEachIndexed { i, t ->
-            val p = pattern.elements[i] as? KtElement ?: return@forEachIndexed
+        target.elements.zip(pattern.elements) { t, p ->
+            if (p !is KtElement) return@zip
 
             if ((t as? KtElement)?.isSemanticMatch(p, matchingContext) != true) {
                 return null
@@ -182,10 +182,15 @@ object K2SemanticMatcher {
     }
 
 
+    /**
+     * @property parameterSubstitution The map that stores the association between pattern parameters and target arguments.
+     * Initially, it's filled with parameters and during match, all parameters should receive corresponding argument.
+     * All arguments for a parameter should be equal.
+     */
     private data class MatchingContext(
         val symbols: MutableMap<KtSymbol, KtSymbol> = mutableMapOf(),
         val blockBodyOwners: MutableMap<KtFunctionLikeSymbol, KtFunctionLikeSymbol> = mutableMapOf(),
-        val substitution: MutableMap<PsiNamedElement, KtElement?> = mutableMapOf(),
+        val parameterSubstitution: MutableMap<PsiNamedElement, KtElement?> = mutableMapOf(),
     ) {
         context(KtAnalysisSession)
         fun areSymbolsEqualOrAssociated(targetSymbol: KtSymbol?, patternSymbol: KtSymbol?): Boolean {
@@ -193,10 +198,10 @@ object K2SemanticMatcher {
 
             if (patternSymbol is KtNamedSymbol) {
                 val patternElement = patternSymbol.psi as? PsiNamedElement
-                if (patternElement != null && substitution.containsKey(patternElement)) {
+                if (patternElement != null && parameterSubstitution.containsKey(patternElement)) {
                     val expression =
                         KtPsiFactory.contextual(targetSymbol.psi!!).createExpression((targetSymbol as KtNamedSymbol).name.asString())
-                    val oldElement = substitution.put(patternElement, expression)
+                    val oldElement = parameterSubstitution.put(patternElement, expression)
                     return oldElement !is KtElement || oldElement.text == expression.text
                 }
             }
@@ -277,9 +282,9 @@ object K2SemanticMatcher {
     private fun elementsMatchOrBothAreNull(targetElement: KtElement?, patternElement: KtElement?, context: MatchingContext): Boolean {
         if (targetElement == null || patternElement == null) return targetElement == null && patternElement == null
         if (patternElement is KtSimpleNameExpression) {
-            val patternElement = patternElement.mainReference.resolveToSymbol() as? PsiNamedElement
-            if (patternElement != null && context.substitution.containsKey(patternElement)) {
-                val oldElement = context.substitution.put(patternElement, targetElement)
+            val param = patternElement.mainReference.resolveToSymbol()?.psi as? PsiNamedElement
+            if (param != null && context.parameterSubstitution.containsKey(param)) {
+                val oldElement = context.parameterSubstitution.put(param, targetElement)
                 return oldElement !is KtElement || oldElement.isSemanticMatch(targetElement)
             }
         }

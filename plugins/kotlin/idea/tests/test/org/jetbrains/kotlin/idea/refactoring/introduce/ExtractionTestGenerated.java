@@ -1891,6 +1891,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/duplicates/insertBeforeDuplicates.kt");
             }
 
+            @TestMetadata("literalAsParameter.kt")
+            public void testLiteralAsParameter() throws Exception {
+                runTest("testData/refactoring/extractFunction/duplicates/literalAsParameter.kt");
+            }
+
             @TestMetadata("multipleOutputValuesMatching.kt")
             public void testMultipleOutputValuesMatching() throws Exception {
                 runTest("testData/refactoring/extractFunction/duplicates/multipleOutputValuesMatching.kt");
