@@ -12,7 +12,7 @@ interface WebSymbolsContextKindRules {
   data class DisablementRules(val fileExtensions: List<String>,
                               val fileNamePatterns: List<Regex>)
 
-  data class EnablementRules(val pkgManagerDependencies: List<String>,
+  data class EnablementRules(val pkgManagerDependencies: Map<String, List<String>>,
                              val projectToolExecutables: List<String>,
                              val fileExtensions: List<String>,
                              val ideLibraries: List<String>,

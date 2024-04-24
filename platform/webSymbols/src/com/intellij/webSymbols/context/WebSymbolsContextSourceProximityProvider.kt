@@ -13,10 +13,13 @@ interface WebSymbolsContextSourceProximityProvider {
   data class Result(val dependency2proximity: Map<String, Double> = emptyMap(),
                     val modificationTrackers: Collection<ModificationTracker> = emptyList())
 
-  enum class SourceKind {
-    PackageManagerDependency,
-    IdeLibrary,
-    ProjectToolExecutable,
+  sealed interface SourceKind {
+
+    data object IdeLibrary : SourceKind
+
+    data object ProjectToolExecutable : SourceKind
+
+    data class PackageManagerDependency(val name: String) : SourceKind
   }
 
   companion object {

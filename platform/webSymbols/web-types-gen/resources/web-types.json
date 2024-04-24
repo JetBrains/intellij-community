@@ -201,6 +201,13 @@
             "type": "string"
           }
         },
+        "ruby-gems": {
+          "description": "Ruby gem names, which enable framework support within the particular Ruby module.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "script-url-patterns": {
           "description": "RegExps to match script URLs, which enable framework support within a particular HTML.",
           "type": "array",
@@ -237,7 +244,16 @@
           }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": {
+        "$ref": "#/definitions/custom-enablement-rules"
+      }
+    },
+    "custom-enablement-rules": {
+      "description": "Custom package manager dependencies, which would enable context according to the rules of custom provider.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "disablement-rules": {
       "description": "Specify rules for disabling web framework support. These rules take precedence over enable-when rules. They allow to turn off framework support in case of some conflicts between frameworks priority.",

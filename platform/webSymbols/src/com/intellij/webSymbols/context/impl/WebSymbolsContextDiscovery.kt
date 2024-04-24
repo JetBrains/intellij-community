@@ -12,6 +12,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
@@ -193,15 +194,29 @@ private fun calcProximityPerContextFromRules(project: Project,
   val result = mutableMapOf<ContextKind, MutableMap<String, Double>>()
   val modificationTrackers = mutableSetOf<ModificationTracker>()
 
-  fun calculateProximity(listAccessor: (EnablementRules) -> List<String>, sourceKind: SourceKind) {
-    val depsToContext = enableWhen
-      .flatMap { (contextKind, map) ->
-        map.entries.flatMap { (contextName, value) ->
-          value.asSequence().flatMap(listAccessor).map { Pair(it, Pair(contextKind, contextName)) }
-        }
+  val sourceKindToDepsToContext = enableWhen
+    .flatMap { (contextKind, map) ->
+      map.entries.flatMap { (contextName, value) ->
+        value.asSequence().flatMap { rule ->
+          // Check enabled IDE libraries
+          rule.ideLibraries.asSequence()
+            .map { Pair(SourceKind.IdeLibrary, it) } +
+          // Check project tool executables
+          rule.projectToolExecutables.asSequence()
+            .map { Pair(SourceKind.ProjectToolExecutable, it) } +
+          // Check package manager dependencies
+          rule.pkgManagerDependencies.asSequence()
+            .flatMap { dep ->
+              val pkgManagerSourceKind = SourceKind.PackageManagerDependency(dep.key)
+              dep.value.asSequence().map { Pair(pkgManagerSourceKind, it) }
+            }
+        }.map { Triple(it.first, it.second, Pair(contextKind, contextName)) }
       }
-      .groupBy({ it.first }, { it.second })
+    }
+    .groupBy({ it.first }, { Pair(it.second, it.third) })
+    .mapValues { perSourceKind -> perSourceKind.value.groupBy({ it.first }, { it.second }) }
 
+  sourceKindToDepsToContext.forEach { (sourceKind, depsToContext) ->
     WebSymbolsContextSourceProximityProvider.calculateProximity(project, directory, depsToContext.keys, sourceKind)
       .let {
         it.dependency2proximity.forEach { (lib, proximity) ->
@@ -214,15 +229,6 @@ private fun calcProximityPerContextFromRules(project: Project,
         modificationTrackers.addAll(it.modificationTrackers)
       }
   }
-
-  // Check enabled IDE libraries
-  calculateProximity({ it.ideLibraries }, SourceKind.IdeLibrary)
-
-  // Check packages by `package.json` entries
-  calculateProximity({ it.pkgManagerDependencies }, SourceKind.PackageManagerDependency)
-
-  // Check project tool executables
-  calculateProximity({ it.projectToolExecutables }, SourceKind.ProjectToolExecutable)
 
   return Pair(result.mapValues { (_, map) -> map.toMap() }, modificationTrackers)
 }
@@ -260,7 +266,7 @@ private class ContextRulesConfigInDir(val project: Project,
 
   private val proximityCache = CachedValuesManager.getManager(project).createCachedValue {
     val result = calcProximityPerContextFromRules(project, directory, rules.mapValues { it.value.enable })
-    CachedValueProvider.Result.create(result.first, dependencies + result.second)
+    CachedValueProvider.Result.create(result.first, result.second + dependencies)
   }
 
   val kinds: Set<ContextKind> get() = rules.keys
