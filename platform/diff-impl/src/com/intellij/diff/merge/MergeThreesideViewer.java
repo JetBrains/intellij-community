@@ -211,6 +211,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     group.add(new MyToggleAutoScrollAction());
     group.add(myEditorSettingsAction);
 
+    AnAction additionalActions = ActionManager.getInstance().getAction("Diff.Conflicts.Additional.Actions");
+    if (additionalActions instanceof ActionGroup) {
+      group.add(additionalActions);
+    }
+
     return group;
   }
 
