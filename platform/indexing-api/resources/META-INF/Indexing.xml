@@ -40,7 +40,7 @@
                           priority="-1"
                           presentableNameKey="ide.indexes.in-memory-storage.presentable.name"
                           bundleName="messages.IndexingBundle"
-                          providerClass="com.intellij.util.indexing.impl.storage.InMemoryStorageLayoutProvider"
+                          providerClass="com.intellij.util.indexing.memory.InMemoryStorageLayoutProvider"
                           version="0"/>
 
     <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.FileBasedIndexInfrastructureExtensionStartup"/>
