@@ -760,6 +760,8 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     //------------ remove parameters ------------
 
+    fun testRemoveParameterInOverriderOnly() = doTest { removeParameter(0) }
+
     fun testRemoveLastNonLambdaParameter() = doTest { removeParameter(0) }
 
     fun testRemoveLastNonLambdaParameter2() = doTest { removeParameter(1) }

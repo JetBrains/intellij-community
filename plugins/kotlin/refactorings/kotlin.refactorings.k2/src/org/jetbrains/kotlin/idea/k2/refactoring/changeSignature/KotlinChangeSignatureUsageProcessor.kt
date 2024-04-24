@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.setValOrVar
+import org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
@@ -273,8 +274,10 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         val element = changeInfo.method
 
         val namedDeclarations = changeInfo.getUserData(primaryElementsKey) ?: listOf(element)
+        val refactoringSupport = KotlinRenameRefactoringSupport.getInstance()
         for (declaration in namedDeclarations) {
             updatePrimaryMethod(declaration, changeInfo)
+            refactoringSupport.dropOverrideKeywordIfNecessary(declaration)
         }
         return true
     }
