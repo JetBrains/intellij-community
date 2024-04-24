@@ -246,7 +246,7 @@ class ShellCommandTreeBuilderTest {
 
   private fun doTest(vararg arguments: String, assertions: CommandTreeAssertions.() -> Unit) = runBlocking {
     val commandSpecManager = FakeShellCommandSpecsManager()
-    val suggestionsProvider = ShellCommandTreeSuggestionsProvider(commandSpecManager, FakeShellRuntimeDataProvider(filePathSuggestions))
+    val suggestionsProvider = ShellCommandTreeSuggestionsProvider(FakeShellRuntimeDataProvider(filePathSuggestions))
     val root = ShellCommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
                                              commandName, spec, arguments.asList())
     assertions(CommandTreeAssertions(root))

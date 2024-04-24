@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.block.completion.engine
 
-import org.jetbrains.terminal.completion.ShellArgument
-import org.jetbrains.terminal.completion.ShellCommand
-import org.jetbrains.terminal.completion.ShellCommandParserDirectives
-import org.jetbrains.terminal.completion.ShellOption
+import com.intellij.terminal.block.completion.spec.ShellArgumentSpec
+import com.intellij.terminal.block.completion.spec.ShellCommandParserDirectives
+import com.intellij.terminal.block.completion.spec.ShellCommandSpec
+import com.intellij.terminal.block.completion.spec.ShellOptionSpec
 
 internal abstract class ShellCommandTreeNode<T>(val text: String, open val spec: T?, val parent: ShellCommandTreeNode<*>?) {
   val children: MutableList<ShellCommandTreeNode<*>> = mutableListOf()
@@ -16,9 +16,9 @@ internal abstract class ShellCommandTreeNode<T>(val text: String, open val spec:
 
 internal class ShellCommandNode(
   text: String,
-  override val spec: ShellCommand,
+  override val spec: ShellCommandSpec,
   parent: ShellCommandTreeNode<*>?
-) : ShellCommandTreeNode<ShellCommand>(text, spec, parent) {
+) : ShellCommandTreeNode<ShellCommandSpec>(text, spec, parent) {
   fun getMergedParserDirectives(): ShellCommandParserDirectives {
     val directives = mutableListOf<ShellCommandParserDirectives>()
     directives.add(spec.parserDirectives)
@@ -32,23 +32,23 @@ internal class ShellCommandNode(
 
   // child values takes precedence over base only if they are not default
   private fun mergeDirectives(base: ShellCommandParserDirectives, child: ShellCommandParserDirectives): ShellCommandParserDirectives {
-    val flagsArePosixNoncompliant = if (child.flagsArePosixNoncompliant) true else base.flagsArePosixNoncompliant
+    val flagsArePosixNonCompliant = if (child.flagsArePosixNonCompliant) true else base.flagsArePosixNonCompliant
     val optionsMustPrecedeArguments = if (child.optionsMustPrecedeArguments) true else base.optionsMustPrecedeArguments
-    val optionArgSeparators = (base.optionArgSeparators + child.optionArgSeparators).toSet().toList()
-    return ShellCommandParserDirectives(flagsArePosixNoncompliant, optionsMustPrecedeArguments, optionArgSeparators)
+    val optionArgSeparators = (base.optionArgSeparators + child.optionArgSeparators).distinct()
+    return ShellCommandParserDirectives.create(flagsArePosixNonCompliant, optionsMustPrecedeArguments, optionArgSeparators)
   }
 }
 
 internal class ShellOptionNode(
   text: String,
-  override val spec: ShellOption,
+  override val spec: ShellOptionSpec,
   parent: ShellCommandTreeNode<*>?
-) : ShellCommandTreeNode<ShellOption>(text, spec, parent)
+) : ShellCommandTreeNode<ShellOptionSpec>(text, spec, parent)
 
 internal class ShellArgumentNode(
   text: String,
-  override val spec: ShellArgument,
+  override val spec: ShellArgumentSpec,
   parent: ShellCommandTreeNode<*>?
-) : ShellCommandTreeNode<ShellArgument>(text, spec, parent)
+) : ShellCommandTreeNode<ShellArgumentSpec>(text, spec, parent)
 
 internal class ShellUnknownNode(text: String, parent: ShellCommandTreeNode<*>?) : ShellCommandTreeNode<Any>(text, null, parent)

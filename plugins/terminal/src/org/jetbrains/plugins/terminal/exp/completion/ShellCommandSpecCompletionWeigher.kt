@@ -5,8 +5,6 @@ import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.terminal.block.completion.ShellArgumentSuggestion
-import com.intellij.terminal.block.completion.ShellCommandSpecUtil.isFilePath
-import com.intellij.terminal.block.completion.ShellCommandSpecUtil.isFolder
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellCommand
 import org.jetbrains.terminal.completion.ShellOption

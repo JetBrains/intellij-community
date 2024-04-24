@@ -5,8 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.terminal.block.completion.ShellArgumentSuggestion
-import com.intellij.terminal.block.completion.ShellCommandSpecUtil.isFilePath
-import com.intellij.terminal.block.completion.ShellCommandSpecUtil.isFolder
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellArgument

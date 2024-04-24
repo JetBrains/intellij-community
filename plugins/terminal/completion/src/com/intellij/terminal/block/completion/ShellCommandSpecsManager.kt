@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.block.completion
 
+import com.intellij.terminal.block.completion.spec.ShellCommandSpec
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.terminal.completion.ShellCommand
 
 @ApiStatus.Internal
 interface ShellCommandSpecsManager {
@@ -12,7 +12,7 @@ interface ShellCommandSpecsManager {
    * Intended that this method should return fast in most of the cases, because it should not load the whole command specification.
    * See [getCommandSpec] for more info.
    */
-  fun getShortCommandSpec(commandName: String): ShellCommand?
+  fun getShortCommandSpec(commandName: String): ShellCommandSpec?
 
   /**
    * [commandName] can be the main command name or the path of subcommand.
@@ -25,5 +25,5 @@ interface ShellCommandSpecsManager {
    *     - sub.json
    *     - sub2.json
    */
-  suspend fun getCommandSpec(commandName: String): ShellCommand?
+  suspend fun getCommandSpec(commandName: String): ShellCommandSpec?
 }

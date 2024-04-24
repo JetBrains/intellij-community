@@ -1,19 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.block.completion.engine
 
-import com.intellij.terminal.block.completion.ShellArgumentSuggestion
-import com.intellij.terminal.block.completion.ShellCommandSpecUtil.isFilePath
-import com.intellij.terminal.block.completion.ShellCommandSpecUtil.isFolder
-import com.intellij.terminal.block.completion.ShellCommandSpecsManager
-import com.intellij.terminal.block.completion.ShellRuntimeDataProvider
-import org.jetbrains.terminal.completion.*
+import com.intellij.terminal.block.completion.ShellDataGeneratorsExecutor
+import com.intellij.terminal.block.completion.spec.ShellArgumentSpec
+import com.intellij.terminal.block.completion.spec.ShellCommandSpec
+import com.intellij.terminal.block.completion.spec.ShellCompletionSuggestion
+import com.intellij.terminal.block.completion.spec.ShellOptionSpec
 import java.io.File
 
-internal class ShellCommandTreeSuggestionsProvider(
-  private val commandSpecManager: ShellCommandSpecsManager,
-  private val runtimeDataProvider: ShellRuntimeDataProvider
-) {
-  suspend fun getSuggestionsOfNext(node: ShellCommandTreeNode<*>, nextNodeText: String): List<BaseSuggestion> {
+internal class ShellCommandTreeSuggestionsProvider(private val generatorsExecutor: ShellDataGeneratorsExecutor) {
+  suspend fun getSuggestionsOfNext(node: ShellCommandTreeNode<*>, nextNodeText: String): List<ShellCompletionSuggestion> {
     return when (node) {
       is ShellCommandNode -> getSuggestionsForSubcommand(node, nextNodeText)
       is ShellOptionNode -> getSuggestionsForOption(node, nextNodeText)
@@ -22,41 +18,20 @@ internal class ShellCommandTreeSuggestionsProvider(
     }
   }
 
-  suspend fun getDirectSuggestionsOfNext(option: ShellOptionNode, nextNodeText: String): List<BaseSuggestion> {
+  suspend fun getDirectSuggestionsOfNext(option: ShellOptionNode): List<ShellCompletionSuggestion> {
     val availableArgs = getAvailableArguments(option)
-    return availableArgs.flatMap { getArgumentSuggestions(it, nextNodeText) }
+    return availableArgs.flatMap { getArgumentSuggestions(it) }
   }
 
-  /**
-   * Returns the list of the commands and aliases available in the Shell.
-   * Returned [ShellCommand] objects contain only names, descriptions, and a 'loadSpec' reference to load full command spec (if it exists).
-   */
-  suspend fun getAvailableCommands(): List<ShellCommand> {
-    val shellEnv = runtimeDataProvider.getShellEnvironment() ?: return emptyList()
-    val commands = sequence {
-      yieldAll(shellEnv.keywords)
-      yieldAll(shellEnv.builtins)
-      yieldAll(shellEnv.functions)
-      yieldAll(shellEnv.commands)
-    }.map {
-      commandSpecManager.getShortCommandSpec(it) ?: ShellCommand(names = listOf(it))
-    }
-    val aliases = shellEnv.aliases.asSequence().map { (alias, command) ->
-      ShellCommand(names = listOf(alias), description = """Alias for "${command}"""")
-    }
-    // place aliases first, so the alias will have preference over the command, if there is the command with the same name
-    return (aliases + commands).distinctBy { it.names.single() }.toList()
+  fun getAvailableArguments(node: ShellOptionNode): List<ShellArgumentSpec> {
+    return node.getAvailableArguments(node.spec.arguments)
   }
 
-  fun getAvailableArguments(node: ShellOptionNode): List<ShellArgument> {
-    return node.getAvailableArguments(node.spec.args)
+  private suspend fun getAvailableArguments(node: ShellCommandNode): List<ShellArgumentSpec> {
+    return node.getAvailableArguments(node.spec.getArguments())
   }
 
-  private fun getAvailableArguments(node: ShellCommandNode): List<ShellArgument> {
-    return node.getAvailableArguments(node.spec.args)
-  }
-
-  private fun ShellCommandTreeNode<*>.getAvailableArguments(allArgs: List<ShellArgument>): List<ShellArgument> {
+  private fun ShellCommandTreeNode<*>.getAvailableArguments(allArgs: List<ShellArgumentSpec>): List<ShellArgumentSpec> {
     val existingArgs = children.mapNotNull { (it as? ShellArgumentNode)?.spec }
     val lastExistingArg = existingArgs.lastOrNull()
     val lastExistingArgIndex = lastExistingArg?.let { allArgs.indexOf(it) } ?: -1
@@ -67,14 +42,14 @@ internal class ShellCommandTreeSuggestionsProvider(
     return allArgs.subList(lastExistingArgIndex + if (includeLast) 0 else 1, firstRequiredArgIndex + 1)
   }
 
-  private suspend fun getSuggestionsForSubcommand(node: ShellCommandNode, nextNodeText: String): List<BaseSuggestion> {
-    val suggestions = mutableListOf<BaseSuggestion>()
+  private suspend fun getSuggestionsForSubcommand(node: ShellCommandNode, nextNodeText: String): List<ShellCompletionSuggestion> {
+    val suggestions = mutableListOf<ShellCompletionSuggestion>()
 
     // suggest subcommands and options only if the provided value is not a file path
     if (!nextNodeText.contains(File.separatorChar)) {
       val spec = node.spec
       if (node.children.isEmpty()) {
-        suggestions.addAll(spec.subcommands)
+        suggestions.addAll(spec.getSubcommands())
       }
 
       if (spec.requiresSubcommand) {
@@ -90,11 +65,11 @@ internal class ShellCommandTreeSuggestionsProvider(
     }
 
     val availableArgs = getAvailableArguments(node)
-    suggestions.addAll(availableArgs.flatMap { getArgumentSuggestions(it, nextNodeText) })
+    suggestions.addAll(availableArgs.flatMap { getArgumentSuggestions(it) })
     return suggestions
   }
 
-  private fun getAvailableOptions(node: ShellCommandNode): List<ShellOption> {
+  private suspend fun getAvailableOptions(node: ShellCommandNode): List<ShellOptionSpec> {
     val existingOptions = node.children.mapNotNull { (it as? ShellOptionNode)?.spec }
     return getAllOptions(node).filter { opt ->
       (opt.repeatTimes == 0 || existingOptions.count { it == opt } < opt.repeatTimes)
@@ -103,16 +78,17 @@ internal class ShellCommandTreeSuggestionsProvider(
     }
   }
 
-  private fun getAllOptions(node: ShellCommandNode): List<ShellOption> {
-    val options = mutableListOf<ShellOption>()
-    options.addAll(node.spec.options)
+  private suspend fun getAllOptions(node: ShellCommandNode): List<ShellOptionSpec> {
+    val options = mutableListOf<ShellOptionSpec>()
+    options.addAll(node.spec.getOptions())
 
     /**
      * Checks that [parent] command contain the subcommand with the name of [child].
-     * If there is no such subcommand, it means that [child] is a nested command in a place of argument with [ShellArgument.isCommand] = true.
+     * If there is no such subcommand, it means that [child] is a nested command in a place of argument with [ShellArgumentSpec.isCommand] = true.
      */
-    fun isSubcommand(parent: ShellCommandNode, child: ShellCommandNode): Boolean {
-      return parent.spec.subcommands.find { subCmd -> child.spec.names.any { subCmd.names.contains(it) } } != null
+    suspend fun isSubcommand(parent: ShellCommandNode, child: ShellCommandNode): Boolean {
+      val subcommands = parent.spec.getSubcommands()
+      return subcommands.find { subCmd -> child.spec.names.any { subCmd.names.contains(it) } } != null
     }
 
     var child = node
@@ -120,16 +96,18 @@ internal class ShellCommandTreeSuggestionsProvider(
     // parent commands can define 'persistent' options - they can be used in all subcommands
     // but add persistent options from parent, only if it is a direct subcommand
     while (parent is ShellCommandNode && isSubcommand(parent, child)) {
-      options.addAll(parent.spec.options.filter { it.isPersistent })
+      val parentOptions = parent.spec.getOptions()
+      options.addAll(parentOptions.filter { it.isPersistent })
       child = parent
       parent = parent.parent
     }
     return options
   }
 
-  private suspend fun getSuggestionsForOption(node: ShellOptionNode, nextNodeText: String): List<BaseSuggestion> {
-    val suggestions = mutableListOf<BaseSuggestion>()
-    val directSuggestions = getDirectSuggestionsOfNext(node, nextNodeText)
+  private suspend fun getSuggestionsForOption(node: ShellOptionNode, nextNodeText: String): List<ShellCompletionSuggestion> {
+    val suggestions = mutableListOf<ShellCompletionSuggestion>()
+
+    val directSuggestions = getDirectSuggestionsOfNext(node)
     suggestions.addAll(directSuggestions)
 
     val availableArgs = getAvailableArguments(node)
@@ -143,41 +121,24 @@ internal class ShellCommandTreeSuggestionsProvider(
     return suggestions
   }
 
-  private suspend fun getArgumentSuggestions(arg: ShellArgument, nextNodeText: String): List<BaseSuggestion> {
-    val suggestions = mutableListOf<BaseSuggestion>()
-
-    if (arg.isCommand) {
-      val commands = getAvailableCommands()
-      suggestions.addAll(commands)
-    }
-
-    val suggestAllFiles = arg.isFilePath()
-    val suggestFolders = arg.isFolder()
-    if (suggestAllFiles || suggestFolders) {
-      val fileSuggestions = getFileSuggestions(arg, nextNodeText, onlyDirectories = suggestFolders && !suggestAllFiles)
-      suggestions.addAll(fileSuggestions)
-    }
-    if (!suggestAllFiles && !suggestFolders || !nextNodeText.contains(File.separatorChar)) {
-      suggestions.addAll(arg.suggestions.map { ShellArgumentSuggestion(it, arg) })
+  private suspend fun getArgumentSuggestions(arg: ShellArgumentSpec): List<ShellCompletionSuggestion> {
+    val suggestions = mutableListOf<ShellCompletionSuggestion>()
+    for (generator in arg.generators) {
+      val result = generatorsExecutor.execute(generator)
+      suggestions.addAll(result)
     }
     return suggestions
   }
 
-  suspend fun getFileSuggestions(arg: ShellArgument, nextNodeText: String, onlyDirectories: Boolean): List<ShellArgumentSuggestion> {
-    val separator = File.separatorChar
-    val nodeText = nextNodeText.removePrefix("\"").removeSuffix("'")
-    val basePath = if (nodeText.contains(separator)) {
-      nodeText.substringBeforeLast(separator) + separator
-    }
-    else "."
-    val files = runtimeDataProvider.getFilesFromDirectory(basePath)
-    return files.asSequence()
-      .filter { !onlyDirectories || it.endsWith(separator) }
-      // do not suggest './' and '../' directories if the user already typed some path
-      .filter { basePath == "." || (it != ".$separator" && it != "..$separator") }
-      .map { ShellArgumentSuggestion(ShellSuggestion(names = listOf(it)), arg) }
-      // add an empty choice to be able to handle the case when the folder is chosen
-      .let { if (basePath != ".") it.plus(ShellArgumentSuggestion(ShellSuggestion(names = listOf("")), arg)) else it }
-      .toList()
+  private suspend fun ShellCommandSpec.getSubcommands(): List<ShellCommandSpec> {
+    return generatorsExecutor.execute(subcommandsGenerator)
+  }
+
+  private suspend fun ShellCommandSpec.getOptions(): List<ShellOptionSpec> {
+    return generatorsExecutor.execute(optionsGenerator)
+  }
+
+  private suspend fun ShellCommandSpec.getArguments(): List<ShellArgumentSpec> {
+    return generatorsExecutor.execute(argumentsGenerator)
   }
 }
