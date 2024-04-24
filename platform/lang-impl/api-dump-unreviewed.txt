@@ -22231,23 +22231,6 @@ c:com.intellij.openapi.roots.impl.ProjectRootManagerComponent
 - markRootsForRefresh():java.util.List
 - p:projectClosed():V
 f:com.intellij.openapi.roots.impl.ProjectRootManagerComponentKt
-f:com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
-- com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
-- <init>(com.intellij.openapi.project.Project):V
-- applyPushersToFile(com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.Object[]):V
-- s:applyScannersToFile(com.intellij.openapi.vfs.VirtualFile,java.util.List):V
-- filePropertiesChanged(com.intellij.openapi.vfs.VirtualFile):V
-- filePropertiesChanged(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Condition):V
-- findAndUpdateValue(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.impl.FilePropertyPusher,java.lang.Object):V
-- s:finishVisitors(java.util.List):V
-- s:getImmediateValuesEx(java.util.List,com.intellij.util.indexing.roots.kind.IndexableSetOrigin):java.lang.Object[]
-- s:getModuleImmediateValues(java.util.List,com.intellij.openapi.module.Module):java.lang.Object[]
-- initializeProperties():V
-- s:invokeConcurrentlyIfPossible(java.util.List):V
-- performDelayedPushTasks():V
-- pushAll(com.intellij.openapi.roots.impl.FilePropertyPusher[]):V
-- runConcurrentlyIfPossible(java.util.List):V
-- s:scanProject(com.intellij.openapi.project.Project,java.util.function.Function):V
 f:com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl
 - com.intellij.openapi.roots.libraries.LibraryTypeService
 - <init>():V

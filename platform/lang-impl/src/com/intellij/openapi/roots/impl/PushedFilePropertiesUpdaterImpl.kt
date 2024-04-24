@@ -53,12 +53,14 @@ import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Function
 
+@Internal
 class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFilePropertiesUpdater() {
   private val myTasks: Queue<Runnable> = ConcurrentLinkedQueue()
 
