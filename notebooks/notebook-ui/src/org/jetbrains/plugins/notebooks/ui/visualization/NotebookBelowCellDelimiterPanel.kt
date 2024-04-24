@@ -18,7 +18,6 @@ class NotebookBelowCellDelimiterPanel(val editor: EditorImpl) : JPanel(GridLayou
   private val labelFont = EditorUtil.getEditorFont()
   private val labelForeground = UIUtil.getLabelInfoForeground()
 
-
   private fun setupForDiffEditor() {
     preferredSize = Dimension(preferredSize.width, getJupyterCellSpacing(editor))
     val basicPanel = JPanel().apply {
@@ -62,9 +61,10 @@ class NotebookBelowCellDelimiterPanel(val editor: EditorImpl) : JPanel(GridLayou
     }
   }
 
+  @Suppress("USELESS_ELVIS")
   override fun updateUI() {
-    // This method is called within constructor of JPanel, at this time state is not yet initialised, reference is null.
-    if (editor == null) return
+    // This method is called within constructor of JPanel, at this time state is not yet initialized, reference is null.
+    editor ?: return
     background = when(shouldUseCustomBackground) {
       true -> editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme)
       false -> editor.colorsScheme.defaultBackground
