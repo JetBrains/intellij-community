@@ -2,8 +2,12 @@
 package com.intellij.ide.util.treeView
 
 import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.util.treeView.TreeState.CachedPresentationDataImpl
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.treeStructure.CachingTreePath
+import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus.Internal
+import javax.swing.JTree
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
@@ -19,6 +23,44 @@ class CachedTreePresentationData(
   val presentation: CachedPresentationData,
   val children: List<CachedTreePresentationData>,
 ) {
+  companion object {
+    @JvmStatic fun createFromTree(tree: JTree): CachedTreePresentationData? {
+      val model = tree.model
+      if (model == null) return null
+      return createPresentation(tree, model, null, model.root)
+    }
+
+    private fun createPresentation(
+      tree: JTree,
+      model: TreeModel,
+      parentPath: TreePath?,
+      node: Any?
+    ): CachedTreePresentationData? {
+      if (node == null) return null
+      val userObject = TreeUtil.getUserObject(node)
+      if (userObject is PresentableNodeDescriptor<*>) {
+        val presentation = userObject.presentation
+        val children = mutableListOf<CachedTreePresentationData>()
+        val result = CachedTreePresentationData(
+          TreeState.PathElement(TreeState.calcId(userObject), TreeState.calcType(userObject), 0, null),
+          CachedPresentationDataImpl(presentation.presentableText ?: ""),
+          children
+        )
+        val nodePath = if (parentPath == null) CachingTreePath(node) else parentPath.pathByAddingChild(node)
+        if (tree.isExpanded(nodePath)) {
+          val childCount = model.getChildCount(node)
+          for (i in 0 until childCount) {
+            val child = model.getChild(node, i)
+            val childPresentation = createPresentation(tree, model, nodePath, child) ?: continue
+            children.add(childPresentation)
+          }
+        }
+        return result
+      }
+      return null
+    }
+  }
+
   override fun toString(): String = "$pathElement $presentation"
 
   fun createTree(): CachedTreePresentation = CachedTreePresentation(this)

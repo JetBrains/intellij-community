@@ -40,6 +40,8 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.intellij.ide.util.treeView.CachedTreePresentationData.createFromTree;
+
 /**
  * @see #createOn(JTree)
  * @see #createOn(JTree, DefaultMutableTreeNode)
@@ -257,7 +259,7 @@ public final class TreeState implements JDOMExternalizable {
     List<PathElement[]> selectedPathElements = !selectedPaths.isEmpty()
       ? createPaths(tree, selectedPaths)
       : new ArrayList<>();
-    return new TreeState(expandedPathElements, selectedPathElements, persistPresentation ? createPresentation(tree) : null);
+    return new TreeState(expandedPathElements, selectedPathElements, persistPresentation ? createFromTree(tree) : null);
   }
 
   public static @NotNull TreeState createFrom(@Nullable Element element) {
@@ -325,7 +327,7 @@ public final class TreeState implements JDOMExternalizable {
     return result;
   }
 
-  private static @NotNull String calcId(@Nullable Object userObject) {
+  static @NotNull String calcId(@Nullable Object userObject) {
     if (userObject == null) return "";
     // The easiest case: the node provides an ID explicitly.
     if (userObject instanceof PathElementIdProvider userObjectWithPathId) {
@@ -338,7 +340,7 @@ public final class TreeState implements JDOMExternalizable {
     return StringUtil.notNullize(userObject.toString());
   }
 
-  private static @NotNull String calcType(@Nullable Object userObject) {
+  static @NotNull String calcType(@Nullable Object userObject) {
     if (userObject == null) return "";
     if (userObject instanceof PathElementIdProvider userObjectWithPathId) {
       // A special override for unusual cases, for example, nodes with cached presentations.
@@ -347,40 +349,6 @@ public final class TreeState implements JDOMExternalizable {
     }
     String name = userObject.getClass().getName();
     return Integer.toHexString(StringHash.murmur(name, 31)) + ":" + StringUtil.getShortName(name);
-  }
-
-  private static @Nullable CachedTreePresentationData createPresentation(@NotNull JTree tree) {
-    var model = tree.getModel();
-    if (model == null) return null;
-    return createPresentation(tree, model, null, model.getRoot());
-  }
-
-  private static @Nullable CachedTreePresentationData createPresentation(
-    @NotNull JTree tree,
-    @NotNull TreeModel model,
-    @Nullable TreePath parentPath,
-    @Nullable Object node
-  ) {
-    var userObject = TreeUtil.getUserObject(node);
-    if (userObject instanceof PresentableNodeDescriptor<?> presentable) {
-      var presentation = presentable.getPresentation();
-      List<CachedTreePresentationData> children = new ArrayList<>();
-      var result = new CachedTreePresentationData(
-        new PathElement(calcId(userObject), calcType(userObject), 0, null),
-        new CachedPresentationDataImpl(StringUtil.notNullize(presentation.getPresentableText())),
-        children
-      );
-      var nodePath = parentPath == null ? new CachingTreePath(node) : parentPath.pathByAddingChild(node);
-      if (tree.isExpanded(nodePath)) {
-        var childCount = model.getChildCount(node);
-        for (int i = 0; i < childCount; i++) {
-          var child = model.getChild(node, i);
-          children.add(createPresentation(tree, model, nodePath, child));
-        }
-      }
-      return result;
-    }
-    return null;
   }
 
   public void applyTo(@NotNull JTree tree) {
