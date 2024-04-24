@@ -861,6 +861,14 @@ fun <T : CommandChain> T.assertOpenedKotlinFileInRoot(path: String): T = apply {
   addCommand("${CMD_PREFIX}assertOpenedKotlinFileInRoot ${path}")
 }
 
+fun <T : CommandChain> T.enableKotlinDaemonLog(): T = apply {
+  addCommand("${CMD_PREFIX}enableKotlinDaemonLog")
+}
+
+fun <T : CommandChain> T.addKotlinCompilerOptions(vararg options: String): T = apply {
+  addCommand("${CMD_PREFIX}addKotlinCompilerOptions ${options.joinToString(" ")}")
+}
+
 fun <T : CommandChain> T.assertFindUsagesCount(count: Int): T = apply {
   addCommand("${CMD_PREFIX}assertFindUsagesCommand ${count}")
 }
