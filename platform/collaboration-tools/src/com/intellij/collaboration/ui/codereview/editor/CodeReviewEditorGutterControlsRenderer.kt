@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.CustomFoldRegion
@@ -60,9 +61,11 @@ private constructor(cs: CoroutineScope,
 
   init {
     val areaDisposable = Disposer.newDisposable()
-    editor.gutterComponentEx.reserveLeftFreePaintersAreaWidth(areaDisposable, ICON_AREA_WIDTH)
-    editor.addEditorMouseListener(hoverHandler)
-    editor.addEditorMouseMotionListener(hoverHandler)
+    cs.launch(Dispatchers.EDT) {
+      editor.gutterComponentEx.reserveLeftFreePaintersAreaWidth(areaDisposable, ICON_AREA_WIDTH)
+      editor.addEditorMouseListener(hoverHandler)
+      editor.addEditorMouseMotionListener(hoverHandler)
+    }
 
     cs.launchNow {
       model.gutterControlsState.collect {
