@@ -82,7 +82,7 @@ mod tests {
         let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
         assert_eq!(vm_options_file.canonicalize().unwrap(), path.canonicalize().unwrap());
 
-        // hardcoded vmoptions
+        // hardcoded VM options
         assert_vm_option_presence(&dump, "-Dide.native.launcher=true");
 
         dump.vmOptions.iter().find(|s| s.starts_with("-XX:ErrorFile="))

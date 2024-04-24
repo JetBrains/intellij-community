@@ -67,6 +67,8 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
             *vm_option = self.expand_path_macro(vm_option)?;
         }
 
+        vm_options.push(jvm_property!("ide.native.launcher", "true"));
+
         Ok(vm_options)
     }
 

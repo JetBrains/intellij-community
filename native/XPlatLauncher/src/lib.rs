@@ -105,12 +105,16 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
 
     #[cfg(target_os = "macos")]
     {
-        // on macOS, `open` doesn't properly set a current working directory
+        // on macOS, `open` doesn't preserve a current working directory
         restore_working_directory()?;
     }
     debug!("Current directory: {:?}", env::current_dir());
 
-    ensure_env_vars_set()?;
+    #[cfg(target_os = "windows")]
+    {
+        // on Windows, the platform requires `[LOCAL]APPDATA` variables
+        ensure_env_vars_set()?;
+    }
 
     debug!("** Preparing launch configuration");
     let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?).context("Cannot detect a launch configuration")?;
@@ -139,11 +143,7 @@ fn ensure_env_vars_set() -> Result<()> {
 
     let local_app_data = get_known_folder_path(&Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")?;
     env::set_var("LOCALAPPDATA", &local_app_data.strip_ns_prefix()?.to_string_checked()?);
-    Ok(())
-}
 
-#[cfg(not(target_os = "windows"))]
-fn ensure_env_vars_set() -> Result<()>  {
     Ok(())
 }
 

@@ -109,7 +109,6 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
 
         let mut vm_options = vm_options.clone();
         vm_options.push(jvm_property!("sun.java.command", main_class));
-        vm_options.push(jvm_property!("ide.native.launcher", "true"));
 
         let jni_env_result = load_and_start_jvm(&jre_home, vm_options);
         let jni_env = match jni_env_result {
