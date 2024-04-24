@@ -46,7 +46,7 @@ class NotebookBelowCellDelimiterPanel(val editor: EditorImpl) : JPanel(GridLayou
     }
 
     if (isExecutable) {
-      val executionCountText = "[${executionCount ?: 0}]"
+      val executionCountText = executionCount?.let { if (it > 0) "[$it]" else "[ ]" } ?: "[ ]"
       val executionLabel = JLabel(executionCountText)
 
       executionLabel.icon = statusIcon
