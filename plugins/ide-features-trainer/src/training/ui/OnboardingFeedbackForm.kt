@@ -154,7 +154,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
 
   val jLabel = JLabel(LearnBundle.message("onboarding.feedback.form.email"))
   jLabel.isEnabled = false
-  val emailTextField = JBTextField(LicensingFacade.INSTANCE?.getLicenseeEmail() ?: "")
+  val emailTextField = JBTextField(LicensingFacade.getInstance()?.getLicenseeEmail() ?: "")
   emailTextField.disabledTextColor = UIUtil.getComboBoxDisabledForeground()
   emailTextField.isEnabled = false
 
