@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.psi.KtFile
  * unnecessary because both the request and creation sides use [KtClassOrObject]. This class helps us to avoid the unnecessary conversion.
  */
 internal class JvmClassWrapperForKtClass<T: KtElement>(internal val ktClassOrFile: T) : JvmClass {
+    private val shortName: String? = ktClassOrFile.name
+
     override fun getSourceElement(): PsiElement = ktClassOrFile
 
     override fun getAnnotations(): Array<JvmAnnotation> = emptyArray()
@@ -47,4 +49,8 @@ internal class JvmClassWrapperForKtClass<T: KtElement>(internal val ktClassOrFil
     override fun getFields(): Array<JvmField> = emptyArray()
 
     override fun getInnerClasses(): Array<JvmClass> = emptyArray()
+
+    override fun toString(): String {
+        return shortName ?: super.toString()
+    }
 }
