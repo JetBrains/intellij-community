@@ -17,6 +17,9 @@ class SettingsDialogUiComponent(data: ComponentData) : UiComponent(data) {
   val searchPluginTextField
     get() = pluginsPanel.textField("//div[@class='TextFieldWithProcessing']")
 
+  val checkBoxTree
+    get() = x("//div[@class='CheckboxTree']", JCheckboxTreeFixture::class.java)
+
   fun openTreeSettingsSection(vararg path: String) {
     tree().clickPath(*path)
   }
