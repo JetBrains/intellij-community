@@ -63,14 +63,14 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner): Int {
-            var renderedModifiers = 0
+        private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner): Boolean {
+            var renderedModifiers = false
             modifiersListOwner.forEachModifier { modifierElement ->
                 if (modifierElement.isRedundant()) {
                     printLeftNonCodeElements(modifierElement)
                     printRightNonCodeElements(modifierElement)
                 } else {
-                    ++renderedModifiers
+                    renderedModifiers = true
                     modifierElement.accept(this)
                     printer.print(" ")
                 }
@@ -791,9 +791,9 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitKtPrimaryConstructorRaw(ktPrimaryConstructor: JKKtPrimaryConstructor) {
             ktPrimaryConstructor.annotationList.accept(this)
-            val renderedModifiersCount = renderModifiersList(ktPrimaryConstructor)
+            val hasRenderedModifiers = renderModifiersList(ktPrimaryConstructor)
 
-            val needConstructorKeyword = ktPrimaryConstructor.hasAnnotations || renderedModifiersCount > 0
+            val needConstructorKeyword = ktPrimaryConstructor.hasAnnotations || hasRenderedModifiers
             if (needConstructorKeyword) {
                 printer.print("constructor")
             }

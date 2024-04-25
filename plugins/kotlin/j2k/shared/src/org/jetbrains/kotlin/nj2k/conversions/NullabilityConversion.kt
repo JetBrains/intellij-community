@@ -5,10 +5,8 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
-import org.jetbrains.kotlin.nj2k.tree.JKParenthesizedExpression
-import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
-import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
-import org.jetbrains.kotlin.nj2k.tree.JKTypeCastExpression
+import org.jetbrains.kotlin.nj2k.forEachDescendantOfType
+import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 
 /**
@@ -18,8 +16,15 @@ import org.jetbrains.kotlin.nj2k.types.updateNullability
 class NullabilityConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
-        if (element is JKTypeCastExpression) {
-            element.updateNullability()
+        when (element) {
+            is JKTypeCastExpression -> element.updateNullability()
+            is JKMethod -> {
+                val parentClass = element.parentOfType<JKClass>()
+                // Update parameters in enum constructor methods
+                if (parentClass?.classKind == JKClass.ClassKind.ENUM && parentClass.name.value == element.name.value) {
+                    element.updateNullabilityOfParameters()
+                }
+            }
         }
 
         return recurse(element)
@@ -31,6 +36,28 @@ class NullabilityConversion(context: NewJ2kConverterContext) : RecursiveConversi
             // In code such as `((String o)).length()`, the cast's type can be considered not-null
             // (it is equivalent to Kotlin's unsafe cast)
             type.type = type.type.updateNullability(NotNull)
+        }
+    }
+
+    private fun JKMethod.updateNullabilityOfParameters() {
+        val enumConstants = mutableListOf<JKEnumConstant>()
+        parentOfType<JKClassBody>()?.forEachDescendantOfType<JKEnumConstant> {
+            enumConstants.add(it)
+        }
+        for (i in parameters.indices) {
+            val isNotNull = enumConstants.none {
+                val arguments = it.arguments.arguments
+                val argument = arguments.getOrNull(i)
+                when {
+                    arguments.size != parameters.size -> true
+                    argument == null -> true
+                    argument.value.calculateType(typeFactory)?.nullability == NotNull -> false
+                    else -> true
+                }
+            }
+            if (isNotNull) {
+                parameters[i].type.type = parameters[i].type.type.updateNullability(NotNull)
+            }
         }
     }
 }

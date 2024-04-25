@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.tree
 
 import org.jetbrains.kotlin.nj2k.isInterface
 import org.jetbrains.kotlin.nj2k.tree.Modality.*
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.INNER
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
 import org.jetbrains.kotlin.nj2k.tree.Visibility.*
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
@@ -145,34 +146,29 @@ inline fun JKModifiersListOwner.forEachModifier(action: (JKModifierElement) -> U
 
 internal fun JKModifierElement.isRedundant(): Boolean {
     val owner = parent ?: return false
+    if (owner is JKMethod && owner.hasRedundantVisibility && modifier is Visibility) return true
+
     val hasOverrideModifier = (owner as? JKOtherModifiersOwner)?.hasOtherModifier(OVERRIDE) == true
+    val hasInnerModifier = (owner as? JKOtherModifiersOwner)?.hasOtherModifier(INNER) == true
     val isOpenAndAbstractByDefault = owner.let {
         (it is JKClass && it.isInterface()) ||
                 (it is JKDeclaration && it.parentOfType<JKClass>()?.isInterface() == true)
     }
     val parentClass = owner.parentOfType<JKClass>()
-    val parentIsPrivate = parentClass?.visibility == PRIVATE || owner.parentOfType<JKMethod>()?.visibility == PRIVATE
-    val hasParentEnumClass = parentClass?.classKind == JKClass.ClassKind.ENUM
-    val hasNestedPrivateParentClass = parentClass?.visibility == PRIVATE && parentClass.parentOfType<JKClass>() != null
+
+    val parentIsPrivate = parentClass?.visibility == PRIVATE || owner.parentOfType<JKMethod>() != null
+    val redundantOnConstructor = (owner is JKConstructor && parentClass?.classKind == JKClass.ClassKind.ENUM)
+            || (owner is JKKtPrimaryConstructor && parentClass?.visibility == PRIVATE && parentClass.parentOfType<JKClass>() != null)
 
     return when (modifier) {
-        PUBLIC -> !hasOverrideModifier || (owner is JKMethod && (owner.isRedundantVisibility || owner.isRedundantPublicBuiltIn()))
+        PUBLIC -> !hasOverrideModifier
         FINAL -> !hasOverrideModifier
-        INTERNAL, PRIVATE -> (parentIsPrivate && owner is JKMethod && owner !is JKConstructor)
-                || (owner is JKConstructor && hasParentEnumClass)
-                || (owner is JKKtPrimaryConstructor && hasNestedPrivateParentClass)
-                || (owner is JKMethod && owner.isRedundantVisibility)
+        PRIVATE -> (parentIsPrivate && owner is JKMethod && owner !is JKConstructor) || redundantOnConstructor
+        INTERNAL -> (parentIsPrivate && owner is JKMethod && owner !is JKConstructor)
+                || redundantOnConstructor || (hasInnerModifier && parentIsPrivate)
 
         OPEN, ABSTRACT -> isOpenAndAbstractByDefault
-        PROTECTED -> owner is JKMethod && owner.name.value == "clone"
-                && owner.parameters.isEmpty() && owner.returnType.type.fqName == "kotlin.Any"
+
         else -> false
     }
-}
-
-private fun JKMethod.isRedundantPublicBuiltIn() = when {
-    name.value == "toString" && parameters.isEmpty() && returnType.type.fqName == "kotlin.String" -> true
-    name.value == "equals" && parameters.size == 1 && returnType.type.fqName == "kotlin.Boolean" -> true
-    name.value == "hashCode" && parameters.isEmpty() && returnType.type.fqName == "kotlin.Int" -> true
-    else -> false
 }

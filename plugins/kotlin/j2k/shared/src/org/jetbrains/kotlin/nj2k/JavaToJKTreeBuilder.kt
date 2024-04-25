@@ -43,7 +43,6 @@ import org.jetbrains.kotlin.nj2k.tree.JKClassLiteralExpression.ClassLiteralType
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType.*
 import org.jetbrains.kotlin.nj2k.tree.Mutability.IMMUTABLE
 import org.jetbrains.kotlin.nj2k.tree.Mutability.UNKNOWN
-import org.jetbrains.kotlin.nj2k.tree.Visibility.*
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -909,17 +908,8 @@ class JavaToJKTreeBuilder(
             val superMethods = findSuperMethods()
             if (superMethods.isEmpty()) return false // Unknown super method
             val methodVisibility = visibility().visibility
-
-            // ensure none of the found super methods violate redundancy conditions
-            return superMethods.all { superMethod ->
-                val superVisibility = superMethod.visibility().visibility
-                when {
-                    name == "clone" && superMethod.containingClass?.name == "Object"
-                            && superMethods.size == 1 -> methodVisibility == PROTECTED // special built-in type
-                    superVisibility == methodVisibility -> true
-                    superVisibility == INTERNAL -> methodVisibility == PUBLIC
-                    else -> false
-                }
+            return superMethods.any { superMethod ->
+                superMethod.visibility().visibility == methodVisibility
             }
         }
 
@@ -942,7 +932,7 @@ class JavaToJKTreeBuilder(
             ).also { jkMethod ->
                 jkMethod.psi = this
                 jkMethod.updateNullability()
-                jkMethod.isRedundantVisibility = isOverrideMethodWithRedundantVisibility()
+                jkMethod.hasRedundantVisibility = isOverrideMethodWithRedundantVisibility()
                 symbolProvider.provideUniverseSymbol(this, jkMethod)
                 parameterList.node
                     ?.safeAs<CompositeElement>()
