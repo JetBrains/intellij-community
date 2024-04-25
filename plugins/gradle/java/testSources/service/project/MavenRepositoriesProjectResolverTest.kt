@@ -7,7 +7,6 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import org.gradle.internal.impldep.org.apache.commons.lang.NotImplementedException
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel
@@ -16,8 +15,8 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 
 class MavenRepositoriesProjectResolverTest {
 
@@ -109,10 +108,6 @@ class MavenRepositoriesProjectResolverTest {
   }
 
   private class TestRepositoriesModel(private val myRepositories: Collection<MavenRepositoryModel>) : RepositoryModels {
-    override fun add(model: MavenRepositoryModel) {
-      throw NotImplementedException("Method not implemented for test stub")
-    }
-
-    override fun getAll(): Collection<MavenRepositoryModel> = myRepositories
+    override fun getRepositories(): Collection<MavenRepositoryModel> = myRepositories
   }
 }

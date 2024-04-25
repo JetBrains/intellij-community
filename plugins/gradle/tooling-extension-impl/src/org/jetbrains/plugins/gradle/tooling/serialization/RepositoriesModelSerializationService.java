@@ -59,7 +59,7 @@ public class RepositoriesModelSerializationService implements SerializationServi
         writer.setFieldName(OBJECT_ID_FIELD);
         writer.writeInt(objectId);
         if (isAdded) {
-          writeRepositories(writer, context, model.getAll());
+          writeRepositories(writer, context, model.getRepositories());
         }
         writer.stepOut();
       }
@@ -105,12 +105,8 @@ public class RepositoriesModelSerializationService implements SerializationServi
 
         @Override
         public DefaultRepositoriesModel create() {
-          DefaultRepositoriesModel repositoriesModel = new DefaultRepositoriesModel();
-          List<MavenRepositoryModel> repositoryModels = readRepositories(reader, context);
-          for (MavenRepositoryModel entry : repositoryModels) {
-            repositoriesModel.add(entry);
-          }
-          return repositoriesModel;
+          List<MavenRepositoryModel> repositories = readRepositories(reader, context);
+          return new DefaultRepositoriesModel(repositories);
         }
       });
     reader.stepOut();

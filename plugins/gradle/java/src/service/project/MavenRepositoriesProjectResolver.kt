@@ -42,7 +42,7 @@ class MavenRepositoriesProjectResolver: AbstractProjectResolverExtension() {
         .map { it.data }
         .toSet()
 
-      repositories.all.asSequence()
+      repositories.repositories.asSequence()
         .map { MavenRepositoryData(GradleConstants.SYSTEM_ID, it.name, it.url) }
         .filter { !knownRepositories.contains(it) }
         .forEach { ideProject.addChild(DataNode(MavenRepositoryData.KEY, it, ideProject)) }

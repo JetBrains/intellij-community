@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.internal;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel;
 import org.jetbrains.plugins.gradle.model.RepositoryModels;
 
@@ -10,16 +11,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class DefaultRepositoriesModel implements RepositoryModels {
-  private final Set<MavenRepositoryModel> myRepositories = new HashSet<>();
 
-  @Override
-  public void add(MavenRepositoryModel model) {
-    myRepositories.add(model);
+  private final @NotNull Set<MavenRepositoryModel> myRepositories;
+
+  public DefaultRepositoriesModel(@NotNull Collection<MavenRepositoryModel> repositories) {
+    myRepositories = Collections.unmodifiableSet(new HashSet<>(repositories));
   }
 
   @Override
-  public Collection<MavenRepositoryModel> getAll() {
-    return Collections.unmodifiableSet(myRepositories);
+  public @NotNull Collection<MavenRepositoryModel> getRepositories() {
+    return myRepositories;
   }
 
   @Override
