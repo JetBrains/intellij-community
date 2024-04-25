@@ -972,6 +972,7 @@ a:com.intellij.openapi.actionSystem.ActionPlaces
 - sf:COMPOSER_LOG_RERUN:java.lang.String
 - sf:CONTEXT_TOOLBAR:java.lang.String
 - sf:COPY_REFERENCE_POPUP:java.lang.String
+- sf:CUSTOMIZE_ACTIONS_PANEL:java.lang.String
 - sf:DATABASE_VIEW_POPUP:java.lang.String
 - sf:DATABASE_VIEW_TOOLBAR:java.lang.String
 - sf:DEBUGGER_TOOLBAR:java.lang.String

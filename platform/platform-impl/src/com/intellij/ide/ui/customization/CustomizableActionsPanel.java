@@ -68,7 +68,7 @@ public class CustomizableActionsPanel {
     myActionsTree.setShowsRootHandles(true);
     myActionsTree.setCellRenderer(createDefaultRenderer());
     RowsDnDSupport.install(myActionsTree, model);
-
+    PopupHandler.installPopupMenu(myActionsTree, createPopupActionGroup(), ActionPlaces.CUSTOMIZE_ACTIONS_PANEL);
 
     TreeExpansionMonitor.install(myActionsTree);
     JComponent filter = setupFilterComponent(myActionsTree);
@@ -83,6 +83,10 @@ public class CustomizableActionsPanel {
 
     myPanel.add(myTopPanel, BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myActionsTree), BorderLayout.CENTER);
+  }
+
+  private ActionGroup createPopupActionGroup() {
+    return new DefaultActionGroup(new EditIconAction(), new RemoveAction(), new Separator(), new AddActionBelowSelectionAction(), new AddSeparatorAction());
   }
 
   private JComponent createToolbar() {
@@ -569,6 +573,10 @@ public class CustomizableActionsPanel {
       super(text);
     }
 
+    private TreeSelectionAction(@NotNull Supplier<String> text, @Nullable Icon icon) {
+      super(text, icon);
+    }
+
     private TreeSelectionAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, @Nullable Icon icon) {
       super(text, description, icon);
     }
@@ -604,44 +612,13 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private final class AddActionActionTreeSelectionAction extends TreeSelectionAction implements CustomComponentAction {
-    private AddActionActionTreeSelectionAction() {
-      super(IdeBundle.messagePointer("group.customizations.add.action.button"));
+  private abstract class AddActionActionBase extends TreeSelectionAction {
+    private AddActionActionBase(@NotNull Supplier<String> text) {
+      super(text);
     }
 
-    @Override
-    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      JButton button = new JButton(presentation.getText()) {
-        @Override
-        public Dimension getPreferredSize() {
-          Dimension size = super.getPreferredSize();
-          if (myPreferredHeightProvider != null) size.height = myPreferredHeightProvider.compute();
-          return size;
-        }
-      };
-
-      button.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          performAction(button, place, presentation);
-        }
-      });
-
-      return button;
-    }
-
-    @Override
-    public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
-      component.setEnabled(presentation.isEnabled());
-    }
-
-    void performAction(JComponent component, String place, Presentation presentation) {
-      DataContext dataContext = ActionToolbar.getDataContextFor(component);
-      AnActionEvent event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext);
-
-      if (ActionUtil.lastUpdateAndCheckDumb(this, event, true)) {
-        ActionUtil.performActionDumbAwareWithCallbacks(this, event);
-      }
+    private AddActionActionBase(@NotNull Supplier<String> text, @Nullable Icon icon) {
+      super(text, icon);
     }
 
     @Override
@@ -699,6 +676,67 @@ public class CustomizableActionsPanel {
     }
   }
 
+  private final class AddActionActionTreeSelectionAction extends AddActionActionBase implements CustomComponentAction {
+    private AddActionActionTreeSelectionAction() {
+      super(IdeBundle.messagePointer("group.customizations.add.action.button"));
+    }
+
+    @Override
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      JButton button = new JButton(presentation.getText()) {
+        @Override
+        public Dimension getPreferredSize() {
+          Dimension size = super.getPreferredSize();
+          if (myPreferredHeightProvider != null) size.height = myPreferredHeightProvider.compute();
+          return size;
+        }
+      };
+
+      button.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          performAction(button, place, presentation);
+        }
+      });
+
+      return button;
+    }
+
+    @Override
+    public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
+      component.setEnabled(presentation.isEnabled());
+    }
+
+    void performAction(JComponent component, String place, Presentation presentation) {
+      DataContext dataContext = ActionToolbar.getDataContextFor(component);
+      AnActionEvent event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext);
+
+      if (ActionUtil.lastUpdateAndCheckDumb(this, event, true)) {
+        ActionUtil.performActionDumbAwareWithCallbacks(this, event);
+      }
+    }
+  }
+
+  private final class AddActionBelowSelectionAction extends AddActionActionBase {
+    private AddActionBelowSelectionAction() {
+      super(IdeBundle.messagePointer("group.customizations.add.action.below"), AllIcons.General.Add);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)myActionsTree.getLeadSelectionPath().getLastPathComponent();
+      boolean isGroup = CustomizationUtil.getGroupForNode(node) != null;
+
+      if (isGroup) {
+        e.getPresentation().setText(IdeBundle.messagePointer("group.customizations.add.action.group"));
+      }
+      else {
+        e.getPresentation().setText(IdeBundle.messagePointer("group.customizations.add.action.below"));
+      }
+    }
+  }
+
   private static boolean isInsideMenu(TreePath path) {
     if (path.getPathCount() < 2) return false;
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getPathComponent(1);
@@ -712,7 +750,7 @@ public class CustomizableActionsPanel {
 
   private final class AddSeparatorAction extends TreeSelectionAction {
     private AddSeparatorAction() {
-      super(IdeBundle.messagePointer("button.add.separator"));
+      super(IdeBundle.messagePointer("button.add.separator"), AllIcons.General.SeparatorH);
     }
 
     @Override
