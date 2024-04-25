@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.ui.preview.jcef.impl
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
+import java.io.File
 import java.net.URL
 
 internal class FileSchemeResourcesProcessor(
@@ -16,7 +17,7 @@ internal class FileSchemeResourcesProcessor(
 
   override fun loadResource(resourceName: String): ResourceProvider.Resource? {
     val resource = if (resourceName.startsWith("file:/")) {
-      VfsUtil.findFileByURL(URL(resourceName))
+      VfsUtil.findFileByIoFile(File(URL(resourceName).path), true)
     } else {
       projectRoot?.findFileByRelativePath(resourceName)
     } ?: return null
