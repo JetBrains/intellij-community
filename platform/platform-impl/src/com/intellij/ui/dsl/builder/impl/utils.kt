@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.BundleBase
+import com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder
 import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -87,7 +88,8 @@ internal fun prepareVisualPaddings(component: JComponent): UnscaledGaps {
     }
 
   if (customVisualPaddings == null && component is JScrollPane) {
-    customVisualPaddings = UnscaledGaps.EMPTY
+    val visualPadding = (component.border as? DarculaScrollPaneBorder)?.getVisualPadding(component) ?: 0
+    customVisualPaddings = UnscaledGaps(visualPadding)
   }
 
   if (customVisualPaddings == null) {

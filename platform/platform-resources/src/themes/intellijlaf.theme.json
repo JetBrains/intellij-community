@@ -746,6 +746,10 @@
       }
     },
 
+    "ScrollPane": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder"
+    },
+
     "SearchEverywhere": {
       "Advertiser.background": "panel",
       "Advertiser.foreground": "infoPanelForeground",

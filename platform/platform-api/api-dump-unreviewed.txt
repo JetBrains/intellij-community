@@ -8407,6 +8407,9 @@ c:com.intellij.ui.components.JBScrollPane
 - isOptimizedDrawingEnabled():Z
 - isOverlappingScrollBar():Z
 - s:isScrollEvent(java.awt.event.MouseWheelEvent):Z
+- paint(java.awt.Graphics):V
+- p:paintBorder(java.awt.Graphics):V
+- p:paintChildren(java.awt.Graphics):V
 - p:processMouseWheelEvent(java.awt.event.MouseWheelEvent):V
 - setOverlappingScrollBar(Z):V
 - setStatusComponent(javax.swing.JComponent):V

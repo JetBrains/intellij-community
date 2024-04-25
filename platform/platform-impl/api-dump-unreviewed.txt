@@ -10275,7 +10275,9 @@ c:com.intellij.ide.ui.laf.darcula.ui.DarculaTextAreaUI
 - s:createUI(javax.swing.JComponent):javax.swing.plaf.ComponentUI
 - getNextVisualPositionFrom(javax.swing.text.JTextComponent,I,javax.swing.text.Position$Bias,I,javax.swing.text.Position$Bias[]):I
 - p:installKeyboardActions():V
+- p:installListeners():V
 - p:paintSafely(java.awt.Graphics):V
+- p:uninstallListeners():V
 c:com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder
 - com.intellij.openapi.ui.ErrorBorderCapable
 - javax.swing.border.Border

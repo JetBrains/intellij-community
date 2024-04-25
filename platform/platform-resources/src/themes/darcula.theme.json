@@ -541,6 +541,10 @@
       "UI": "com.intellij.ui.components.JBScrollBar"
     },
 
+    "ScrollPane": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder"
+    },
+
     "SearchEverywhere": {
       "Advertiser.background": "#45494a",
       "Advertiser.foreground": "#808080",

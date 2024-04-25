@@ -2,31 +2,29 @@
 package com.intellij.internal.ui.sandbox.components
 
 import com.intellij.internal.ui.sandbox.UISandboxPanel
+import com.intellij.internal.ui.sandbox.initWithText
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.*
 import javax.swing.JComponent
-import javax.swing.JTextArea
 
 internal class JBTextAreaPanel : UISandboxPanel {
 
   override val title: String = "JBTextArea"
 
   override fun createContent(disposable: Disposable): JComponent {
-    return panel {
+    val result = panel {
       row {
         textArea()
           .label("Enabled:", LabelPosition.TOP)
-          .align(AlignX.FILL)
-          .addText()
-          .rows(5)
+          .initWithText()
       }
       row {
         textArea()
           .label("Disabled:", LabelPosition.TOP)
-          .align(AlignX.FILL)
           .enabled(false)
-          .addText()
-          .rows(5)
+          .initWithText()
       }
       row {
         textArea()
@@ -37,12 +35,52 @@ internal class JBTextAreaPanel : UISandboxPanel {
             component.emptyText.text = "Type some text here"
           }
       }
+      row {
+        cell(JBTextArea())
+          .label("JBTextArea without scroll:", LabelPosition.TOP)
+          .text("Some text\nNew line")
+      }
 
+      group("Validation") {
+        row {
+          textArea()
+            .label("Error:", LabelPosition.TOP)
+            .initWithText()
+            .validationOnInput {
+              validate(it, true)
+            }.validationOnApply {
+              validate(it, true)
+            }
+        }
+        row {
+          textArea()
+            .label("Warning:", LabelPosition.TOP)
+            .initWithText()
+            .validationOnInput {
+              validate(it, false)
+            }.validationOnApply {
+              validate(it, false)
+            }
+        }
+      }
     }
+
+    result.registerValidators(disposable)
+    result.validateAll()
+
+    return result
   }
 
-  fun <T : JTextArea> Cell<T>.addText(): Cell<T> {
-    component.text = (1..20).joinToString(separator = "\n") { "Line $it" }
-    return this
+  private fun validate(textArea: JBTextArea, isError: Boolean): ValidationInfo? {
+    if (!textArea.text.isNullOrBlank()) {
+      return if (isError) {
+        ValidationInfo("Text must be empty")
+      }
+      else {
+        ValidationInfo("Text should be empty").asWarning()
+      }
+    }
+
+    return null
   }
 }
