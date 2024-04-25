@@ -35,12 +35,10 @@ import com.intellij.usages.impl.rules.UsageTypeProvider
 import com.intellij.usages.rules.ImportFilteringRule
 import com.intellij.usages.rules.UsageGroupingRule
 import com.intellij.util.CommonProcessors
-import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesOptions
@@ -57,6 +55,9 @@ import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.assertEqualsToFile
+import org.jetbrains.kotlin.idea.test.kmp.KMPProjectDescriptorTestUtilities
+import org.jetbrains.kotlin.idea.test.kmp.KMPTest
+import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
@@ -83,7 +84,7 @@ abstract class AbstractKotlinScriptFindUsagesTest : AbstractFindUsagesTest() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithScriptRuntime()
 }
 
-abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(), KMPTest {
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceNoSources()
 
@@ -102,7 +103,16 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
         if (isFirPlugin) FindUsageTestType.FIR else FindUsageTestType.DEFAULT,
         prefixForResults,
         ignoreLog,
+        testPlatform,
     )
+
+    override val testPlatform: KMPTestPlatform
+        get() = KMPTestPlatform.Unspecified
+
+    override fun setUp() {
+        super<KotlinLightCodeInsightFixtureTestCase>.setUp()
+        super<KMPTest>.setUp()
+    }
 
     companion object {
         enum class FindUsageTestType(val isFir: Boolean, val isCri: Boolean) {
@@ -120,9 +130,11 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
             testType: FindUsageTestType = FindUsageTestType.DEFAULT,
             prefixForResults: String = "",
             ignoreLog: Boolean,
+            testPlatform: KMPTestPlatform,
             executionWrapper: (findUsageTest: (FindUsageTestType) -> Unit) -> Unit = { it(testType) }
         ) {
             val mainFile = File(path)
+
             val mainFileName = mainFile.name
             val mainFileText = FileUtil.loadFile(mainFile, true)
             val prefix = mainFileName.substringBefore(".") + "."
@@ -183,6 +195,9 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                 }.orEmpty()
 
                 configurator.configureByFiles(listOf(mainFileName) + extraFiles.map(File::getName))
+
+                KMPProjectDescriptorTestUtilities.validateTest(configurator.allFiles, testPlatform)
+
                 if ((configurator.file as? KtFile)?.isScript() == true) {
                     ScriptConfigurationManager.updateScriptDependenciesSynchronously(configurator.file)
                 }
@@ -293,6 +308,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                             caretElement,
                             options,
                             project,
+                            platform = testPlatform,
                             alwaysAppendFileName = false,
                             testType = executionTestType,
                             javaNamesMap = javaNamesMap,
@@ -347,6 +363,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     caretElement: T,
     options: FindUsagesOptions?,
     project: Project,
+    platform: KMPTestPlatform = KMPTestPlatform.Unspecified,
     alwaysAppendFileName: Boolean = false,
     testType: FindUsageTestType = FindUsageTestType.DEFAULT,
     javaNamesMap: Map<String, String>? = null,
@@ -426,6 +443,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
             results = firResults
         }
     }
+    results = KMPTest.withPlatformExtension(results.toPath(), platform).toFile()
 
     KotlinTestUtils.assertEqualsToFile("${testType.name} $additionalErrorMessage", results, finalUsages.joinToString("\n"))
 
@@ -443,6 +461,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
                 caretElement,
                 options,
                 project,
+                platform,
                 alwaysAppendFileName = false,
                 testType,
                 javaNamesMap,

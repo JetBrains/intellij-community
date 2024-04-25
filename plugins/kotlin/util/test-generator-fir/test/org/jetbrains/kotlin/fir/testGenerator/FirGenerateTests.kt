@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTe
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
+import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterMultiFileTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterPartialTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileFullJDKTest
@@ -349,6 +350,17 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.(kt|kts)$"""))
             model("java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""))
             model("propertyFiles", pattern = Patterns.forRegex("""^(.+)\.0\.properties$"""))
+        }
+
+        testClass<AbstractFindUsagesFirTest>(
+            platforms = listOf(
+                KMPTestPlatform.Js,
+                KMPTestPlatform.NativeLinux,
+                //KMPTestPlatform.CommonNativeJvm, TODO should be enabled after KTIJ-29715 is fixed
+            ),
+            generatedPackagePostfix = "kmpFindUsages",
+        ) {
+            model("kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.(kt|kts)$"""))
         }
 
         testClass<AbstractFindUsagesWithDisableComponentSearchFirTest> {
