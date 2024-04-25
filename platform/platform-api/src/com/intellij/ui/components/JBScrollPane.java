@@ -225,7 +225,7 @@ public class JBScrollPane extends JScrollPane {
 
   @Override
   public void paint(Graphics g) {
-    paintBorderAllowed = false;
+    paintBorderAllowed = !isBorderOverComponents();
 
     super.paint(g);
   }
@@ -241,8 +241,17 @@ public class JBScrollPane extends JScrollPane {
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
 
-    paintBorderAllowed = true;
-    paintBorder(g);
+    if (isBorderOverComponents()) {
+      paintBorderAllowed = true;
+      paintBorder(g);
+    }
+  }
+
+  private boolean isBorderOverComponents() {
+    Border border = getBorder();
+
+    // Quick workaround for module dependency. Can be revised later if needed
+    return border != null && border.getClass().getName().contains("DarculaScrollPaneBorder");
   }
 
   private static final class JBMouseWheelListener implements MouseWheelListener {
