@@ -11,7 +11,7 @@ import org.gradle.internal.impldep.org.apache.commons.lang.NotImplementedExcepti
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel
-import org.jetbrains.plugins.gradle.model.RepositoriesModel
+import org.jetbrains.plugins.gradle.model.RepositoryModels
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -34,7 +34,7 @@ class MavenRepositoriesProjectResolverTest {
     myResolver.nextResolver = mock(GradleProjectResolverExtension::class.java)
 
     myRepoList.clear()
-    val fakeModel = MyRepositoriesModel(myRepoList)
+    val fakeModel = TestRepositoriesModel(myRepoList)
 
     myProject = mock(IdeaProject::class.java)
     myModule = mock(IdeaModule::class.java)
@@ -48,8 +48,8 @@ class MavenRepositoriesProjectResolverTest {
     myModuleNode = DataNode(ProjectKeys.MODULE, moduleData, myProjectNode)
 
     val fakeContext = mock(ProjectResolverContext::class.java)
-    `when`<RepositoriesModel>(fakeContext.getRootModel(RepositoriesModel::class.java)).thenReturn(fakeModel)
-    `when`<RepositoriesModel>(fakeContext.getExtraProject(myModule, RepositoriesModel::class.java)).thenReturn(fakeModel)
+    `when`<RepositoryModels>(fakeContext.getRootModel(RepositoryModels::class.java)).thenReturn(fakeModel)
+    `when`<RepositoryModels>(fakeContext.getExtraProject(myModule, RepositoryModels::class.java)).thenReturn(fakeModel)
     myResolver.setProjectResolverContext(fakeContext)
   }
 
@@ -108,7 +108,7 @@ class MavenRepositoriesProjectResolverTest {
     override fun getUrl(): String = myUrl
   }
 
-  private class MyRepositoriesModel(private val myRepositories: Collection<MavenRepositoryModel>) : RepositoriesModel {
+  private class TestRepositoriesModel(private val myRepositories: Collection<MavenRepositoryModel>) : RepositoryModels {
     override fun add(model: MavenRepositoryModel) {
       throw NotImplementedException("Method not implemented for test stub")
     }

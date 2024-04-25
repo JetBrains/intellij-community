@@ -7,7 +7,7 @@ import java.util.Collection;
 /**
  * Container for Maven repositories of a given project
  */
-public interface RepositoriesModel extends Serializable {
+public interface RepositoryModels extends Serializable {
 
   void add(MavenRepositoryModel model);
 

@@ -2,14 +2,14 @@
 package org.jetbrains.plugins.gradle.tooling.internal;
 
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel;
-import org.jetbrains.plugins.gradle.model.RepositoriesModel;
+import org.jetbrains.plugins.gradle.model.RepositoryModels;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class RepositoriesModelImpl implements RepositoriesModel {
+public class DefaultRepositoriesModel implements RepositoryModels {
   private final Set<MavenRepositoryModel> myRepositories = new HashSet<>();
 
   @Override
@@ -27,7 +27,7 @@ public class RepositoriesModelImpl implements RepositoriesModel {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    RepositoriesModelImpl model = (RepositoriesModelImpl)o;
+    DefaultRepositoriesModel model = (DefaultRepositoriesModel)o;
 
     if (!myRepositories.equals(model.myRepositories)) return false;
 
