@@ -292,9 +292,13 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                             CommonBundle.getCancelButtonText(),
                             () -> {
                               startDumbIfPossible();
-                              rollBack();
-                              createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions);
-                              stopDumbLaterIfPossible();
+                              try {
+                                rollBack();
+                                createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions);
+                              }
+                              finally {
+                                stopDumbLaterIfPossible();
+                              }
                             },
                             () -> rollBack(), 0).showInBestPositionFor(myEditor);
     }
@@ -366,12 +370,16 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
               highlighter.dispose();
             }
             startDumbIfPossible();
-            rollBack();
-            PsiNamedElement var = getVariable();
-            if (var != null) {
-              createInplaceRenamerToRestart(var, myEditor, myInsertedName).performInplaceRefactoring(myNameSuggestions);
+            try {
+              rollBack();
+              PsiNamedElement var = getVariable();
+              if (var != null) {
+                createInplaceRenamerToRestart(var, myEditor, myInsertedName).performInplaceRefactoring(myNameSuggestions);
+              }
             }
-            stopDumbLaterIfPossible();
+            finally {
+              stopDumbLaterIfPossible();
+            }
           },
           0)
         .showInBestPositionFor(myEditor);
