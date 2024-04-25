@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.io.HttpRequests;
+import com.intellij.util.net.internal.ProxyNewUserService;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.proxy.PropertiesEncryptionSupport;
@@ -122,6 +123,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   @Override
   public void initializeComponent() {
+    if (ApplicationManager.getApplication().getService(ProxyNewUserService.class).isNewUser()) { // temporary! will be removed in new proxy settings API
+      switchDefaultForNewUser();
+    }
     mySelector = new IdeaWideProxySelector(this);
     String name = getClass().getName();
     CommonProxy commonProxy = CommonProxy.getInstance();
@@ -605,6 +609,14 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
     catch (Exception e) {
       LOG.info(e);
+    }
+  }
+
+  private void switchDefaultForNewUser() {
+    // check that settings are really default, just in case
+    if (!USE_HTTP_PROXY && !USE_PROXY_PAC && // == USE_NO_PROXY
+        !USE_PAC_URL && StringUtil.isEmpty(PAC_URL)) {
+      USE_PROXY_PAC = true;
     }
   }
 }
