@@ -2,8 +2,6 @@
 package com.intellij.analysis.logging.resolve
 
 import com.intellij.codeInspection.logging.*
-import com.intellij.codeInspection.logging.PlaceholderCountIndexStrategy.KOTLIN_MULTILINE_RAW_STRING
-import com.intellij.codeInspection.logging.PlaceholderCountIndexStrategy.RAW_STRING
 import com.intellij.codeInspection.logging.PlaceholderLoggerType.*
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiExternalReferenceHost
@@ -73,7 +71,17 @@ internal fun <T> getAlignedPlaceholderCount(placeholderList: List<T>, context: P
 
 internal fun getPlaceholderRanges(context: PlaceholderContext): List<PlaceholderRanges>? {
   val logStringText = context.logStringArgument.sourcePsi?.text ?: return null
-  val type = if (isKotlinMultilineString(context.logStringArgument, logStringText))  KOTLIN_MULTILINE_RAW_STRING else RAW_STRING
+  val type = if (isKotlinMultilineString(context.logStringArgument, logStringText)) {
+    KOTLIN_MULTILINE_RAW_STRING
+  }
+  else if (isKotlinString(context.logStringArgument)) {
+    KOTLIN_RAW_STRING
+  }
+  else if (isJavaString(context.logStringArgument)) {
+    JAVA_RAW_STRING
+  }
+  else return null
+
   val partHolders = listOf(
     LoggingStringPartEvaluator.PartHolder(
       logStringText,
@@ -86,6 +94,14 @@ internal fun getPlaceholderRanges(context: PlaceholderContext): List<Placeholder
   return placeholderCountResult.placeholderRangesList
 }
 
-private fun isKotlinMultilineString(logString: UExpression, text : String): Boolean {
-  return logString is UPolyadicExpression && text.startsWith("\"\"\"") && text.endsWith("\"\"\"") && text.length >= 6
+private fun isKotlinString(logString: UExpression): Boolean {
+  return logString is UPolyadicExpression
+}
+
+private fun isJavaString(logString: UExpression): Boolean {
+  return logString is ULiteralExpression
+}
+
+private fun isKotlinMultilineString(logString: UExpression, text: String): Boolean {
+  return isKotlinString(logString) && text.startsWith("\"\"\"") && text.endsWith("\"\"\"") && text.length >= 6
 }

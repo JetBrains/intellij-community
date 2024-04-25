@@ -124,24 +124,35 @@ internal enum class PlaceholdersStatus {
   EXACTLY, PARTIAL, ERROR_TO_PARSE_STRING, EMPTY
 }
 
-internal enum class PlaceholderCountIndexStrategy {
-  UAST_STRING {
-    override fun shiftAfterEscapeChar(index: Int): Int {
-      return index
-    }
-  },
-  KOTLIN_MULTILINE_RAW_STRING {
-    override fun shiftAfterEscapeChar(index: Int): Int {
-      return index
-    }
-  },
-  RAW_STRING {
-    override fun shiftAfterEscapeChar(index: Int): Int {
-      return index + 1
-    }
-  };
+internal interface PlaceholderCountIndexStrategy {
+  fun shiftAfterEscapeChar(text: String, index: Int): Int {
+    assert(index in text.indices && text[index] == '\\')
+    return index
+  }
+}
 
-  abstract fun shiftAfterEscapeChar(index: Int): Int
+internal abstract class RawStringPlaceholderCountStrategy : PlaceholderCountIndexStrategy {
+  protected abstract val escapeSymbols: Set<Char>
+
+  override fun shiftAfterEscapeChar(text: String, index: Int): Int {
+    assert(index in text.indices && text[index] == '\\')
+    if (index + 1 !in text.indices || isEscapeSymbol(text[index + 1])) return index
+    return index + 1
+  }
+
+  private fun isEscapeSymbol(char: Char): Boolean = char in escapeSymbols
+}
+
+internal val UAST_STRING = object : PlaceholderCountIndexStrategy {}
+
+internal val KOTLIN_MULTILINE_RAW_STRING = object : PlaceholderCountIndexStrategy {}
+
+internal val KOTLIN_RAW_STRING = object : RawStringPlaceholderCountStrategy() {
+  override val escapeSymbols: Set<Char> = setOf('t', 'b', 'n', 'r', '$', '\'', '\"')
+}
+
+internal val JAVA_RAW_STRING = object : RawStringPlaceholderCountStrategy() {
+  override val escapeSymbols: Set<Char> = setOf('t', 'b', 'n', 'r', 'f', '\'', '\"')
 }
 
 
@@ -468,17 +479,17 @@ private fun countBracesBasedPlaceholders(holders: List<LoggingStringPartEvaluato
       full = false
       continue
     }
-    val string = partHolder.text ?: continue
-    val length = string.length
+    val text = partHolder.text ?: continue
+    val length = text.length
     var escaped = false
     var lastPlaceholderIndex = -1
     var i = 0
     while (i < length) {
-      val c = string[i]
+      val c = text[i]
       if (c == '\\' &&
           (loggerType == PlaceholderLoggerType.SLF4J_EQUAL_PLACEHOLDERS || loggerType == PlaceholderLoggerType.SLF4J)) {
         escaped = !escaped
-        i = placeholderCountShiftIndexStrategy.shiftAfterEscapeChar(i)
+        i = placeholderCountShiftIndexStrategy.shiftAfterEscapeChar(text, i)
       }
       else if (c == '{') {
         if (holderIndex != 0 && i == 0 && !holders[holderIndex - 1].isConstant) {
