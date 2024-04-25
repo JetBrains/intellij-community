@@ -1,8 +1,10 @@
 package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.impl.DriverCallException
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RemoteMouseButton
+import com.intellij.driver.sdk.DeclarativeInlayRenderer
 import com.intellij.driver.sdk.Document
 import com.intellij.driver.sdk.Editor
 import com.intellij.driver.sdk.logicalPosition
@@ -29,6 +31,28 @@ fun Finder.editor(@Language("xpath") xpath: String? = null, action: JEditorUiCom
 
 class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   val editor: Editor by lazy { driver.cast(component, EditorComponentImpl::class).getEditor() }
+
+  fun getInlayHints(): List<InlayHint> {
+    val hints = mutableListOf<InlayHint>()
+    this.editor.getInlayModel().getInlineElementsInRange(0, Int.MAX_VALUE).forEach { element ->
+      val hintText = try {
+        element.getRenderer().getText()
+      }
+      catch (e: DriverCallException) {
+        try {
+          driver.cast(element.getRenderer(), DeclarativeInlayRenderer::class).getPresentationList().getEntries().joinToString { it.getText() }
+        }
+        catch (e: DriverCallException) {
+          element.getRenderer().toString().substring(1, element.getRenderer().toString().length - 1)
+        }
+      }
+      finally {
+        ""
+      }
+      hints.add(InlayHint(element.getOffset(), hintText!!))
+    }
+    return hints
+  }
 
   private val document: Document by lazy { editor.getDocument() }
 
@@ -130,6 +154,33 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
 
   }
 }
+
+class InlayHint(val offset: Int, val text: String)
+
+//driver.cast(element.getRenderer(), DeclarativeInlayRenderer::class).getPresentationList().getEntries()[0].getText()
+
+
+//fun List<InlayHint>.hasHint(text: String): Boolean {
+//  return this.find { it.text.equals(text) } != null
+//}
+
+//fun List<InlayHint>.getHint(text: String): InlayHint {
+//  val foundHint = this.find { it.text.equals(text) }
+//  if (foundHint == null) {
+//    throw NoSuchElementException("cannot find hint: $text in ${this.joinToString(separator = "\n") { it.text }}")
+//  }
+//  return foundHint
+//}
+
+//driver.cast(element.getRenderer(), DeclarativeInlayRenderer::class).getPresentationList().getEntries()[0].getText()
+fun List<InlayHint>.getHint(offset: Int): InlayHint {
+  val foundHint = this.find { it.offset.equals(offset) }
+  if (foundHint == null) {
+    throw NoSuchElementException("cannot find hint with offset: $offset")
+  }
+  return foundHint
+}
+
 
 @Remote("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")
 interface EditorGutterComponentImpl : Component {
