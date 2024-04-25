@@ -76,13 +76,13 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Dynamic Layout Inspector", libraryName = "precompiled-dynamic-layout-inspector.common"),
     androidDependency(name = "Android Emulator gRPC API", libraryName = "emulator-proto"),
     androidDependency(name = "Android Flags", libraryName = "precompiled-flags"),
-    LibraryLicense(name = "Android Gradle model", attachedTo = "intellij.android.core", version = "0.4-SNAPSHOT",
-                   url = "https://android.googlesource.com/platform/tools/build/+/master/gradle-model/").apache(
-      "https://source.android.com/setup/start/licenses")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
-    LibraryLicense(name = "Android Instant Apps SDK API", url = "https://source.android.com/", libraryName = "instantapps-api",
-                   version = LibraryLicense.CUSTOM_REVISION).apache("https://source.android.com/setup/start/licenses")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
+    androidDependency(name = "Android Gradle model", version = "0.4-SNAPSHOT", libraryName = null)
+      .copy(
+        attachedTo = "intellij.android.core",
+        url = "https://android.googlesource.com/platform/tools/build/+/master/gradle-model/"
+      ),
+    androidDependency(name = "Android Instant Apps SDK API", version = LibraryLicense.CUSTOM_REVISION, libraryName = null)
+      .copy(url = "https://source.android.com/", libraryName = "instantapps-api"),
     androidDependency(name = "Android JdwpPacket", libraryName = "precompiled-jdwppacket"),
     androidDependency(name = "Android JdwpsCache", libraryName = "precompiled-jdwpscache"),
     androidDependency(name = "Android JdwpTracer", libraryName = "precompiled-jdwptracer"),
@@ -1295,8 +1295,10 @@ object CommunityLibraryLicenses {
     ).suppliedByOrganizations(Suppliers.GOOGLE)
   }
 
-  private fun androidDependency(name: String, libraryName: String = name, version: String? = null) =
+  private fun androidDependency(name: String, libraryName: String? = name, version: String? = null) =
     LibraryLicense(name = name, libraryName = libraryName, version = version,
-                   url = "https://source.android.com/").apache("https://source.android.com/setup/start/licenses")
+                   url = "https://source.android.com/")
+      .apache("https://source.android.com/setup/start/licenses")
+      .copyrightText("Copyright (C) The Android Open Source Project")
       .suppliedByOrganizations(Suppliers.GOOGLE)
 }
