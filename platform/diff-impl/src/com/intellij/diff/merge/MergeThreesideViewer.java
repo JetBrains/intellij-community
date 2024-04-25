@@ -988,6 +988,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     return ContainerUtil.filter(getAllChanges(), change -> !change.isImportChange() && canResolveChangeAutomatically(change, side));
   }
 
+  @ApiStatus.Internal
   public void applyResolvableConflictedChanges() {
     List<TextMergeChange> changes = getAllChanges();
     executeMergeCommand(DiffBundle.message("message.resolve.simple.conflicts.command"), true, null, () -> {

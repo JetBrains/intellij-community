@@ -1096,6 +1096,7 @@ c:com.intellij.diff.merge.TextMergeChange
 - pf:myResolved:Z[]
 - pf:myViewer:com.intellij.diff.merge.MergeThreesideViewer
 - <init>(I,Z,com.intellij.diff.fragments.MergeLineFragment,com.intellij.diff.util.MergeConflictType,com.intellij.diff.merge.TextMergeViewer):V
+- p:destroyOperations():V
 - p:getEditor(com.intellij.diff.util.ThreeSide):com.intellij.openapi.editor.Editor
 - getEndLine():I
 - getEndLine(com.intellij.diff.util.ThreeSide):I
