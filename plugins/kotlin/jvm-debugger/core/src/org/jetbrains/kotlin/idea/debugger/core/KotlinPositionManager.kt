@@ -307,9 +307,13 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     private fun getCallableReferenceIfInside(location: Location, file: KtFile, lineNumber: Int): KtCallableReferenceExpression? {
         val currentLocationClassName = location.getClassName() ?: return null
         val allReferenceExpressions = getElementsAtLineIfAny<KtCallableReferenceExpression>(file, lineNumber)
-
-        return allReferenceExpressions.firstOrNull {
-            it.calculatedClassNameMatches(currentLocationClassName, false)
+        if (allReferenceExpressions.isEmpty()) return null
+        analyze(allReferenceExpressions.first()) {
+            val (inlinedReference, notInlined) = allReferenceExpressions.separateInlinedAndNonInlinedElements(location)
+            if (inlinedReference != null) return inlinedReference
+            return notInlined.firstOrNull {
+                it.calculatedClassNameMatches(currentLocationClassName, false)
+            }
         }
     }
 
@@ -327,24 +331,30 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             return null
         }
         analyze(literalsOrFunctions.first()) {
-            val notInlinedLambdas = mutableListOf<KtFunction>()
-            var innermostContainingLiteral: KtFunction? = null
-            for (literal in literalsOrFunctions) {
-                val inlineArgument = getInlineArgumentSymbol(literal)
-                if (inlineArgument != null && (!inlineArgument.isCrossinline || isInlinedArgument(literal, location))) {
-                    if (isInsideInlineArgument(literal, location, debugProcess as DebugProcessImpl)) {
-                        innermostContainingLiteral = literal
-                    }
-                } else {
-                    notInlinedLambdas.add(literal)
-                }
-            }
+            val (innermostContainingLiteral, notInlinedLambdas) = literalsOrFunctions.separateInlinedAndNonInlinedElements(location)
             if (innermostContainingLiteral != null) return innermostContainingLiteral
 
             return notInlinedLambdas.getAppropriateLiteralBasedOnDeclaringClassName(currentLocationClassName) ?:
                    notInlinedLambdas.getAppropriateLiteralForCrossinlineLambda(currentLocationClassName) ?:
                    notInlinedLambdas.getAppropriateLiteralBasedOnLambdaName(location, lineNumber)
         }
+    }
+
+    context(KtAnalysisSession)
+    private fun <T : KtExpression> List<T>.separateInlinedAndNonInlinedElements(location: Location): Pair<T?, List<T>> {
+        val notInlined = mutableListOf<T>()
+        var innermostInlinedElement: T? = null
+        for (expression in this) {
+            val inlineArgument = getInlineArgumentSymbol(expression)
+            if (inlineArgument != null && (!inlineArgument.isCrossinline || isInlinedArgument(expression, location))) {
+                if (isInsideInlineArgument(expression, location, debugProcess as DebugProcessImpl)) {
+                    innermostInlinedElement = expression
+                }
+            } else {
+                notInlined.add(expression)
+            }
+        }
+        return innermostInlinedElement to notInlined
     }
 
     private fun List<KtFunction>.getAppropriateLiteralBasedOnDeclaringClassName(currentLocationClassName: String): KtFunction? {

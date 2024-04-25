@@ -32,7 +32,9 @@ import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.org.objectweb.asm.MethodVisitor
@@ -73,7 +75,7 @@ fun ReferenceType.containsKotlinStrata() = availableStrata().contains(KOTLIN_STR
 fun ReferenceType.containsKotlinStrataAsync(): CompletableFuture<Boolean> =
     DebuggerUtilsAsync.availableStrata(this).thenApply { it.contains(KOTLIN_STRATA_NAME) }
 
-fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debugProcess: DebugProcessImpl): Boolean =
+fun isInsideInlineArgument(inlineArgument: KtExpression, location: Location, debugProcess: DebugProcessImpl): Boolean =
   isInlinedArgument(location.visibleVariables(debugProcess), inlineArgument)
 
 /**
@@ -82,14 +84,15 @@ fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debug
  *
  * For crossinline lambdas inlining depends on whether the lambda is passed further to a non-inline context.
  */
-fun isInlinedArgument(inlineArgument: KtFunction, location: Location): Boolean =
+fun isInlinedArgument(inlineArgument: KtExpression, location: Location): Boolean =
   isInlinedArgument(location.method().safeVariables() ?: emptyList(), inlineArgument)
 
-private fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgument: KtFunction): Boolean {
+private fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgument: KtExpression): Boolean {
+    if (inlineArgument !is KtFunction && inlineArgument !is KtCallableReferenceExpression) return false
     val markerLocalVariables = localVariables.filter { it.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
 
     return runReadAction {
-        val lambdaOrdinal = lambdaOrdinalByArgument(inlineArgument)
+        val lambdaOrdinal = (inlineArgument as? KtFunction)?.let { lambdaOrdinalByArgument(it) }
         val functionName = functionNameByArgument(inlineArgument) ?: "unknown"
 
         markerLocalVariables
@@ -131,7 +134,7 @@ private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
     return className.substringAfterLast("$").toIntOrNull() ?: 0
 }
 
-private fun functionNameByArgument(argument: KtFunction): String? =
+private fun functionNameByArgument(argument: KtExpression): String? =
     analyze(argument) {
         val function = getFunctionSymbol(argument) as? KtFunctionSymbol ?: return null
         return function.name.asString()

@@ -1503,6 +1503,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/custom/lineBreakpointWithAnonymousFunction.kt");
         }
 
+        @TestMetadata("lineBreakpointWithMethodReference.kt")
+        public void testLineBreakpointWithMethodReference() throws Exception {
+            runTest("../testData/stepping/custom/lineBreakpointWithMethodReference.kt");
+        }
+
         @TestMetadata("manyFilesWithInlineCalls1.kt")
         public void testManyFilesWithInlineCalls1() throws Exception {
             runTest("../testData/stepping/custom/manyFilesWithInlineCalls1.kt");
