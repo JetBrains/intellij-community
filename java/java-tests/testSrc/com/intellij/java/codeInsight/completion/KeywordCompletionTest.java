@@ -217,6 +217,12 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testEnumPermitsList() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(0, "permits"); }
   public void testInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "sealed");}
   public void testInterfaceInnerClassSealedModifier() {setLanguageLevel(LanguageLevel.JDK_17);  doTest(1, "sealed");}
+  
+  public void testModuleKeyword() {
+    configureFromFileText("module-info.java", "m<caret>odule hello;");
+    complete();
+    assertContainsItems("module");
+  }
 
   public void testOverwriteCatch() {
     configureByTestName();
