@@ -5,6 +5,8 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.kmp.KMPProjectDescriptorTestUtilities
+import org.jetbrains.kotlin.idea.test.kmp.KMPTest
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
@@ -16,6 +18,10 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
         val psiFile = files.first()
         if (psiFile is KtFile && psiFile.isScript()) {
             ScriptConfigurationManager.updateScriptDependenciesSynchronously(psiFile)
+        }
+
+        if (this is KMPTest) {
+            KMPProjectDescriptorTestUtilities.validateTest(files, testPlatform)
         }
 
         checkHighlighting(psiFile, expectedHighlighting, globalDirectives, project)

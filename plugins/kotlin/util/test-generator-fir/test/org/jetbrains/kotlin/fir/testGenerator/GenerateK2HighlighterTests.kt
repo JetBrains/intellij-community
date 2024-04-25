@@ -12,6 +12,16 @@ internal fun MutableTWorkspace.generateK2HighlighterTests() {
             model("highlighterMetaInfo", pattern = Patterns.KT_OR_KTS)
         }
 
+        testClass<AbstractK2HighlightingMetaInfoTest>(
+            platforms = KMPTestPlatform.ALL_SPECIFIED - KMPTestPlatform.Jvm,
+            generatedPackagePostfix = "metaInfoKmp",
+        ) {
+            model(
+                "highlighterMetaInfo", pattern = Patterns.KT_OR_KTS,
+                excludedDirectories = listOf("jvm")
+            )
+        }
+
         testClass<AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest> {
             model("highlighterMetaInfoWithBundledCompilerPlugins")
         }
