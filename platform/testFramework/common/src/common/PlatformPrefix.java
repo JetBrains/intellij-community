@@ -19,8 +19,8 @@ public final class PlatformPrefix {
     "Rider", "GoLand", "CLion", "MobileIDE", "FleetBackend",
     null,
     "AppCode", "SwiftTests",
-    "DataGrip",
     "Python", "DataSpell", "PyCharmCore",
+    "DataGrip",
     "Ruby",
     "PhpStorm",
     "UltimateLangXml", "Idea", "PlatformLangXml"
