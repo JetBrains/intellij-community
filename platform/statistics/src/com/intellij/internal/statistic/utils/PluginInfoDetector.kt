@@ -43,7 +43,7 @@ internal fun isPlatformOrJetBrainsBundled(aClass: Class<*>): Boolean {
 
 fun getPluginInfo(className: String): PluginInfo {
   if (className.startsWith("java.") || className.startsWith("javax.") ||
-      className.startsWith("sun.") || className.startsWith("com.sun.") ||
+      className.startsWith("sun.") || className.startsWith("com.sun.") || className.startsWith("jdk.") ||
       className.startsWith("kotlin.") || className.startsWith("kotlinx.") ||
       className.startsWith("groovy.")) {
     return jvmCore
