@@ -137,7 +137,9 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
   }
 
   public void loadState(@NotNull State state) {
-    saveProjectBuildClasspathWorkspaceEntity(myProject, state.projectBuildClasspath);
+    if (!state.projectBuildClasspath.isEmpty()) {
+      saveProjectBuildClasspathWorkspaceEntity(myProject, state.projectBuildClasspath);
+    }
     state.projectBuildClasspath = Collections.emptyMap();
     //noinspection unchecked
     this.state = (S)state;
@@ -226,9 +228,6 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     @NotNull Project project,
     @NotNull Map<String, ExternalProjectBuildClasspathPojo> projectBuildClasspath
   ) {
-    if (projectBuildClasspath.isEmpty()) {
-      return;
-    }
     modifyWorkspaceModel(
       project,
       ExternalSystemBundle.message("external.system.local.settings.workspace.model.project.update"),
