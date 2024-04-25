@@ -245,6 +245,11 @@ public abstract class K2IntroduceParameterTestGenerated extends AbstractK2Introd
             runTest("../../idea/tests/testData/refactoring/introduceParameter/classUsedParameter.kt");
         }
 
+        @TestMetadata("defaultParameter.kt")
+        public void testDefaultParameter() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceParameter/defaultParameter.kt");
+        }
+
         @TestMetadata("defaultValueInParens.kt")
         public void testDefaultValueInParens() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceParameter/defaultValueInParens.kt");

@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
@@ -69,6 +70,14 @@ internal class KotlinFunctionCallUsage(
                 val oldIdxMap: Map<KtValueParameterSymbol, Int> = partiallyAppliedSymbol.signature.valueParameters.mapIndexed { idx, s -> s.symbol to (idx + receiverOffset) }.toMap()
                 functionCall.argumentMapping.forEach { (expr, variableSymbol) ->
                     map[oldIdxMap[variableSymbol.symbol]!!] = expr.createSmartPointer()
+                }
+                for (entry in oldIdxMap.entries) {
+                    if (!map.containsKey(entry.value)) {
+                        entry.key.defaultValue?.let {
+                            //create copy because the (unused) parameter might be removed during introduce parameter refactoring
+                            map[entry.value] = (it.copy() as KtExpression).createSmartPointer()
+                        }
+                    }
                 }
                 val receiver = ((partiallyAppliedSymbol.extensionReceiver
                     ?: partiallyAppliedSymbol.dispatchReceiver) as? KtExplicitReceiverValue)?.expression
@@ -399,7 +408,8 @@ internal class KotlinFunctionCallUsage(
             var addReceiver: Boolean = paramIdx == Int.MAX_VALUE
             var argumentExpression = indexToExpMap?.get(paramIdx)?.element ?: continue
 
-            if (needSeparateVariable(argumentExpression)
+            if (argumentExpression.isPhysical &&  //don't create variable for default value expression
+                needSeparateVariable(argumentExpression)
                 && PsiTreeUtil.getNonStrictParentOfType(
                     element,
                     KtConstructorDelegationCall::class.java,

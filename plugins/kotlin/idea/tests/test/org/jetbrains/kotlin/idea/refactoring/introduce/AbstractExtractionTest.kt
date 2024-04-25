@@ -188,7 +188,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
     }
 
     private fun doIntroduceParameterTest(unused: String, asLambda: Boolean) {
-        doTest { file ->
+        doTestIfNotDisabledByFileDirective { file ->
             val fileText = file.text
 
             open class HelperImpl : KotlinIntroduceParameterHelper<FunctionDescriptor> {
