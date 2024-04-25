@@ -223,7 +223,8 @@ public final class ThreadLeakTracker {
            || isCoroutineSchedulerPoolThread(thread, stackTrace)
            || isKotlinCIOSelector(stackTrace)
            || isStarterTestFramework(stackTrace)
-           || isJMXRemoteCall(stackTrace);
+           || isJMXRemoteCall(stackTrace)
+           || isBuildLogCall(stackTrace);
   }
 
   private static boolean isWellKnownOffender(String threadName) {
@@ -355,6 +356,19 @@ public final class ThreadLeakTracker {
     // at java.base@17.0.9/java.lang.Thread.run(Thread.java:840)
 
     return ContainerUtil.exists(stackTrace, element -> element.getClassName().contains("com.sun.jmx.remote"));
+  }
+
+  /**
+   * <a href="https://youtrack.jetbrains.com/issue/IDEA-349419/Flaky-thread-leak-in-ConsoleSpanExporter">IDEA-349419</a>
+   */
+  private static boolean isBuildLogCall(StackTraceElement[] stackTrace) {
+    //java.lang.AssertionError: Thread leaked: Thread[#204,DefaultDispatcher-worker-6,5,main] (alive) RUNNABLE
+    //  --- its stacktrace:
+    //at java.base/java.io.FileOutputStream.writeBytes(Native Method)
+    //at org.jetbrains.intellij.build.ConsoleSpanExporter.export(ConsoleSpanExporter.kt:44)
+    //at com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor$exportCurrentBatch$2.invokeSuspend(BatchSpanProcessor.kt:155)
+
+    return ContainerUtil.exists(stackTrace, element -> element.getClassName().contains("org.jetbrains.intellij.build.ConsoleSpanExporter"));
   }
 
   private static CharSequence dumpThreadsToString(Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {
