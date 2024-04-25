@@ -1427,6 +1427,7 @@ f:com.intellij.icons.ExpUiIcons$CodeWithMe
 - <init>():V
 f:com.intellij.icons.ExpUiIcons$Debugger
 - sf:AddToWatch:javax.swing.Icon
+- sf:DbArray:javax.swing.Icon
 - sf:DbPrimitive:javax.swing.Icon
 - sf:Frame:javax.swing.Icon
 - sf:SelfReference:javax.swing.Icon
@@ -1607,6 +1608,7 @@ f:com.intellij.icons.ExpUiIcons$General
 - sf:Settings_20x20:javax.swing.Icon
 - sf:Show:javax.swing.Icon
 - sf:ShowAsTree:javax.swing.Icon
+- sf:ShowToImplement:javax.swing.Icon
 - sf:SoftWrap:javax.swing.Icon
 - sf:SplitHorizontally:javax.swing.Icon
 - sf:SplitVertically:javax.swing.Icon
@@ -1787,6 +1789,7 @@ f:com.intellij.icons.ExpUiIcons$Nodes
 - sf:ProcessMark:javax.swing.Icon
 - sf:Property:javax.swing.Icon
 - sf:Record:javax.swing.Icon
+- sf:ResourceBundle:javax.swing.Icon
 - sf:ResourcesRoot:javax.swing.Icon
 - sf:RunnableMark:javax.swing.Icon
 - sf:Servlet:javax.swing.Icon
