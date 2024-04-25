@@ -89,19 +89,14 @@ object ErrorStatusPanelFactory {
       val errorAction = errorPresenter.getErrorAction(error)
       action = errorAction
 
-      when (errorPresenter) {
-        is ErrorStatusPresenter.HTML -> updateHTMLPresenter(error, errorPresenter)
-        is ErrorStatusPresenter.Text -> updateTextPresenter(error, errorPresenter)
+      htmlEditorPane.text = when (errorPresenter ) {
+        is ErrorStatusPresenter.HTML -> errorPresenter.getHTMLBody(error)
+        is ErrorStatusPresenter.Text -> getErrorText(error, errorPresenter)
       }
       htmlEditorPane.isVisible = true
     }
 
-    private fun <T> updateHTMLPresenter(error: T, errorPresenter: ErrorStatusPresenter.HTML<T>) {
-      val htmlBody = errorPresenter.getHTMLBody(error)
-      htmlEditorPane.text = htmlBody
-    }
-
-    private fun <T> updateTextPresenter(error: T, errorPresenter: ErrorStatusPresenter.Text<T>) {
+    private fun <T> getErrorText(error: T, errorPresenter: ErrorStatusPresenter.Text<T>): String {
       val errorTextBuilder = HtmlBuilder().apply {
          appendP(alignment, errorPresenter.getErrorTitle(error))
         val errorTitle = errorPresenter.getErrorDescription(error)
@@ -115,7 +110,7 @@ object ErrorStatusPanelFactory {
         errorTextBuilder.appendP(alignment, HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF, errorAction.name.orEmpty()))
       }
 
-      htmlEditorPane.text = errorTextBuilder.wrapWithHtmlBody().toString()
+      return errorTextBuilder.wrapWithHtmlBody().toString()
     }
 
   }
