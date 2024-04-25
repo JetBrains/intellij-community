@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -59,6 +59,7 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
 
   public void testDefaultConstructor() { runTest("03", null); }
   public void testDefaultConstructorWithTypeParams() { runTest("TypeParams", null); }
+  public void testPreserveComments() { runTest(getTestName(false), null); }
 
   public void testInnerClass() { runTest("04", null); }
   
