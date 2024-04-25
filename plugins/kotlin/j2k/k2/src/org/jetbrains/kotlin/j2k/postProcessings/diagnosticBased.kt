@@ -28,7 +28,7 @@ private val smartcastImpossibleFactory = KotlinQuickFixFactory.IntentionBased { 
         return@IntentionBased emptyList()
     }
     val nullableExpectedType = expectedType.withNullability(KtTypeNullability.NULLABLE)
-    if (actualType isSubTypeOf nullableExpectedType) {
+    if (actualType.isSubTypeOf(nullableExpectedType)) {
         return@IntentionBased listOf(AddExclExclCallFix(psi))
     }
     return@IntentionBased emptyList()
