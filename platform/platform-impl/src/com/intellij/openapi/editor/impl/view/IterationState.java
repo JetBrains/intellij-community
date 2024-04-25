@@ -19,6 +19,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,9 +36,10 @@ import java.util.List;
 public final class IterationState {
   private static final Logger LOG = Logger.getInstance(IterationState.class);
 
-  public static Comparator<RangeHighlighterEx> createByLayerThenByAttributesComparator(EditorColorsScheme scheme) {
+  @Contract(pure = true)
+  public static @NotNull Comparator<RangeHighlighterEx> createByLayerThenByAttributesComparator(@NotNull EditorColorsScheme scheme) {
     return (o1, o2) -> {
-      final int result = LayerComparator.INSTANCE.compare(o1, o2);
+      int result = LayerComparator.HIGHER_FIRST.compare(o1, o2);
       if (result != 0) {
         return result;
       }
@@ -45,26 +47,24 @@ public final class IterationState {
       // There is a possible case when more than one highlighter target the same region (e.g. 'identifier under caret' and 'identifier').
       // We want to prefer the one that defines foreground color to the one that doesn't define (has either fore- or background colors
       // while the other one has only foreground color). See IDEA-85697 for concrete example.
-      final TextAttributes a1 = o1.getTextAttributes(scheme);
-      final TextAttributes a2 = o2.getTextAttributes(scheme);
+      TextAttributes a1 = o1.getTextAttributes(scheme);
+      TextAttributes a2 = o2.getTextAttributes(scheme);
       if (a1 == null ^ a2 == null) {
         return a1 == null ? 1 : -1;
       }
 
-      if (a1 == null) {
-        return 0;
-      }
+      if (a1 != null) {
+        Color fore1 = a1.getForegroundColor();
+        Color fore2 = a2.getForegroundColor();
+        if (fore1 == null ^ fore2 == null) {
+          return fore1 == null ? 1 : -1;
+        }
 
-      final Color fore1 = a1.getForegroundColor();
-      final Color fore2 = a2.getForegroundColor();
-      if (fore1 == null ^ fore2 == null) {
-        return fore1 == null ? 1 : -1;
-      }
-
-      final Color back1 = a1.getBackgroundColor();
-      final Color back2 = a2.getBackgroundColor();
-      if (back1 == null ^ back2 == null) {
-        return back1 == null ? 1 : -1;
+        Color back1 = a1.getBackgroundColor();
+        Color back2 = a2.getBackgroundColor();
+        if (back1 == null ^ back2 == null) {
+          return back1 == null ? 1 : -1;
+        }
       }
       return compareByHighlightInfoSeverity(o1, o2);
     };
@@ -76,7 +76,8 @@ public final class IterationState {
     HighlightSeverity severity1 = info1 == null ? null : info1.getSeverity();
     HighlightSeverity severity2 = info2 == null ? null : info2.getSeverity();
     if (severity1 != null && severity2 != null) {
-      return -severity1.compareTo(severity2);
+      // higher severity should win
+      return severity2.compareTo(severity1);
     }
     // having severity has more priority than no severity
     return Boolean.compare(severity1 == null, severity2 == null);
@@ -220,15 +221,15 @@ public final class IterationState {
                              @NotNull MarkupModelEx markupModel,
                              int start,
                              int end,
-                             final boolean onlyFullLine,
-                             final boolean onlyFontOrForegroundAffecting) {
+                             boolean onlyFullLine,
+                             boolean onlyFontOrForegroundAffecting) {
       myColorsScheme = scheme;
       myMarkupModel = markupModel;
       myOnlyFullLine = onlyFullLine;
       myOnlyFontOrForegroundAffecting = onlyFontOrForegroundAffecting;
       // we have to get all highlighters in advance and sort them by affected offsets
       // since these can be different from the real offsets the highlighters are sorted by in the tree.  (See LINES_IN_RANGE perverts)
-      final List<RangeHighlighterEx> list = new ArrayList<>();
+      List<RangeHighlighterEx> list = new ArrayList<>();
       markupModel.processRangeHighlightersOverlappingWith(myReverseIteration ? end : start, myReverseIteration ? start : end,
                                                           new CommonProcessors.CollectProcessor<>(list) {
                                                             @Override
@@ -312,10 +313,9 @@ public final class IterationState {
 
   private boolean skipHighlighter(@NotNull RangeHighlighterEx highlighter) {
     if (!highlighter.isValid() || highlighter.isAfterEndOfLine() || highlighter.getTextAttributes(myEditor.getColorsScheme()) == null) return true;
-    final FoldRegion region = myFoldingModel == null ? null :
+    FoldRegion region = myFoldingModel == null ? null :
                               myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaStartOffset());
-    if (region != null && region == myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaEndOffset())) return true;
-    return false;
+    return region != null && region == myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaEndOffset());
   }
 
   public void advance() {
@@ -577,7 +577,7 @@ public final class IterationState {
                            ? new TextAttributes(null, myReadOnlyColor, null, EffectType.BOXED, Font.PLAIN)
                            : null;
 
-    final int size = myCurrentHighlighters.size();
+    int size = myCurrentHighlighters.size();
     if (size > 1) {
       ContainerUtil.quickSort(myCurrentHighlighters, createByLayerThenByAttributesComparator(myEditor.getColorsScheme()));
     }
@@ -762,7 +762,7 @@ public final class IterationState {
   }
 
   private static final class LayerComparator implements Comparator<RangeHighlighterEx> {
-    private static final LayerComparator INSTANCE = new LayerComparator();
+    private static final LayerComparator HIGHER_FIRST = new LayerComparator();
     @Override
     public int compare(RangeHighlighterEx o1, RangeHighlighterEx o2) {
       int layerDiff = o2.getLayer() - o1.getLayer();
