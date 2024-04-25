@@ -823,6 +823,8 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
     fun testRemoveDefaultParameterBeforeLambda() = doTest { removeParameter(1) }
     fun testRemoveParameterKeepOtherComments() = doTest { removeParameter(1) }
 
+    fun testCalledByJvmName() = doTest { removeParameter(0) }
+
     //----------- receivers ---------------
 
     fun testAddFunctionReceiverWithDefaultValue() = doTest {
