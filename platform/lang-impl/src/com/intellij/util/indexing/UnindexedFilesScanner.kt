@@ -646,7 +646,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   companion object {
     private val DELAY_IN_TESTS_MS = SystemProperties.getIntProperty("scanning.delay.before.start.in.tests.ms", 0)
 
-    private val SCANNING_PARALLELISM = UnindexedFilesUpdater.getNumberOfScanningThreads().coerceAtLeast(1)
+    private val SCANNING_PARALLELISM = UnindexedFilesUpdater.getNumberOfScanningThreads()
     private val BLOCKING_PROVIDERS_ITERATOR_PARALLELISM = SCANNING_PARALLELISM
 
     // We still have a lot of IO during scanning, so Default dispatcher might be not the best choice at the moment.
