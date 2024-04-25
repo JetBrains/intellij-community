@@ -43,6 +43,7 @@ import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
+import com.intellij.xdebugger.impl.util.BringDebuggeeIntoForegroundImpl;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
@@ -311,6 +312,10 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (myDebugProcess.checkCanInitBreakpoints()) {
       initBreakpoints();
     }
+    if (myDebugProcess instanceof XDebugProcessDebuggeeInForegroundSupport) {
+      BringDebuggeeIntoForegroundImpl.Companion.start(LOG, this, 1000);
+    }
+
 
     myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
       @Override

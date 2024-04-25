@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -24,7 +25,9 @@ import java.awt.*;
 import java.awt.peer.ComponentPeer;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -42,6 +45,7 @@ public final class X11UiUtil {
   private static final long None = 0;
   private static final long XA_ATOM = 4;
   private static final long XA_WINDOW = 33;
+  private static final long ANY_PROPERTY_TYPE = 0;
   private static final int CLIENT_MESSAGE = 33;
   private static final int FORMAT_BYTE = 8;
   private static final int FORMAT_LONG = 32;
@@ -92,6 +96,8 @@ public final class X11UiUtil {
     private Method getScreenNumber;
     private Method awtLock;
     private Method awtUnlock;
+    private Method getChildWindows;
+    private Method XGetWindowAttributes;
 
     private long display;
 
@@ -104,6 +110,7 @@ public final class X11UiUtil {
     private long NET_WM_STATE_MAXIMIZED_HORZ;
     private long NET_WM_STATE_DEMANDS_ATTENTION;
     private long NET_ACTIVE_WINDOW;
+    private long _NET_WM_PID;
 
     private static @Nullable Xlib getInstance() {
       Class<? extends Toolkit> toolkitClass = Toolkit.getDefaultToolkit().getClass();
@@ -121,12 +128,16 @@ public final class X11UiUtil {
         x11.XFree = method(XlibWrapper, "XFree", 1);
         x11.RootWindow = method(XlibWrapper, "RootWindow", 2);
         x11.XSendEvent = method(XlibWrapper, "XSendEvent", 5);
+        x11.XGetWindowAttributes = method(XlibWrapper, "XGetWindowAttributes", 3);
         Class<?> XBaseWindow = Class.forName("sun.awt.X11.XBaseWindow");
         x11.getWindow = method(XBaseWindow, "getWindow");
         x11.getScreenNumber = method(XBaseWindow, "getScreenNumber");
         x11.display = (Long)method(toolkitClass, "getDisplay").invoke(null);
         x11.awtLock = method(toolkitClass, "awtLock");
         x11.awtUnlock = method(toolkitClass, "awtUnlock");
+
+        Class<?> XlibUtil = Class.forName("sun.awt.X11.XlibUtil");
+        x11.getChildWindows = method(XlibUtil, "getChildWindows", long.class);
 
         // intern atoms
         Class<?> XAtom = Class.forName("sun.awt.X11.XAtom");
@@ -141,6 +152,7 @@ public final class X11UiUtil {
         x11.NET_WM_STATE_MAXIMIZED_HORZ = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_MAXIMIZED_HORZ"));
         x11.NET_WM_STATE_DEMANDS_ATTENTION = (Long)atom.get(get.invoke(null, "_NET_WM_STATE_DEMANDS_ATTENTION"));
         x11.NET_ACTIVE_WINDOW = (Long)atom.get(get.invoke(null, "_NET_ACTIVE_WINDOW"));
+        x11._NET_WM_PID = (Long)atom.get(get.invoke(null, "_NET_WM_PID"));
 
         // check for _NET protocol support
         Long netWmWindow = x11.getNetWmWindow();
@@ -269,6 +281,74 @@ public final class X11UiUtil {
       catch (Throwable t) {
         LOG.info("cannot " + operation, t);
       }
+    }
+
+    private Long findProcessWindow(long window, int pid, int recursionLevel) {
+      if (recursionLevel > 100) {
+        LOG.warn("Recursion level exceeded. Deep lying windows will be skipped");
+        return null;
+      }
+
+      if (isProcessWindowOwner(window, pid) && isViewableWin(window)) {
+        return window;
+      }
+
+      Set<Long> childWindows = getChildWindows(window);
+      if (childWindows == null) return null;
+
+      for (Long childWindow : childWindows) {
+        var wnd = findProcessWindow(childWindow, pid, recursionLevel + 1);
+        if (wnd != null) {
+          return wnd;
+        }
+      }
+
+      return null;
+    }
+
+    private static Boolean isViewableWin(long window) {
+      XWindowAttributesWrapper wrapper = null;
+      try {
+        wrapper = new XWindowAttributesWrapper(window);
+        return wrapper.getMapState() == XWindowAttributesWrapper.MapState.IsViewable;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+        return false;
+      }
+      finally {
+        if (wrapper != null)
+          wrapper.dispose();
+      }
+    }
+
+    private boolean isProcessWindowOwner(Long window, int pid) {
+      long[] value;
+      try {
+        value = getWindowProperty(window, _NET_WM_PID, ANY_PROPERTY_TYPE, FORMAT_LONG);
+      }
+      catch (Exception ex) {
+        LOG.error("Exception on obtaingin \"_NET_WM_PID\" window property", ex);
+        return false;
+      }
+
+      if (value == null) {
+        LOG.trace("_NET_WM_PID property is not set for window " + window);
+        return false;
+      }
+
+      var windowPid = value[0];
+      return windowPid == pid;
+    }
+
+    public Set<Long> getChildWindows(Long window) {
+      try {
+        return (Set<Long>)getChildWindows.invoke(null, window);
+      }
+      catch (Exception e) {
+        LOG.error("Can't get children for window: " + window, e);
+      }
+      return null;
     }
   }
 
@@ -431,6 +511,33 @@ public final class X11UiUtil {
     X11.sendClientMessage(window, "activate", X11.NET_ACTIVE_WINDOW);
   }
 
+  public static boolean activate(long windowId) {
+    if (X11 == null) return false;
+    if (FocusManagerImpl.FOCUS_REQUESTS_LOG.isDebugEnabled()) {
+      FocusManagerImpl.FOCUS_REQUESTS_LOG.debug("_NET_ACTIVE_WINDOW", new Throwable());
+    }
+    try {
+      var rootWindow = X11.getRootWindow(0);
+      X11.sendClientMessage(rootWindow, windowId, X11.NET_ACTIVE_WINDOW);
+      return true;
+    }
+    catch (Exception e) {
+      LOG.error("Can not activate window:" + windowId, e);
+      return false;
+    }
+  }
+
+  public static Long findVisibleWindowByPid(int pid) {
+    if (X11 == null) return null;
+    try {
+      var rootWindow = X11.getRootWindow(0);
+      return X11.findProcessWindow(rootWindow, pid, 0);
+    }
+    catch (Exception e) {
+      return null;
+    }
+  }
+
   public static void requestAttention(@NotNull Window window) {
     if (X11 == null) return;
     X11.sendClientMessage(window, "request attention", X11.NET_WM_STATE, NET_WM_STATE_ADD, X11.NET_WM_STATE_DEMANDS_ATTENTION);
@@ -506,6 +613,59 @@ public final class X11UiUtil {
     catch (IOException e) {
       LOG.info(errorMessage, e);
       return Collections.emptyList();
+    }
+  }
+
+  final static class XWindowAttributesWrapper implements Disposable {
+    enum MapState {
+      IsUnmapped,
+      IsUnviewable,
+      IsViewable,
+    }
+
+    MapState getMapState() throws InvocationTargetException, IllegalAccessException {
+      return MapState.values()[(Integer)get_map_state.invoke(instance)];
+    }
+
+    XWindowAttributesWrapper(long windowId) throws Exception {
+      assert X11 != null;
+
+      instance = getXWindowAttributesCtor().newInstance();
+      var ptrData = getPData.invoke(instance);
+
+      var operationResult = (Integer)X11.XGetWindowAttributes.invoke(null, X11.display, windowId, ptrData);
+      if (operationResult == 0) {
+        throw new Exception("XGetWindowAttributes failed :" + operationResult);
+      }
+    }
+
+    @Override
+    public void dispose() {
+      try {
+        dispose.invoke(instance);
+      }
+      catch (Exception exception) {
+        LOG.error("Exception on XWindowAttributes instance dispose", exception);
+      }
+    }
+
+    private final Object instance;
+
+    private static Constructor<?> ctor;
+    private static Method get_map_state;
+    private static Method getPData;
+    private static Method dispose;
+
+    private static Constructor<?> getXWindowAttributesCtor() throws Exception {
+      if (ctor == null) {
+        var clazz = Class.forName("sun.awt.X11.XWindowAttributes");
+        ctor = clazz.getConstructor();
+        get_map_state = method(clazz, "get_map_state");
+        dispose = method(clazz, "dispose");
+        getPData = method(clazz, "getPData");
+      }
+
+      return ctor;
     }
   }
 }

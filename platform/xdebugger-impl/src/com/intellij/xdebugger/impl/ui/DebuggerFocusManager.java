@@ -21,11 +21,13 @@ import java.util.Arrays;
  * on breakpoint' setting work as expected.
  */
 public class DebuggerFocusManager implements XDebuggerManagerListener, RegistryValueListener, ProjectManagerListener {
-  private final RegistryValue mySetting = Registry.get("debugger.mayBringFrameToFrontOnBreakpoint");
+  private final RegistryValue myFrameToFrontOnBreakpointSetting = Registry.get("debugger.mayBringFrameToFrontOnBreakpoint");
+  private final RegistryValue myBringDebuggeeToFrontAfterResumeSetting = Registry.get("debugger.mayBringDebuggeeWindowToFrontAfterResume");
   private boolean myFocusStealingEnabled;
 
   private DebuggerFocusManager() {
-    mySetting.addListener(this, ApplicationManager.getApplication());
+    myFrameToFrontOnBreakpointSetting.addListener(this, ApplicationManager.getApplication());
+    myBringDebuggeeToFrontAfterResumeSetting.addListener(this, ApplicationManager.getApplication());
   }
 
   @Override
@@ -61,7 +63,8 @@ public class DebuggerFocusManager implements XDebuggerManagerListener, RegistryV
   }
 
   private synchronized void update(boolean enable) {
-    boolean shouldBeEnabled = enable && mySetting.asBoolean();
+    boolean shouldBeEnabled = enable && (myFrameToFrontOnBreakpointSetting.asBoolean() ||
+                                         myBringDebuggeeToFrontAfterResumeSetting.asBoolean());
     if (shouldBeEnabled != myFocusStealingEnabled) {
       WinFocusStealer.setFocusStealingEnabled(myFocusStealingEnabled = shouldBeEnabled);
     }

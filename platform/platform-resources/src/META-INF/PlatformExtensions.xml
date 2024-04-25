@@ -298,6 +298,19 @@
 
     <applicationService serviceImplementation="com.intellij.ui.WinFocusStealer" os="windows" preload="notHeadless"/>
 
+    <applicationService serviceInterface="com.intellij.execution.process.window.to.foreground.BringProcessWindowToForegroundSupport"
+                        serviceImplementation="com.intellij.execution.process.window.to.foreground.WinBringProcessWindowToForegroundSupport"
+                        os="windows"
+                        preload="notHeadless"/>
+    <applicationService serviceInterface="com.intellij.execution.process.window.to.foreground.BringProcessWindowToForegroundSupport"
+                        serviceImplementation="com.intellij.execution.process.window.to.foreground.MacBringProcessWindowToForegroundSupport"
+                        os="mac"
+                        preload="notHeadless"/>
+    <applicationService serviceInterface="com.intellij.execution.process.window.to.foreground.BringProcessWindowToForegroundSupport"
+                        serviceImplementation="com.intellij.execution.process.window.to.foreground.X11BringProcessWindowToForegroundSupport"
+                        os="linux"
+                        preload="notHeadless"/>
+
     <applicationService serviceInterface="com.intellij.diff.DiffManager"
                         serviceImplementation="com.intellij.diff.DiffManagerImpl"/>
     <applicationService serviceInterface="com.intellij.diff.DiffContentFactory"
