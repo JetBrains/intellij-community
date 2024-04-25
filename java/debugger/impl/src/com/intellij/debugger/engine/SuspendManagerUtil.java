@@ -98,15 +98,6 @@ public final class SuspendManagerUtil {
     return resumeData;
   }
 
-  public static SuspendContextImpl getEvaluatingContext(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
-    for (SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {
-      if (!suspendContext.isResumed() && suspendContext.isEvaluating() && suspendContext.getThread() == thread) {
-        return suspendContext;
-      }
-    }
-    return null;
-  }
-
   private static class ResumeData {
     final boolean myIsFrozen;
     final Set<ThreadReferenceProxyImpl> myResumedThreads;
