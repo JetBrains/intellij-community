@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
-import com.intellij.concurrency.resetThreadContext
+import com.intellij.concurrency.escapeCancellation
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.projectRoots.Sdk
+import kotlinx.coroutines.job
 import org.jetbrains.idea.maven.server.MavenServerManager.Companion.getInstance
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.util.function.Consumer
 
@@ -52,7 +54,10 @@ class MavenIndexingConnectorImpl(jdk: Sdk,
           MavenLog.LOG.debug("[connector] terminate " + this@MavenIndexingConnectorImpl)
           getInstance().shutdownConnector(this@MavenIndexingConnectorImpl, false)
         })
-        resetThreadContext().use {
+        // the computation below spawns an immortal server that will not terminate
+        // if someone is interested in the termination of the current computation, they do not need to wait for maven to terminate.
+        // hence, we spawn the server in the context of maven plugin, so that it has cancellation of all other maven processes
+        escapeCancellation(MavenCoroutineScopeProvider.getCoroutineScope(project).coroutineContext.job) {
           val server = mySupport!!.acquire(this, "", indicator)
           myServerPromise.setResult(server)
         }
