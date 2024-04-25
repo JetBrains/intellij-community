@@ -507,7 +507,7 @@ internal suspend fun generateProjectStructureMapping(
           copyFiles = false,
           moduleOutputPatcher = moduleOutputPatcher,
           includedModules = plugin.includedModules,
-          moduleWithSearchableOptions = emptySet(),
+          jarsWithSearchableOptions = emptySet(),
           context = context,
         ).first)
       }
@@ -532,7 +532,7 @@ private suspend fun buildPlugins(
 
   val scrambleTasks = mutableListOf<ScrambleTask>()
 
-  val moduleWithSearchableOptions = getModuleWithSearchableOptions(context)
+  val jarsWithSearchableOptions = getJarsWithSearchableOptions(context)
   val entries = coroutineScope {
     plugins.map { plugin ->
       if (plugin.mainModule != "intellij.platform.builtInHelp") {
@@ -563,7 +563,7 @@ private suspend fun buildPlugins(
             copyFiles = true,
             moduleOutputPatcher = moduleOutputPatcher,
             includedModules = plugin.includedModules,
-            moduleWithSearchableOptions = moduleWithSearchableOptions,
+            jarsWithSearchableOptions = jarsWithSearchableOptions,
             context = context,
           )
           pluginBuilt?.invoke(plugin, file)
@@ -613,7 +613,7 @@ private suspend fun buildPlugins(
   return entries
 }
 
-private suspend fun getModuleWithSearchableOptions(context: BuildContext): Set<String> {
+private suspend fun getJarsWithSearchableOptions(context: BuildContext): Set<String> {
   return withContext(Dispatchers.IO) {
     try {
       val result = HashSet<String>()
@@ -737,7 +737,7 @@ suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
         copyFiles = copyFiles,
         moduleOutputPatcher = moduleOutputPatcher,
         includedModules = platform.includedModules,
-        moduleWithSearchableOptions = if (copyFiles) getModuleWithSearchableOptions(context) else emptySet(),
+        jarsWithSearchableOptions = if (copyFiles) getJarsWithSearchableOptions(context) else emptySet(),
         context = context,
       ).first
     }
@@ -978,7 +978,7 @@ suspend fun layoutDistribution(
   copyFiles: Boolean = true,
   moduleOutputPatcher: ModuleOutputPatcher,
   includedModules: Collection<ModuleItem>,
-  moduleWithSearchableOptions: Set<String>,
+  jarsWithSearchableOptions: Set<String>,
   context: BuildContext,
 ): Pair<List<DistributionFileEntry>, Path> {
   if (copyFiles) {
@@ -1014,7 +1014,7 @@ suspend fun layoutDistribution(
                          layout = layout,
                          platformLayout = platformLayout,
                          moduleOutputPatcher = moduleOutputPatcher,
-                         moduleWithSearchableOptions = moduleWithSearchableOptions,
+                         jarsWithSearchableOptions = jarsWithSearchableOptions,
                          dryRun = !copyFiles,
                          context = context)
       }
