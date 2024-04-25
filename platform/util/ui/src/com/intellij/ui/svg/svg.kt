@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
+import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Image
 import java.awt.geom.Rectangle2D
@@ -314,6 +315,31 @@ fun loadWithSizes(sizes: List<Int>, data: ByteArray, scale: Float = JBUIScale.sy
     else {
       image
     }
+  }
+}
+
+
+/**
+* Loads a custom image based on provided size, data and optional scale.
+*
+* This method may return a [JBHiDPIScaledImage], specifically designed for high-DPI displays, and it is not supposed to be drawn
+* using `Graphics.drawImage()` method. Instead, use `UIUtil.drawImage()` for handling rather than directly drawing the images returned by this method.
+*
+* @param size The dimensions of the image to load.
+* @param data The byte array containing the image data in a specific format.
+* @param scale The scale factor for the high-DPI image. The default value is obtained from `JBUIScale.sysScale()`.
+* @return The loaded image. When a HiDPI scale is necessary, a [JBHiDPIScaledImage] instance is returned. Otherwise, the original image is returned.
+*/
+@Internal
+fun loadCustomImage(size: Dimension, data: ByteArray, scale: Float = JBUIScale.sysScale()): Image {
+  val document by lazy(LazyThreadSafetyMode.NONE) { createJSvgDocument(data) }
+  val isHiDpiNeeded = isHiDPIEnabledAndApplicable(scale)
+  val image = renderSvgWithSize(document = document, width = (size.width * scale), height = (size.height * scale))
+  return if (isHiDpiNeeded) {
+    JBHiDPIScaledImage(image, scale.toDouble())
+  }
+  else {
+    image
   }
 }
 
