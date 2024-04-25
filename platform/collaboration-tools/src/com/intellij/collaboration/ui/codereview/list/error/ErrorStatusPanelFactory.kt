@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.error
 
+import com.intellij.collaboration.ui.setHtmlBody
 import com.intellij.collaboration.ui.util.name
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.util.text.HtmlBuilder
@@ -69,7 +70,7 @@ object ErrorStatusPanelFactory {
 
   private fun <T> JEditorPane.update(alignment: Alignment, error: T?, errorPresenter: ErrorStatusPresenter<T>, setAction: (Action?) -> Unit) {
     if (error == null) {
-      text = ""
+      setHtmlBody("")
       isVisible = false
       return
     }
@@ -77,10 +78,11 @@ object ErrorStatusPanelFactory {
     val errorAction = errorPresenter.getErrorAction(error)
     setAction(errorAction)
 
-    text = when (errorPresenter) {
-      is ErrorStatusPresenter.HTML -> errorPresenter.getHTMLBody(error)
-      is ErrorStatusPresenter.Text -> getErrorText(alignment, errorAction, error, errorPresenter)
-    }
+    setHtmlBody(
+      when (errorPresenter) {
+        is ErrorStatusPresenter.HTML -> errorPresenter.getHTMLBody(error)
+        is ErrorStatusPresenter.Text -> getErrorText(alignment, errorAction, error, errorPresenter)
+      })
     isVisible = true
   }
 
