@@ -39,12 +39,9 @@ import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -56,6 +53,7 @@ import java.util.function.Consumer
 import java.util.function.Predicate
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
 @ApiStatus.Internal
 class UnindexedFilesScanner private constructor(private val myProject: Project,
@@ -403,7 +401,12 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       catch (e: Exception) {
         scanningRequest.markUnsuccessful()
 
-        // "e" might be a CancellationException, or PCE. We don't care if the scope is not canceled.
+        // Some code doesn't care if we are inside a non-cancellable section, or in a coroutine.
+        // E.g., ComponentManagerImpl.doGetService does `throw new PCE("out-of-thin")`.
+        // Handle all these PCE and CE as a valid cancellation.
+        if (coroutineContext.isActive && (e is ProcessCanceledException || e is CancellationException)) {
+          coroutineContext.cancel()
+        }
         checkCanceled()
 
         // CollectingIterator should skip failing files by itself. But if provider.iterateFiles cannot iterate files and throws exception,
