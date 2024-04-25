@@ -498,8 +498,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     if (graphOptions is PermanentGraph.Options.Base) {
       setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_SORT_TYPE.key, graphOptions.sortType.presentation)
     }
-    setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_FILTERED_COMMIT_COUNT.key,
-                 if (commitCount.isAll()) CommitCountStage.ALL.toString() else commitCount.count.toString())
+    setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_FILTERED_COMMIT_COUNT.key, commitCount.toString())
     if (dataPack.isFull) {
       setAttribute(VcsTelemetrySpanAttribute.VCS_LOG_REPOSITORY_COMMIT_COUNT, dataPack.permanentGraph.allCommits.size)
     }
