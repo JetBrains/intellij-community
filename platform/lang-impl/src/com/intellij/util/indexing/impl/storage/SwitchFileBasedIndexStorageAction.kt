@@ -9,7 +9,6 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.util.indexing.FileBasedIndexTumbler
-import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
@@ -19,10 +18,10 @@ import javax.swing.ListModel
 class SwitchFileBasedIndexStorageAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val allStorages = customIndexStorageDescriptors() + defaultIndexStorageDescriptor()
-    val activeStorage = allStorages.find { it.bean == FileBasedIndexLayoutSettings.getUsedLayout() }
-    val popupContext = IndexStorageDescriptorPopupContext(project, allStorages)
-    ComboBoxPopup(popupContext, activeStorage, Consumer {
+    val supportedIndexStorages = supportedIndexStorageDescriptors()
+    val activeIndexStorage = supportedIndexStorages.find { it.bean == IndexLayoutPersistentSettings.getCustomLayout() }
+    val popupContext = IndexStorageDescriptorPopupContext(project, supportedIndexStorages)
+    ComboBoxPopup(popupContext, activeIndexStorage, Consumer {
       restartIndexesWithStorage(it)
     }).showInBestPositionFor(e.dataContext)
   }
@@ -32,12 +31,12 @@ class SwitchFileBasedIndexStorageAction : DumbAwareAction() {
   }
 
   private fun restartIndexesWithStorage(indexStorage: IndexStorageDescriptor) {
-    val usedLayout = FileBasedIndexLayoutSettings.getUsedLayout()
+    val usedLayout = IndexLayoutPersistentSettings.getCustomLayout()
     if (usedLayout != indexStorage.bean) {
       val switcher = FileBasedIndexTumbler("Index Storage Switching")
       switcher.turnOff()
       try {
-        FileBasedIndexLayoutSettings.setUsedLayout(indexStorage.bean)
+        IndexLayoutPersistentSettings.setCustomLayout(indexStorage.bean)
       }
       finally {
         switcher.turnOn(null)
@@ -51,14 +50,7 @@ private data class IndexStorageDescriptor(val presentableName: @Nls String,
                                           val version: Int,
                                           val bean: FileBasedIndexLayoutProviderBean?)
 
-private fun defaultIndexStorageDescriptor(): IndexStorageDescriptor {
-  return IndexStorageDescriptor(IndexingBundle.message("ide.indexes.default-storage.presentable.name"),
-                                "default",
-                                0,
-                                null)
-}
-
-private fun customIndexStorageDescriptors(): List<IndexStorageDescriptor> =
+private fun supportedIndexStorageDescriptors(): List<IndexStorageDescriptor> =
   IndexStorageLayoutLocator.supportedLayoutProviders.map {
     IndexStorageDescriptor(it.localizedPresentableName, it.id, it.version, it)
   }

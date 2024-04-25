@@ -533,13 +533,12 @@ f:com.intellij.util.indexing.impl.forward.SingleEntryIndexForwardIndexAccessor$S
 - differentiate(java.util.Map,com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.RemovedKeyProcessor):Z
 - getKeys():java.util.Collection
 f:com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProviderKt
-f:com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings
-- sf:INSTANCE:com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings
-- f:getUsedLayout():com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
-- f:loadUsedLayout():Z
-- f:resetUsedLayout():V
-- f:saveCurrentLayout():V
-- f:setUsedLayout(com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean):V
+f:com.intellij.util.indexing.impl.storage.IndexLayoutPersistentSettings
+- sf:INSTANCE:com.intellij.util.indexing.impl.storage.IndexLayoutPersistentSettings
+- f:forceSaveCurrentLayout():V
+- f:getCustomLayout():com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
+- f:setCustomLayout(com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean):V
+f:com.intellij.util.indexing.impl.storage.IndexLayoutPersistentSettingsKt
 f:com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator
 - sf:INSTANCE:com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator
 - sf:getCustomLayoutId():java.lang.String
