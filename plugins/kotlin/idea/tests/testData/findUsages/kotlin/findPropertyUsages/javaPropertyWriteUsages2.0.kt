@@ -1,6 +1,10 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtParameter
 // OPTIONS: usages, skipRead
 // PSI_ELEMENT_AS_TITLE: "foo: T"
+
+// IGNORE_PLATFORM_JS: Java-specific code
+// IGNORE_PLATFORM_NATIVE: Java-specific code
+
 package server
 
 open class A<T>(open var <caret>foo: T)

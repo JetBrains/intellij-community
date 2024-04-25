@@ -6,3 +6,6 @@ public class A @JvmOverloads <caret>constructor(
     public val y: Double = 0.0,
     public val z: String = "0"
 )
+
+// IGNORE_PLATFORM_JS: Java-specific code
+// IGNORE_PLATFORM_NATIVE: Java-specific code

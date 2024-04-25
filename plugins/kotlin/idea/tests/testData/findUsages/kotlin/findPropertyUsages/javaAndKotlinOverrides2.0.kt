@@ -26,3 +26,6 @@ open class D : A<String>("") {
 
 open class E<T>(override var foo: T) : A<T>(foo)
 
+// IGNORE_PLATFORM_JS: Java-specific code
+// IGNORE_PLATFORM_NATIVE: Java-specific code
+

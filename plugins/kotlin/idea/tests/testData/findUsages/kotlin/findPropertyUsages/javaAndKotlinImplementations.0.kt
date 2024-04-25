@@ -14,3 +14,6 @@ class KotlinImpl(override var absProp: String) : KotlinInterface
 class KotlinImpl2 : KotlinInterface {
     override var absProp: String = ""
 }
+
+// IGNORE_PLATFORM_JS: Java-specific code
+// IGNORE_PLATFORM_NATIVE: Java-specific code

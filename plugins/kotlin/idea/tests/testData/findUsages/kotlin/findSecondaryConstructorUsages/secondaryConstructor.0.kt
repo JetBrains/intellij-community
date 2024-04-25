@@ -25,4 +25,7 @@ fun test() {
     B("")
 }
 
+// IGNORE_PLATFORM_JS: KTIJ-29704
+// IGNORE_PLATFORM_NATIVE: KTIJ-29704
+
 
