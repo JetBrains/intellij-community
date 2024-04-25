@@ -153,16 +153,23 @@ public final class DefineParamsDefaultValueAction extends PsiBasedModCommandActi
                                 (PsiMethod)method.copy();
     final PsiCodeBlock body = prototype.getBody();
     final PsiCodeBlock emptyBody = JavaPsiFacade.getElementFactory(method.getProject()).createCodeBlock();
+    PsiModifierList modifierList = prototype.getModifierList();
     if (body != null) {
       body.replace(emptyBody);
     } else {
-      prototype.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
+      modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
       prototype.addBefore(emptyBody, null);
     }
 
     final PsiClass aClass = method.getContainingClass();
     if (aClass != null && aClass.isInterface() && !method.hasModifierProperty(PsiModifier.STATIC)) {
-      prototype.getModifierList().setModifierProperty(PsiModifier.DEFAULT, true);
+      modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
+    }
+
+    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+      if (annotation.hasQualifiedName(CommonClassNames.JAVA_LANG_OVERRIDE)) {
+        annotation.delete();
+      }
     }
 
     final PsiParameterList parameterList = method.getParameterList();
