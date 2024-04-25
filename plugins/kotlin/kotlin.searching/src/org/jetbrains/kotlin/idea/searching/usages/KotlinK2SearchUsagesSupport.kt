@@ -350,7 +350,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                     when (call) {
                         is KtDelegatedConstructorCall -> {
                             val constructorSymbol = call.symbol
-                            val declarationSymbol = ktDeclaration.getSymbol()
+                            val declarationSymbol = ((ktDeclaration.originalElement as? KtDeclaration)?.takeUnless { ktDeclaration.containingFile == element.containingFile } ?: ktDeclaration).getSymbol()
                             constructorSymbol == declarationSymbol || constructorSymbol.getContainingSymbol() == declarationSymbol
                         }
                         else -> false

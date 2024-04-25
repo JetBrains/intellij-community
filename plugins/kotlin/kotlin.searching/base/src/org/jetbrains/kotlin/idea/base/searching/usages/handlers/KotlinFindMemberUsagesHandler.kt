@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinCallableFindUsagesOptions
@@ -40,8 +41,10 @@ import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFunctionFindUsagesO
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindFunctionUsagesDialog
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindPropertyUsagesDialog
+import org.jetbrains.kotlin.idea.base.util.excludeFileTypes
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.dataClassComponentMethodName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.filterDataClassComponentsIfDisabled
@@ -51,6 +54,7 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOpt
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
+import org.jetbrains.kotlin.idea.search.usagesSearch.buildProcessDelegationCallKotlinConstructorUsagesTask
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -301,6 +305,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
                     for (psiMethod in element.toLightMethods().filterDataClassComponentsIfDisabled(kotlinSearchOptions)) {
                         addTask {
+                            // function as property syntax when there is java super
                             val query = MethodReferencesSearch.search(psiMethod, psiMethodScopeSearch, true)
                             applyQueryFilters(
                                 element,
@@ -314,17 +319,28 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                     if (element is KtPrimaryConstructor) {
                         val containingClass = element.containingClass()
                         if (containingClass?.isAnnotation() == true) {
-                            val query = ReferencesSearch.search(containingClass, nonKotlinSources)
-                            applyQueryFilters(
-                                element,
-                                options,
-                                forHighlight,
-                                query
-                            ).forEach(referenceProcessor)
+                            addTask {
+                                val query = ReferencesSearch.search(containingClass, nonKotlinSources)
+                                applyQueryFilters(
+                                    element,
+                                    options,
+                                    forHighlight,
+                                    query
+                                ).forEach(referenceProcessor)
+                            }
                         }
                     }
                 }
+
+                if (element is KtConstructor<*>) {
+                    addTask(
+                        element.buildProcessDelegationCallKotlinConstructorUsagesTask(options.searchScope) { callElement ->
+                            callElement.calleeExpression?.let { referenceProcessor.process(it.mainReference) } != false
+                        }
+                    )
+                }
             }
+
 
             if (kotlinOptions.searchOverrides) {
                 addTask {

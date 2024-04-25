@@ -7,7 +7,6 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
-import com.intellij.util.Query
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
@@ -52,5 +51,6 @@ class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
     override fun searchInheritors(
         element: PsiElement,
         searchScope: SearchScope,
-    ): Sequence<PsiElement> = HierarchySearchRequest(element, searchScope).searchInheritors().asSequence()
+        searchDeeply: Boolean,
+    ): Sequence<PsiElement> = HierarchySearchRequest(element, searchScope, searchDeeply).searchInheritors().asSequence()
 }

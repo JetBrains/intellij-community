@@ -1,7 +1,8 @@
 package test
 
 actual class Foo actual constructor() {
-    constructor(s: String): this(0)
+    val x = n + 1
+    constructor(s: String): this()
 }
 
 fun test() {

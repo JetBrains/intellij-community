@@ -27,9 +27,11 @@ import org.jetbrains.kotlin.asJava.elements.KtLightParameter
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.base.util.excludeFileTypes
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -282,7 +284,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             var namedArgsScope = function.useScope.intersectWith(queryParameters.scopeDeterminedByUser)
 
             if (namedArgsScope is GlobalSearchScope) {
-              namedArgsScope = KotlinSourceFilterScope.everything(namedArgsScope, project)
+                namedArgsScope = KotlinSourceFilterScope.everything(namedArgsScope, project)
 
                 val filesWithFunctionName = CacheManager.getInstance(project).getVirtualFilesWithWord(
                     function.name!!, UsageSearchContext.IN_CODE, namedArgsScope, true
@@ -303,6 +305,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
         @RequiresReadLock
         private fun searchLightElements(element: PsiElement) {
+            val project = element.project
             when (element) {
                 is KtClassOrObject -> {
                     processKtClassOrObject(element)
@@ -310,7 +313,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
                 is KtConstructor<*> -> {
                     val psiMethods = if (element.isExpectDeclaration()) {
-                        val declarations = ExpectActualSupport.getInstance(element.project)
+                        val declarations = ExpectActualSupport.getInstance(project)
                             .actualsForExpected(element)
                         declarations
                             .filterIsInstance<KtConstructor<*>>()
@@ -318,7 +321,13 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                     } else getLightClassMethods(element)
 
                     psiMethods.forEach { psiMethod ->
-                        MethodReferencesSearch.search(psiMethod, queryParameters.effectiveSearchScope, true).forEach(consumer)
+                        MethodReferencesSearch.search(
+                            psiMethod,
+                            queryParameters.effectiveSearchScope.excludeFileTypes(
+                                project, KotlinFileType.INSTANCE
+                            ),
+                            true
+                        ).forEach(consumer)
                     }
                 }
 
@@ -330,7 +339,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
                 is KtProperty -> {
                     val propertyAccessors = if (element.isExpectDeclaration()) {
-                        ExpectActualSupport.getInstance(element.project)
+                        ExpectActualSupport.getInstance(project)
                             .actualsForExpected(element)
                             .filterIsInstance<KtProperty>()
                             .map { getLightClassPropertyMethods(it) }
@@ -458,6 +467,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                             kotlinOptions = kotlinOptions
                         )
                     }
+
                     else -> return@Callable
                 }
             }).executeSynchronously()
@@ -469,7 +479,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             componentMethodName: String,
             kotlinOptions: KotlinReferencesSearchOptions
         ) {
-            assertReadAccessAllowed()
+            ApplicationManager.getApplication().assertReadAccessAllowed()
             containingClass.methods.firstOrNull {
                 it.name == componentMethodName && it.parameterList.parametersCount == 0
             }?.let {
@@ -503,7 +513,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             name: String? = null,
             modifyScope: ((SearchScope) -> SearchScope)? = null
         ) {
-            assertReadAccessAllowed()
+            ApplicationManager.getApplication().assertReadAccessAllowed()
             element ?: return
             val nameToUse = name ?: element.name ?: return
             val baseScope = queryParameters.effectiveSearchScope(element)
@@ -514,11 +524,14 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 queryParameters.elementToSearch.namedUnwrappedElement ?: element,
                 options = kotlinOptions
             )
-            queryParameters.optimizer.searchWord(nameToUse, scope, context.toShort(), true, element, resultProcessor)
-        }
-
-        private fun assertReadAccessAllowed() {
-            ApplicationManager.getApplication().assertReadAccessAllowed()
+            queryParameters.optimizer.searchWord(
+                nameToUse,
+                if (element !is KtElement) scope.excludeFileTypes(element.project, KotlinFileType.INSTANCE) else scope,
+                context.toShort(),
+                true,
+                element,
+                resultProcessor
+            )
         }
 
         private fun PsiReference.isNamedArgumentReference(): Boolean {

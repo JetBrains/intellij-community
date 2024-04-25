@@ -11,7 +11,6 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
-import com.intellij.util.Query
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -28,8 +27,9 @@ interface KotlinFindUsagesSupport {
         }
 
         fun searchInheritors(element: PsiElement,
-                             searchScope: SearchScope): Sequence<PsiElement> {
-            return getInstance(element.project).searchInheritors(element, searchScope)
+                             searchScope: SearchScope,
+                             searchDeeply: Boolean = true): Sequence<PsiElement> {
+            return getInstance(element.project).searchInheritors(element, searchScope, searchDeeply)
         }
 
         fun processCompanionObjectInternalReferences(
@@ -76,5 +76,6 @@ interface KotlinFindUsagesSupport {
     fun searchInheritors(
         element: PsiElement,
         searchScope: SearchScope,
+        searchDeeply: Boolean = true,
     ): Sequence<PsiElement>
 }

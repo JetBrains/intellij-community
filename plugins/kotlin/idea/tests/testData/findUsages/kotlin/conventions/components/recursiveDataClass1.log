@@ -11,6 +11,7 @@ Resolved (a3, n3)
 Searched references to A
 Searched references to a1 in non-Java files
 Searched references to a2 in non-Java files
+Searched references to a3 in non-Java files
 Searched references to parameter a of A(val a: A?, val n: Int) in non-Java files
 Searched references to parameter a of f(a: A) in non-Java files
 Used plain search of parameter a of A(val a: A?, val n: Int) in LocalSearchScope:
