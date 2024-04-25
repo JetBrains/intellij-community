@@ -86,7 +86,11 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
       return
     }
 
-    if (checkModuleDependencies && !descriptor.isBundled && descriptor.packagePrefix == null && !hasModuleDependencies(descriptor)) {
+    if (checkModuleDependencies
+        && !descriptor.isBundled
+        && descriptor.packagePrefix == null
+        && !hasModuleDependencies(descriptor)
+        && descriptor.pluginId.idString != "DevKit") {
       addIncompletePlugin(descriptor, PluginLoadingError(
         plugin = descriptor,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.name) },
