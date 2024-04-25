@@ -243,6 +243,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
     InspectionResultsView oldView = myView;
     InspectionResultsView newView = oldView == null ? new InspectionResultsView(this, new InspectionRVContentProviderImpl()) : null;
+    if (newView != null) Disposer.register(getProject(), newView);
     ReadAction
       .nonBlocking(() -> (oldView == null ? newView : oldView).hasProblems())
       .finishOnUiThread(ModalityState.any(), hasProblems -> {
