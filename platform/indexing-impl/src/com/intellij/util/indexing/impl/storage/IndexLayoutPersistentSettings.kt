@@ -9,6 +9,7 @@ import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.EnumeratorStringDescriptor
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.DataInputStream
 import java.io.IOException
 import java.nio.file.Files
@@ -31,7 +32,10 @@ import kotlin.io.path.outputStream
  * layouts, and to be able to manage those experimental layouts without alternating `Indexing.xml` or alike.
  * Hence, this class should have as little usages as it possible across a codebase.
  */
+@Internal
 object IndexLayoutPersistentSettings {
+
+  const val INDICES_LAYOUT_FILE = "indices.layout"
 
   /**
    * `null` means custom layout wasn't set/loaded yet.
@@ -66,6 +70,8 @@ object IndexLayoutPersistentSettings {
 }
 
 private val LOG = logger<IndexLayoutPersistentSettings>()
+
+private fun indexLayoutSettingFile(): Path = PathManager.getIndexRoot().resolve(IndexLayoutPersistentSettings.INDICES_LAYOUT_FILE)
 
 @Synchronized
 private fun loadLayout(): FileBasedIndexLayoutProviderBean? {
@@ -116,6 +122,3 @@ private fun saveLayout(bean: FileBasedIndexLayoutProviderBean?) {
     LOG.error(e)
   }
 }
-
-
-private fun indexLayoutSettingFile(): Path = PathManager.getIndexRoot().resolve("indices.layout")

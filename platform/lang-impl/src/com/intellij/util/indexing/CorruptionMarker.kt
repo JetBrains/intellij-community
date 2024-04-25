@@ -73,7 +73,8 @@ object CorruptionMarker {
 
     if (Files.exists(indexRoot)) {
       val filesToBeIgnored = FileBasedIndexInfrastructureExtension.EP_NAME.extensions.mapNotNull { it.persistentStateRoot }.toSet() +
-                             "indices.enum" //TODO RC: ID.getEnumFile()
+                             ID.INDICES_ENUM_FILE +
+                             IndexLayoutPersistentSettings.INDICES_LAYOUT_FILE
       indexRoot.directoryStreamIfExists { dirStream ->
         dirStream.forEach {
           if (!filesToBeIgnored.contains(it.fileName.toString())) {
