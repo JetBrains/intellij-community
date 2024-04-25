@@ -49,6 +49,14 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     } ?: throw PathNotFoundException(path.toList())
   }
 
+  fun selectPathWithEnter(vararg path: String, fullMatch: Boolean = true) {
+    expandPath(*path, fullMatch = fullMatch)
+    findExpandedPath(*path, fullMatch = fullMatch)?.let {
+      clickRow(it.row)
+      keyboard { enter() }
+    } ?: throw PathNotFoundException(path.toList())
+  }
+
   fun expandAll(timeout: Duration) {
     fixture.expandAll(timeout.inWholeMilliseconds.toInt())
   }
@@ -60,6 +68,27 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
         var currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
         if (currentPathPaths.isEmpty()) {
           doubleClickPath(*expandedPath.toTypedArray(), fullMatch = fullMatch)
+          currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
+        }
+        if (currentPathPaths.isEmpty()) {
+          throw PathNotFoundException(expandedPath + listOf(it))
+        }
+        expandedPath.add(it)
+      }
+      true
+    }
+    catch (e: PathNotFoundException) {
+      false
+    }
+  }
+
+  fun expandPathWithEnter(vararg path: String, fullMatch: Boolean = true) = waitFor(10.seconds, errorMessage = "Failed find ${path.toList()}") {
+    try {
+      val expandedPath = mutableListOf<String>()
+      path.forEach {
+        var currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
+        if (currentPathPaths.isEmpty()) {
+          selectPathWithEnter(*expandedPath.toTypedArray(), fullMatch = fullMatch)
           currentPathPaths = findExpandedPaths(*(expandedPath + listOf(it)).toTypedArray(), fullMatch = fullMatch)
         }
         if (currentPathPaths.isEmpty()) {
