@@ -74,28 +74,27 @@ object ErrorStatusPanelFactory {
 
       scope.launch {
         errorState.collect { error ->
-          update(error)
+          htmlEditorPane.update(alignment, error, errorPresenter) { action = it }
         }
       }
     }
+  }
 
-    private fun update(error: T?) {
-      if (error == null) {
-        htmlEditorPane.text = ""
-        htmlEditorPane.isVisible = false
-        return
-      }
-
-      val errorAction = errorPresenter.getErrorAction(error)
-      action = errorAction
-
-      htmlEditorPane.text = when (errorPresenter ) {
-        is ErrorStatusPresenter.HTML -> errorPresenter.getHTMLBody(error)
-        is ErrorStatusPresenter.Text -> getErrorText(alignment, errorAction, error, errorPresenter)
-      }
-      htmlEditorPane.isVisible = true
+  private fun <T> JEditorPane.update(alignment: Alignment, error: T?, errorPresenter: ErrorStatusPresenter<T>, setAction: (Action?) -> Unit) {
+    if (error == null) {
+      text = ""
+      isVisible = false
+      return
     }
 
+    val errorAction = errorPresenter.getErrorAction(error)
+    setAction(errorAction)
+
+    text = when (errorPresenter) {
+      is ErrorStatusPresenter.HTML -> errorPresenter.getHTMLBody(error)
+      is ErrorStatusPresenter.Text -> getErrorText(alignment, errorAction, error, errorPresenter)
+    }
+    isVisible = true
   }
 
   private fun <T> getErrorText(alignment: Alignment, errorAction: Action?, error: T, errorPresenter: ErrorStatusPresenter.Text<T>): String {
@@ -116,6 +115,7 @@ object ErrorStatusPanelFactory {
 
   private fun HtmlBuilder.appendP(alignment: Alignment, chunk: HtmlChunk): HtmlBuilder =
     append(HtmlChunk.p().attr("align", alignment.htmlValue).child(chunk))
+
   private fun HtmlBuilder.appendP(alignment: Alignment, @Nls text: String): HtmlBuilder =
     appendP(alignment, HtmlChunk.text(text))
 
