@@ -5,9 +5,10 @@ import org.jetbrains.kotlin.idea.k2.fe10bindings.inspections.AbstractFe10Binding
 import org.jetbrains.kotlin.idea.k2.fe10bindings.inspections.AbstractFe10BindingLocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.fe10bindings.inspections.AbstractFe10BindingQuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 
 internal fun MutableTWorkspace.generateK2Fe10BindingsTests() {
-    testGroup("k2-fe10-bindings", testDataPath = "../idea/tests") {
+    testGroup("k2-fe10-bindings", testDataPath = "../idea/tests", category = INTENTIONS) {
         testClass<AbstractFe10BindingIntentionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("testData/intentions/conventionNameCalls", pattern = pattern)
@@ -18,7 +19,7 @@ internal fun MutableTWorkspace.generateK2Fe10BindingsTests() {
         }
     }
 
-    testGroup("k2-fe10-bindings", testDataPath = "../idea/tests") {
+    testGroup("k2-fe10-bindings", testDataPath = "../idea/tests", category = INSPECTIONS) {
         testClass<AbstractFe10BindingLocalInspectionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("testData/inspectionsLocal/addOperatorModifier", pattern = pattern)
@@ -45,7 +46,7 @@ internal fun MutableTWorkspace.generateK2Fe10BindingsTests() {
         }
     }
 
-    testGroup("k2-fe10-bindings", testDataPath = "../idea/tests") {
+    testGroup("k2-fe10-bindings", testDataPath = "../idea/tests", category = QUICKFIXES) {
         testClass<AbstractFe10BindingQuickFixTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
             model("testData/quickfix/addVarianceModifier", pattern = pattern)

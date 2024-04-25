@@ -1,32 +1,32 @@
 # K2/K1 feature parity report
 
 
-Generated on Sun Apr 21 06:54:44 CEST 2024
+Generated on Thu Apr 25 21:55:15 CEST 2024
 
 ## Categories
 
 | Status | Category | Success rate, % | K2 files | K1 files |
 | -- | -- | --  | -- | -- |
- | :white_check_mark: | UNCATEGORIZED | 118 | 1803 | 1524 | 0 | 
- | :x: | HIGHLIGHTING | 76 | 218 | 285 | 0 | 
- | :x: | COMPLETION | 64 | 1353 | 2126 | 0 | 
- | :x: | CODE_INSIGHT | 58 | 1228 | 2130 | 0 | 
- | :x: | NAVIGATION | 50 | 71 | 142 | 0 | 
- | :white_check_mark: | FIND_USAGES | 89 | 317 | 356 | 0 | 
+ | :x: | UNCATEGORIZED | 14 | 209 | 1519 | 0 | 
+ | :x: | HIGHLIGHTING | 78 | 221 | 285 | 0 | 
+ | :x: | COMPLETION | 64 | 1367 | 2147 | 0 | 
+ | :x: | CODE_INSIGHT | 56 | 1416 | 2547 | 0 | 
+ | :x: | NAVIGATION | 61 | 87 | 142 | 0 | 
+ | :white_check_mark: | FIND_USAGES | 106 | 412 | 387 | 0 | 
  | :x: | REFACTORING | 80 | 308 | 386 | 0 | 
  | :white_check_mark: | RENAME_REFACTORING | 103 | 418 | 405 | 0 | 
- | :white_check_mark: | INLINE_REFACTORING | 202 | 332 | 164 | 0 | 
+ | :x: | INLINE_REFACTORING | 76 | 332 | 439 | 0 | 
  | :x: | MOVE_REFACTORING | 66 | 128 | 193 | 0 | 
- | :x: | EXTRACT_REFACTORING | 64 | 377 | 586 | 0 | 
- | :x: | INSPECTIONS | 22 | 577 | 2610 | 0 | 
- | :x: | INTENTIONS | 53 | 1510 | 2857 | 0 | 
- | :x: | QUICKFIXES | 48 | 864 | 1815 | 0 | 
+ | :white_check_mark: | EXTRACT_REFACTORING | 123 | 724 | 588 | 0 | 
+ | :x: | INSPECTIONS | 26 | 986 | 3796 | 0 | 
+ | :x: | INTENTIONS | 47 | 1769 | 3778 | 0 | 
+ | :x: | QUICKFIXES | 25 | 892 | 3532 | 0 | 
  | :x: | SCRIPTS | 0 | 0 | 40 | 0 | 
- | :x: | DEBUGGER | 0 | 0 | 961 | 0 | 
- | :x: | J2K | 50 | 553 | 1104 | 0 | 
+ | :white_check_mark: | DEBUGGER | 90 | 861 | 961 | 0 | 
+ | :x: | J2K | 50 | 577 | 1151 | 0 | 
 
 ## Shared cases
-shared 11950 files out of 856 cases
+shared 14368 files out of 1094 cases
 
 | Status | Case name | Success rate, % | K2 files | K1 files | Total files |
 | -- | -- | --  | -- | -- | -- |
@@ -38,8 +38,8 @@ shared 11950 files out of 856 cases
  | :white_check_mark: | FirParameterInfoTestGenerated$TypeArguments | 100 | 23 | 23 | 23 | 
  | :white_check_mark: | FirParameterInfoTestGenerated$WithLib1 | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | FirParameterInfoTestGenerated$WithLib2 | 100 | 1 | 1 | 1 | 
- | :x: | [HighLevelQuickFixTestGenerated] | 33 | 522 | 1560 | 1566 | 
- | :x: | HighLevelQuickFixTestGenerated$AddAnnotationTarget | 0 | 0 | 30 | 30 | 
+ | :x: | [HighLevelQuickFixTestGenerated] | 31 | 729 | 2339 | 2348 | 
+ | :x: | HighLevelQuickFixTestGenerated$AddAnnotationTarget | 0 | 0 | 35 | 35 | 
  | :x: | HighLevelQuickFixTestGenerated$AddAnnotationUseSiteTarget | 0 | 0 | 2 | 2 | 
  | :x: | HighLevelQuickFixTestGenerated$AddConstructorParameter | 0 | 0 | 1 | 1 | 
  | :x: | HighLevelQuickFixTestGenerated$AddConstructorParameterFromSuperTypeCall | 0 | 0 | 10 | 10 | 
@@ -59,21 +59,22 @@ shared 11950 files out of 856 cases
  | :x: | HighLevelQuickFixTestGenerated$AddReturnToUnusedLastExpressionInFunction | 0 | 0 | 6 | 6 | 
  | :x: | HighLevelQuickFixTestGenerated$AddRunBeforeLambda | 0 | 0 | 1 | 1 | 
  | :x: | HighLevelQuickFixTestGenerated$AddSemicolonBeforeLambdaExpression | 0 | 0 | 13 | 13 | 
- | :x: | HighLevelQuickFixTestGenerated$AddStarProjections | 0 | 0 | 6 | 6 | 
+ | :x: | HighLevelQuickFixTestGenerated$AddStarProjections | 0 | 0 | 47 | 47 | 
  | :x: | HighLevelQuickFixTestGenerated$AddSuspend | 0 | 0 | 6 | 6 | 
  | :x: | HighLevelQuickFixTestGenerated$AddTypeAnnotationToValueParameter | 0 | 0 | 10 | 10 | 
  | :x: | HighLevelQuickFixTestGenerated$AddUnsafeVarianceAnnotation | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$AddValVar | 0 | 0 | 3 | 3 | 
  | :x: | HighLevelQuickFixTestGenerated$AssignToProperty | 0 | 0 | 12 | 12 | 
- | :x: | HighLevelQuickFixTestGenerated$CallFromPublicInline | 0 | 0 | 4 | 4 | 
+ | :x: | HighLevelQuickFixTestGenerated$CallFromPublicInline | 0 | 0 | 16 | 16 | 
  | :x: | HighLevelQuickFixTestGenerated$CanBeParameter | 0 | 0 | 4 | 4 | 
  | :x: | HighLevelQuickFixTestGenerated$CanBePrimaryConstructorProperty | 0 | 0 | 5 | 5 | 
  | :x: | HighLevelQuickFixTestGenerated$CastDueToProgressionResolveChange | 0 | 0 | 9 | 9 | 
  | :x: | HighLevelQuickFixTestGenerated$ChangeObjectToClass | 0 | 0 | 2 | 2 | 
  | :x: | HighLevelQuickFixTestGenerated$ChangeSignature | 0 | 0 | 64 | 64 | 
  | :x: | HighLevelQuickFixTestGenerated$ChangeSuperTypeListEntryTypeArgument | 0 | 0 | 4 | 4 | 
+ | :x: | HighLevelQuickFixTestGenerated$ChangeToFunctionInvocation | 0 | 0 | 6 | 6 | 
  | :x: | HighLevelQuickFixTestGenerated$ChangeToLabeledReturn | 0 | 0 | 11 | 11 | 
  | :x: | HighLevelQuickFixTestGenerated$ChangeToMutableCollection | 0 | 0 | 5 | 5 | 
+ | :x: | HighLevelQuickFixTestGenerated$ChangeToPropertyAccess | 0 | 0 | 5 | 5 | 
  | :x: | HighLevelQuickFixTestGenerated$ChangeToUseSpreadOperator | 0 | 0 | 8 | 8 | 
  | :x: | HighLevelQuickFixTestGenerated$CompilerError | 0 | 0 | 1 | 1 | 
  | :x: | HighLevelQuickFixTestGenerated$ConvertCollectionLiteralToIntArrayOf | 0 | 0 | 4 | 4 | 
@@ -82,31 +83,31 @@ shared 11950 files out of 856 cases
  | :x: | HighLevelQuickFixTestGenerated$ConvertPropertyInitializerToGetter | 0 | 0 | 3 | 3 | 
  | :x: | HighLevelQuickFixTestGenerated$ConvertToAnonymousObject | 0 | 0 | 12 | 12 | 
  | :x: | HighLevelQuickFixTestGenerated$ConvertToIsArrayOfCall | 0 | 0 | 7 | 7 | 
- | :x: | HighLevelQuickFixTestGenerated$CreateFromUsage | 0 | 0 | 46 | 46 | 
+ | :x: | HighLevelQuickFixTestGenerated$CreateFromUsage | 0 | 0 | 106 | 106 | 
  | :x: | HighLevelQuickFixTestGenerated$CreateLabel | 0 | 0 | 9 | 9 | 
  | :x: | HighLevelQuickFixTestGenerated$DeclarationCantBeInlined | 0 | 0 | 2 | 2 | 
  | :x: | HighLevelQuickFixTestGenerated$DeclaringJavaClass | 0 | 0 | 5 | 5 | 
  | :x: | HighLevelQuickFixTestGenerated$DecreaseVisibility | 0 | 0 | 14 | 14 | 
  | :x: | HighLevelQuickFixTestGenerated$DeprecatedJavaAnnotation | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$DeprecatedSymbolUsage | 0 | 0 | 23 | 23 | 
- | :x: | HighLevelQuickFixTestGenerated$EqualityNotApplicable | 0 | 0 | 4 | 4 | 
+ | :x: | HighLevelQuickFixTestGenerated$DeprecatedSymbolUsage | 0 | 0 | 176 | 176 | 
+ | :x: | HighLevelQuickFixTestGenerated$EqualityNotApplicable | 0 | 0 | 11 | 11 | 
  | :x: | HighLevelQuickFixTestGenerated$Final | 0 | 0 | 5 | 5 | 
  | :x: | HighLevelQuickFixTestGenerated$FoldTryCatch | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$FunctionWithLambdaExpressionBody | 0 | 0 | 2 | 2 | 
+ | :x: | HighLevelQuickFixTestGenerated$FunctionWithLambdaExpressionBody | 0 | 0 | 10 | 10 | 
  | :x: | HighLevelQuickFixTestGenerated$Implement | 0 | 0 | 39 | 39 | 
  | :x: | HighLevelQuickFixTestGenerated$ImportAlias | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$IncreaseVisibility | 0 | 0 | 23 | 23 | 
+ | :x: | HighLevelQuickFixTestGenerated$IncreaseVisibility | 0 | 0 | 33 | 33 | 
  | :x: | HighLevelQuickFixTestGenerated$InitializeWithConstructorParameter | 0 | 0 | 17 | 17 | 
  | :x: | HighLevelQuickFixTestGenerated$InlineClass | 0 | 0 | 4 | 4 | 
  | :x: | HighLevelQuickFixTestGenerated$InlineTypeParameterFix | 0 | 0 | 5 | 5 | 
  | :x: | HighLevelQuickFixTestGenerated$InsertDelegationCall | 0 | 0 | 8 | 8 | 
  | :x: | HighLevelQuickFixTestGenerated$IsEnumEntry | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$JavaClassOnCompanion | 0 | 0 | 4 | 4 | 
+ | :x: | HighLevelQuickFixTestGenerated$JavaClassOnCompanion | 0 | 0 | 7 | 7 | 
  | :x: | HighLevelQuickFixTestGenerated$LeakingThis | 0 | 0 | 8 | 8 | 
  | :x: | HighLevelQuickFixTestGenerated$Libraries | 0 | 0 | 2 | 2 | 
  | :x: | HighLevelQuickFixTestGenerated$MakeConstructorParameterProperty | 0 | 0 | 5 | 5 | 
  | :x: | HighLevelQuickFixTestGenerated$MakeUpperBoundNonNullable | 0 | 0 | 11 | 11 | 
- | :x: | HighLevelQuickFixTestGenerated$Migration | 0 | 0 | 2 | 2 | 
+ | :x: | HighLevelQuickFixTestGenerated$Migration | 0 | 0 | 46 | 46 | 
  | :x: | HighLevelQuickFixTestGenerated$MissingConstructorBrackets | 0 | 0 | 1 | 1 | 
  | :x: | HighLevelQuickFixTestGenerated$MoveMemberToCompanionObject | 0 | 0 | 1 | 1 | 
  | :x: | HighLevelQuickFixTestGenerated$MoveReceiverAnnotation | 0 | 0 | 4 | 4 | 
@@ -149,14 +150,14 @@ shared 11950 files out of 856 cases
  | :x: | HighLevelQuickFixTestGenerated$RenameUnresolvedReference | 0 | 0 | 6 | 6 | 
  | :x: | HighLevelQuickFixTestGenerated$ReorderParameters | 0 | 0 | 11 | 11 | 
  | :x: | HighLevelQuickFixTestGenerated$ReplaceJvmFieldWithConst | 0 | 0 | 9 | 9 | 
- | :x: | HighLevelQuickFixTestGenerated$RestrictedRetentionForExpressionAnnotation | 0 | 0 | 6 | 6 | 
+ | :x: | HighLevelQuickFixTestGenerated$RestrictedRetentionForExpressionAnnotation | 0 | 0 | 16 | 16 | 
  | :x: | HighLevelQuickFixTestGenerated$SmartCastImpossibleInIfThen | 0 | 0 | 12 | 12 | 
  | :x: | HighLevelQuickFixTestGenerated$SpecifySuperExplicitly | 0 | 0 | 10 | 10 | 
  | :x: | HighLevelQuickFixTestGenerated$SpecifyTypeExplicitly | 0 | 0 | 1 | 1 | 
  | :x: | HighLevelQuickFixTestGenerated$SuperTypeIsExtensionType | 0 | 0 | 3 | 3 | 
- | :x: | HighLevelQuickFixTestGenerated$Suppress | 0 | 0 | 4 | 4 | 
+ | :x: | HighLevelQuickFixTestGenerated$Suppress | 0 | 0 | 88 | 89 | 
  | :x: | HighLevelQuickFixTestGenerated$SurroundWithNullCheck | 0 | 0 | 24 | 24 | 
- | :x: | HighLevelQuickFixTestGenerated$SuspiciousCollectionReassignment | 0 | 0 | 1 | 1 | 
+ | :x: | HighLevelQuickFixTestGenerated$SuspiciousCollectionReassignment | 0 | 0 | 35 | 35 | 
  | :x: | HighLevelQuickFixTestGenerated$TooLongCharLiteralToString | 0 | 0 | 7 | 7 | 
  | :x: | HighLevelQuickFixTestGenerated$TypeImports | 0 | 0 | 5 | 5 | 
  | :x: | HighLevelQuickFixTestGenerated$TypeInferenceExpectedTypeMismatch | 0 | 0 | 1 | 1 | 
@@ -171,38 +172,48 @@ shared 11950 files out of 856 cases
  | :x: | HighLevelQuickFixTestGenerated$WrapWhenExpressionInParentheses | 0 | 0 | 1 | 1 | 
  | :x: | HighLevelQuickFixTestGenerated$WrongLongSuffix | 0 | 0 | 1 | 1 | 
  | :x: | HighLevelQuickFixTestGenerated$YieldUnsupported | 0 | 0 | 2 | 2 | 
+ | :x: | HighLevelQuickFixTestGenerated$AddValVar | 10 | 1 | 10 | 10 | 
  | :x: | HighLevelQuickFixTestGenerated$Lateinit | 33 | 2 | 6 | 6 | 
  | :x: | HighLevelQuickFixTestGenerated$SurroundWithArrayOfForNamedArgumentsToVarargs | 44 | 4 | 9 | 9 | 
  | :x: | HighLevelQuickFixTestGenerated$SupertypeInitialization | 50 | 16 | 32 | 32 | 
+ | :x: | HighLevelQuickFixTestGenerated$ParameterTypeMismatch | 53 | 9 | 17 | 17 | 
+ | :x: | HighLevelQuickFixTestGenerated$AutoImports | 57 | 55 | 96 | 96 | 
+ | :x: | HighLevelQuickFixTestGenerated$TypeMismatch | 59 | 47 | 80 | 81 | 
  | :x: | HighLevelQuickFixTestGenerated$ReplaceWithDotCall | 67 | 6 | 9 | 9 | 
  | :x: | HighLevelQuickFixTestGenerated$When | 73 | 27 | 37 | 38 | 
  | :x: | HighLevelQuickFixTestGenerated$Abstract | 74 | 26 | 35 | 35 | 
  | :x: | HighLevelQuickFixTestGenerated$Modifiers | 75 | 52 | 69 | 69 | 
  | :x: | HighLevelQuickFixTestGenerated$TypeAddition | 75 | 15 | 20 | 20 | 
+ | :x: | HighLevelQuickFixTestGenerated$Suspend | 77 | 10 | 13 | 13 | 
  | :x: | HighLevelQuickFixTestGenerated$ReplaceWithArrayCallInAnnotation | 80 | 4 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$AddExclExclCall | 84 | 31 | 37 | 37 | 
+ | :x: | HighLevelQuickFixTestGenerated$Nullables | 81 | 13 | 16 | 16 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$ReplaceInfixOrOperatorCall | 86 | 19 | 22 | 22 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$ReplaceWithSafeCall | 86 | 25 | 29 | 29 | 
+ | :white_check_mark: | HighLevelQuickFixTestGenerated$AddExclExclCall | 88 | 45 | 51 | 51 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$RemoveUnused | 89 | 25 | 28 | 28 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AutoImports | 90 | 44 | 49 | 49 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$Expressions | 90 | 36 | 40 | 40 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$AddFunModifier | 91 | 10 | 11 | 11 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$Nullables | 92 | 11 | 12 | 12 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$Override | 92 | 23 | 25 | 25 | 
+ | :white_check_mark: | HighLevelQuickFixTestGenerated$ChangeMutability | 93 | 14 | 15 | 15 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$WrapWithSafeLetCall | 94 | 32 | 34 | 34 | 
+ | :white_check_mark: | HighLevelQuickFixTestGenerated$TypeMismatchOnOverride | 95 | 19 | 20 | 20 | 
+ | :white_check_mark: | HighLevelQuickFixTestGenerated$TypeMismatchOnReturnedExpression | 97 | 36 | 37 | 37 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$AddCrossinline | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$AddDataModifier | 100 | 16 | 16 | 16 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$AddInitializer | 100 | 23 | 23 | 23 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$AddInline | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$AddInlineToReifiedFunctionFix | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$AddNoinline | 100 | 4 | 4 | 4 | 
+ | :white_check_mark: | HighLevelQuickFixTestGenerated$AddOpenToClassDeclaration | 100 | 18 | 18 | 18 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$AddPropertyAccessors | 100 | 4 | 4 | 4 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$CheckArguments | 100 | 1 | 1 | 1 | 
+ | :white_check_mark: | HighLevelQuickFixTestGenerated$ComponentFunctionReturnTypeMismatch | 100 | 6 | 6 | 6 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$ConflictingImports | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$ConvertToBlockBody | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$LocalVariableWithTypeParameters | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$MakeTypeParameterReified | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$RemoveRedundantSpreadOperator | 100 | 1 | 1 | 1 | 
+ | :white_check_mark: | HighLevelQuickFixTestGenerated$RemoveValVarFromParameter | 100 | 7 | 7 | 7 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$SimplifyComparison | 100 | 7 | 7 | 7 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$SpecifyOverrideExplicitly | 100 | 8 | 8 | 8 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$SpecifySuperType | 100 | 10 | 10 | 10 | 
@@ -210,8 +221,9 @@ shared 11950 files out of 856 cases
  | :white_check_mark: | HighLevelQuickFixTestGenerated$Supercalls | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$ToString | 100 | 7 | 7 | 7 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$WrongPrimitive | 100 | 14 | 14 | 14 | 
- | :x: | [K2IntentionTestGenerated] | 39 | 799 | 2060 | 2074 | 
- | :x: | K2IntentionTestGenerated$AddAnnotationUseSiteTarget | 0 | 0 | 5 | 5 | 
+ | :white_check_mark: | HighLevelQuickFixTestGenerated$Casts | 108 | 13 | 12 | 13 | 
+ | :x: | [K2IntentionTestGenerated] | 41 | 1131 | 2726 | 2744 | 
+ | :x: | K2IntentionTestGenerated$AddAnnotationUseSiteTarget | 0 | 0 | 32 | 32 | 
  | :x: | K2IntentionTestGenerated$AddForLoopIndices | 0 | 0 | 14 | 14 | 
  | :x: | K2IntentionTestGenerated$AddJvmOverloads | 0 | 0 | 8 | 8 | 
  | :x: | K2IntentionTestGenerated$AddJvmStatic | 0 | 0 | 13 | 13 | 
@@ -220,17 +232,17 @@ shared 11950 files out of 856 cases
  | :x: | K2IntentionTestGenerated$AddThrowsAnnotation | 0 | 0 | 29 | 29 | 
  | :x: | K2IntentionTestGenerated$AddValOrVar | 0 | 0 | 12 | 12 | 
  | :x: | K2IntentionTestGenerated$AnonymousFunctionToLambda | 0 | 0 | 26 | 26 | 
+ | :x: | K2IntentionTestGenerated$Branched | 0 | 0 | 104 | 104 | 
  | :x: | K2IntentionTestGenerated$ConvertArgumentToSet | 0 | 0 | 20 | 20 | 
  | :x: | K2IntentionTestGenerated$ConvertArrayParameterToVararg | 0 | 0 | 12 | 12 | 
  | :x: | K2IntentionTestGenerated$ConvertBlockCommentToLineComment | 0 | 0 | 7 | 7 | 
  | :x: | K2IntentionTestGenerated$ConvertCamelCaseTestFunctionToSpaced | 0 | 0 | 7 | 7 | 
  | :x: | K2IntentionTestGenerated$ConvertCollectionConstructorToFunction | 0 | 0 | 7 | 7 | 
  | :x: | K2IntentionTestGenerated$ConvertEnumToSealedClass | 0 | 0 | 9 | 9 | 
- | :x: | K2IntentionTestGenerated$ConvertFilteringFunctionWithDemorgansLaw | 0 | 0 | 5 | 5 | 
+ | :x: | K2IntentionTestGenerated$ConvertFilteringFunctionWithDemorgansLaw | 0 | 0 | 17 | 17 | 
  | :x: | K2IntentionTestGenerated$ConvertFunctionToProperty | 0 | 0 | 32 | 32 | 
  | :x: | K2IntentionTestGenerated$ConvertFunctionTypeParameterToReceiver | 0 | 0 | 19 | 19 | 
  | :x: | K2IntentionTestGenerated$ConvertFunctionTypeReceiverToParameter | 0 | 0 | 11 | 11 | 
- | :x: | K2IntentionTestGenerated$ConvertLambdaToReference | 0 | 0 | 10 | 10 | 
  | :x: | K2IntentionTestGenerated$ConvertLateinitPropertyToNullable | 0 | 0 | 4 | 4 | 
  | :x: | K2IntentionTestGenerated$ConvertLazyPropertyToOrdinary | 0 | 0 | 6 | 6 | 
  | :x: | K2IntentionTestGenerated$ConvertNullablePropertyToLateinit | 0 | 0 | 17 | 17 | 
@@ -244,8 +256,8 @@ shared 11950 files out of 856 cases
  | :x: | K2IntentionTestGenerated$ConvertReceiverToParameter | 0 | 0 | 17 | 17 | 
  | :x: | K2IntentionTestGenerated$ConvertSealedClassToEnum | 0 | 0 | 11 | 11 | 
  | :x: | K2IntentionTestGenerated$ConvertSnakeCaseTestFunctionToSpaced | 0 | 0 | 2 | 2 | 
- | :x: | K2IntentionTestGenerated$ConvertToIndexedFunctionCall | 0 | 0 | 8 | 8 | 
- | :x: | K2IntentionTestGenerated$ConvertToScope | 0 | 0 | 26 | 26 | 
+ | :x: | K2IntentionTestGenerated$ConvertToIndexedFunctionCall | 0 | 0 | 26 | 26 | 
+ | :x: | K2IntentionTestGenerated$ConvertToScope | 0 | 0 | 105 | 105 | 
  | :x: | K2IntentionTestGenerated$ConvertTrimIndentToTrimMargin | 0 | 0 | 6 | 6 | 
  | :x: | K2IntentionTestGenerated$ConvertTrimMarginToTrimIndent | 0 | 0 | 10 | 10 | 
  | :x: | K2IntentionTestGenerated$ConvertUnsafeCastCallToUnsafeCast | 0 | 0 | 2 | 2 | 
@@ -253,12 +265,12 @@ shared 11950 files out of 856 cases
  | :x: | K2IntentionTestGenerated$ConvertVarargParameterToArray | 0 | 0 | 7 | 7 | 
  | :x: | K2IntentionTestGenerated$ConvertVariableAssignmentToExpression | 0 | 0 | 4 | 4 | 
  | :x: | K2IntentionTestGenerated$CopyConcatenatedStringToClipboard | 0 | 0 | 5 | 5 | 
- | :x: | K2IntentionTestGenerated$Declarations | 0 | 0 | 15 | 15 | 
+ | :x: | K2IntentionTestGenerated$Declarations | 0 | 0 | 63 | 63 | 
  | :x: | K2IntentionTestGenerated$DestructuringInLambda | 0 | 0 | 26 | 26 | 
  | :x: | K2IntentionTestGenerated$DestructuringVariables | 0 | 0 | 11 | 11 | 
  | :x: | K2IntentionTestGenerated$EvaluateCompileTimeExpression | 0 | 0 | 16 | 16 | 
  | :x: | K2IntentionTestGenerated$ExpandBooleanExpression | 0 | 0 | 13 | 13 | 
- | :x: | K2IntentionTestGenerated$ImplementAbstractMember | 0 | 0 | 13 | 13 | 
+ | :x: | K2IntentionTestGenerated$ImplementAbstractMember | 0 | 0 | 26 | 26 | 
  | :x: | K2IntentionTestGenerated$ImplementAsConstructorParameter | 0 | 0 | 11 | 11 | 
  | :x: | K2IntentionTestGenerated$InsertCurlyBracesToTemplate | 0 | 0 | 8 | 8 | 
  | :x: | K2IntentionTestGenerated$IntroduceBackingProperty | 0 | 0 | 15 | 15 | 
@@ -290,7 +302,7 @@ shared 11950 files out of 856 cases
  | :x: | K2IntentionTestGenerated$ReplaceSizeZeroCheckWithIsEmpty | 0 | 0 | 17 | 17 | 
  | :x: | K2IntentionTestGenerated$ReplaceTypeArgumentWithUnderscore | 0 | 0 | 31 | 31 | 
  | :x: | K2IntentionTestGenerated$ReplaceUnderscoreWithParameterName | 0 | 0 | 9 | 9 | 
- | :x: | K2IntentionTestGenerated$ReplaceUntilWithRangeTo | 0 | 0 | 1 | 1 | 
+ | :x: | K2IntentionTestGenerated$ReplaceUntilWithRangeTo | 0 | 0 | 8 | 8 | 
  | :x: | K2IntentionTestGenerated$ReplaceWithOrdinaryAssignment | 0 | 0 | 9 | 9 | 
  | :x: | K2IntentionTestGenerated$SamConversionToAnonymousObject | 0 | 0 | 20 | 20 | 
  | :x: | K2IntentionTestGenerated$SimplifyBooleanWithConstants | 0 | 0 | 39 | 39 | 
@@ -300,25 +312,25 @@ shared 11950 files out of 856 cases
  | :x: | K2IntentionTestGenerated$UsePropertyAccessSyntax | 0 | 0 | 57 | 57 | 
  | :x: | K2IntentionTestGenerated$UseWithIndex | 0 | 0 | 8 | 8 | 
  | :x: | K2IntentionTestGenerated$ValToObject | 0 | 0 | 8 | 8 | 
+ | :x: | K2IntentionTestGenerated$ConvertLambdaToReference | 71 | 96 | 136 | 136 | 
  | :white_check_mark: | K2IntentionTestGenerated$ImportMember | 95 | 21 | 22 | 22 | 
  | :white_check_mark: | K2IntentionTestGenerated$SpecifyExplicitLambdaSignature | 95 | 18 | 19 | 19 | 
  | :white_check_mark: | K2IntentionTestGenerated$ConvertReferenceToLambda | 98 | 46 | 47 | 47 | 
  | :white_check_mark: | K2IntentionTestGenerated$ConvertToBlockBody | 98 | 40 | 41 | 41 | 
  | :white_check_mark: | K2IntentionTestGenerated$SpecifyTypeExplicitly | 98 | 47 | 48 | 48 | 
- | :white_check_mark: | K2IntentionTestGenerated$AddFullQualifier | 100 | 7 | 7 | 7 | 
+ | :white_check_mark: | K2IntentionTestGenerated$AddFullQualifier | 100 | 51 | 51 | 51 | 
  | :white_check_mark: | K2IntentionTestGenerated$AddMissingClassKeyword | 100 | 8 | 8 | 8 | 
  | :white_check_mark: | K2IntentionTestGenerated$AddNameToArgument | 100 | 30 | 30 | 30 | 
- | :white_check_mark: | K2IntentionTestGenerated$AddNamesInCommentToJavaCallArguments | 100 | 15 | 15 | 15 | 
+ | :white_check_mark: | K2IntentionTestGenerated$AddNamesInCommentToJavaCallArguments | 100 | 19 | 19 | 19 | 
  | :white_check_mark: | K2IntentionTestGenerated$AddNamesToCallArguments | 100 | 16 | 16 | 16 | 
  | :white_check_mark: | K2IntentionTestGenerated$AddNamesToFollowingArguments | 100 | 11 | 11 | 11 | 
  | :white_check_mark: | K2IntentionTestGenerated$AddOpenModifier | 100 | 14 | 14 | 14 | 
- | :white_check_mark: | K2IntentionTestGenerated$AddPropertyAccessors | 100 | 15 | 15 | 15 | 
+ | :white_check_mark: | K2IntentionTestGenerated$AddPropertyAccessors | 100 | 46 | 46 | 46 | 
  | :white_check_mark: | K2IntentionTestGenerated$AddWhenRemainingBranches | 100 | 4 | 4 | 4 | 
- | :white_check_mark: | K2IntentionTestGenerated$ChangeVisibility | 100 | 3 | 3 | 3 | 
- | :white_check_mark: | K2IntentionTestGenerated$Chop | 100 | 10 | 10 | 10 | 
+ | :white_check_mark: | K2IntentionTestGenerated$Chop | 100 | 22 | 22 | 22 | 
  | :white_check_mark: | K2IntentionTestGenerated$ConvertBinaryExpressionWithDemorgansLaw | 100 | 25 | 25 | 25 | 
  | :white_check_mark: | K2IntentionTestGenerated$ConvertConcatenationToBuildString | 100 | 7 | 7 | 7 | 
- | :white_check_mark: | K2IntentionTestGenerated$ConvertForEachToForLoop | 100 | 22 | 22 | 22 | 
+ | :white_check_mark: | K2IntentionTestGenerated$ConvertForEachToForLoop | 100 | 31 | 31 | 31 | 
  | :white_check_mark: | K2IntentionTestGenerated$ConvertPropertyGetterToInitializer | 100 | 11 | 11 | 11 | 
  | :white_check_mark: | K2IntentionTestGenerated$ConvertStringTemplateToBuildString | 100 | 8 | 8 | 8 | 
  | :white_check_mark: | K2IntentionTestGenerated$ConvertToConcatenatedString | 100 | 37 | 37 | 37 | 
@@ -332,18 +344,38 @@ shared 11950 files out of 856 cases
  | :white_check_mark: | K2IntentionTestGenerated$MovePropertyToConstructor | 100 | 18 | 18 | 18 | 
  | :white_check_mark: | K2IntentionTestGenerated$RemoveAllArgumentNames | 100 | 16 | 16 | 16 | 
  | :white_check_mark: | K2IntentionTestGenerated$RemoveExplicitTypeArguments | 100 | 37 | 37 | 37 | 
- | :white_check_mark: | K2IntentionTestGenerated$RemoveSingleArgumentName | 100 | 17 | 17 | 17 | 
+ | :white_check_mark: | K2IntentionTestGenerated$RemoveSingleArgumentName | 100 | 21 | 21 | 21 | 
  | :white_check_mark: | K2IntentionTestGenerated$ReplaceUnderscoreWithTypeArgument | 100 | 27 | 27 | 27 | 
  | :white_check_mark: | K2IntentionTestGenerated$ToRawStringLiteral | 100 | 16 | 16 | 16 | 
  | :white_check_mark: | K2IntentionTestGenerated$TrailingComma | 100 | 1 | 1 | 1 | 
+ | :white_check_mark: | K2IntentionTestGenerated$ChangeVisibility | 101 | 90 | 89 | 90 | 
  | :white_check_mark: | K2IntentionTestGenerated$InsertExplicitTypeArguments | 103 | 31 | 30 | 31 | 
+ | :white_check_mark: | K2IntentionTestGenerated$IfToWhen | 107 | 45 | 42 | 45 | 
  | :white_check_mark: | K2IntentionTestGenerated$RemoveExplicitType | 115 | 62 | 54 | 66 | 
  | :white_check_mark: | K2IntentionTestGenerated$Flatten | 133 | 4 | 3 | 4 | 
+ | :x: | [K2PsiUnifierTestGenerated] | 76 | 83 | 109 | 114 | 
+ | :x: | K2PsiUnifierTestGenerated$CallableReferences | 0 | 0 | 3 | 3 | 
+ | :x: | K2PsiUnifierTestGenerated$ClassesAndObjects | 0 | 0 | 6 | 6 | 
+ | :x: | K2PsiUnifierTestGenerated$TypeParameters | 0 | 0 | 1 | 1 | 
+ | :x: | K2PsiUnifierTestGenerated$Super | 25 | 1 | 4 | 4 | 
+ | :x: | K2PsiUnifierTestGenerated$Assignments | 60 | 3 | 5 | 5 | 
+ | :x: | K2PsiUnifierTestGenerated$Blocks | 67 | 2 | 3 | 3 | 
+ | :x: | K2PsiUnifierTestGenerated$Types | 67 | 4 | 6 | 6 | 
+ | :x: | K2PsiUnifierTestGenerated$Conventions | 69 | 9 | 13 | 13 | 
+ | :x: | K2PsiUnifierTestGenerated$Uncategorized | 69 | 9 | 13 | 13 | 
+ | :white_check_mark: | K2PsiUnifierTestGenerated$Lambdas | 86 | 6 | 7 | 7 | 
+ | :white_check_mark: | K2PsiUnifierTestGenerated$This | 90 | 9 | 10 | 10 | 
+ | :white_check_mark: | K2PsiUnifierTestGenerated$Calls | 100 | 15 | 15 | 17 | 
+ | :white_check_mark: | K2PsiUnifierTestGenerated$Casts | 100 | 3 | 3 | 3 | 
+ | :white_check_mark: | K2PsiUnifierTestGenerated$Invoke | 100 | 4 | 4 | 4 | 
+ | :white_check_mark: | K2PsiUnifierTestGenerated$LocalCallables | 100 | 5 | 5 | 6 | 
+ | :white_check_mark: | K2PsiUnifierTestGenerated$Misc | 100 | 3 | 3 | 3 | 
+ | :white_check_mark: | K2PsiUnifierTestGenerated$Expressions | 125 | 10 | 8 | 10 | 
  | :x: | [K2JavaToKotlinConverterSingleFileFullJDKTestGenerated] | 13 | 1 | 8 | 8 | 
  | :x: | K2JavaToKotlinConverterSingleFileFullJDKTestGenerated$Collections | 0 | 0 | 5 | 5 | 
  | :x: | K2JavaToKotlinConverterSingleFileFullJDKTestGenerated$Enum | 0 | 0 | 1 | 1 | 
  | :x: | K2JavaToKotlinConverterSingleFileFullJDKTestGenerated$Issues | 50 | 1 | 2 | 2 | 
- | :x: | [K2JavaToKotlinConverterSingleFileTestGenerated] | 51 | 531 | 1049 | 1049 | 
+ | :x: | [K2JavaToKotlinConverterSingleFileTestGenerated] | 51 | 555 | 1096 | 1096 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$AnonymousClass | 0 | 0 | 3 | 3 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ExplicitApiMode | 0 | 0 | 2 | 2 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$JavaStandardMethods | 0 | 0 | 3 | 3 | 
@@ -352,8 +384,10 @@ shared 11950 files out of 856 cases
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Lambda | 0 | 0 | 2 | 2 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$List | 0 | 0 | 2 | 2 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ObjectLiteral | 0 | 0 | 5 | 5 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$PatternMatching | 0 | 0 | 1 | 1 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Projections | 0 | 0 | 1 | 1 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$RawGenerics | 0 | 0 | 4 | 4 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$RecordClass | 0 | 0 | 16 | 16 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Strings | 0 | 0 | 1 | 1 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ToArray | 0 | 0 | 1 | 1 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ToKotlinClasses | 0 | 0 | 6 | 6 | 
@@ -366,15 +400,15 @@ shared 11950 files out of 856 cases
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$TypeParameters | 20 | 3 | 15 | 15 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$MutableCollections | 23 | 3 | 13 | 13 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$InvalidCode | 25 | 1 | 4 | 4 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$PostProcessing | 25 | 7 | 28 | 28 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$TryWithResource | 25 | 3 | 12 | 12 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$TypeCastExpression | 26 | 5 | 19 | 19 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ArrayType | 27 | 3 | 11 | 11 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$PostProcessing | 31 | 9 | 29 | 29 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Constructors | 33 | 15 | 45 | 45 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Types | 33 | 2 | 6 | 6 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Enum | 36 | 9 | 25 | 25 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Function | 38 | 17 | 45 | 45 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Issues | 38 | 32 | 84 | 84 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Enum | 40 | 10 | 25 | 25 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Inheritance | 40 | 2 | 5 | 5 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$SuperExpression | 43 | 3 | 7 | 7 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Nullability | 46 | 18 | 39 | 39 | 
@@ -390,13 +424,14 @@ shared 11950 files out of 856 cases
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$AssertStatement | 60 | 3 | 5 | 5 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Field | 63 | 10 | 16 | 16 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$KotlinApiAccess | 63 | 12 | 19 | 19 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$BoxedType | 67 | 10 | 15 | 15 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$SwitchExpression | 65 | 11 | 17 | 17 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Interface | 67 | 8 | 12 | 12 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$IsOperator | 67 | 2 | 3 | 3 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$SimplifyNegatedBinaryExpression | 67 | 4 | 6 | 6 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$AssignmentExpression | 70 | 19 | 27 | 27 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Annotations | 73 | 24 | 33 | 33 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$BinaryExpression | 73 | 19 | 26 | 26 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$BoxedType | 73 | 11 | 15 | 15 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$DocComments | 73 | 11 | 15 | 15 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Formatting | 73 | 8 | 11 | 11 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ArrayAccessExpression | 75 | 3 | 4 | 4 | 
@@ -414,6 +449,7 @@ shared 11950 files out of 856 cases
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Protected | 86 | 6 | 7 | 7 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Class | 89 | 33 | 37 | 37 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$LocalVariable | 89 | 8 | 9 | 9 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$TextBlocks | 90 | 9 | 10 | 10 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$LiteralExpression | 95 | 18 | 19 | 19 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Blocks | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$BreakStatement | 100 | 2 | 2 | 2 | 
@@ -421,8 +457,8 @@ shared 11950 files out of 856 cases
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ConditionalExpression | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ContinueStatement | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$DoWhileStatement | 100 | 5 | 5 | 5 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$EnhancedSwitchStatement | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$LibraryUsage | 100 | 2 | 2 | 2 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$NewJavaFeatures | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$PackageStatement | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ParenthesizedExpression | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$PolyadicExpression | 100 | 6 | 6 | 6 | 
@@ -430,14 +466,17 @@ shared 11950 files out of 856 cases
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$SynchronizedStatement | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ThisExpression | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ThrowStatement | 100 | 1 | 1 | 1 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Uncategorized | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$VarArg | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$WhileStatement | 100 | 6 | 6 | 6 | 
  | :x: | FindUsagesWithDisableComponentSearchFirTestGenerated | 5 | 1 | 21 | 21 | 
  | :x: | K2MultiModuleMoveTestGenerated | 23 | 6 | 26 | 26 | 
- | :x: | [HighLevelWeigherTestGenerated] | 70 | 74 | 106 | 107 | 
+ | :x: | [HighLevelWeigherTestGenerated] | 69 | 85 | 124 | 125 | 
  | :x: | HighLevelWeigherTestGenerated$ExpectedInfo | 13 | 2 | 15 | 15 | 
- | :x: | HighLevelWeigherTestGenerated$ContextualReturn | 65 | 11 | 17 | 17 | 
+ | :x: | HighLevelWeigherTestGenerated$TypesWithInstances | 29 | 2 | 7 | 7 | 
+ | :x: | HighLevelWeigherTestGenerated$WithReturnType | 65 | 11 | 17 | 17 | 
  | :x: | HighLevelWeigherTestGenerated$Uncategorized | 79 | 46 | 58 | 59 | 
+ | :x: | HighLevelWeigherTestGenerated$NoReturnType | 82 | 9 | 11 | 11 | 
  | :white_check_mark: | HighLevelWeigherTestGenerated$ExpectedType | 88 | 7 | 8 | 8 | 
  | :white_check_mark: | HighLevelWeigherTestGenerated$ParameterNameAndType | 100 | 8 | 8 | 8 | 
  | :x: | [FirJvmOptimizeImportsTestGenerated] | 71 | 85 | 120 | 120 | 
@@ -448,9 +487,7 @@ shared 11950 files out of 856 cases
  | :x: | K2JavaToKotlinConverterPartialTestGenerated$Field | 46 | 6 | 13 | 13 | 
  | :x: | K2MoveNestedTestGenerated | 50 | 29 | 58 | 58 | 
  | :x: | K2AutoImportTestGenerated | 64 | 18 | 28 | 28 | 
- | :x: | HighLevelQuickFixMultiFileTestGenerated$Uncategorized | 65 | 87 | 134 | 135 | 
  | :x: | SharedK2MultiFileQuickFixTestGenerated | 67 | 2 | 3 | 3 | 
- | :x: | K2PsiUnifierTestGenerated$Equivalence | 67 | 4 | 6 | 6 | 
  | :x: | K2JvmBasicCompletionTestGenerated$Java | 68 | 41 | 60 | 65 | 
  | :x: | HighLevelBasicCompletionHandlerTestGenerated$Basic | 76 | 214 | 283 | 289 | 
  | :white_check_mark: | [K2MultiFileLocalInspectionTestGenerated] | 95 | 18 | 19 | 19 | 
@@ -458,6 +495,19 @@ shared 11950 files out of 856 cases
  | :white_check_mark: | K2MultiFileLocalInspectionTestGenerated$ReconcilePackageWithDirectory | 100 | 7 | 7 | 7 | 
  | :white_check_mark: | K2MultiFileLocalInspectionTestGenerated$UnusedSymbol | 100 | 7 | 7 | 7 | 
  | :x: | K2MoveFileTestGenerated | 81 | 17 | 21 | 22 | 
+ | :white_check_mark: | [KotlinFirInlineTestGenerated] | 98 | 332 | 338 | 339 | 
+ | :x: | KotlinFirInlineTestGenerated$ExplicateTypeArgument | 60 | 6 | 10 | 10 | 
+ | :white_check_mark: | KotlinFirInlineTestGenerated$InlineVariableOrProperty | 97 | 33 | 34 | 34 | 
+ | :white_check_mark: | KotlinFirInlineTestGenerated$NamedFunction | 99 | 87 | 88 | 89 | 
+ | :white_check_mark: | KotlinFirInlineTestGenerated$AddParenthesis | 100 | 32 | 32 | 32 | 
+ | :white_check_mark: | KotlinFirInlineTestGenerated$AnonymousFunction | 100 | 16 | 16 | 16 | 
+ | :white_check_mark: | KotlinFirInlineTestGenerated$ExplicateParameterTypes | 100 | 7 | 7 | 7 | 
+ | :white_check_mark: | KotlinFirInlineTestGenerated$ExpressionBody | 100 | 40 | 40 | 40 | 
+ | :white_check_mark: | KotlinFirInlineTestGenerated$FromIntellij | 100 | 19 | 19 | 19 | 
+ | :white_check_mark: | KotlinFirInlineTestGenerated$LambdaExpression | 100 | 10 | 10 | 10 | 
+ | :white_check_mark: | KotlinFirInlineTestGenerated$Property | 100 | 28 | 28 | 28 | 
+ | :white_check_mark: | KotlinFirInlineTestGenerated$ReturnAtEnd | 100 | 46 | 46 | 46 | 
+ | :white_check_mark: | KotlinFirInlineTestGenerated$StringTemplates | 100 | 8 | 8 | 8 | 
  | :white_check_mark: | FirWithLibBasicCompletionTestGenerated | 88 | 15 | 17 | 17 | 
  | :white_check_mark: | FirShortenRefsTestGenerated$This | 88 | 7 | 8 | 8 | 
  | :white_check_mark: | K2ChangePackageTestGenerated | 88 | 7 | 8 | 8 | 
@@ -475,7 +525,7 @@ shared 11950 files out of 856 cases
  | :white_check_mark: | [K2SelectExpressionForDebuggerTestGenerated] | 99 | 68 | 69 | 69 | 
  | :white_check_mark: | K2SelectExpressionForDebuggerTestGenerated$DisallowMethodCalls | 95 | 20 | 21 | 21 | 
  | :white_check_mark: | K2SelectExpressionForDebuggerTestGenerated$Uncategorized | 100 | 48 | 48 | 48 | 
- | :white_check_mark: | FirQuickDocTestGenerated | 96 | 72 | 75 | 75 | 
+ | :white_check_mark: | FirQuickDocTestGenerated | 96 | 73 | 76 | 76 | 
  | :white_check_mark: | FirRenameTestGenerated | 98 | 273 | 278 | 278 | 
  | :white_check_mark: | [FirLegacyUastValuesTestGenerated] | 100 | 79 | 79 | 79 | 
  | :white_check_mark: | [FirUastDeclarationTestGenerated] | 100 | 31 | 31 | 31 | 
@@ -486,12 +536,12 @@ shared 11950 files out of 856 cases
  | :white_check_mark: | [FirDumbCompletionTestGenerated] | 100 | 45 | 45 | 45 | 
  | :white_check_mark: | [FirKeywordCompletionHandlerTestGenerated] | 100 | 49 | 49 | 49 | 
  | :white_check_mark: | [HighLevelJavaCompletionHandlerTestGenerated] | 100 | 1 | 1 | 1 | 
- | :white_check_mark: | [K2CompletionIncrementalResolveTestGenerated] | 100 | 5 | 5 | 5 | 
+ | :white_check_mark: | [K2CompletionIncrementalResolveTestGenerated] | 100 | 8 | 8 | 8 | 
  | :white_check_mark: | [FirLiteralKotlinToKotlinCopyPasteTestGenerated] | 100 | 6 | 6 | 6 | 
  | :white_check_mark: | [FirLiteralTextToKotlinCopyPasteTestGenerated] | 100 | 18 | 18 | 18 | 
  | :white_check_mark: | [K2ExternalAnnotationTestGenerated] | 100 | 4 | 4 | 4 | 
- | :white_check_mark: | [FindUsagesFirTestGenerated] | 93 | 273 | 292 | 293 | 
- | :white_check_mark: | [KotlinFindUsagesWithLibraryFirTestGenerated] | 100 | 22 | 22 | 22 | 
+ | :white_check_mark: | [FindUsagesFirTestGenerated] | 94 | 274 | 293 | 294 | 
+ | :white_check_mark: | [KotlinFindUsagesWithLibraryFirTestGenerated] | 100 | 52 | 52 | 52 | 
  | :white_check_mark: | [KotlinFindUsagesWithStdlibFirTestGenerated] | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | [KotlinGroupUsagesBySimilarityFeaturesFirTestGenerated] | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | [KotlinGroupUsagesBySimilarityFirTestGenerated] | 100 | 12 | 12 | 12 | 
@@ -501,17 +551,19 @@ shared 11950 files out of 856 cases
  | :white_check_mark: | [FirGotoTestGenerated] | 97 | 28 | 29 | 29 | 
  | :white_check_mark: | [K2ProjectViewTestGenerated] | 100 | 31 | 31 | 31 | 
  | :white_check_mark: | [FirReferenceResolveInJavaTestGenerated] | 100 | 6 | 6 | 6 | 
- | :white_check_mark: | [FirReferenceResolveTestGenerated] | 101 | 154 | 152 | 154 | 
+ | :white_check_mark: | [FirReferenceResolveTestGenerated] | 101 | 166 | 164 | 166 | 
  | :white_check_mark: | [FirReferenceToCompiledKotlinResolveInJavaTestGenerated] | 100 | 16 | 16 | 16 | 
  | :white_check_mark: | [ReferenceResolveInLibrarySourcesFirTestGenerated] | 100 | 4 | 4 | 4 | 
+ | :white_check_mark: | [KotlinCompilerReferenceFirTestGenerated] | 100 | 27 | 27 | 27 | 
  | :white_check_mark: | [KotlinFirBreadcrumbsTestGenerated] | 100 | 15 | 15 | 15 | 
  | :white_check_mark: | [K2SharedQuickFixTestGenerated] | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | [SharedK2InspectionTestGenerated] | 100 | 9 | 9 | 9 | 
- | :white_check_mark: | [SharedK2LocalInspectionTestGenerated] | 100 | 383 | 383 | 383 | 
+ | :white_check_mark: | [SharedK2LocalInspectionTestGenerated] | 100 | 424 | 424 | 424 | 
  | :white_check_mark: | [SharedK2KDocHighlightingTestGenerated] | 100 | 2 | 2 | 2 | 
- | :white_check_mark: | [SharedK2IntentionTestGenerated] | 100 | 364 | 364 | 364 | 
+ | :white_check_mark: | [SharedK2IntentionTestGenerated] | 100 | 455 | 455 | 455 | 
  | :white_check_mark: | [LineMarkersK2TestGenerated] | 100 | 46 | 46 | 46 | 
- | :white_check_mark: | [K2PostfixTemplateTestGenerated] | 100 | 4 | 4 | 4 | 
+ | :x: | [K2PostfixTemplateTestGenerated] | 67 | 39 | 58 | 58 | 
+ | :x: | [HighLevelQuickFixMultiFileTestGenerated] | 67 | 113 | 168 | 176 | 
  | :white_check_mark: | [FirUpdateKotlinCopyrightTestGenerated] | 100 | 8 | 8 | 8 | 
  | :white_check_mark: | [K2BreakpointApplicabilityTestGenerated] | 100 | 8 | 8 | 8 | 
  | :white_check_mark: | [K2ClassNameCalculatorTestGenerated] | 100 | 8 | 8 | 8 | 
@@ -525,8 +577,8 @@ shared 11950 files out of 856 cases
  | :white_check_mark: | [K2KotlinExceptionFilterTestGenerated] | 100 | 23 | 23 | 23 | 
  | :white_check_mark: | [K2PositionManagerTestGenerated] | 100 | 20 | 20 | 20 | 
  | :white_check_mark: | [K2SmartStepIntoTestGenerated] | 100 | 46 | 46 | 46 | 
- | :white_check_mark: | [Fe10BindingIntentionTestGenerated] | 101 | 132 | 131 | 132 | 
- | :white_check_mark: | [Fe10BindingLocalInspectionTestGenerated] | 100 | 204 | 204 | 204 | 
+ | :white_check_mark: | [Fe10BindingIntentionTestGenerated] | 101 | 168 | 167 | 168 | 
+ | :white_check_mark: | [Fe10BindingLocalInspectionTestGenerated] | 100 | 368 | 368 | 368 | 
  | :white_check_mark: | [Fe10BindingQuickFixTestGenerated] | 100 | 10 | 10 | 10 | 
  | :white_check_mark: | [K2HighlightExitPointsTestGenerated] | 100 | 53 | 53 | 53 | 
  | :white_check_mark: | [K2HighlightUsagesTestGenerated] | 100 | 1 | 1 | 1 | 
@@ -541,10 +593,11 @@ shared 11950 files out of 856 cases
  | :white_check_mark: | [FirMoveLeftRightTestGenerated] | 100 | 16 | 16 | 16 | 
  | :white_check_mark: | [KotlinFirMoveStatementTestGenerated] | 99 | 281 | 283 | 283 | 
  | :white_check_mark: | [K2MultiFileQuickFixTestGenerated] | 100 | 6 | 6 | 6 | 
- | :white_check_mark: | [KotlinFirInlineTestGenerated] | 99 | 146 | 148 | 149 | 
+ | :white_check_mark: | [K2QuickFixTestGenerated] | 100 | 12 | 12 | 12 | 
+ | :white_check_mark: | [K2IntroduceFunctionTestGenerated] | 98 | 150 | 153 | 156 | 
+ | :white_check_mark: | [K2IntroduceParameterTestGenerated] | 99 | 82 | 83 | 84 | 
+ | :white_check_mark: | [K2IntroducePropertyTestGenerated] | 98 | 53 | 54 | 54 | 
  | :white_check_mark: | [K2IntroduceVariableTestGenerated] | 100 | 151 | 151 | 154 | 
- | :white_check_mark: | [K2IntroduceFunctionTestGenerated] | 101 | 141 | 140 | 144 | 
- | :white_check_mark: | [K2IntroduceParameterTestGenerated] | 98 | 81 | 83 | 83 | 
  | :white_check_mark: | [K2MovePackageTestGenerated] | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | [K2MoveTopLevelToInnerTestGenerated] | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | [K2SafeDeleteTestGenerated] | 100 | 198 | 198 | 198 | 
@@ -553,6 +606,8 @@ shared 11950 files out of 856 cases
  | :white_check_mark: | [KotlinFirSurroundWithTestGenerated] | 100 | 77 | 77 | 77 | 
  | :white_check_mark: | [KotlinFirUnwrapRemoveTestGenerated] | 100 | 63 | 63 | 63 | 
  | :white_check_mark: | [ParcelizeK2QuickFixTestGenerated] | 100 | 18 | 18 | 18 | 
+ | :white_check_mark: | [K2UnusedSymbolHighlightingTestGenerated] | 108 | 150 | 139 | 151 | 
+ | :white_check_mark: | K2UnusedSymbolHighlightingTestGenerated$Multifile | 105 | 23 | 22 | 23 | 
  | :white_check_mark: | K2UnusedSymbolHighlightingTestGenerated$Uncategorized | 109 | 127 | 117 | 128 | 
  | :white_check_mark: | FirGotoTypeDeclarationTestGenerated | 111 | 20 | 18 | 20 | 
  | :white_check_mark: | FirGotoDeclarationTestGenerated | 113 | 17 | 15 | 17 | 
@@ -571,8 +626,8 @@ kt, test, before.Main.kt, kts, main.java, main.kt, option1.kt, kt.kt, java, 0.kt
 
 ---
 ## Total 
- * K1: 11825 rate: 99 % of 11950 files
- * K2: 8544 rate: 71 % of 11950 files
+ * K1: 14223 rate: 99 % of 14368 files
+ * K2: 9948 rate: 69 % of 14368 files
 ---
 
 ## Build cases for K1
@@ -595,6 +650,24 @@ org.jetbrains.kotlin.idea.debugger.test.PositionManagerTestGenerated$MultiFile h
  * jvm-debugger/test/testData/positionManager/multiFileSameName
 
 org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$AccessibilityChecker has directories
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/annotationOnClass
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/classPrimaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/classSecondaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/classUpperBounds
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/errorType
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/memberFunction
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/memberFunctionAndNestedClass
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/memberFunctionParentType
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/memberFunctionParentType2
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/nestedClassWithTypeParam
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelFunParameter
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelFunReturnType
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelFunTypeParameter
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelFunUpperBounds
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelFunUpperBounds2
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelProperty
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelPropertyTypeParam2
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelPropertyTypeParamBound
  * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/annotationOnClass
  * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/classPrimaryConstructor
  * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/classSecondaryConstructor
@@ -640,8 +713,39 @@ org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$ActualAnnota
  * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideEmptyWithNonEmpty
  * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideWithEmpty
  * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnExpect
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualFakeOverride
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualHasDefaultEmptyConstructor
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualHasDefaultGetter
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualTypealias
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenExpectWithUseSiteTarget
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualConstExpression
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualGetter
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualNoArg
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualPrimaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualSecondaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualSingleArg
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualTypeParameter
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualTypeUsage
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualValueParameter
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualWithImport
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpect
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualFakeOverride
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualHasDefaultEmptyConstructor
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualHasNoSource
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualTypealias
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActual
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualDifferentArgsOrder
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideEmptyWithNonEmpty
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideWithEmpty
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnExpect
 
 org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$AddDependency has directories
+ * idea/tests/testData/multiModuleQuickFix/addDependency/class
+ * idea/tests/testData/multiModuleQuickFix/addDependency/import
+ * idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunction
+ * idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunction2
+ * idea/tests/testData/multiModuleQuickFix/addDependency/topLevelProperty
+ * idea/tests/testData/multiModuleQuickFix/addDependency/topLevelProperty2
  * idea/tests/testData/multiModuleQuickFix/addDependency/class
  * idea/tests/testData/multiModuleQuickFix/addDependency/import
  * idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunction
@@ -664,8 +768,26 @@ org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$AddMissingAc
  * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/primaryConstructorAbsence
  * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/propertyWithIncorrectType
  * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/secondaryConstructorAbsence
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classFunction
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classFunctionSameSignature
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classFunctionWithConstructor
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classFunctionWithConstructorAndParameters
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classFunctionWithIncompatibleConstructor
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classOverloadedFunction
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classPropertyInConstructor
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classSomeProperties
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classWithIncompilableFunction
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/companionAbsence
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/membersWithIncorrectType
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/primaryConstructorAbsence
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/propertyWithIncorrectType
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/secondaryConstructorAbsence
 
 org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$AddThrowAnnotation has directories
+ * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/common
+ * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/js
+ * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/jvm
+ * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/jvmWithoutStdlib
  * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/common
  * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/js
  * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/jvm
@@ -677,12 +799,27 @@ org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$CanSealedSub
  * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertImplicitExpectSubClass
  * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notGenerateEqualsAndHashCodeForSealedInCommon
  * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notGenerateEqualsAndHashCodeForSealedInJvmForExpect
+ * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertActualSubClass
+ * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertExpectSubClass
+ * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertImplicitExpectSubClass
+ * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notGenerateEqualsAndHashCodeForSealedInCommon
+ * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notGenerateEqualsAndHashCodeForSealedInJvmForExpect
 
 org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$ChangeModifier has directories
  * idea/tests/testData/multiModuleQuickFix/changeModifier/internal
  * idea/tests/testData/multiModuleQuickFix/changeModifier/public
+ * idea/tests/testData/multiModuleQuickFix/changeModifier/internal
+ * idea/tests/testData/multiModuleQuickFix/changeModifier/public
 
 org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$ChangeSignature has directories
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/actual
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/expect
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/override
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/override2
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/override3
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/override4
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/override5
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/override6
  * idea/tests/testData/multiModuleQuickFix/changeSignature/actual
  * idea/tests/testData/multiModuleQuickFix/changeSignature/expect
  * idea/tests/testData/multiModuleQuickFix/changeSignature/override
@@ -732,12 +869,111 @@ org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$CreateActual
  * idea/tests/testData/multiModuleQuickFix/createActual/withRootPackage
  * idea/tests/testData/multiModuleQuickFix/createActual/withTest
  * idea/tests/testData/multiModuleQuickFix/createActual/withTestDummy
+ * idea/tests/testData/multiModuleQuickFix/createActual/abstract
+ * idea/tests/testData/multiModuleQuickFix/createActual/abstractClassWithJdk
+ * idea/tests/testData/multiModuleQuickFix/createActual/annotation
+ * idea/tests/testData/multiModuleQuickFix/createActual/annotationOptionalExpectation
+ * idea/tests/testData/multiModuleQuickFix/createActual/annotationOptionalExpectationNoDir
+ * idea/tests/testData/multiModuleQuickFix/createActual/annotationWithComment
+ * idea/tests/testData/multiModuleQuickFix/createActual/class
+ * idea/tests/testData/multiModuleQuickFix/createActual/classWithBase
+ * idea/tests/testData/multiModuleQuickFix/createActual/classWithJdk
+ * idea/tests/testData/multiModuleQuickFix/createActual/classWithSuperTypeFromOtherPackage
+ * idea/tests/testData/multiModuleQuickFix/createActual/constructorWithDelegation
+ * idea/tests/testData/multiModuleQuickFix/createActual/constructorWithJdk
+ * idea/tests/testData/multiModuleQuickFix/createActual/createWithImport
+ * idea/tests/testData/multiModuleQuickFix/createActual/defaultParameterInExpected
+ * idea/tests/testData/multiModuleQuickFix/createActual/defaultParameterInExpectedClass
+ * idea/tests/testData/multiModuleQuickFix/createActual/defaultParameterInExpectedConstructor
+ * idea/tests/testData/multiModuleQuickFix/createActual/enum
+ * idea/tests/testData/multiModuleQuickFix/createActual/expectSealedInCommonWhen
+ * idea/tests/testData/multiModuleQuickFix/createActual/forbiddenForLeafSourceSets
+ * idea/tests/testData/multiModuleQuickFix/createActual/function
+ * idea/tests/testData/multiModuleQuickFix/createActual/functionSameFile
+ * idea/tests/testData/multiModuleQuickFix/createActual/inlineClass
+ * idea/tests/testData/multiModuleQuickFix/createActual/interface
+ * idea/tests/testData/multiModuleQuickFix/createActual/nested
+ * idea/tests/testData/multiModuleQuickFix/createActual/object
+ * idea/tests/testData/multiModuleQuickFix/createActual/package
+ * idea/tests/testData/multiModuleQuickFix/createActual/packageIncorrect
+ * idea/tests/testData/multiModuleQuickFix/createActual/packageIncorrectEmpty
+ * idea/tests/testData/multiModuleQuickFix/createActual/primaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/createActual/property
+ * idea/tests/testData/multiModuleQuickFix/createActual/sealed
+ * idea/tests/testData/multiModuleQuickFix/createActual/sealedInCommonWhen
+ * idea/tests/testData/multiModuleQuickFix/createActual/sealedSubclass
+ * idea/tests/testData/multiModuleQuickFix/createActual/valueClass
+ * idea/tests/testData/multiModuleQuickFix/createActual/valueClassWithGenerics
+ * idea/tests/testData/multiModuleQuickFix/createActual/withFakeJvm
+ * idea/tests/testData/multiModuleQuickFix/createActual/withRootPackage
+ * idea/tests/testData/multiModuleQuickFix/createActual/withTest
+ * idea/tests/testData/multiModuleQuickFix/createActual/withTestDummy
 
 org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$CreateActualExplicitApi has directories
  * idea/tests/testData/multiModuleQuickFix/createActualExplicitApi/class
  * idea/tests/testData/multiModuleQuickFix/createActualExplicitApi/function
+ * idea/tests/testData/multiModuleQuickFix/createActualExplicitApi/class
+ * idea/tests/testData/multiModuleQuickFix/createActualExplicitApi/function
 
 org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$CreateExpect has directories
+ * idea/tests/testData/multiModuleQuickFix/createExpect/annotation
+ * idea/tests/testData/multiModuleQuickFix/createExpect/annotation2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/class
+ * idea/tests/testData/multiModuleQuickFix/createExpect/classWithAnnotation
+ * idea/tests/testData/multiModuleQuickFix/createExpect/classWithSuperClassAndTypeParameter
+ * idea/tests/testData/multiModuleQuickFix/createExpect/classWithSuperTypeFromOtherPackage
+ * idea/tests/testData/multiModuleQuickFix/createExpect/commented
+ * idea/tests/testData/multiModuleQuickFix/createExpect/companion
+ * idea/tests/testData/multiModuleQuickFix/createExpect/createWithImport
+ * idea/tests/testData/multiModuleQuickFix/createExpect/dataClass
+ * idea/tests/testData/multiModuleQuickFix/createExpect/dataObject
+ * idea/tests/testData/multiModuleQuickFix/createExpect/enum
+ * idea/tests/testData/multiModuleQuickFix/createExpect/enumComplex
+ * idea/tests/testData/multiModuleQuickFix/createExpect/enumEmpty
+ * idea/tests/testData/multiModuleQuickFix/createExpect/funWithAccessibleAlias
+ * idea/tests/testData/multiModuleQuickFix/createExpect/funWithAccessibleExpansion
+ * idea/tests/testData/multiModuleQuickFix/createExpect/funWithAccessibleParameter
+ * idea/tests/testData/multiModuleQuickFix/createExpect/funWithAccessibleTypeFromCommon
+ * idea/tests/testData/multiModuleQuickFix/createExpect/funWithJdk
+ * idea/tests/testData/multiModuleQuickFix/createExpect/funWithPrivateModifier
+ * idea/tests/testData/multiModuleQuickFix/createExpect/function
+ * idea/tests/testData/multiModuleQuickFix/createExpect/function2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/functionInInterface
+ * idea/tests/testData/multiModuleQuickFix/createExpect/functionWithImplementationInInterface
+ * idea/tests/testData/multiModuleQuickFix/createExpect/functionWithImplementationInInterface2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/hierarchy
+ * idea/tests/testData/multiModuleQuickFix/createExpect/inlineClass
+ * idea/tests/testData/multiModuleQuickFix/createExpect/inlineClass2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/innerClassWithTypeParam
+ * idea/tests/testData/multiModuleQuickFix/createExpect/innerClassWithTypeParam2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/innerEnum
+ * idea/tests/testData/multiModuleQuickFix/createExpect/memberFunctionAndNestedClass
+ * idea/tests/testData/multiModuleQuickFix/createExpect/nestedClass
+ * idea/tests/testData/multiModuleQuickFix/createExpect/noAccessOnMember
+ * idea/tests/testData/multiModuleQuickFix/createExpect/onMember
+ * idea/tests/testData/multiModuleQuickFix/createExpect/primaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/createExpect/property
+ * idea/tests/testData/multiModuleQuickFix/createExpect/property2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/propertyInConstructor
+ * idea/tests/testData/multiModuleQuickFix/createExpect/propertyWithConstModifier
+ * idea/tests/testData/multiModuleQuickFix/createExpect/propertyWithLateinitModifier
+ * idea/tests/testData/multiModuleQuickFix/createExpect/propertyWithPrivateModifier
+ * idea/tests/testData/multiModuleQuickFix/createExpect/sealedClass
+ * idea/tests/testData/multiModuleQuickFix/createExpect/stdlibWithJavaAlias
+ * idea/tests/testData/multiModuleQuickFix/createExpect/superTypeFromStdlib
+ * idea/tests/testData/multiModuleQuickFix/createExpect/topLevelFunctionWithAnnotations
+ * idea/tests/testData/multiModuleQuickFix/createExpect/topLevelPropertyWithTypeParam
+ * idea/tests/testData/multiModuleQuickFix/createExpect/typeAlias
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withAliases
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withAnnotations
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withConstructorWithParametersWithoutValVar
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withInitializer
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withPlatformNested
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withRootPackage
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withSecondaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withSecondaryConstructor2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withSupertype
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withVararg
  * idea/tests/testData/multiModuleQuickFix/createExpect/annotation
  * idea/tests/testData/multiModuleQuickFix/createExpect/annotation2
  * idea/tests/testData/multiModuleQuickFix/createExpect/class
@@ -804,8 +1040,24 @@ org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$FixNativeThr
  * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/addCancellationException4
  * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/removeEmptyThrows
  * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/removeThrowsOnIncompatibleOverride
+ * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/addCancellationException1
+ * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/addCancellationException2
+ * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/addCancellationException3
+ * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/addCancellationException4
+ * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/removeEmptyThrows
+ * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/removeThrowsOnIncompatibleOverride
 
 org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$FunctionTypeReceiverToParameter has directories
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionConstructor
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionParameter
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionReturn
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classProperty
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/functionParameter
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/functionReturn
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/interfaceFunctionParameter
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/interfaceFunctionReturn
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/interfaceProperty
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/property
  * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionConstructor
  * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionParameter
  * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionReturn
@@ -822,14 +1074,26 @@ org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$InitializePr
  * idea/tests/testData/multiModuleQuickFix/initializeProperty/notInitializeWithConstructorParameter
  * idea/tests/testData/multiModuleQuickFix/initializeProperty/notMoveNonActualParamterToActualConstructor
  * idea/tests/testData/multiModuleQuickFix/initializeProperty/notMoveToActualConstructor
+ * idea/tests/testData/multiModuleQuickFix/initializeProperty/notInitializeNonActualParameterWithConstructorParameter
+ * idea/tests/testData/multiModuleQuickFix/initializeProperty/notInitializeWithConstructorParameter
+ * idea/tests/testData/multiModuleQuickFix/initializeProperty/notMoveNonActualParamterToActualConstructor
+ * idea/tests/testData/multiModuleQuickFix/initializeProperty/notMoveToActualConstructor
 
 org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$InlineToValue has directories
  * idea/tests/testData/multiModuleQuickFix/inlineToValue/commonWithJvm
  * idea/tests/testData/multiModuleQuickFix/inlineToValue/genericParameter
  * idea/tests/testData/multiModuleQuickFix/inlineToValue/JS
  * idea/tests/testData/multiModuleQuickFix/inlineToValue/JVM
+ * idea/tests/testData/multiModuleQuickFix/inlineToValue/commonWithJvm
+ * idea/tests/testData/multiModuleQuickFix/inlineToValue/genericParameter
+ * idea/tests/testData/multiModuleQuickFix/inlineToValue/JS
+ * idea/tests/testData/multiModuleQuickFix/inlineToValue/JVM
 
 org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$MakeOverridenMemberOpen has directories
+ * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/actual
+ * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/expect
+ * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/hasAbstract
+ * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/hasOpen
  * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/actual
  * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/expect
  * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/hasAbstract
@@ -904,13 +1168,90 @@ org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$Other has di
  * idea/tests/testData/multiModuleQuickFix/other/safeDeleteForbiddenFromActual
  * idea/tests/testData/multiModuleQuickFix/other/safeDeleteFromActual
  * idea/tests/testData/multiModuleQuickFix/other/safeDeleteUsedInAnotherPlatform
+ * idea/tests/testData/multiModuleQuickFix/other/actualImplementAsConstructorParam
+ * idea/tests/testData/multiModuleQuickFix/other/actualNoImplementAsConstructorParam
+ * idea/tests/testData/multiModuleQuickFix/other/actualWithoutExpect
+ * idea/tests/testData/multiModuleQuickFix/other/addActualToClass
+ * idea/tests/testData/multiModuleQuickFix/other/addActualToClassMember
+ * idea/tests/testData/multiModuleQuickFix/other/addActualToTopLevelMember
+ * idea/tests/testData/multiModuleQuickFix/other/addAnnotationTargetToActual
+ * idea/tests/testData/multiModuleQuickFix/other/addAnnotationTargetToExpect
+ * idea/tests/testData/multiModuleQuickFix/other/addFunctionToCommonClassFromJavaUsage
+ * idea/tests/testData/multiModuleQuickFix/other/addOperatorByActual
+ * idea/tests/testData/multiModuleQuickFix/other/addOperatorByExpect
+ * idea/tests/testData/multiModuleQuickFix/other/cancelMakeAbstractFromActual
+ * idea/tests/testData/multiModuleQuickFix/other/convertActualEnumToSealedClass
+ * idea/tests/testData/multiModuleQuickFix/other/convertActualSealedClassToEnum
+ * idea/tests/testData/multiModuleQuickFix/other/convertExpectEnumToSealedClass
+ * idea/tests/testData/multiModuleQuickFix/other/convertExpectSealedClassToEnum
+ * idea/tests/testData/multiModuleQuickFix/other/convertPropertyGetterToInitializer
+ * idea/tests/testData/multiModuleQuickFix/other/convertPropertyToFunction
+ * idea/tests/testData/multiModuleQuickFix/other/createClassFromUsageImport
+ * idea/tests/testData/multiModuleQuickFix/other/createClassFromUsageRef
+ * idea/tests/testData/multiModuleQuickFix/other/createFunInExpectClass
+ * idea/tests/testData/multiModuleQuickFix/other/createTestOnExpect
+ * idea/tests/testData/multiModuleQuickFix/other/createValInExpectClass
+ * idea/tests/testData/multiModuleQuickFix/other/createVarInExpectClass
+ * idea/tests/testData/multiModuleQuickFix/other/deprecatedHeader
+ * idea/tests/testData/multiModuleQuickFix/other/deprecatedHeaderImpl
+ * idea/tests/testData/multiModuleQuickFix/other/deprecatedImpl
+ * idea/tests/testData/multiModuleQuickFix/other/deprecatedImplHeader
+ * idea/tests/testData/multiModuleQuickFix/other/functionTypeParameterToReceiverByHeader
+ * idea/tests/testData/multiModuleQuickFix/other/functionTypeParameterToReceiverByImpl
+ * idea/tests/testData/multiModuleQuickFix/other/functionTypeReceiverToParameterByHeader
+ * idea/tests/testData/multiModuleQuickFix/other/functionTypeReceiverToParameterByImpl
+ * idea/tests/testData/multiModuleQuickFix/other/generateEqualsInExpect
+ * idea/tests/testData/multiModuleQuickFix/other/generateHashCodeInExpect
+ * idea/tests/testData/multiModuleQuickFix/other/implementAbstractExpectMemberInheritedFromInterface
+ * idea/tests/testData/multiModuleQuickFix/other/implementMembersInActualClassNoExpectMember
+ * idea/tests/testData/multiModuleQuickFix/other/implementMembersInImplClassNonImplInheritor
+ * idea/tests/testData/multiModuleQuickFix/other/importClassInCommon
+ * idea/tests/testData/multiModuleQuickFix/other/importClassInFromProductionInCommonTests
+ * idea/tests/testData/multiModuleQuickFix/other/importCommonClassInJs
+ * idea/tests/testData/multiModuleQuickFix/other/importCommonClassInJvm
+ * idea/tests/testData/multiModuleQuickFix/other/importCommonFunInJvm
+ * idea/tests/testData/multiModuleQuickFix/other/importExpectClassWithActualInJvm
+ * idea/tests/testData/multiModuleQuickFix/other/importExpectClassWithoutActualInJvm
+ * idea/tests/testData/multiModuleQuickFix/other/importFunInCommon
+ * idea/tests/testData/multiModuleQuickFix/other/makeAbstractFromActual
+ * idea/tests/testData/multiModuleQuickFix/other/makeInlineFromExpect
+ * idea/tests/testData/multiModuleQuickFix/other/makeInternalFromExpect
+ * idea/tests/testData/multiModuleQuickFix/other/makeOpenFromActual
+ * idea/tests/testData/multiModuleQuickFix/other/makeOpenFromExpect
+ * idea/tests/testData/multiModuleQuickFix/other/mayBeConstantWithActual
+ * idea/tests/testData/multiModuleQuickFix/other/memberFunParameterToReceiverByHeader
+ * idea/tests/testData/multiModuleQuickFix/other/memberFunParameterToReceiverByImpl
+ * idea/tests/testData/multiModuleQuickFix/other/memberFunReceiverToParameterByHeader
+ * idea/tests/testData/multiModuleQuickFix/other/memberFunReceiverToParameterByImpl
+ * idea/tests/testData/multiModuleQuickFix/other/memberFunToExtensionByHeader
+ * idea/tests/testData/multiModuleQuickFix/other/memberFunToExtensionByImpl
+ * idea/tests/testData/multiModuleQuickFix/other/memberValToExtensionByHeader
+ * idea/tests/testData/multiModuleQuickFix/other/memberValToExtensionByHeaderWithInapplicableImpl
+ * idea/tests/testData/multiModuleQuickFix/other/memberValToExtensionByImpl
+ * idea/tests/testData/multiModuleQuickFix/other/moveActualPropertyToExistentConstructor
+ * idea/tests/testData/multiModuleQuickFix/other/movePropertyToConstructor
+ * idea/tests/testData/multiModuleQuickFix/other/notMakeAbstractFromActual
+ * idea/tests/testData/multiModuleQuickFix/other/orderHeader
+ * idea/tests/testData/multiModuleQuickFix/other/orderImpl
+ * idea/tests/testData/multiModuleQuickFix/other/safeDeleteForbiddenFromActual
+ * idea/tests/testData/multiModuleQuickFix/other/safeDeleteFromActual
+ * idea/tests/testData/multiModuleQuickFix/other/safeDeleteUsedInAnotherPlatform
 
 org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$PackageDirectoryMismatch has directories
  * idea/tests/testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToAnotherPackage
  * idea/tests/testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToCommonSourceRoot
  * idea/tests/testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToJvmSourceRoot
+ * idea/tests/testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToAnotherPackage
+ * idea/tests/testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToCommonSourceRoot
+ * idea/tests/testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToJvmSourceRoot
 
 org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$RedundantNullableReturnType has directories
+ * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/actualMethod
+ * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/actualTopLevelFunction
+ * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/actualTopLevelProperty
+ * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/expectMemberProperty
+ * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/expectTopLevelFunction
+ * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/expectTopLevelProperty
  * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/actualMethod
  * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/actualTopLevelFunction
  * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/actualTopLevelProperty
@@ -1494,7 +1835,1266 @@ org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$F
 org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Properties has directories
  * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithJvmNameOnProperty
 
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ClassOrObject$TestClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/class
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ClassOrObject$TestCompanion has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/companion
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ClassOrObject$TestInnerClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/innerClass
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ClassOrObject$TestInnerClassWithPackage has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/innerClassWithPackage
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ClassOrObject$TestJavaInnerClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaInnerClass
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ClassOrObject$TestJavaInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaInvoke
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ClassOrObject$TestJavaNestedClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaNestedClass
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ClassOrObject$TestJavaNestedInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaNestedInvoke
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ClassOrObject$TestNamedCompanion has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/namedCompanion
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ClassOrObject$TestNestedClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/nestedClass
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ClassOrObject$TestNestedObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/nestedObject
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ClassOrObject$TestObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/object
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/class
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestCompanion has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/companion
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestInnerClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/innerClass
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestInnerClassWithPackage has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/innerClassWithPackage
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaInnerClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaInnerClass
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaInvoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaInvoke
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaNestedClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaNestedClass
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaNestedInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaNestedInvoke
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestNamedCompanion has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/namedCompanion
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestNestedClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/nestedClass
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestNestedObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/nestedObject
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/object
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Functions$Constructors has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/secondaryConstructor
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Functions$FromObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/staticFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Functions$Hierarchy has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/fromLibrary
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Functions$Members has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticSet
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Functions$TopLevel has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/functionWithJvmOverloads
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Constructors$TestAllWithDefault has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/allWithDefault
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Constructors$TestJavaConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/javaConstructor
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Constructors$TestJvmOverloads has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/jvmOverloads
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Constructors$TestNestedPrimaryConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/nestedPrimaryConstructor
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Constructors$TestPrimaryConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/primaryConstructor
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Constructors$TestSecondaryConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/secondaryConstructor
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestAllWithDefault has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/allWithDefault
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/javaConstructor
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJvmOverloads has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/jvmOverloads
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestNestedPrimaryConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/nestedPrimaryConstructor
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestPrimaryConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/primaryConstructor
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestSecondaryConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/secondaryConstructor
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$FromCompanion has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/variable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$NestedObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/variable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/extension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/function
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestFunctionWithSeveralParameters has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/functionWithSeveralParameters
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticExtension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/staticFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$Named has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/variable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$NestedObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/staticFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$Operators has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/set
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/extension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestExtensionForObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/extensionForObject
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/function
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestJavaStaticMethod has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/javaStaticMethod
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestJavaStaticMethod2 has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/javaStaticMethod2
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestOverloadsExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsExtension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestOverloadsFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestOverloadsStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsStaticExtension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestOverloadsStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsStaticFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticExtension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/staticFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$NestedObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/staticFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/extension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/function
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticExtension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/staticFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/extension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/function
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticExtension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/staticFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/extension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/function
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticExtension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/staticFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Operators$TestComponent has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/component
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/component
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/component
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Operators$TestGet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/get
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/get
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/get
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Operators$TestHasNext has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/hasNext
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/hasNext
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/hasNext
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Operators$TestInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/invoke
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Operators$TestIterator has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/iterator
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/iterator
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/iterator
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Operators$TestMinus has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/minus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/minus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/minus
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Operators$TestNext has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/next
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/next
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/next
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Operators$TestPlus has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/plus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/plus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/plus
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Operators$TestSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/set
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/set
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/set
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestComponent has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/component
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/component
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/component
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/component
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestGet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/get
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/get
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/get
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/get
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/get
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestHasNext has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/hasNext
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/hasNext
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/hasNext
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/hasNext
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/invoke
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestIterator has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/iterator
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/iterator
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/iterator
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/iterator
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestMinus has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/minus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/minus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/minus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/minus
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestNext has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/next
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/next
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/next
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/next
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestPlus has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/plus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/plus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/plus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/plus
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/set
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/set
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/set
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/set
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestExtensionForObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/extensionForObject
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaStaticMethod has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/javaStaticMethod
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaStaticMethod2 has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/javaStaticMethod2
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestOverloadsExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsExtension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestOverloadsFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestOverloadsStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsStaticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsStaticExtension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestOverloadsStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsStaticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsStaticFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestOverloadsExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsExtension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestOverloadsFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestOverloadsStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsStaticExtension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestOverloadsStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsStaticFunction
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestFunctionWithSeveralParameters has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/functionWithSeveralParameters
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Hierarchy$TestFromLibrary has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/fromLibrary
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Java$TestJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/J
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Java$TestJJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/JJ
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Java$TestJJJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/JJJ
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Java$TestJKJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/JKJ
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/J
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/JJ
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJJJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/JJJ
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJKJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/JKJ
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Kotlin$TestJJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JJJK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Kotlin$TestJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JJK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Kotlin$TestJJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JJKK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Kotlin$TestJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Kotlin$TestJKJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JKJK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Kotlin$TestJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JKK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Kotlin$TestJKKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JKKK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JJJK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JJJK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JJJK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JJK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JJK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JJK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JJKK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JJKK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JJKK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJKJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JKJK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JKJK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JKJK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JKK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JKK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JKK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJKKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JKKK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JKKK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JKKK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestFromLibrary has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/fromLibrary
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$ExtensionOperators has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/set
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$InterfaceDefault has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/variable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$Operators has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/set
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/function
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestJavaAnnotation has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaAnnotation
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestJavaAnnotationWithCustomName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaAnnotationWithCustomName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestJavaAnnotationWithSeveralParameters has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaAnnotationWithSeveralParameters
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestJavaInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaInvoke
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestJavaMethod has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethod
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestJavaMethodSyntheticGet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticGet
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestJavaMethodSyntheticIs has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticIs
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestJavaMethodSyntheticIsSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticIsSet
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestJavaMethodSyntheticSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticSet
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ExtensionOperators$TestComponent has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/component
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ExtensionOperators$TestGet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/get
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ExtensionOperators$TestHasNext has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/hasNext
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ExtensionOperators$TestInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/invoke
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ExtensionOperators$TestIterator has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/iterator
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ExtensionOperators$TestMinus has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/minus
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ExtensionOperators$TestNext has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/next
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ExtensionOperators$TestPlus has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/plus
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ExtensionOperators$TestSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/set
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$InterfaceDefault$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/extension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$InterfaceDefault$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/function
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$InterfaceDefault$TestGet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/get
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$InterfaceDefault$TestInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/invoke
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Operators$TestComponentFromDataClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/componentFromDataClass
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestComponentFromDataClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/componentFromDataClass
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaAnnotation has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaAnnotation
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaAnnotationWithCustomName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaAnnotationWithCustomName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaAnnotationWithSeveralParameters has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaAnnotationWithSeveralParameters
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaMethod has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethod
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaMethodSyntheticGet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticGet
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaMethodSyntheticIs has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticIs
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaMethodSyntheticIsSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticIsSet
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaMethodSyntheticSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticSet
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$Operators has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/set
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/extension
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestExtensionWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/extensionWithCustomFileName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestExtensionWithJvmOverloadsAndJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/extensionWithJvmOverloadsAndJvmName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/function
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestFunctionWithJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/functionWithJvmName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestFunctionWithJvmOverloads has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/functionWithJvmOverloads
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestExtensionWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/extensionWithCustomFileName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestExtensionWithJvmOverloadsAndJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/extensionWithJvmOverloadsAndJvmName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestFunctionWithJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/functionWithJvmName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestFunctionWithJvmOverloads has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/functionWithJvmOverloads
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Properties$ConstructorParameter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/withoutVal
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Properties$ConstructorParameterFromDataClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/varWithJvmField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Properties$FromObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/variable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Properties$Members has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variableWithReceiver
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Properties$TopLevel has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithJvmNameOnProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameter$TestAnnotation has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/annotation
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameter$TestAnnotationWithCustomParameter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/annotationWithCustomParameter
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameter$TestHierarchy has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/hierarchy
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameter$TestVal has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/val
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameter$TestVar has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/var
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameter$TestVarWithCustomNames has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/varWithCustomNames
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameter$TestVarWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/varWithJvmField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameter$TestWithoutVal has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/withoutVal
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestAnnotation has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/annotation
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestAnnotationWithCustomParameter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/annotationWithCustomParameter
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestHierarchy has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/hierarchy
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestVal has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/val
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/val
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestVar has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/var
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/var
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestVarWithCustomNames has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/varWithCustomNames
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/varWithCustomNames
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestVarWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/varWithJvmField
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/varWithJvmField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestWithoutVal has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/withoutVal
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameterFromDataClass$TestComponentB has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/componentB
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameterFromDataClass$TestEscapedName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/escapedName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameterFromDataClass$TestVal has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/val
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameterFromDataClass$TestVar has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/var
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameterFromDataClass$TestVarWithCustomNames has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/varWithCustomNames
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$ConstructorParameterFromDataClass$TestVarWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/varWithJvmField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestComponentB has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/componentB
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestEscapedName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/escapedName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestConstant has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/constant
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/extensionVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestFieldProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fieldProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestFieldVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fieldVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/isProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/isVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/lateinit
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/property
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestStaticExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticExtensionVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestStaticLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticLateinit
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestStaticProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestStaticVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromObject$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/variable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestConstant has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/constant
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/extensionVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestFieldProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/fieldProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestFieldVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/fieldVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/isProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/isVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestJavaStaticField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/javaStaticField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestJavaStaticField2 has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/javaStaticField2
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/lateinit
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/property
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestPropertyWithBackingField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/propertyWithBackingField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestPropertyWithCustomGetterAndSetter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/propertyWithCustomGetterAndSetter
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestStaticExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticExtensionVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestStaticLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticLateinit
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestStaticProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestStaticVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$FromCompanion$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/variable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestConstant has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/constant
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/extensionVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestFieldProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/fieldProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestFieldVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/fieldVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/isProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/isVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/lateinit
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/property
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestStaticExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticExtensionVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestStaticLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticLateinit
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestStaticProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestStaticVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Named$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/variable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestConstant has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/constant
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/constant
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/constant
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/constant
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constant
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/extensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/extensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/extensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/extensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/extensionVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestFieldProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/fieldProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/fieldProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/fieldProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fieldProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestFieldVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/fieldVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/fieldVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/fieldVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fieldVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/isProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/isProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/isProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/isProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/isProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/isProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/isProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/isVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/isVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/isVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/isVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/isVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/isVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/lateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/lateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/lateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/lateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/lateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/lateinit
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/property
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/property
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/property
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/property
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/property
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/property
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/property
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestStaticExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticExtensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticExtensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticExtensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticExtensionVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestStaticLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticLateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticLateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticLateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticLateinit
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestStaticProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestStaticVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/variable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/variable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/variable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/variable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/variable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaStaticField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/javaStaticField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaStaticField2 has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/javaStaticField2
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestPropertyWithBackingField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/propertyWithBackingField
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithBackingField
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/propertyWithBackingField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestPropertyWithCustomGetterAndSetter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/propertyWithCustomGetterAndSetter
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithCustomGetterAndSetter
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/propertyWithCustomGetterAndSetter
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestConstant has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/constant
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/extensionVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestFieldProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/fieldProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestFieldVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/fieldVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/isProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/isVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/lateinit
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/property
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestStaticExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticExtensionVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestStaticLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticLateinit
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestStaticProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestStaticVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$NestedObject$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/variable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Get$TestJJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JJJK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Get$TestJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JJK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Get$TestJJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JJKK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Get$TestJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Get$TestJKJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JKJK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Get$TestJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JKK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Get$TestJKKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JKKK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Set$TestJJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JJJK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Set$TestJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JJK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Set$TestJJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JJKK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Set$TestJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Set$TestJKJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JKJK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Set$TestJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JKK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Set$TestJKKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JKKK
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/isProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/isVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestJavaField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/javaField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestJavaFieldWithInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/javaFieldWithInvoke
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/lateinit
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/property
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestPropertyWithBackingField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithBackingField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestPropertyWithCustomGetterAndSetter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithCustomGetterAndSetter
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestPropertyWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithJvmField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestPropertyWithReceiver has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithReceiver
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestVariableWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variableWithJvmField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$Members$TestVariableWithReceiver has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variableWithReceiver
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$InterfaceDefault$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/isProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$InterfaceDefault$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/isVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$InterfaceDefault$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/property
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$InterfaceDefault$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/variable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/javaField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestJavaFieldWithInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/javaFieldWithInvoke
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestPropertyWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithJvmField
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/propertyWithJvmField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestPropertyWithReceiver has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithReceiver
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestVariableWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variableWithJvmField
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithJvmField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestVariableWithReceiver has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variableWithReceiver
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestConstant has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constant
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestConstantJava has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constantJava
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestConstantJavaWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constantJavaWithCustomFileName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestConstantWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constantWithCustomFileName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/extensionVariable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestExtensionVariableWithJvmNameOnProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/extensionVariableWithJvmNameOnProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/isProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestIsVariableWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/isVariableWithCustomFileName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/lateinit
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/property
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestPropertyWithBackingField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/propertyWithBackingField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestPropertyWithCustomGetterAndSetter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/propertyWithCustomGetterAndSetter
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestPropertyWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/propertyWithJvmField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variable
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestVariableWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithCustomFileName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestVariableWithCustomGetterAndSetterAndJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithCustomGetterAndSetterAndJvmName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestVariableWithCustomGetterAndSetterAndMixedJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithCustomGetterAndSetterAndMixedJvmName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestVariableWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithJvmField
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TopLevel$TestVariableWithJvmNameOnProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithJvmNameOnProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestConstantJava has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constantJava
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestConstantJavaWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constantJavaWithCustomFileName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestConstantWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constantWithCustomFileName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestExtensionVariableWithJvmNameOnProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/extensionVariableWithJvmNameOnProperty
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestIsVariableWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/isVariableWithCustomFileName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestVariableWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithCustomFileName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestVariableWithCustomGetterAndSetterAndJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithCustomGetterAndSetterAndJvmName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestVariableWithCustomGetterAndSetterAndMixedJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithCustomGetterAndSetterAndMixedJvmName
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceTestGenerated$TestVariableWithJvmNameOnProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithJvmNameOnProperty
+
 org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$Library has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/string_/length
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$Library$Any has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/any/hashCode
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$Library$Long has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/long/class/class
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$Library$Object has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/object/hashCode
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$Library$String_ has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/string_/length
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$Any$TestHashCode has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/any/hashCode
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$TestHashCode has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/any/hashCode
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/object/hashCode
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$Long$Class has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/long/class/class
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$Class$TestClass has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/long/class/class
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$TestClass has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/long/class/class
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/string_/class
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$Object$TestHashCode has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/object/hashCode
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$String_$TestClass has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/string_/class
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$String_$TestLength has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/string_/length
+
+org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceByReferenceTestGenerated$TestLength has directories
  * compiler-reference-index/tests/testData/compilerIndexByReference/library/string_/length
 
 org.jetbrains.kotlin.idea.codeMetaInfo.MultiModuleLineMarkerCodeMetaInfoTestGenerated has directories
@@ -1502,6 +3102,24 @@ org.jetbrains.kotlin.idea.codeMetaInfo.MultiModuleLineMarkerCodeMetaInfoTestGene
 ## Build cases for K2
 
 org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated$AccessibilityChecker has directories
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/annotationOnClass
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/classPrimaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/classSecondaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/classUpperBounds
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/errorType
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/memberFunction
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/memberFunctionAndNestedClass
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/memberFunctionParentType
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/memberFunctionParentType2
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/nestedClassWithTypeParam
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelFunParameter
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelFunReturnType
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelFunTypeParameter
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelFunUpperBounds
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelFunUpperBounds2
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelProperty
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelPropertyTypeParam2
+ * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/topLevelPropertyTypeParamBound
  * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/annotationOnClass
  * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/classPrimaryConstructor
  * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/classSecondaryConstructor
@@ -1547,8 +3165,39 @@ org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestG
  * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideEmptyWithNonEmpty
  * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideWithEmpty
  * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnExpect
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualFakeOverride
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualHasDefaultEmptyConstructor
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualHasDefaultGetter
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenActualTypealias
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyNotSuggestedWhenExpectWithUseSiteTarget
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualConstExpression
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualGetter
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualNoArg
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualPrimaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualSecondaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualSingleArg
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualTypeParameter
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualTypeUsage
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualValueParameter
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualWithImport
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpect
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualFakeOverride
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualHasDefaultEmptyConstructor
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualHasNoSource
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpectSuggestedWhenActualTypealias
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActual
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualDifferentArgsOrder
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideEmptyWithNonEmpty
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideWithEmpty
+ * idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnExpect
 
 org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated$AddDependency has directories
+ * idea/tests/testData/multiModuleQuickFix/addDependency/class
+ * idea/tests/testData/multiModuleQuickFix/addDependency/import
+ * idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunction
+ * idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunction2
+ * idea/tests/testData/multiModuleQuickFix/addDependency/topLevelProperty
+ * idea/tests/testData/multiModuleQuickFix/addDependency/topLevelProperty2
  * idea/tests/testData/multiModuleQuickFix/addDependency/class
  * idea/tests/testData/multiModuleQuickFix/addDependency/import
  * idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunction
@@ -1571,8 +3220,26 @@ org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestG
  * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/primaryConstructorAbsence
  * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/propertyWithIncorrectType
  * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/secondaryConstructorAbsence
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classFunction
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classFunctionSameSignature
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classFunctionWithConstructor
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classFunctionWithConstructorAndParameters
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classFunctionWithIncompatibleConstructor
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classOverloadedFunction
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classPropertyInConstructor
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classSomeProperties
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/classWithIncompilableFunction
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/companionAbsence
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/membersWithIncorrectType
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/primaryConstructorAbsence
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/propertyWithIncorrectType
+ * idea/tests/testData/multiModuleQuickFix/addMissingActualMembers/secondaryConstructorAbsence
 
 org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated$AddThrowAnnotation has directories
+ * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/common
+ * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/js
+ * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/jvm
+ * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/jvmWithoutStdlib
  * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/common
  * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/js
  * idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/jvm
@@ -1584,12 +3251,27 @@ org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestG
  * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertImplicitExpectSubClass
  * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notGenerateEqualsAndHashCodeForSealedInCommon
  * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notGenerateEqualsAndHashCodeForSealedInJvmForExpect
+ * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertActualSubClass
+ * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertExpectSubClass
+ * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notConvertImplicitExpectSubClass
+ * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notGenerateEqualsAndHashCodeForSealedInCommon
+ * idea/tests/testData/multiModuleQuickFix/canSealedSubClassBeObject/notGenerateEqualsAndHashCodeForSealedInJvmForExpect
 
 org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated$ChangeModifier has directories
  * idea/tests/testData/multiModuleQuickFix/changeModifier/internal
  * idea/tests/testData/multiModuleQuickFix/changeModifier/public
+ * idea/tests/testData/multiModuleQuickFix/changeModifier/internal
+ * idea/tests/testData/multiModuleQuickFix/changeModifier/public
 
 org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated$ChangeSignature has directories
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/actual
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/expect
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/override
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/override2
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/override3
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/override4
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/override5
+ * idea/tests/testData/multiModuleQuickFix/changeSignature/override6
  * idea/tests/testData/multiModuleQuickFix/changeSignature/actual
  * idea/tests/testData/multiModuleQuickFix/changeSignature/expect
  * idea/tests/testData/multiModuleQuickFix/changeSignature/override
@@ -1639,12 +3321,111 @@ org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestG
  * idea/tests/testData/multiModuleQuickFix/createActual/withRootPackage
  * idea/tests/testData/multiModuleQuickFix/createActual/withTest
  * idea/tests/testData/multiModuleQuickFix/createActual/withTestDummy
+ * idea/tests/testData/multiModuleQuickFix/createActual/abstract
+ * idea/tests/testData/multiModuleQuickFix/createActual/abstractClassWithJdk
+ * idea/tests/testData/multiModuleQuickFix/createActual/annotation
+ * idea/tests/testData/multiModuleQuickFix/createActual/annotationOptionalExpectation
+ * idea/tests/testData/multiModuleQuickFix/createActual/annotationOptionalExpectationNoDir
+ * idea/tests/testData/multiModuleQuickFix/createActual/annotationWithComment
+ * idea/tests/testData/multiModuleQuickFix/createActual/class
+ * idea/tests/testData/multiModuleQuickFix/createActual/classWithBase
+ * idea/tests/testData/multiModuleQuickFix/createActual/classWithJdk
+ * idea/tests/testData/multiModuleQuickFix/createActual/classWithSuperTypeFromOtherPackage
+ * idea/tests/testData/multiModuleQuickFix/createActual/constructorWithDelegation
+ * idea/tests/testData/multiModuleQuickFix/createActual/constructorWithJdk
+ * idea/tests/testData/multiModuleQuickFix/createActual/createWithImport
+ * idea/tests/testData/multiModuleQuickFix/createActual/defaultParameterInExpected
+ * idea/tests/testData/multiModuleQuickFix/createActual/defaultParameterInExpectedClass
+ * idea/tests/testData/multiModuleQuickFix/createActual/defaultParameterInExpectedConstructor
+ * idea/tests/testData/multiModuleQuickFix/createActual/enum
+ * idea/tests/testData/multiModuleQuickFix/createActual/expectSealedInCommonWhen
+ * idea/tests/testData/multiModuleQuickFix/createActual/forbiddenForLeafSourceSets
+ * idea/tests/testData/multiModuleQuickFix/createActual/function
+ * idea/tests/testData/multiModuleQuickFix/createActual/functionSameFile
+ * idea/tests/testData/multiModuleQuickFix/createActual/inlineClass
+ * idea/tests/testData/multiModuleQuickFix/createActual/interface
+ * idea/tests/testData/multiModuleQuickFix/createActual/nested
+ * idea/tests/testData/multiModuleQuickFix/createActual/object
+ * idea/tests/testData/multiModuleQuickFix/createActual/package
+ * idea/tests/testData/multiModuleQuickFix/createActual/packageIncorrect
+ * idea/tests/testData/multiModuleQuickFix/createActual/packageIncorrectEmpty
+ * idea/tests/testData/multiModuleQuickFix/createActual/primaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/createActual/property
+ * idea/tests/testData/multiModuleQuickFix/createActual/sealed
+ * idea/tests/testData/multiModuleQuickFix/createActual/sealedInCommonWhen
+ * idea/tests/testData/multiModuleQuickFix/createActual/sealedSubclass
+ * idea/tests/testData/multiModuleQuickFix/createActual/valueClass
+ * idea/tests/testData/multiModuleQuickFix/createActual/valueClassWithGenerics
+ * idea/tests/testData/multiModuleQuickFix/createActual/withFakeJvm
+ * idea/tests/testData/multiModuleQuickFix/createActual/withRootPackage
+ * idea/tests/testData/multiModuleQuickFix/createActual/withTest
+ * idea/tests/testData/multiModuleQuickFix/createActual/withTestDummy
 
 org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated$CreateActualExplicitApi has directories
  * idea/tests/testData/multiModuleQuickFix/createActualExplicitApi/class
  * idea/tests/testData/multiModuleQuickFix/createActualExplicitApi/function
+ * idea/tests/testData/multiModuleQuickFix/createActualExplicitApi/class
+ * idea/tests/testData/multiModuleQuickFix/createActualExplicitApi/function
 
 org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated$CreateExpect has directories
+ * idea/tests/testData/multiModuleQuickFix/createExpect/annotation
+ * idea/tests/testData/multiModuleQuickFix/createExpect/annotation2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/class
+ * idea/tests/testData/multiModuleQuickFix/createExpect/classWithAnnotation
+ * idea/tests/testData/multiModuleQuickFix/createExpect/classWithSuperClassAndTypeParameter
+ * idea/tests/testData/multiModuleQuickFix/createExpect/classWithSuperTypeFromOtherPackage
+ * idea/tests/testData/multiModuleQuickFix/createExpect/commented
+ * idea/tests/testData/multiModuleQuickFix/createExpect/companion
+ * idea/tests/testData/multiModuleQuickFix/createExpect/createWithImport
+ * idea/tests/testData/multiModuleQuickFix/createExpect/dataClass
+ * idea/tests/testData/multiModuleQuickFix/createExpect/dataObject
+ * idea/tests/testData/multiModuleQuickFix/createExpect/enum
+ * idea/tests/testData/multiModuleQuickFix/createExpect/enumComplex
+ * idea/tests/testData/multiModuleQuickFix/createExpect/enumEmpty
+ * idea/tests/testData/multiModuleQuickFix/createExpect/funWithAccessibleAlias
+ * idea/tests/testData/multiModuleQuickFix/createExpect/funWithAccessibleExpansion
+ * idea/tests/testData/multiModuleQuickFix/createExpect/funWithAccessibleParameter
+ * idea/tests/testData/multiModuleQuickFix/createExpect/funWithAccessibleTypeFromCommon
+ * idea/tests/testData/multiModuleQuickFix/createExpect/funWithJdk
+ * idea/tests/testData/multiModuleQuickFix/createExpect/funWithPrivateModifier
+ * idea/tests/testData/multiModuleQuickFix/createExpect/function
+ * idea/tests/testData/multiModuleQuickFix/createExpect/function2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/functionInInterface
+ * idea/tests/testData/multiModuleQuickFix/createExpect/functionWithImplementationInInterface
+ * idea/tests/testData/multiModuleQuickFix/createExpect/functionWithImplementationInInterface2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/hierarchy
+ * idea/tests/testData/multiModuleQuickFix/createExpect/inlineClass
+ * idea/tests/testData/multiModuleQuickFix/createExpect/inlineClass2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/innerClassWithTypeParam
+ * idea/tests/testData/multiModuleQuickFix/createExpect/innerClassWithTypeParam2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/innerEnum
+ * idea/tests/testData/multiModuleQuickFix/createExpect/memberFunctionAndNestedClass
+ * idea/tests/testData/multiModuleQuickFix/createExpect/nestedClass
+ * idea/tests/testData/multiModuleQuickFix/createExpect/noAccessOnMember
+ * idea/tests/testData/multiModuleQuickFix/createExpect/onMember
+ * idea/tests/testData/multiModuleQuickFix/createExpect/primaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/createExpect/property
+ * idea/tests/testData/multiModuleQuickFix/createExpect/property2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/propertyInConstructor
+ * idea/tests/testData/multiModuleQuickFix/createExpect/propertyWithConstModifier
+ * idea/tests/testData/multiModuleQuickFix/createExpect/propertyWithLateinitModifier
+ * idea/tests/testData/multiModuleQuickFix/createExpect/propertyWithPrivateModifier
+ * idea/tests/testData/multiModuleQuickFix/createExpect/sealedClass
+ * idea/tests/testData/multiModuleQuickFix/createExpect/stdlibWithJavaAlias
+ * idea/tests/testData/multiModuleQuickFix/createExpect/superTypeFromStdlib
+ * idea/tests/testData/multiModuleQuickFix/createExpect/topLevelFunctionWithAnnotations
+ * idea/tests/testData/multiModuleQuickFix/createExpect/topLevelPropertyWithTypeParam
+ * idea/tests/testData/multiModuleQuickFix/createExpect/typeAlias
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withAliases
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withAnnotations
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withConstructorWithParametersWithoutValVar
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withInitializer
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withPlatformNested
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withRootPackage
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withSecondaryConstructor
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withSecondaryConstructor2
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withSupertype
+ * idea/tests/testData/multiModuleQuickFix/createExpect/withVararg
  * idea/tests/testData/multiModuleQuickFix/createExpect/annotation
  * idea/tests/testData/multiModuleQuickFix/createExpect/annotation2
  * idea/tests/testData/multiModuleQuickFix/createExpect/class
@@ -1711,8 +3492,24 @@ org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestG
  * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/addCancellationException4
  * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/removeEmptyThrows
  * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/removeThrowsOnIncompatibleOverride
+ * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/addCancellationException1
+ * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/addCancellationException2
+ * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/addCancellationException3
+ * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/addCancellationException4
+ * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/removeEmptyThrows
+ * idea/tests/testData/multiModuleQuickFix/fixNativeThrowsErrors/removeThrowsOnIncompatibleOverride
 
 org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated$FunctionTypeReceiverToParameter has directories
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionConstructor
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionParameter
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionReturn
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classProperty
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/functionParameter
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/functionReturn
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/interfaceFunctionParameter
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/interfaceFunctionReturn
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/interfaceProperty
+ * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/property
  * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionConstructor
  * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionParameter
  * idea/tests/testData/multiModuleQuickFix/functionTypeReceiverToParameter/classFunctionReturn
@@ -1729,14 +3526,26 @@ org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestG
  * idea/tests/testData/multiModuleQuickFix/initializeProperty/notInitializeWithConstructorParameter
  * idea/tests/testData/multiModuleQuickFix/initializeProperty/notMoveNonActualParamterToActualConstructor
  * idea/tests/testData/multiModuleQuickFix/initializeProperty/notMoveToActualConstructor
+ * idea/tests/testData/multiModuleQuickFix/initializeProperty/notInitializeNonActualParameterWithConstructorParameter
+ * idea/tests/testData/multiModuleQuickFix/initializeProperty/notInitializeWithConstructorParameter
+ * idea/tests/testData/multiModuleQuickFix/initializeProperty/notMoveNonActualParamterToActualConstructor
+ * idea/tests/testData/multiModuleQuickFix/initializeProperty/notMoveToActualConstructor
 
 org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated$InlineToValue has directories
  * idea/tests/testData/multiModuleQuickFix/inlineToValue/commonWithJvm
  * idea/tests/testData/multiModuleQuickFix/inlineToValue/genericParameter
  * idea/tests/testData/multiModuleQuickFix/inlineToValue/JS
  * idea/tests/testData/multiModuleQuickFix/inlineToValue/JVM
+ * idea/tests/testData/multiModuleQuickFix/inlineToValue/commonWithJvm
+ * idea/tests/testData/multiModuleQuickFix/inlineToValue/genericParameter
+ * idea/tests/testData/multiModuleQuickFix/inlineToValue/JS
+ * idea/tests/testData/multiModuleQuickFix/inlineToValue/JVM
 
 org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated$MakeOverridenMemberOpen has directories
+ * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/actual
+ * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/expect
+ * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/hasAbstract
+ * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/hasOpen
  * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/actual
  * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/expect
  * idea/tests/testData/multiModuleQuickFix/makeOverridenMemberOpen/hasAbstract
@@ -1811,13 +3620,90 @@ org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestG
  * idea/tests/testData/multiModuleQuickFix/other/safeDeleteForbiddenFromActual
  * idea/tests/testData/multiModuleQuickFix/other/safeDeleteFromActual
  * idea/tests/testData/multiModuleQuickFix/other/safeDeleteUsedInAnotherPlatform
+ * idea/tests/testData/multiModuleQuickFix/other/actualImplementAsConstructorParam
+ * idea/tests/testData/multiModuleQuickFix/other/actualNoImplementAsConstructorParam
+ * idea/tests/testData/multiModuleQuickFix/other/actualWithoutExpect
+ * idea/tests/testData/multiModuleQuickFix/other/addActualToClass
+ * idea/tests/testData/multiModuleQuickFix/other/addActualToClassMember
+ * idea/tests/testData/multiModuleQuickFix/other/addActualToTopLevelMember
+ * idea/tests/testData/multiModuleQuickFix/other/addAnnotationTargetToActual
+ * idea/tests/testData/multiModuleQuickFix/other/addAnnotationTargetToExpect
+ * idea/tests/testData/multiModuleQuickFix/other/addFunctionToCommonClassFromJavaUsage
+ * idea/tests/testData/multiModuleQuickFix/other/addOperatorByActual
+ * idea/tests/testData/multiModuleQuickFix/other/addOperatorByExpect
+ * idea/tests/testData/multiModuleQuickFix/other/cancelMakeAbstractFromActual
+ * idea/tests/testData/multiModuleQuickFix/other/convertActualEnumToSealedClass
+ * idea/tests/testData/multiModuleQuickFix/other/convertActualSealedClassToEnum
+ * idea/tests/testData/multiModuleQuickFix/other/convertExpectEnumToSealedClass
+ * idea/tests/testData/multiModuleQuickFix/other/convertExpectSealedClassToEnum
+ * idea/tests/testData/multiModuleQuickFix/other/convertPropertyGetterToInitializer
+ * idea/tests/testData/multiModuleQuickFix/other/convertPropertyToFunction
+ * idea/tests/testData/multiModuleQuickFix/other/createClassFromUsageImport
+ * idea/tests/testData/multiModuleQuickFix/other/createClassFromUsageRef
+ * idea/tests/testData/multiModuleQuickFix/other/createFunInExpectClass
+ * idea/tests/testData/multiModuleQuickFix/other/createTestOnExpect
+ * idea/tests/testData/multiModuleQuickFix/other/createValInExpectClass
+ * idea/tests/testData/multiModuleQuickFix/other/createVarInExpectClass
+ * idea/tests/testData/multiModuleQuickFix/other/deprecatedHeader
+ * idea/tests/testData/multiModuleQuickFix/other/deprecatedHeaderImpl
+ * idea/tests/testData/multiModuleQuickFix/other/deprecatedImpl
+ * idea/tests/testData/multiModuleQuickFix/other/deprecatedImplHeader
+ * idea/tests/testData/multiModuleQuickFix/other/functionTypeParameterToReceiverByHeader
+ * idea/tests/testData/multiModuleQuickFix/other/functionTypeParameterToReceiverByImpl
+ * idea/tests/testData/multiModuleQuickFix/other/functionTypeReceiverToParameterByHeader
+ * idea/tests/testData/multiModuleQuickFix/other/functionTypeReceiverToParameterByImpl
+ * idea/tests/testData/multiModuleQuickFix/other/generateEqualsInExpect
+ * idea/tests/testData/multiModuleQuickFix/other/generateHashCodeInExpect
+ * idea/tests/testData/multiModuleQuickFix/other/implementAbstractExpectMemberInheritedFromInterface
+ * idea/tests/testData/multiModuleQuickFix/other/implementMembersInActualClassNoExpectMember
+ * idea/tests/testData/multiModuleQuickFix/other/implementMembersInImplClassNonImplInheritor
+ * idea/tests/testData/multiModuleQuickFix/other/importClassInCommon
+ * idea/tests/testData/multiModuleQuickFix/other/importClassInFromProductionInCommonTests
+ * idea/tests/testData/multiModuleQuickFix/other/importCommonClassInJs
+ * idea/tests/testData/multiModuleQuickFix/other/importCommonClassInJvm
+ * idea/tests/testData/multiModuleQuickFix/other/importCommonFunInJvm
+ * idea/tests/testData/multiModuleQuickFix/other/importExpectClassWithActualInJvm
+ * idea/tests/testData/multiModuleQuickFix/other/importExpectClassWithoutActualInJvm
+ * idea/tests/testData/multiModuleQuickFix/other/importFunInCommon
+ * idea/tests/testData/multiModuleQuickFix/other/makeAbstractFromActual
+ * idea/tests/testData/multiModuleQuickFix/other/makeInlineFromExpect
+ * idea/tests/testData/multiModuleQuickFix/other/makeInternalFromExpect
+ * idea/tests/testData/multiModuleQuickFix/other/makeOpenFromActual
+ * idea/tests/testData/multiModuleQuickFix/other/makeOpenFromExpect
+ * idea/tests/testData/multiModuleQuickFix/other/mayBeConstantWithActual
+ * idea/tests/testData/multiModuleQuickFix/other/memberFunParameterToReceiverByHeader
+ * idea/tests/testData/multiModuleQuickFix/other/memberFunParameterToReceiverByImpl
+ * idea/tests/testData/multiModuleQuickFix/other/memberFunReceiverToParameterByHeader
+ * idea/tests/testData/multiModuleQuickFix/other/memberFunReceiverToParameterByImpl
+ * idea/tests/testData/multiModuleQuickFix/other/memberFunToExtensionByHeader
+ * idea/tests/testData/multiModuleQuickFix/other/memberFunToExtensionByImpl
+ * idea/tests/testData/multiModuleQuickFix/other/memberValToExtensionByHeader
+ * idea/tests/testData/multiModuleQuickFix/other/memberValToExtensionByHeaderWithInapplicableImpl
+ * idea/tests/testData/multiModuleQuickFix/other/memberValToExtensionByImpl
+ * idea/tests/testData/multiModuleQuickFix/other/moveActualPropertyToExistentConstructor
+ * idea/tests/testData/multiModuleQuickFix/other/movePropertyToConstructor
+ * idea/tests/testData/multiModuleQuickFix/other/notMakeAbstractFromActual
+ * idea/tests/testData/multiModuleQuickFix/other/orderHeader
+ * idea/tests/testData/multiModuleQuickFix/other/orderImpl
+ * idea/tests/testData/multiModuleQuickFix/other/safeDeleteForbiddenFromActual
+ * idea/tests/testData/multiModuleQuickFix/other/safeDeleteFromActual
+ * idea/tests/testData/multiModuleQuickFix/other/safeDeleteUsedInAnotherPlatform
 
 org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated$PackageDirectoryMismatch has directories
  * idea/tests/testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToAnotherPackage
  * idea/tests/testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToCommonSourceRoot
  * idea/tests/testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToJvmSourceRoot
+ * idea/tests/testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToAnotherPackage
+ * idea/tests/testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToCommonSourceRoot
+ * idea/tests/testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToJvmSourceRoot
 
 org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated$RedundantNullableReturnType has directories
+ * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/actualMethod
+ * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/actualTopLevelFunction
+ * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/actualTopLevelProperty
+ * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/expectMemberProperty
+ * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/expectTopLevelFunction
+ * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/expectTopLevelProperty
  * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/actualMethod
  * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/actualTopLevelFunction
  * idea/tests/testData/multiModuleQuickFix/redundantNullableReturnType/actualTopLevelProperty
@@ -1857,7 +3743,1266 @@ org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGene
 org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Properties has directories
  * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithJvmNameOnProperty
 
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ClassOrObject$TestClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/class
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ClassOrObject$TestCompanion has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/companion
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ClassOrObject$TestInnerClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/innerClass
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ClassOrObject$TestInnerClassWithPackage has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/innerClassWithPackage
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ClassOrObject$TestJavaInnerClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaInnerClass
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ClassOrObject$TestJavaInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaInvoke
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ClassOrObject$TestJavaNestedClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaNestedClass
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ClassOrObject$TestJavaNestedInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaNestedInvoke
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ClassOrObject$TestNamedCompanion has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/namedCompanion
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ClassOrObject$TestNestedClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/nestedClass
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ClassOrObject$TestNestedObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/nestedObject
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ClassOrObject$TestObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/object
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/class
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestCompanion has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/companion
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestInnerClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/innerClass
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestInnerClassWithPackage has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/innerClassWithPackage
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaInnerClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaInnerClass
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaInvoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaInvoke
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaNestedClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaNestedClass
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaNestedInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/javaNestedInvoke
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestNamedCompanion has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/namedCompanion
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestNestedClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/nestedClass
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestNestedObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/nestedObject
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/classOrObject/object
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Functions$Constructors has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/secondaryConstructor
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Functions$FromObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/staticFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Functions$Hierarchy has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/fromLibrary
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Functions$Members has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticSet
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Functions$TopLevel has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/functionWithJvmOverloads
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Constructors$TestAllWithDefault has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/allWithDefault
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Constructors$TestJavaConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/javaConstructor
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Constructors$TestJvmOverloads has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/jvmOverloads
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Constructors$TestNestedPrimaryConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/nestedPrimaryConstructor
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Constructors$TestPrimaryConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/primaryConstructor
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Constructors$TestSecondaryConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/secondaryConstructor
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestAllWithDefault has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/allWithDefault
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/javaConstructor
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJvmOverloads has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/jvmOverloads
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestNestedPrimaryConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/nestedPrimaryConstructor
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestPrimaryConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/primaryConstructor
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestSecondaryConstructor has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/constructors/secondaryConstructor
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$FromCompanion has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/variable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$NestedObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/variable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/extension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/function
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestFunctionWithSeveralParameters has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/functionWithSeveralParameters
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticExtension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/staticFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$Named has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/variable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$NestedObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/staticFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$Operators has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/set
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/extension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestExtensionForObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/extensionForObject
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/function
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestJavaStaticMethod has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/javaStaticMethod
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestJavaStaticMethod2 has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/javaStaticMethod2
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestOverloadsExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsExtension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestOverloadsFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestOverloadsStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsStaticExtension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestOverloadsStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsStaticFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticExtension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/staticFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$NestedObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/staticFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/extension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/function
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticExtension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/staticFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/extension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/function
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticExtension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/staticFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/extension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/function
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/function
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticExtension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/nestedObject/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/named/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/nestedObject/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/staticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/staticFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Operators$TestComponent has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/component
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/component
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/component
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Operators$TestGet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/get
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/get
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/get
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Operators$TestHasNext has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/hasNext
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/hasNext
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/hasNext
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Operators$TestInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/invoke
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Operators$TestIterator has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/iterator
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/iterator
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/iterator
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Operators$TestMinus has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/minus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/minus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/minus
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Operators$TestNext has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/next
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/next
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/next
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Operators$TestPlus has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/plus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/plus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/plus
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Operators$TestSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/set
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/set
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/set
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestComponent has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/component
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/component
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/component
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/component
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestGet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/get
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/get
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/get
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/get
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/get
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestHasNext has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/hasNext
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/hasNext
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/hasNext
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/hasNext
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/invoke
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestIterator has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/iterator
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/iterator
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/iterator
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/iterator
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestMinus has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/minus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/minus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/minus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/minus
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestNext has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/next
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/next
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/next
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/next
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestPlus has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/plus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/plus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/plus
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/plus
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/operators/set
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/set
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/set
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/set
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestExtensionForObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/extensionForObject
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaStaticMethod has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/javaStaticMethod
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaStaticMethod2 has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/javaStaticMethod2
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestOverloadsExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsExtension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestOverloadsFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestOverloadsStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsStaticExtension
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsStaticExtension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestOverloadsStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/fromCompanion/overloadsStaticFunction
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsStaticFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestOverloadsExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsExtension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestOverloadsFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestOverloadsStaticExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsStaticExtension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestOverloadsStaticFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/nestedObject/overloadsStaticFunction
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestFunctionWithSeveralParameters has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/fromObject/functionWithSeveralParameters
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Hierarchy$TestFromLibrary has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/fromLibrary
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Java$TestJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/J
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Java$TestJJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/JJ
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Java$TestJJJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/JJJ
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Java$TestJKJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/JKJ
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/J
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/JJ
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJJJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/JJJ
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJKJ has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/java/JKJ
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Kotlin$TestJJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JJJK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Kotlin$TestJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JJK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Kotlin$TestJJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JJKK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Kotlin$TestJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Kotlin$TestJKJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JKJK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Kotlin$TestJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JKK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Kotlin$TestJKKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JKKK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JJJK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JJJK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JJJK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JJK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JJK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JJK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JJKK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JJKK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JJKK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJKJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JKJK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JKJK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JKJK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JKK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JKK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JKK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJKKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/kotlin/JKKK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JKKK
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JKKK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestFromLibrary has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/hierarchy/fromLibrary
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$ExtensionOperators has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/set
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$InterfaceDefault has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/invoke
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/variable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$Operators has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/set
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/function
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestJavaAnnotation has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaAnnotation
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestJavaAnnotationWithCustomName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaAnnotationWithCustomName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestJavaAnnotationWithSeveralParameters has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaAnnotationWithSeveralParameters
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestJavaInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaInvoke
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestJavaMethod has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethod
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestJavaMethodSyntheticGet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticGet
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestJavaMethodSyntheticIs has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticIs
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestJavaMethodSyntheticIsSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticIsSet
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestJavaMethodSyntheticSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticSet
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ExtensionOperators$TestComponent has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/component
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ExtensionOperators$TestGet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/get
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ExtensionOperators$TestHasNext has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/hasNext
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ExtensionOperators$TestInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/invoke
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ExtensionOperators$TestIterator has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/iterator
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ExtensionOperators$TestMinus has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/minus
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ExtensionOperators$TestNext has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/next
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ExtensionOperators$TestPlus has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/plus
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ExtensionOperators$TestSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/extensionOperators/set
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$InterfaceDefault$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/extension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$InterfaceDefault$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/function
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$InterfaceDefault$TestGet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/get
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$InterfaceDefault$TestInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/interfaceDefault/invoke
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Operators$TestComponentFromDataClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/componentFromDataClass
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestComponentFromDataClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/operators/componentFromDataClass
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaAnnotation has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaAnnotation
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaAnnotationWithCustomName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaAnnotationWithCustomName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaAnnotationWithSeveralParameters has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaAnnotationWithSeveralParameters
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaMethod has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethod
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaMethodSyntheticGet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticGet
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaMethodSyntheticIs has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticIs
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaMethodSyntheticIsSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticIsSet
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaMethodSyntheticSet has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/members/javaMethodSyntheticSet
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$Operators has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/operators/set
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestExtension has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/extension
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/extension
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestExtensionWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/extensionWithCustomFileName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestExtensionWithJvmOverloadsAndJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/extensionWithJvmOverloadsAndJvmName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestFunction has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/function
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestFunctionWithJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/functionWithJvmName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestFunctionWithJvmOverloads has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/functionWithJvmOverloads
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestExtensionWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/extensionWithCustomFileName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestExtensionWithJvmOverloadsAndJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/extensionWithJvmOverloadsAndJvmName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestFunctionWithJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/functionWithJvmName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestFunctionWithJvmOverloads has directories
+ * compiler-reference-index/tests/testData/compilerIndex/functions/topLevel/functionWithJvmOverloads
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Properties$ConstructorParameter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/withoutVal
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Properties$ConstructorParameterFromDataClass has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/varWithJvmField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Properties$FromObject has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/variable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Properties$Members has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variableWithReceiver
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Properties$TopLevel has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithJvmNameOnProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameter$TestAnnotation has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/annotation
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameter$TestAnnotationWithCustomParameter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/annotationWithCustomParameter
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameter$TestHierarchy has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/hierarchy
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameter$TestVal has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/val
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameter$TestVar has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/var
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameter$TestVarWithCustomNames has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/varWithCustomNames
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameter$TestVarWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/varWithJvmField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameter$TestWithoutVal has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/withoutVal
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestAnnotation has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/annotation
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestAnnotationWithCustomParameter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/annotationWithCustomParameter
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestHierarchy has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/hierarchy
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestVal has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/val
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/val
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestVar has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/var
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/var
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestVarWithCustomNames has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/varWithCustomNames
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/varWithCustomNames
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestVarWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/varWithJvmField
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/varWithJvmField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestWithoutVal has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameter/withoutVal
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameterFromDataClass$TestComponentB has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/componentB
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameterFromDataClass$TestEscapedName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/escapedName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameterFromDataClass$TestVal has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/val
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameterFromDataClass$TestVar has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/var
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameterFromDataClass$TestVarWithCustomNames has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/varWithCustomNames
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$ConstructorParameterFromDataClass$TestVarWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/varWithJvmField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestComponentB has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/componentB
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestEscapedName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/constructorParameterFromDataClass/escapedName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestConstant has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/constant
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/extensionVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestFieldProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fieldProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestFieldVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fieldVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/isProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/isVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/lateinit
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/property
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestStaticExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticExtensionVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestStaticLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticLateinit
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestStaticProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestStaticVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromObject$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/variable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestConstant has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/constant
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/extensionVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestFieldProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/fieldProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestFieldVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/fieldVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/isProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/isVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestJavaStaticField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/javaStaticField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestJavaStaticField2 has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/javaStaticField2
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/lateinit
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/property
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestPropertyWithBackingField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/propertyWithBackingField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestPropertyWithCustomGetterAndSetter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/propertyWithCustomGetterAndSetter
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestStaticExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticExtensionVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestStaticLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticLateinit
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestStaticProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestStaticVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$FromCompanion$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/variable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestConstant has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/constant
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/extensionVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestFieldProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/fieldProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestFieldVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/fieldVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/isProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/isVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/lateinit
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/property
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestStaticExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticExtensionVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestStaticLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticLateinit
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestStaticProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestStaticVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Named$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/variable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestConstant has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/constant
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/constant
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/constant
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/constant
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constant
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/extensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/extensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/extensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/extensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/extensionVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestFieldProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/fieldProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/fieldProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/fieldProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fieldProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestFieldVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/fieldVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/fieldVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/fieldVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fieldVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/isProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/isProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/isProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/isProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/isProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/isProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/isProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/isVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/isVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/isVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/isVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/isVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/isVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/lateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/lateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/lateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/lateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/lateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/lateinit
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/property
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/property
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/property
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/property
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/property
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/property
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/property
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestStaticExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticExtensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticExtensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticExtensionVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticExtensionVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestStaticLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticLateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticLateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticLateinit
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticLateinit
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestStaticProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticProperty
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestStaticVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/staticVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/staticVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticVariable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/staticVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/named/variable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/variable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/variable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/variable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/variable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variable
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaStaticField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/javaStaticField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaStaticField2 has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/javaStaticField2
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestPropertyWithBackingField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/propertyWithBackingField
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithBackingField
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/propertyWithBackingField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestPropertyWithCustomGetterAndSetter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/fromCompanion/propertyWithCustomGetterAndSetter
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithCustomGetterAndSetter
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/propertyWithCustomGetterAndSetter
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestConstant has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/constant
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/extensionVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestFieldProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/fieldProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestFieldVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/fieldVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/isProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/isVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/lateinit
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/property
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestStaticExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticExtensionVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestStaticLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticLateinit
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestStaticProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestStaticVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/staticVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$NestedObject$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/fromObject/nestedObject/variable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Get$TestJJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JJJK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Get$TestJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JJK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Get$TestJJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JJKK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Get$TestJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Get$TestJKJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JKJK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Get$TestJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JKK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Get$TestJKKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/get/JKKK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Set$TestJJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JJJK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Set$TestJJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JJK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Set$TestJJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JJKK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Set$TestJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Set$TestJKJK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JKJK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Set$TestJKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JKK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Set$TestJKKK has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/hierarchy/kotlin/set/JKKK
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/isProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/isVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestJavaField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/javaField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestJavaFieldWithInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/javaFieldWithInvoke
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/lateinit
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/property
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestPropertyWithBackingField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithBackingField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestPropertyWithCustomGetterAndSetter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithCustomGetterAndSetter
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestPropertyWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithJvmField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestPropertyWithReceiver has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithReceiver
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestVariableWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variableWithJvmField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$Members$TestVariableWithReceiver has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variableWithReceiver
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$InterfaceDefault$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/isProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$InterfaceDefault$TestIsVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/isVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$InterfaceDefault$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/property
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$InterfaceDefault$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/interfaceDefault/variable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/javaField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestJavaFieldWithInvoke has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/javaFieldWithInvoke
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestPropertyWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithJvmField
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/propertyWithJvmField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestPropertyWithReceiver has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/propertyWithReceiver
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestVariableWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variableWithJvmField
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithJvmField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestVariableWithReceiver has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/members/variableWithReceiver
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestConstant has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constant
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestConstantJava has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constantJava
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestConstantJavaWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constantJavaWithCustomFileName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestConstantWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constantWithCustomFileName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestExtensionVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/extensionVariable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestExtensionVariableWithJvmNameOnProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/extensionVariableWithJvmNameOnProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestIsProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/isProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestIsVariableWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/isVariableWithCustomFileName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestLateinit has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/lateinit
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/property
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestPropertyWithBackingField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/propertyWithBackingField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestPropertyWithCustomGetterAndSetter has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/propertyWithCustomGetterAndSetter
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestPropertyWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/propertyWithJvmField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestVariable has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variable
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestVariableWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithCustomFileName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestVariableWithCustomGetterAndSetterAndJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithCustomGetterAndSetterAndJvmName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestVariableWithCustomGetterAndSetterAndMixedJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithCustomGetterAndSetterAndMixedJvmName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestVariableWithJvmField has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithJvmField
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TopLevel$TestVariableWithJvmNameOnProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithJvmNameOnProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestConstantJava has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constantJava
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestConstantJavaWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constantJavaWithCustomFileName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestConstantWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/constantWithCustomFileName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestExtensionVariableWithJvmNameOnProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/extensionVariableWithJvmNameOnProperty
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestIsVariableWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/isVariableWithCustomFileName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestVariableWithCustomFileName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithCustomFileName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestVariableWithCustomGetterAndSetterAndJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithCustomGetterAndSetterAndJvmName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestVariableWithCustomGetterAndSetterAndMixedJvmName has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithCustomGetterAndSetterAndMixedJvmName
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceFirTestGenerated$TestVariableWithJvmNameOnProperty has directories
+ * compiler-reference-index/tests/testData/compilerIndex/properties/topLevel/variableWithJvmNameOnProperty
+
 org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$Library has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/string_/length
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$Library$Any has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/any/hashCode
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$Library$Long has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/long/class/class
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$Library$Object has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/object/hashCode
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$Library$String_ has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/string_/length
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$Any$TestHashCode has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/any/hashCode
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$TestHashCode has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/any/hashCode
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/object/hashCode
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$Long$Class has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/long/class/class
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$Class$TestClass has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/long/class/class
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$TestClass has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/long/class/class
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/string_/class
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$Object$TestHashCode has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/object/hashCode
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$String_$TestClass has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/string_/class
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$String_$TestLength has directories
+ * compiler-reference-index/tests/testData/compilerIndexByReference/library/string_/length
+
+org.jetbrains.kotlin.idea.fir.search.refIndex.KotlinCompilerReferenceByReferenceFirTestGenerated$TestLength has directories
  * compiler-reference-index/tests/testData/compilerIndexByReference/library/string_/length
 
 org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.LocalSessionInvalidationTestGenerated has directories
@@ -2005,7 +5150,7 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * fir/tests/testData/resolve/anchors/anchorInSameModuleJavaDependency
 ## K1 only cases
 
-439 K1 only cases (5865 files):
+648 K1 only cases (8099 files):
 
  * org.jetbrains.kotlin.DataFlowValueRenderingTestGenerated
  * org.jetbrains.kotlin.addImport.AddImportTestGenerated
@@ -2091,7 +5236,6 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.codeInsight.generate.GenerateToStringActionTestGenerated$Common
  * org.jetbrains.kotlin.idea.codeInsight.generate.GenerateToStringActionTestGenerated$MultipleTemplates
  * org.jetbrains.kotlin.idea.codeInsight.generate.GenerateToStringActionTestGenerated$SingleTemplate
- * org.jetbrains.kotlin.idea.codeInsight.postfix.K1PostfixTemplateTestGenerated$Uncategorized
  * org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.SerializationPluginIdeDiagnosticTestGenerated
  * org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.SerializationQuickFixTestGenerated
  * org.jetbrains.kotlin.idea.completion.test.Java8BasicCompletionTestGenerated
@@ -2148,24 +5292,47 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.decompiler.navigation.NavigateJavaSourceToLibrarySourceTestGenerated
  * org.jetbrains.kotlin.idea.decompiler.navigation.NavigateJavaSourceToLibraryTestGenerated
  * org.jetbrains.kotlin.idea.decompiler.navigation.NavigateToDecompiledLibraryTestGenerated
- * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Annotations
- * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Class
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Class$Uncategorized
  * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$ClassFun
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$ClassMembers
  * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$ClassObject
- * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Constructor
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Classes
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Constructor$Uncategorized
  * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$ContextReceivers
  * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Coroutines
  * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$DataClass
- * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$FromLoadJava
- * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Fun
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$DefaultAccessors
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Error
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$FromLoadJava$Uncategorized
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Fun$Uncategorized
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Fun$Vararg
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$GenericWithTypeVariables
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$GenericWithoutTypeVariables
  * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Inline
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$JavaBean
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$KotlinSignature$Uncategorized
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Library
  * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$MemberOrder
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Modality
  * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$NestedClasses
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$NonGeneric
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$NotNull
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$PackageMembers
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Parameter
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Parameters
  * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$PlatformTypes
- * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Prop
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Prop$Uncategorized
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Propagation$Uncategorized
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$PropertiesWithoutBackingFields
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Return
  * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Type
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$TypeParameter
  * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Typealias
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Types
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Uncategorized
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Vararg
  * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$Visibility
+ * org.jetbrains.kotlin.idea.decompiler.stubBuilder.LoadJavaClsStubTestGenerated$WithUseSiteTarget
  * org.jetbrains.kotlin.idea.decompiler.textBuilder.CommonDecompiledTextTestGenerated
  * org.jetbrains.kotlin.idea.decompiler.textBuilder.JvmDecompiledTextTestGenerated
  * org.jetbrains.kotlin.idea.editor.backspaceHandler.BackspaceHandlerTestGenerated$StringTemplate
@@ -2182,39 +5349,73 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.inspections.InspectionTestGenerated$Inspections
  * org.jetbrains.kotlin.idea.inspections.InspectionTestGenerated$InspectionsLocal
  * org.jetbrains.kotlin.idea.inspections.InspectionTestGenerated$Intentions
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$AddArrow
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$AlsoToApply
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$AnonymousFunction
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ApplyToAlso
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ArrayInDataClass
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ArrayList
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$BlockElse
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$BlockElseUsedAsExpression
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$CallableReferenceExpressions
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$CanBeParameter
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$CanBeVal
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$CatchIgnoresException
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Collections
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Check
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$CheckNotNull
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Comment
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Commons
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Compare
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Complex
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ConstantConditionIf
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ConventionNameCalls
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ConvertObjectToDataObject
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ConvertToExpressionBody$Uncategorized
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ConvertTwoComparisonsToRangeCheck
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Coroutines
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Default
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$DeprecatedCallableAddReplaceWith
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$DotQualifiedExpressions
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$DoubleNegation
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$EmptyRange
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$EnumValuesSoftDeprecate
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$EqualsBetweenInconvertibleTypes
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$EqualsOrHashCode
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ExplicitThis
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$False
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$FloatingPoint
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$FloatingPointLiteralPrecision
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$FunctionWithLambdaExpressionBody
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Function
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$FunctionWithLambdaExpressionBody$Uncategorized
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$HashSet
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$IfThenToElvis
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$IfThenToSafeAccess
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$IfToAssignment$Uncategorized
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$IfToReturn$OnlySingleStatement
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$IfToReturn$Uncategorized
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$IgnoreChainedIf$False
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$IgnoreChainedIf$True
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ImplicitNullableNothingType
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ImplicitThis
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$IncompleteDestructuringInspection
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$InconsistentCommentForJavaParameter
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$InconsistentCommentForJavaParameter$Uncategorized
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$InvertEmptinessCheck
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Io
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$JavaCollectionsStaticMethod
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$JavaMapForEach
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$JoinDeclarationAndAssignment
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$JoinDeclarationAndAssignment$Uncategorized
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$KeepComments
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$LambdaExpression
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$LeakingThis
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$LiftOut
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$LetToRun
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$LocalVariableName
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Logging
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Log4j
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Log4j2
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$MainFunctionReturnUnit
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$MapSumWithConstant
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Math
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$MayBeConstant
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$MigrateDiagnosticSuppression
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$MoveLambdaOutsideParentheses
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$MoveToPrevLine
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$MoveVariableDeclarationIntoWhen
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$NestedLambdaShadowedImplicitParameter
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$NonExhaustiveWhenStatementMigration
@@ -2224,33 +5425,42 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$NullChecksToSafeCall
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$NullableBooleanElvis
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ObjectLiteralToLambda
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$OnlySingleStatement$False
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$OnlySingleStatement$True
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$OverrideDeprecatedMigration
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$PrimitiveArray
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigration
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigration1_3
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ProhibitRepeatedUseSiteTargetAnnotationsMigration
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ProhibitTypeParametersForLocalVariablesMigration
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ProhibitUseSiteTargetAnnotationsOnSuperTypesMigration
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ProhibitUseSiteTargetAnnotationsOnSuperTypesMigration1_3
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Property
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Readln
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReadlnOrNull
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Receivers
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RecursiveEqualsCall
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RecursivePropertyAccessor
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantAsSequence
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantCompanionReference
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantDiagnosticSuppress
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantElseInIf
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantElvisReturnNull
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantEnumConstructorInvocation
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantIf
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantInnerClassModifier
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantLabelMigration
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantLambdaArrow
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantLambdaOrAnonymousFunction
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantNullableReturnType
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantLambdaOrAnonymousFunction$Uncategorized
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantOverride
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantRequireNotNullCall
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantRunCatching
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantSamConstructor
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantUnitExpression
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantUnitReturnType
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantVisibilityModifier
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantWith
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReferenceExpression
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RemoveBraces
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RemoveEmptyParenthesesFromAnnotationEntry
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RemoveExplicitTypeArguments
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RemoveRedundantQualifierName
@@ -2258,9 +5468,11 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RemoveToStringInStringTemplate
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceArrayOfWithLiteral
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceAssertBooleanWithAssertEquality
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceCallWithBinaryOperator
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceCollectionCountWithSize
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceGuardClauseWithFunctionCall
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceJavaStaticMethodWithKotlinAnalog
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceGetOrSet
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceGuardClauseWithFunctionCall$Uncategorized
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceJavaStaticMethodWithKotlinAnalog$Collections
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceManualRangeWithIndicesCalls
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceMapIndexedWithListGenerator
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceNegatedIsEmptyWithIsNotEmpty
@@ -2269,9 +5481,8 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceRangeStartEndInclusiveWithFirstLast
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceRangeToWithRangeUntil
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceRangeToWithUntil
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceReadLineWithReadln
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceReadLineWithReadln$Uncategorized
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceStringFormatWithLiteral
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceSubstring
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceToStringWithStringTemplate
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceToWithInfixForm
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceUntilWithRangeUntil
@@ -2280,35 +5491,71 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceWithImportAlias
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceWithOperatorAssignment
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReplaceWithStringBuilderAppendRange
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReportImmediatelyReturnedVariables
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReportNonTrivialAccessors$Default
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReportNonTrivialAccessors$False
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ReportNonTrivialAccessors$True
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Require
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RequireNotNull
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RestrictReturnStatementTargetMigration
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RunToLet
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SafeCastWithReturn
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ScopeFunctions
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SelfAssignment
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SelfReferenceConstructorParameter
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SetterBackingFieldAssignment
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SimplifiableCall
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SimplifiableCallChain$Uncategorized
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SimplifyAssertNotNull
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SimplifyNestedEachInScope
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SimplifyWhenWithBooleanConstantCondition
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SingleElse
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Slf4j
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SpecifyType
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SubjectVariable$Uncategorized
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SuspendFunctionOnCoroutineScope
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SuspiciousAsDynamic
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SuspiciousCallableReferenceInLambda
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SuspiciousCollectionReassignment
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SuspiciousVarProperty
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$System
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ThrowableNotThrown
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ToString
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$True
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$TryToAssignment
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$TryToReturn
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UnlabeledReturnInsideLambda
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UnnecessaryOptInAnnotation
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UnnecessaryVariable
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UnnecessaryVariable$Uncategorized
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UnsafeCastFromDynamic
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UnusedDataClassCopyResult
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UnusedEquals
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UnusedLambdaExpressionBody
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UnusedMainParameter
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UnusedReceiverParameter
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UnusedUnaryOperator
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UseExpressionBody
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UsePropertyAccessSyntax
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$VerboseNullabilityAndEmptiness
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UnusedUnaryOperator$Uncategorized
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UseExpressionBody$Uncategorized
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UselessCallOnCollection
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$UselessCallOnNotNull
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Util
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$VerboseNullabilityAndEmptiness$Array
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$VerboseNullabilityAndEmptiness$Collection
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$VerboseNullabilityAndEmptiness$IntArray
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$VerboseNullabilityAndEmptiness$List
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$VerboseNullabilityAndEmptiness$Map
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$VerboseNullabilityAndEmptiness$Set
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$VerboseNullabilityAndEmptiness$Str
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$WarningOnMainUnusedParameterMigration
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$WhenWithOnlyElse
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$WhenToAssignment
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$WhenToReturn
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$WhenWithOnlyElse$Uncategorized
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Whitespace
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$WithDropLast
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$WithIndexingOperation
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$WithSubstringAfter
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$WithSubstringBefore
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$WithTake
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$WrapRun
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Wrapped
  * org.jetbrains.kotlin.idea.inspections.MultiFileLocalInspectionTestGenerated
  * org.jetbrains.kotlin.idea.inspections.ViewOfflineInspectionTestGenerated$LocalVariableName
  * org.jetbrains.kotlin.idea.inspections.ViewOfflineInspectionTestGenerated$SuspiciousCollectionReassignment
@@ -2329,8 +5576,35 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.intentions.K1IntentionTest2Generated$TakeWhile
  * org.jetbrains.kotlin.idea.intentions.K1IntentionTest2Generated$ToCollection
  * org.jetbrains.kotlin.idea.intentions.K1IntentionTest2Generated$Uncategorized
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$AllToNone$Uncategorized
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$AnyToNone$ToAny
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$AssignmentToIf
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$AssignmentToWhen
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$Delegate
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$EliminateSubject
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$FilterNotToFilter
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$FilterNotToToFilterTo
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$FilterToFilterNot
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$FilterToToFilterNotTo
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$Function
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$NoneToAll
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$Predicate
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$Property$Uncategorized
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$Property$Val
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$Property$Var
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$PropertyToIf
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$PropertyToWhen
  * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$RemoveExplicitTypeWithApiMode
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$ReturnToIf
  * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$SpecifyTypeExplicitlyInDestructuringAssignment
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$TakeIfToTakeUnless
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$TakeUnlessToTakeIf
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$ToAll
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$ToAny
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$ToNone
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$Uncategorized
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$Val
+ * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$ValNoBacking
  * org.jetbrains.kotlin.idea.intentions.MultiFileIntentionTestGenerated
  * org.jetbrains.kotlin.idea.intentions.declarations.JoinLinesTestGenerated$AddSemicolon
  * org.jetbrains.kotlin.idea.intentions.declarations.JoinLinesTestGenerated$DeclarationAndAssignment
@@ -2365,40 +5639,123 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.navigation.GotoSuperTestGenerated
  * org.jetbrains.kotlin.idea.navigation.KotlinGotoImplementationTestGenerated
  * org.jetbrains.kotlin.idea.navigationToolbar.KotlinNavBarTestGenerated
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$AddNameToArgument
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$AnnotationEntry
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$BinaryOperations
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$Call$TypeArguments
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$CallExpression$Uncategorized
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$CallableReferences
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$CanBeVal
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$ClassUsages$Uncategorized
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$CodeStructure
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$Component
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$ConvertCollection
  * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$DataClassConstructorVsCopyVisibility
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$DefinitelyNonNullableTypes
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$DelegateAccessors
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$DelegationSpecifier
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$Extension
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$ExtensionByExtensionReceiver
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$FixOverloadedOperator
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$FromChar
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$FunctionLiteralArguments$Uncategorized
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$General
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$Get
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$HasNext
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$ImportDirective$Kt21515
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$ImportDirective$Uncategorized
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$InContainingDeclaration
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$IncompatibleTypes
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$Invoke
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$Iterator
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$LocalVariable
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$Member
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$Next
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$NothingToOverride
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$NumberConversion$Uncategorized
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$OverrideDeprecation
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$Parameter
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$PrimaryParameter
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$Property$Abstract
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$ReferenceExpression
  * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$ReplaceWithSafeCallForScopeFunction
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$RoundNumber
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$Set
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$Simple
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$ToByte
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$ToChar
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$ToShort
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$TypeArguments
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$TypeArguments$Uncategorized
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$Unavailable
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$WithLocalElements
+ * org.jetbrains.kotlin.idea.quickfix.K1QuickFixTestGenerated$WrapWithCollectionLiteral
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$AddAnnotationTarget
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$AddExclExclCall
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$AddGenericUpperBound
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$AddOpenToClassDeclaration
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$AddSpreadOperatorForArrayAsVarargAfterSam
- * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$ChangeSignature
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$AnnotationEntry
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$Call$TypeArguments
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$CallExpression$Uncategorized
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$ChangeSignature$Uncategorized
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$ClassUsages$Uncategorized
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$ConflictingExtension
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$ConvertJavaInterfaceToClass
- * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$CreateFromUsage
- * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$DeprecatedSymbolUsage
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$CreateSecondaryConstructor
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$DefinitelyNonNullableTypes
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$DelegationSpecifier
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$DeprecatedSymbolUsage$TypeArguments
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$DeprecatedSymbolUsage$Uncategorized
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$Extension
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$FieldFromJava
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$FromJava
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$FromKotlinToJava
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$GenericVarianceViolation
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$ImportDirective
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$Imports
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$IncreaseVisibility
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$JavaAnnotationPositionedArguments
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$Jk
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$Kj
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$MakePrivateAndOverrideMember
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$MakeUpperBoundNonNullable
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$Member
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$MemberVisibilityCanBePrivate
- * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$Migration
- * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$Modifiers
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$Modifiers$Uncategorized
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$MoveToSealedParent
- * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$Override
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$NothingToOverride
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$Parameter
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$PrimaryParameter
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$Property$Uncategorized
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$ReferenceExpression
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$RemoveUnused
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$ReplaceWithSafeCall
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$ReplaceWithSafeCallForScopeFunction
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$Simple
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$SpecifySuperExplicitly
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$SurroundWithNullCheck
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$TypeAliases$WholeProject
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$TypeArguments
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$TypeImports
- * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$TypeMismatch
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$TypeMismatch$Uncategorized
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$TypeReference
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$When
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$WholeProject
  * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$WrapWithSafeLetCall
+ * org.jetbrains.kotlin.idea.quickfix.QuickFixMultiFileTestGenerated$WrongNullabilityForJavaOverride
  * org.jetbrains.kotlin.idea.refactoring.NameSuggestionProviderTestGenerated
  * org.jetbrains.kotlin.idea.refactoring.copy.CopyTestGenerated
  * org.jetbrains.kotlin.idea.refactoring.copy.MultiModuleCopyTestGenerated
  * org.jetbrains.kotlin.idea.refactoring.inline.InlineMultiFileTestGenerated
+ * org.jetbrains.kotlin.idea.refactoring.inline.InlineTestGenerated$FromFinalJavaToKotlin
+ * org.jetbrains.kotlin.idea.refactoring.inline.InlineTestGenerated$FromJavaToKotlin
+ * org.jetbrains.kotlin.idea.refactoring.inline.InlineTestGenerated$FromKotlinToJava
  * org.jetbrains.kotlin.idea.refactoring.inline.InlineTestGenerated$InlineTypeAlias
+ * org.jetbrains.kotlin.idea.refactoring.inline.InlineTestGenerated$JavaUsages
+ * org.jetbrains.kotlin.idea.refactoring.inline.InlineTestGenerated$NamedFunction$FromFinalJavaToKotlin
+ * org.jetbrains.kotlin.idea.refactoring.inline.InlineTestGenerated$NamedFunction$FromJavaToKotlin
  * org.jetbrains.kotlin.idea.refactoring.inline.InlineTestWithSomeDescriptorsGenerated
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractFunction$Duplicates
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractInterface
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractSuperclass
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceConstant$BinaryExpression
@@ -2409,9 +5766,6 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceLambdaParameter$Multiline
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceLambdaParameter$StringTemplates
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceLambdaParameter$Uncategorized
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceProperty$Script
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceProperty$StringTemplates
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceProperty$Uncategorized
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceTypeAlias
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceTypeParameter
  * org.jetbrains.kotlin.idea.refactoring.move.MoveTestGenerated$MoveDirectory

@@ -31,7 +31,7 @@ class SuiteElement private constructor(
     methods: List<TestMethod>, nestedSuites: List<SuiteElement>
 ) : RenderElement {
     private val methods = methods.sortedBy { it.methodName }
-    private val nestedSuites = nestedSuites.sortedBy { it.className }
+    val nestedSuites = nestedSuites.sortedBy { it.className }
 
     companion object {
         fun create(group: TGroup, suite: TSuite, model: TModel, className: String, isNested: Boolean): SuiteElement {

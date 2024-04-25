@@ -826,7 +826,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests") {
+    testGroup("idea/tests", category = CODE_INSIGHT) {
         testClass<AbstractFormatterTest> {
             model("formatter", pattern = Patterns.forRegex("""^([^.]+)\.after\.kt.*$"""))
             model(
@@ -848,7 +848,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                 testClassName = "FormatterInvertedCallSite",
             )
         }
+    }
 
+    testGroup("idea/tests") {
         testClass<AbstractDiagnosticMessageTest> {
             model("diagnosticMessage", isRecursive = false)
         }
