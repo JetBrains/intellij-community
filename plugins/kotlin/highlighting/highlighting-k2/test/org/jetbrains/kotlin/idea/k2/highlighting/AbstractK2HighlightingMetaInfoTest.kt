@@ -1,10 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.highlighting
 
-import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
-import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.core.script.K2ScriptDependenciesProvider
+import org.jetbrains.kotlin.idea.core.script.ScriptModel
+import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfoTest() {
@@ -13,6 +18,16 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
     override fun isFirPlugin(): Boolean = true
 
     override fun getDefaultProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
+
+    override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
+        val psiFile = files.first()
+        if (psiFile is KtFile && psiFile.isScript()) {
+            val scriptModel = ScriptModel(psiFile.virtualFile)
+            K2ScriptDependenciesProvider.getInstance(project).reloadConfigurations(setOf(scriptModel), System.getProperty("java.home"))
+        }
+
+        super.doMultiFileTest(files, globalDirectives)
+    }
 
     override fun highlightingFileNameSuffix(testKtFile: File): String {
         val fileContent = testKtFile.readText()

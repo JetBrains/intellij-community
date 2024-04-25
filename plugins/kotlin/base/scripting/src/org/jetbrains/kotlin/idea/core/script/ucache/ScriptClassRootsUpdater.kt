@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.k2ScriptingEnabled
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
@@ -90,7 +89,7 @@ abstract class ScriptClassRootsUpdater(
             }
         })
 
-        if (!k2ScriptingEnabled()) {
+        if (KotlinPluginModeProvider.isK1Mode()) {
             performUpdate(synchronous = false)
         }
     }
@@ -123,7 +122,7 @@ abstract class ScriptClassRootsUpdater(
     }
 
     fun invalidateAndCommit() {
-        if (!k2ScriptingEnabled()) {
+        if (KotlinPluginModeProvider.isK1Mode()) {
             update { invalidate() }
         }
     }
@@ -188,6 +187,7 @@ abstract class ScriptClassRootsUpdater(
     private var scheduledUpdate: BackgroundTaskUtil.BackgroundTask<*>? = null
 
     private fun performUpdate(synchronous: Boolean = false) {
+        if (KotlinPluginModeProvider.isK2Mode()) return
         val disposable = KotlinPluginDisposable.getInstance(project)
         if (disposable.disposed) return
 
@@ -299,8 +299,6 @@ abstract class ScriptClassRootsUpdater(
         filesToRemove: List<VirtualFile>
     ) {
         if (project.isDisposed) return
-
-        if (k2ScriptingEnabled()) return
 
         val builderSnapshot = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).getBuilderSnapshot()
         builderSnapshot.syncScriptEntities(project, filesToAddOrUpdate, filesToRemove) // time-consuming call
