@@ -571,15 +571,13 @@ internal class SoftwareBillOfMaterialsImpl(
     val license: LibraryLicense,
     val entry: LibraryFileEntry,
     val pomXmlUrl: String? = null,
-    pomXmlModel: Model?
+    val pomXmlModel: Model?
   ) {
-    val organizations = (pomXmlModel?.organization?.name ?: pomXmlModel
-      ?.developers?.asSequence()
-      ?.mapNotNull { it.organization }
+    val organizations = (pomXmlModel?.organization?.name?.let { sequenceOf(it) }
+                         ?: pomXmlModel?.developers?.asSequence()?.mapNotNull { it.organization })
       ?.filter { it.isNotBlank() }
-      ?.map(::translateSupplier)
       ?.distinct()
-      ?.joinToString())
+      ?.joinToString(transform = ::translateSupplier)
       ?.takeIf { it.isNotBlank() }
       ?.let { "Organization: $it" }
 
@@ -598,13 +596,15 @@ internal class SoftwareBillOfMaterialsImpl(
 
     val supplier: String? = license.supplier ?: organizations ?: developers
 
-    val copyrightText: String?
-      get() = if (license.copyrightText == null && isSupplierJetBrains) {
-        jetBrainsOwnLicense.copyrightText
+    val copyrightText: String? by lazy {
+      license.copyrightText ?: when {
+        isSupplierJetBrains -> jetBrainsOwnLicense.copyrightText
+        pomXmlModel?.inceptionYear == null || supplier == null -> null
+        else -> "Copyright (C) ${pomXmlModel.inceptionYear} " + supplier
+          .removePrefix("Organization: ")
+          .removePrefix("Person: ")
       }
-      else {
-        license.copyrightText
-      }
+    }
 
     val isSupplierJetBrains: Boolean by lazy {
       license.license == LibraryLicense.JETBRAINS_OWN || JETBRAINS_GITHUB_ORGANIZATIONS.any {
