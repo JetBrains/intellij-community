@@ -21,6 +21,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.io.computeDetached
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
 import java.nio.file.Path
 
@@ -34,7 +35,6 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     }
   }
 
-  @OptIn(IntellijInternalApi::class)
   override suspend fun execute(project: Project) {
     val checker = serviceAsync<WindowsDefenderChecker>()
 
@@ -44,13 +44,13 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       return
     }
 
-    @Suppress("OPT_IN_USAGE")
+    @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
     computeDetached {
       checkDefenderStatus(project, checker)
     }
   }
 
-  private suspend fun checkDefenderStatus(project: Project, checker: WindowsDefenderChecker) {
+  private fun checkDefenderStatus(project: Project, checker: WindowsDefenderChecker) {
     val protection = checker.isRealTimeProtectionEnabled()
     WindowsDefenderStatisticsCollector.protectionCheckStatus(project, protection)
     if (protection != true) {
