@@ -576,7 +576,10 @@ internal class SoftwareBillOfMaterialsImpl(
     val organizations = (pomXmlModel?.organization?.name?.let { sequenceOf(it) }
                          ?: pomXmlModel?.developers?.asSequence()?.mapNotNull { it.organization })
       ?.filter { it.isNotBlank() }
-      ?.distinct()
+      ?.mapNotNull {
+        @Suppress("HardCodedStringLiteral")
+        Jsoup.parse(it).wholeText().takeIf { it.isNotBlank() } ?: it
+      }?.distinct()
       ?.joinToString(transform = ::translateSupplier)
       ?.takeIf { it.isNotBlank() }
       ?.let { "Organization: $it" }
