@@ -45,16 +45,13 @@ class NotebookBelowCellDelimiterPanel(val editor: EditorImpl) : JPanel(GridLayou
     }
 
     if (isExecutable) {
-      val executionCountText = executionCount?.let { if (it > 0) "[$it]" else "[ ]" } ?: "[ ]"
+      val executionCountText = executionCount?.let { if (it > 0) "[$it]" else "" } ?: ""
       val executionLabel = JLabel(executionCountText)
 
       executionLabel.icon = statusIcon
       executionLabel.font = labelFont
       executionLabel.foreground = labelForeground
-
-      if (!tooltipText.isNullOrEmpty()) {
-        executionLabel.toolTipText = tooltipText
-      }
+      tooltipText?.let { executionLabel.toolTipText = tooltipText }
 
       add(executionLabel, BorderLayout.WEST)
       shouldUseCustomBackground = true
