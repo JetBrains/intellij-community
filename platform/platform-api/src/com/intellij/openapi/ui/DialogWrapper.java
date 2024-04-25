@@ -75,9 +75,9 @@ public abstract class DialogWrapper {
   public enum IdeModalityType {
     IDE,
     /**
-     * Effectively the same as {@link IDE}.
+     * Effectively the same as {@link #IDE}.
      *
-     * @deprecated use {@link IDE} instead
+     * @deprecated use {@link #IDE} instead
      */
     @Deprecated
     PROJECT,
@@ -1528,13 +1528,13 @@ public abstract class DialogWrapper {
 
   /**
    * Sets whether this dialog will keep previously opened popup open while it's showing.
-   *
+   *<p>
    * Some dialogs (e.g. Paste from History) can be invoked from a popup to perform
    * a certain task and then get back to working with the popup. However, as popups
    * normally disappear on losing focus, this doesn't work by default. Calling this
    * method with the parameter set to {@code true} will override this behavior
    * and keep all previously opened popups while the dialog is displayed.
-   *
+   *</p>
    * @param keepPopupsOpen whether to keep previously opened popups open
    */
   @ApiStatus.Experimental
