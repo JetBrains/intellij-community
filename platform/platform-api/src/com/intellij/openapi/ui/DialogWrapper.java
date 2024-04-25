@@ -260,8 +260,14 @@ public abstract class DialogWrapper {
       public void componentResized(ComponentEvent e) {
         if (!myResizeInProgress) {
           myActualSize = myPeer.getSize();
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Updated the actual size to " + myActualSize + " because the dialog has been resized");
+          }
           if (myErrorText != null && myErrorText.isVisible()) {
             myActualSize.height -= myErrorText.getMinimumSize().height;
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Adjusted the actual size to " + myActualSize + " to account for the minimum height of the error text");
+            }
           }
         }
       }
@@ -950,6 +956,9 @@ public abstract class DialogWrapper {
     // if rootPane = null, dialog has already been disposed
     if (rootPane != null) {
       if (myActualSize != null && isAutoAdjustable()) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Resetting the size on dispose to the actual size " + myActualSize);
+        }
         setSize(myActualSize.width, myActualSize.height);
       }
       myPeer.dispose();
@@ -2124,7 +2133,11 @@ public abstract class DialogWrapper {
 
   private void updateSize() {
     if (myActualSize == null && !myErrorText.isVisible()) {
-      myActualSize = getSize();
+      Dimension actualSize = getSize();
+      myActualSize = actualSize;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Updated the actual size to " + actualSize + " because the error text is invisible");
+      }
     }
   }
 
