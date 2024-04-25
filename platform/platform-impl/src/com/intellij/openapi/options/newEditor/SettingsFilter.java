@@ -23,6 +23,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,8 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
   private volatile SearchableOptionsRegistrar searchableOptionRegistrar;
   private final Alarm myUpdatingAlarm;
 
-  public SettingsFilter(@Nullable Project project, @NotNull List<? extends ConfigurableGroup> groups, SearchTextField search) {
+  @ApiStatus.Internal
+  protected SettingsFilter(@Nullable Project project, @NotNull List<? extends ConfigurableGroup> groups, SearchTextField search) {
     myUpdatingAlarm = new Alarm(project != null ? project : ApplicationManager.getApplication());
     SearchableOptionsRegistrarImpl optionRegistrar =
       (SearchableOptionsRegistrarImpl)ApplicationManager.getApplication().getServiceIfCreated(SearchableOptionsRegistrar.class);
@@ -97,10 +99,13 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     });
   }
 
+  @ApiStatus.Internal
   protected abstract Configurable getConfigurable(SimpleNode node);
 
+  @ApiStatus.Internal
   protected abstract SimpleNode findNode(Configurable configurable);
 
+  @ApiStatus.Internal
   protected abstract void updateSpotlight(boolean now);
 
   @Override
@@ -137,12 +142,14 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
   }
 
   @NotNull
+  @ApiStatus.Internal
   public String getFilterText() {
     String text = mySearch.getText();
     return text == null ? "" : text.trim();
   }
 
   @NotNull
+  @ApiStatus.Internal
   public String getSpotlightFilterText() {
     if (myHits != null) {
       return myHits.getSpotlightFilter();

@@ -22,6 +22,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,6 +94,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     return new SettingsTreeView(filter, groups);
   }
 
+  @ApiStatus.Internal
   protected @NotNull SpotlightPainter spotlightPainterFactory(@Nullable Project project, @NotNull JComponent target, @NotNull Disposable parent, @NotNull SpotlightPainter.SpotlightPainterUpdater updater) {
     return new SpotlightPainter(target, parent, updater);
   }
