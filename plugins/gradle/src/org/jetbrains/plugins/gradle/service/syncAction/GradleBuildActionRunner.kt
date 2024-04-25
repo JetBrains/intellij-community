@@ -22,9 +22,6 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
  *
  * To do this, we require the current [resolverCtx] and the [buildAction] that should be run.
  *
- * We also require the [helper] which will be used to set up each [BuildActionExecuter]. We may need to set up more than one
- * of these if the version of Gradle that we are connecting to doesn't support the certain features.
- *
  * We have two different cases which will be handled in [runBuildAction] we will try the most recent first,
  * falling back to the older ones if a [GradleConnectionException] is thrown. For Gradle 4.8 and above,
  * we use [BuildActionExecuter] in phased mode. This allows us to inject build actions into different parts of the Gradle build.
@@ -35,8 +32,7 @@ class GradleBuildActionRunner(
   private val resolverCtx: DefaultProjectResolverContext,
   private val buildAction: GradleModelFetchAction,
   private val settings: GradleExecutionSettings,
-  private val helper: GradleExecutionHelper,
-  private val buildActionMulticaster: GradleBuildActionListener
+  private val resultHandler: GradleBuildActionResultHandler
 ) {
 
   /**
@@ -71,13 +67,12 @@ class GradleBuildActionRunner(
    */
   private fun runPhasedBuildAction() {
     buildAction.isUseProjectsLoadedPhase = true
-    val resultHandler = GradleBuildActionResultHandler(resolverCtx, buildAction, buildActionMulticaster)
     resolverCtx.connection.action()
       .projectsLoaded(buildAction, resultHandler.createProjectLoadedHandler())
       .buildFinished(buildAction, resultHandler.createBuildFinishedHandler())
       .build()
       .prepareOperationForSync()
-      .withCancellationToken(resolverCtx.cancellationTokenSource.token())
+      .withCancellationToken(resolverCtx.cancellationToken)
       .withStreamedValueListener(resultHandler.createStreamValueListener())
       .forTasks(emptyList()) // this will allow setting up Gradle StartParameter#taskNames using model builders
       .run(resultHandler.createResultHandler())
@@ -85,10 +80,9 @@ class GradleBuildActionRunner(
   }
 
   private fun runDefaultBuildAction() {
-    val resultHandler = GradleBuildActionResultHandler(resolverCtx, buildAction, buildActionMulticaster)
     resolverCtx.connection.action(buildAction)
       .prepareOperationForSync()
-      .withCancellationToken(resolverCtx.cancellationTokenSource.token())
+      .withCancellationToken(resolverCtx.cancellationToken)
       .withStreamedValueListener(resultHandler.createStreamValueListener())
       .run(resultHandler.createResultHandler())
     resultHandler.waitForBuildFinish()

@@ -10,11 +10,8 @@ import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceProvider
 import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
-import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
-import org.jetbrains.uast.getParentOfType
-import org.jetbrains.uast.toUElementOfType
 
 class LoggingArgumentSymbolReferenceProvider : PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
@@ -74,14 +71,37 @@ internal fun <T> getAlignedPlaceholderCount(placeholderList: List<T>, context: P
 
 internal fun getPlaceholderRanges(context: PlaceholderContext): List<PlaceholderRanges>? {
   val logStringText = context.logStringArgument.sourcePsi?.text ?: return null
+  val type = if (isKotlinMultilineString(context.logStringArgument, logStringText)) {
+    KOTLIN_MULTILINE_RAW_STRING
+  }
+  else if (isKotlinString(context.logStringArgument)) {
+    KOTLIN_RAW_STRING
+  }
+  else if (isJavaString(context.logStringArgument)) {
+    JAVA_RAW_STRING
+  }
+  else return null
+
   val partHolders = listOf(
     LoggingStringPartEvaluator.PartHolder(
       logStringText,
       true
     )
   )
-  val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, partHolders)
+  val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, partHolders, type)
   if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY) return null
 
   return placeholderCountResult.placeholderRangesList
+}
+
+private fun isKotlinString(logString: UExpression): Boolean {
+  return logString is UPolyadicExpression
+}
+
+private fun isJavaString(logString: UExpression): Boolean {
+  return logString is ULiteralExpression
+}
+
+private fun isKotlinMultilineString(logString: UExpression, text: String): Boolean {
+  return isKotlinString(logString) && text.startsWith("\"\"\"") && text.endsWith("\"\"\"") && text.length >= 6
 }

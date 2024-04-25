@@ -39,7 +39,7 @@ class JpsKotlinBuildSystemDependencyManager : KotlinBuildSystemDependencyManager
     }
 
     private fun Project.createNewLibrary(libraryDescriptor: ExternalLibraryDescriptor): Library? {
-        val version = libraryDescriptor.preferredVersion ?: return null
+        val version = libraryDescriptor.preferredVersion ?: libraryDescriptor.maxVersion ?: libraryDescriptor.minVersion ?: return null
         val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(this)
 
         // Attempt to find a name that is not being used yet

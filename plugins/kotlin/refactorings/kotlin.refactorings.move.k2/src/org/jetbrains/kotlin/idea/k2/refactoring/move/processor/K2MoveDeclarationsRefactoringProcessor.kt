@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.deleteSingle
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
 
 /**
  * K2 move refactoring processor that moves declarations inside a new target according to the passed [descriptor]. The main difference
@@ -47,9 +48,11 @@ class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.De
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun performRefactoring(usages: Array<out UsageInfo>) = allowAnalysisOnEdt {
+        val elementsToMove = descriptor.source.elements
+        unMarkNonUpdatableUsages(elementsToMove)
         val targetFile = descriptor.target.getOrCreateTarget()
-        val sourceFiles = descriptor.source.elements.map { it.containingKtFile }.distinct()
-        val oldToNewMap = descriptor.source.elements.moveInto(targetFile)
+        val sourceFiles = elementsToMove.map { it.containingKtFile }.distinct()
+        val oldToNewMap = elementsToMove.moveInto(targetFile)
         descriptor.source.elements.forEach(PsiElement::deleteSingle)
         retargetUsagesAfterMove(usages.toList(), oldToNewMap)
         for (sourceFile in sourceFiles) {

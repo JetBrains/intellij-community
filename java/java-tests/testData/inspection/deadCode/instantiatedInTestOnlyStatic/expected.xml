@@ -2,8 +2,20 @@
 <problems>
   <problem>
     <file>Test.java</file>
+    <line>1</line>
+    <description>No class references has been found. Class static initializer is not reachable.</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
     <line>2</line>
     <description>Method has one usage but it is not reachable from entry points.</description>
+  </problem>
+
+  <problem>
+    <file>Main.java</file>
+    <line>1</line>
+    <description>No class references has been found. Class static initializer is not reachable.</description>
   </problem>
 
   <problem>

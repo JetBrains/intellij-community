@@ -2,12 +2,11 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState
 import com.intellij.openapi.project.IncompleteDependenciesService.IncompleteDependenciesAccessToken
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
@@ -23,10 +22,10 @@ class IncompleteDependenciesServiceImpl : IncompleteDependenciesService {
     return stateFlow.value
   }
 
-  @RequiresBlockingContext
+  @RequiresWriteLock
   override fun enterIncompleteState(): IncompleteDependenciesAccessToken {
     val token = object : IncompleteDependenciesAccessToken() {
-      @RequiresBlockingContext
+      @RequiresWriteLock
       override fun finish() {
         deregisterToken(this)
       }
@@ -35,33 +34,25 @@ class IncompleteDependenciesServiceImpl : IncompleteDependenciesService {
     return token
   }
 
-  @RequiresBlockingContext
+  @RequiresWriteLock
   private fun registerToken(token: AccessToken) {
+    ThreadingAssertions.assertWriteAccess() // @RequiresWriteLock does nothing in Kotlin
     synchronized(tokens) {
       val wasEmpty = tokens.isEmpty()
       tokens.add(token)
-      if (!wasEmpty) {
-        return
-      }
-      ApplicationManager.getApplication().invokeAndWait {
-        ApplicationManager.getApplication().runWriteAction {
-          stateFlow.update { DependenciesState.INCOMPLETE }
-        }
+      if (wasEmpty) {
+        stateFlow.update { DependenciesState.INCOMPLETE }
       }
     }
   }
 
-  @RequiresBlockingContext
+  @RequiresWriteLock
   private fun deregisterToken(token: AccessToken) {
+    ThreadingAssertions.assertWriteAccess() // @RequiresWriteLock does nothing in Kotlin
     synchronized(tokens) {
       tokens.remove(token)
-      if (tokens.isNotEmpty()) {
-        return
-      }
-      ApplicationManager.getApplication().invokeAndWait {
-        ApplicationManager.getApplication().runWriteAction {
-          stateFlow.update { DependenciesState.COMPLETE }
-        }
+      if (tokens.isEmpty()) {
+        stateFlow.update { DependenciesState.COMPLETE }
       }
     }
   }

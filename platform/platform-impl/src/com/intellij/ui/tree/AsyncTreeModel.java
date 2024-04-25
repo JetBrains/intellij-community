@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
+import com.intellij.ide.util.treeView.CachedTreePresentation;
+import com.intellij.ide.util.treeView.CachedTreePresentationSupport;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +39,7 @@ import static java.util.Collections.emptyList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
-public final class AsyncTreeModel extends AbstractTreeModel implements Searchable, TreeVisitor.Acceptor {
+public final class AsyncTreeModel extends AbstractTreeModel implements Searchable, TreeVisitor.Acceptor, CachedTreePresentationSupport {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
   private final Invoker foreground;
   private final Invoker background;
@@ -327,9 +329,53 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
   private @NotNull Promise<Node> promiseChildren(@NotNull Node node) {
     if (disposed) return rejectedPromise();
     return node.queue.promise(this::submit, () -> {
-      node.setLoading(!showLoadingNode ? null : new Node(new LoadingNode(), LeafState.ALWAYS));
+      var cachedNodes = getChildrenFromCachedPresentation(node);
+      if (cachedNodes != null) {
+        node.setChildren(cachedNodes);
+      }
+      else if (showLoadingNode) {
+        node.setLoading(new Node(new LoadingNode(), LeafState.ALWAYS));
+      }
+      else {
+        node.setLoading(null);
+      }
       return new CmdGetChildren("Load children", node, false);
     });
+  }
+
+  private @Nullable List<Node> getChildrenFromCachedPresentation(@NotNull AsyncTreeModel.Node parent) {
+    var cachedPresentation = tree.cachedPresentation;
+    if (cachedPresentation == null) return null;
+    for (TreePath parentPath : parent.paths) {
+      var cachedChildren = cachedPresentation.getChildren(parentPath.getLastPathComponent());
+      if (cachedChildren != null) {
+        return ContainerUtil.map(cachedChildren, child -> toNode(parent, cachedPresentation, parentPath.pathByAddingChild(child)));
+      }
+    }
+    return null;
+  }
+
+  private @NotNull Node toNode(
+    @Nullable Node parent,
+    @NotNull CachedTreePresentation cachedPresentation,
+    @NotNull TreePath nodePath
+  ) {
+    var object = nodePath.getLastPathComponent();
+    var result = new Node(object, LeafState.DEFAULT);
+    if (parent == null) {
+      result.paths.add(new CachingTreePath(object));
+    }
+    else {
+      for (TreePath path : parent.paths) {
+        result.paths.add(path.pathByAddingChild(object));
+      }
+    }
+    tree.map.put(object, result);
+    var resultChildren = cachedPresentation.getChildren(nodePath.getLastPathComponent());
+    if (resultChildren != null) {
+      result.children = ContainerUtil.map(resultChildren, child -> toNode(result, cachedPresentation, nodePath.pathByAddingChild(child)));
+    }
+    return result;
   }
 
   private Node getEntry(Object object) {
@@ -553,6 +599,9 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
         tree.map.put(loaded.object, loaded);
         TreePath path = new CachingTreePath(loaded.object);
         loaded.insertPath(path);
+        if (tree.cachedPresentation != null) {
+          tree.cachedPresentation.rootLoaded(loaded.object);
+        }
         treeStructureChanged(path, null, null);
         if (LOG.isTraceEnabled()) LOG.debug("new root: ", loaded.object);
         tree.queue.done(this, loaded);
@@ -662,6 +711,9 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       }
       List<Node> oldChildren = node.getChildren();
       List<Node> newChildren = loaded.getChildren();
+      if (tree.cachedPresentation != null) {
+        tree.cachedPresentation.childrenLoaded(node.object, ContainerUtil.map(newChildren, child -> child.object));
+      }
       if (oldChildren.isEmpty() && newChildren.isEmpty()) {
         node.setLeafState(loaded.leafState);
         treeNodesChanged(node, null);
@@ -829,6 +881,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     private final CommandQueue<CmdGetRoot> queue = new CommandQueue<>();
     private final Map<Object, Node> map = new HashMap<>();
     private volatile Node root;
+    private @Nullable CachedTreePresentation cachedPresentation;
 
     private void removeEmpty(@NotNull Node child) {
       child.forEachChildExceptLoading(this::removeEmpty);
@@ -971,6 +1024,17 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
         if (path == null) return false;
       }
       return true;
+    }
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void setCachedPresentation(@Nullable CachedTreePresentation presentation) {
+    tree.cachedPresentation = presentation;
+    if (tree.root == null && presentation != null) {
+      var rootPath = new CachingTreePath(presentation.getRoot());
+      tree.root = toNode(null, presentation, rootPath);
+      treeStructureChanged(new CachingTreePath(tree.root.object), null, null);
     }
   }
 

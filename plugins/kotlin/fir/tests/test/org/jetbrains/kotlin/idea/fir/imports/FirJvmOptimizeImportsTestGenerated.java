@@ -191,6 +191,11 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/KDocReference.kt");
             }
 
+            @TestMetadata("KDocReference2.kt")
+            public void testKDocReference2() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/jvm/KDocReference2.kt");
+            }
+
             @TestMetadata("KT10226.kt")
             public void testKT10226() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/jvm/KT10226.kt");

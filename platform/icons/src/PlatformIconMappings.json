@@ -8,6 +8,8 @@
       "diffWithClipboard.svg": "actions/diffWithClipboard.svg",
       "filterdups.svg": "toolbar/filterdups.svg",
       "generated.svg": "actions/generatedFolder.svg",
+      "groupByClass.svg": "actions/GroupByClass.svg",
+      "groupByFile.svg": "actions/GroupByFile.svg",
       "groupByMethod.svg": "actions/groupByMethod.svg",
       "groupByModule.svg": "actions/GroupByModule.svg",
       "groupByPackage.svg": "actions/GroupByPackage.svg",
@@ -441,6 +443,7 @@
     "ide": {
       "configFile.svg": "ide/configFile.svg",
       "externalLink.svg": "ide/external_link_arrow.svg",
+      "externalLinkWhite.svg": "ide/externalLinkArrowWhite.svg",
       "feedbackRating.svg": "ide/feedbackRating.svg",
       "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
       "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",

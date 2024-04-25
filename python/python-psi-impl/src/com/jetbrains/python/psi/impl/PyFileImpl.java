@@ -502,15 +502,18 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Nullable
   @Override
   public List<String> getDunderAll() {
-    if (getGreenStub() instanceof PyFileStub stubElement) {
-      return stubElement.getDunderAll();
-    }
-    if (!myDunderAllCalculated) {
-      final List<String> dunderAll = calculateDunderAll();
-      myDunderAll = dunderAll == null ? null : Collections.unmodifiableList(dunderAll);
-      myDunderAllCalculated = true;
-    }
-    return myDunderAll;
+    return withGreenStubOrAst(
+      PyFileStub.class,
+      stub -> stub.getDunderAll(),
+      ast -> {
+        if (!myDunderAllCalculated) {
+          final List<String> dunderAll = calculateDunderAll();
+          myDunderAll = dunderAll == null ? null : Collections.unmodifiableList(dunderAll);
+          myDunderAllCalculated = true;
+        }
+        return myDunderAll;
+      }
+    );
   }
 
   @Nullable
@@ -632,24 +635,28 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Override
   public boolean hasImportFromFuture(FutureFeature feature) {
-    if (getGreenStub() instanceof PyFileStub stub) {
-      return stub.getFutureFeatures().get(feature.ordinal());
-    }
-    Boolean enabled = myFutureFeatures.get(feature);
-    if (enabled == null) {
-      enabled = calculateImportFromFuture(feature);
-      myFutureFeatures.put(feature, enabled);
-      // NOTE: ^^^ not synchronized. if two threads will try to modify this, both can only be expected to set the same value.
-    }
-    return enabled;
+    return withGreenStubOrAst(
+      PyFileStub.class,
+      stub -> stub.getFutureFeatures().get(feature.ordinal()),
+      ast -> {
+        Boolean enabled = myFutureFeatures.get(feature);
+        if (enabled == null) {
+          enabled = calculateImportFromFuture(feature);
+          myFutureFeatures.put(feature, enabled);
+          // NOTE: ^^^ not synchronized. if two threads will try to modify this, both can only be expected to set the same value.
+        }
+        return enabled;
+      }
+    );
   }
 
   @Override
   public String getDeprecationMessage() {
-    if (getGreenStub() instanceof PyFileStub stub) {
-      return stub.getDeprecationMessage();
-    }
-    return extractDeprecationMessage();
+    return withGreenStubOrAst(
+      PyFileStub.class,
+      stub -> stub.getDeprecationMessage(),
+      ast -> extractDeprecationMessage()
+    );
   }
 
   @Override

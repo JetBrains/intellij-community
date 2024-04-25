@@ -2617,6 +2617,7 @@ f:com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 - s:runTask(com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.task.TaskCallback,com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):V
 - s:runTask(com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.task.TaskCallback,com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode,Z):V
 - s:runTask(com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.task.TaskCallback,com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode,Z,com.intellij.openapi.util.UserDataHolderBase):V
+- s:runTask(com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec):V
 - s:scheduleExternalViewStructureUpdate(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):V
 c:com.intellij.openapi.externalSystem.util.OutputWrapper
 - java.io.OutputStream
@@ -2646,6 +2647,31 @@ f:com.intellij.openapi.externalSystem.util.environment.SystemEnvironment
 - <init>():V
 - property(java.lang.String):java.lang.String
 - variable(java.lang.String):java.lang.String
+com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
+- sf:Companion:com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec$Companion
+- s:create(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:getActivateToolWindowBeforeRun():Z
+- a:getActivateToolWindowOnFailure():Z
+- a:getCallback():com.intellij.openapi.externalSystem.task.TaskCallback
+- a:getExecutorId():java.lang.String
+- a:getProgressExecutionMode():com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
+- a:getProject():com.intellij.openapi.project.Project
+- a:getSettings():com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+- a:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
+- a:getUserData():com.intellij.openapi.util.UserDataHolderBase
+f:com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec$Companion
+- f:create(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:build():com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
+- a:getExecutorId():java.lang.String
+- a:getProject():com.intellij.openapi.project.Project
+- a:getSettings():com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+- a:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
+- a:withActivateToolWindowBeforeRun(Z):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withActivateToolWindowOnFailure(Z):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withCallback(com.intellij.openapi.externalSystem.task.TaskCallback):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withProgressExecutionMode(com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
+- a:withUserData(com.intellij.openapi.util.UserDataHolderBase):com.intellij.openapi.externalSystem.util.task.TaskExecutionSpecBuilder
 a:com.intellij.openapi.externalSystem.util.ui.DataView
 - sf:Companion:com.intellij.openapi.externalSystem.util.ui.DataView$Companion
 - <init>():V

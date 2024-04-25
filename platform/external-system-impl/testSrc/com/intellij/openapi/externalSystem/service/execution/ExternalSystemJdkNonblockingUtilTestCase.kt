@@ -6,8 +6,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProviderImpl
-import com.intellij.testFramework.PlatformTestUtil
-import java.util.concurrent.TimeUnit
 
 abstract class ExternalSystemJdkNonblockingUtilTestCase : ExternalSystemJdkUtilTestCase() {
 
@@ -43,16 +41,4 @@ abstract class ExternalSystemJdkNonblockingUtilTestCase : ExternalSystemJdkUtilT
   }
 
   fun createResolvingSdkInfo(sdk: Sdk) = SdkInfo.Resolving(sdk.name, sdk.versionString, sdk.homePath)
-
-  fun waitForLookup() = sdkLookupProvider.waitForLookup()
-
-  companion object {
-    fun SdkLookupProvider.waitForLookup() {
-      this as SdkLookupProviderImpl
-      val promise = getSdkPromiseForTests()
-      if (promise != null) {
-        PlatformTestUtil.waitForPromise(promise, TimeUnit.SECONDS.toMillis(10))
-      }
-    }
-  }
 }

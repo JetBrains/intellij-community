@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import java.awt.event.KeyEvent
 
-class BlockTerminalEventsHandler(
+internal class BlockTerminalEventsHandler(
   session: BlockTerminalSession,
   settings: JBTerminalSystemSettingsProviderBase,
   private val outputController: TerminalOutputController

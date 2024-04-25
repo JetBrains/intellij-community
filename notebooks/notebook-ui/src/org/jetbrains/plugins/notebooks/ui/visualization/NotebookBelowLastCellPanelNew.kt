@@ -6,13 +6,11 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.notebooks.ui.jupyterToolbar.JupyterToolbar
+import org.jetbrains.plugins.notebooks.ui.jupyterToolbar.JupyterToolbarManager
 import java.awt.GridBagLayout
-import java.awt.Point
-import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JPanel
-import javax.swing.SwingUtilities
 
 class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayout()) {
   private var toolbar: JupyterToolbar? = null
@@ -63,15 +61,7 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
 
   private fun adjustToolbarBounds() {
     toolbar?.let { tb ->
-      val toolbarPreferredSize = tb.preferredSize
-      val xOffset = (this.width - toolbarPreferredSize.width) / 2
-      val editorComponent = editor.contentComponent
-      val panelLocationInEditor = SwingUtilities.convertPoint(this, Point(0, 0), editorComponent)
-
-      val xCoordinate = panelLocationInEditor.x + xOffset
-      val yCoordinate = panelLocationInEditor.y
-
-      tb.bounds = Rectangle(xCoordinate, yCoordinate, toolbarPreferredSize.width, toolbarPreferredSize.height)
+      tb.bounds = JupyterToolbarManager.calculateToolbarBounds(editor, this, tb)
       revalidate()
       repaint()
     }

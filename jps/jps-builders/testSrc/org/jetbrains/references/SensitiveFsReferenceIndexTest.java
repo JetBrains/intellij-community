@@ -4,9 +4,9 @@ package org.jetbrains.references;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
+import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter;
 import org.jetbrains.jps.backwardRefs.JavaCompilerBackwardReferenceIndex;
+import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.builders.TestProjectBuilderLogger;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -54,28 +55,27 @@ public class SensitiveFsReferenceIndexTest extends ReferenceIndexTestBase {
 
     HashSet<String> fileNames = new HashSet<>();
     fileNames.add("Foo.java");
-    ((MapIndexStorage)((MapReduceIndex)index.get(BACK_USAGES)).getStorage()).processKeys(new Processor() {
-      @Override
-      public boolean process(Object usage) {
-        try {
-          ValueContainer<Integer> data = index.get(BACK_USAGES).getData((CompilerRef)usage);
-          data.forEach((id, value) -> {
-            try {
-              String fullName = filePathEnumerator.valueOf(id);
-              String fileName = PathUtil.getFileName(fullName);
-              fileNames.remove(fileName);
-            }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-            return false;
-          });
-        }
-        catch (StorageException e) {
-          throw new RuntimeException(e);
-        }
-        return false;
+    IndexStorage<CompilerRef, Integer> storage =
+      ((MapReduceIndex<CompilerRef, Integer, CompiledFileData>)index.get(BACK_USAGES)).getStorage();
+    ((MapIndexStorage<CompilerRef, Integer>)storage).processKeys(usage -> {
+      try {
+        ValueContainer<Integer> data = index.get(BACK_USAGES).getData(usage);
+        data.forEach((id, value) -> {
+          try {
+            String fullName = filePathEnumerator.valueOf(id);
+            String fileName = PathUtil.getFileName(fullName);
+            fileNames.remove(fileName);
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+          return false;
+        });
       }
+      catch (StorageException e) {
+        throw new RuntimeException(e);
+      }
+      return false;
     });
 
     Assertions.assertTrue(fileNames.isEmpty());

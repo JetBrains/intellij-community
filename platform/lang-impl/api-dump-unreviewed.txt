@@ -4067,6 +4067,22 @@ f:com.intellij.codeInsight.daemon.impl.HighlightInfoFilterImpl
 - com.intellij.codeInsight.daemon.impl.HighlightInfoFilter
 - <init>():V
 - accept(com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.psi.PsiFile):Z
+f:com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection
+- com.intellij.codeInspection.GlobalSimpleInspectionTool
+- sf:SHORT_NAME:java.lang.String
+- highlightErrorElements:Z
+- runAnnotators:Z
+- runVisitors:Z
+- <init>():V
+- checkFile(com.intellij.psi.PsiFile,com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.ProblemsHolder,com.intellij.codeInspection.GlobalInspectionContext,com.intellij.codeInspection.ProblemDescriptionsProcessor):V
+- getDefaultLevel():com.intellij.codeHighlighting.HighlightDisplayLevel
+- getGroupDisplayName():java.lang.String
+- getOptionsPane():com.intellij.codeInspection.options.OptPane
+- getShortName():java.lang.String
+- s:runAnnotatorsInGeneralHighlighting(com.intellij.psi.PsiFile,Z,Z,Z):java.util.List
+- setHighlightErrorElements(Z):com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection
+- setRunAnnotators(Z):com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection
+- setRunVisitors(Z):com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection
 f:com.intellij.codeInsight.daemon.impl.HighlightingPassesCacheImplKt
 f:com.intellij.codeInsight.daemon.impl.HighlightingPreloadExperiment
 - <init>():V
@@ -4958,13 +4974,6 @@ f:com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor
 - com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 - <init>():V
 - collectTransferableData(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I[],I[]):java.util.List
-- extractTransferableData(java.awt.datatransfer.Transferable):java.util.List
-- processTransferableData(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.RangeMarker,I,com.intellij.openapi.util.Ref,java.util.List):V
-- requiresAllDocumentsToBeCommitted(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
-a:com.intellij.codeInsight.editorActions.CopyPastePostProcessor
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- <init>():V
-- a:collectTransferableData(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I[],I[]):java.util.List
 - extractTransferableData(java.awt.datatransfer.Transferable):java.util.List
 - processTransferableData(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.RangeMarker,I,com.intellij.openapi.util.Ref,java.util.List):V
 - requiresAllDocumentsToBeCommitted(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
@@ -11778,6 +11787,7 @@ c:com.intellij.find.SearchTextArea
 - <init>(javax.swing.JTextArea,Z):V
 - <init>(javax.swing.JTextArea,Z,Z):V
 - getMinimumSize():java.awt.Dimension
+- s:getNewLineKeystroke():javax.swing.KeyStroke
 - getTextArea():javax.swing.JTextArea
 - propertyChange(java.beans.PropertyChangeEvent):V
 - setExtraActions(com.intellij.openapi.actionSystem.AnAction[]):java.util.List
@@ -13501,11 +13511,15 @@ c:com.intellij.ide.actions.GotoFileItemProvider
 - s:unitePaths(java.lang.String,java.lang.String):java.lang.String
 f:com.intellij.ide.actions.GotoRelatedSymbolAction
 - com.intellij.openapi.actionSystem.AnAction
+- sf:Companion:com.intellij.ide.actions.GotoRelatedSymbolAction$Companion
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- s:getItems(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):java.util.List
+- sf:getItems(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):java.util.List
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ide.actions.GotoRelatedSymbolAction$Companion
+- f:getItems(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):java.util.List
+- bs:getItems$default(com.intellij.ide.actions.GotoRelatedSymbolAction$Companion,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext,I,java.lang.Object):java.util.List
 f:com.intellij.ide.actions.GotoSymbolAction
 - com.intellij.ide.actions.SearchEverywhereBaseAction
 - com.intellij.openapi.project.DumbAware
@@ -13857,7 +13871,7 @@ c:com.intellij.ide.actions.runAnything.RunAnythingChooseContextAction$ChooseCont
 - p:getListElementRenderer():com.intellij.ui.popup.list.PopupListElementRenderer
 f:com.intellij.ide.actions.runAnything.RunAnythingChooseContextAction$ChooseContextPopupStep
 - com.intellij.ui.popup.ActionPopupStep
-- <init>(java.util.List,com.intellij.openapi.actionSystem.DataContext,kotlin.jvm.functions.Function0):V
+- <init>(java.util.List,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.impl.PresentationFactory,kotlin.jvm.functions.Function0):V
 - f:getActions():java.util.List
 - getFinalRunnable():java.lang.Runnable
 - getSeparatorAbove(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):com.intellij.openapi.ui.popup.ListSeparator
@@ -14450,7 +14464,6 @@ f:com.intellij.ide.actions.searcheverywhere.PreviewExperiment
 *:com.intellij.ide.actions.searcheverywhere.PromoAction
 - a:getCallToAction():java.lang.String
 - a:getPromotedProductIcon():javax.swing.Icon
-- a:getPromotedProductTitle():java.lang.String
 f:com.intellij.ide.actions.searcheverywhere.PsiElementsEqualityProvider
 - com.intellij.ide.actions.searcheverywhere.AbstractEqualityProvider
 - <init>():V
@@ -22218,23 +22231,6 @@ c:com.intellij.openapi.roots.impl.ProjectRootManagerComponent
 - markRootsForRefresh():java.util.List
 - p:projectClosed():V
 f:com.intellij.openapi.roots.impl.ProjectRootManagerComponentKt
-f:com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
-- com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
-- <init>(com.intellij.openapi.project.Project):V
-- applyPushersToFile(com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.Object[]):V
-- s:applyScannersToFile(com.intellij.openapi.vfs.VirtualFile,java.util.List):V
-- filePropertiesChanged(com.intellij.openapi.vfs.VirtualFile):V
-- filePropertiesChanged(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Condition):V
-- findAndUpdateValue(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.impl.FilePropertyPusher,java.lang.Object):V
-- s:finishVisitors(java.util.List):V
-- s:getImmediateValuesEx(java.util.List,com.intellij.util.indexing.roots.kind.IndexableSetOrigin):java.lang.Object[]
-- s:getModuleImmediateValues(java.util.List,com.intellij.openapi.module.Module):java.lang.Object[]
-- initializeProperties():V
-- s:invokeConcurrentlyIfPossible(java.util.List):V
-- performDelayedPushTasks():V
-- pushAll(com.intellij.openapi.roots.impl.FilePropertyPusher[]):V
-- runConcurrentlyIfPossible(java.util.List):V
-- s:scanProject(com.intellij.openapi.project.Project,java.util.function.Function):V
 f:com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl
 - com.intellij.openapi.roots.libraries.LibraryTypeService
 - <init>():V
@@ -22969,6 +22965,7 @@ com.intellij.openapi.roots.ui.configuration.SdkLookupParameters
 - a:getSdk():com.intellij.openapi.projectRoots.Sdk
 - a:getSdkInfo():com.intellij.openapi.roots.ui.configuration.SdkLookupProvider$SdkInfo
 - a:newLookupBuilder():com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
+- a:waitForLookup():V
 *f:com.intellij.openapi.roots.ui.configuration.SdkLookupProvider$Companion
 - f:getInstance(com.intellij.openapi.project.Project,com.intellij.openapi.roots.ui.configuration.SdkLookupProvider$Id):com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 *:com.intellij.openapi.roots.ui.configuration.SdkLookupProvider$Id
@@ -23009,7 +23006,9 @@ com.intellij.openapi.roots.ui.configuration.SdkLookupParameters
 - sf:INSTANCE:com.intellij.openapi.roots.ui.configuration.SdkLookupProvider$SdkInfo$Unresolved
 f:com.intellij.openapi.roots.ui.configuration.SdkLookupUtil
 - sf:findAndSetupSdk(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.projectRoots.SdkType,kotlin.jvm.functions.Function1):V
+- sf:lookupAndSetupSdkBlocking(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.projectRoots.SdkType,java.util.function.Consumer):V
 - sf:lookupSdk(kotlin.jvm.functions.Function1):com.intellij.openapi.projectRoots.Sdk
+- sf:lookupSdkBlocking(kotlin.jvm.functions.Function1):com.intellij.openapi.projectRoots.Sdk
 com.intellij.openapi.roots.ui.configuration.SdkPopup
 - com.intellij.openapi.ui.popup.JBPopup
 - a:showPopup(com.intellij.openapi.actionSystem.AnActionEvent):V
@@ -29015,15 +29014,6 @@ f:com.intellij.util.indexing.DumbModeWhileScanningSubscriber
 - com.intellij.openapi.startup.StartupActivity$RequiredForSmartMode
 - <init>():V
 - runActivity(com.intellij.openapi.project.Project):V
-f:com.intellij.util.indexing.DurableTimestampsEnumerator
-- com.intellij.util.io.DurableDataEnumerator
-- <init>(java.nio.file.Path):V
-- close():V
-- enumerate(com.intellij.util.indexing.TimestampsImmutable):I
-- force():V
-- isDirty():Z
-- tryEnumerate(com.intellij.util.indexing.TimestampsImmutable):I
-- valueOf(I):com.intellij.util.indexing.TimestampsImmutable
 f:com.intellij.util.indexing.FileBasedIndexImpl
 - com.intellij.util.indexing.FileBasedIndex
 - f:myWriteLock:java.util.concurrent.locks.Lock
@@ -29032,7 +29022,7 @@ f:com.intellij.util.indexing.FileBasedIndexImpl
 - belongsToProjectIndexableFiles(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 - cleanupForNextTest():V
 - cleanupMemoryStorage(Z):V
-- doInvalidateIndicesForFile(I,com.intellij.openapi.vfs.VirtualFile,java.util.List):V
+- doInvalidateIndicesForFile(I,com.intellij.openapi.vfs.VirtualFile,java.util.Set,java.util.List):V
 - doTransientStateChangeForFile(I,com.intellij.openapi.vfs.VirtualFile,java.util.List):V
 - ensureUpToDate(com.intellij.util.indexing.ID,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.vfs.VirtualFile):Z
 - extractIdFilter(com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.project.Project):com.intellij.util.indexing.IdFilter
@@ -29099,21 +29089,6 @@ f:com.intellij.util.indexing.FileBasedIndexVersionInfo
 - f:getVersion():java.lang.String
 - hashCode():I
 - toString():java.lang.String
-com.intellij.util.indexing.FilesFilterScanningHandler
-- a:addFileId(com.intellij.openapi.project.Project,I):V
-- scanningCompleted(com.intellij.openapi.project.Project):V
-- a:scanningStarted(com.intellij.openapi.project.Project,Z):V
-c:com.intellij.util.indexing.FilesFilterScanningHandler$IdleFilesFilterScanningHandler
-- com.intellij.util.indexing.FilesFilterScanningHandler
-- <init>(com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder):V
-- addFileId(com.intellij.openapi.project.Project,I):V
-- scanningCompleted(com.intellij.openapi.project.Project):V
-- scanningStarted(com.intellij.openapi.project.Project,Z):V
-c:com.intellij.util.indexing.FilesFilterScanningHandler$UpdatingFilesFilterScanningHandler
-- com.intellij.util.indexing.FilesFilterScanningHandler
-- <init>(com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder):V
-- addFileId(com.intellij.openapi.project.Project,I):V
-- scanningStarted(com.intellij.openapi.project.Project,Z):V
 f:com.intellij.util.indexing.FindSymbolParameters
 - <init>(java.lang.String,java.lang.String,com.intellij.psi.search.GlobalSearchScope):V
 - <init>(java.lang.String,java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):V
@@ -29230,7 +29205,6 @@ f:com.intellij.util.indexing.PerProjectIndexingQueue
 - f:clear():V
 - f:estimatedFilesCount():kotlinx.coroutines.flow.StateFlow
 - f:flushNow(java.lang.String):V
-- f:flushNowSync(java.lang.String,com.intellij.openapi.progress.ProgressIndicator):V
 - f:getFilesAndClear():java.util.Map
 - f:getSink(com.intellij.util.indexing.roots.IndexableFilesIterator,J):com.intellij.util.indexing.PerProjectIndexingQueue$PerProviderSink
 - f:resumeQueue():V
@@ -29245,6 +29219,7 @@ f:com.intellij.util.indexing.PerProjectIndexingQueue$TestCompanion
 - <init>(com.intellij.util.indexing.PerProjectIndexingQueue):V
 - f:getAndResetQueuedFiles():kotlin.Pair
 f:com.intellij.util.indexing.PersistentIndexingStampEnumeratorKt
+- sf:createTimestampsEnumerator(java.nio.file.Path):com.intellij.util.io.DurableDataEnumerator
 e:com.intellij.util.indexing.RebuildStatus
 - java.lang.Enum
 - sf:DOING_REBUILD:com.intellij.util.indexing.RebuildStatus
@@ -29337,17 +29312,6 @@ f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
 - f:getCurrentTokenInTest():com.intellij.util.indexing.dependencies.AppIndexingDependenciesToken
 - f:invalidateAllStamps(java.lang.String):V
 f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService$Companion
-f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesStorage
-- com.intellij.util.indexing.dependencies.IndexingDependenciesStorageBase
-- sf:Companion:com.intellij.util.indexing.dependencies.AppIndexingDependenciesStorage$Companion
-- <init>(java.nio.channels.FileChannel,java.nio.file.Path):V
-- f:readAppFingerprint():com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint$FingerprintImpl
-- f:readRequestId():I
-- resetStorage():V
-- f:writeAppFingerprint(com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint$FingerprintImpl):V
-- f:writeRequestId(I):V
-f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesStorage$Companion
-- f:openOrInit(java.nio.file.Path):com.intellij.util.indexing.dependencies.AppIndexingDependenciesStorage
 com.intellij.util.indexing.dependencies.FileIndexingStamp
 - a:isSame(I):Z
 - a:store(java.util.function.IntConsumer):V
@@ -29356,22 +29320,6 @@ f:com.intellij.util.indexing.dependencies.FutureScanningRequestToken
 - <init>():V
 - f:isSuccessful():Z
 - f:markSuccessful():V
-a:com.intellij.util.indexing.dependencies.IndexingDependenciesStorageBase
-- sf:Companion:com.intellij.util.indexing.dependencies.IndexingDependenciesStorageBase$Companion
-- sf:FIRST_UNUSED_OFFSET:J
-- <init>(java.nio.channels.FileChannel,java.nio.file.Path,I):V
-- f:checkVersion(kotlin.jvm.functions.Function2):V
-- f:close():V
-- f:completeMigration():V
-- pf:getStoragePath():java.nio.file.Path
-- f:initIfNotInitialized():V
-- f:readIntOrExecute(J,kotlin.jvm.functions.Function1):I
-- resetStorage():V
-- f:tooFewBytesReadMsg(I,java.lang.String):java.lang.String
-- f:tooFewBytesWrittenMsg(I,java.lang.String):java.lang.String
-- f:writeIntOrExecute(J,I,kotlin.jvm.functions.Function1):V
-f:com.intellij.util.indexing.dependencies.IndexingDependenciesStorageBase$Companion
-- f:openOrInit(java.nio.file.Path,kotlin.jvm.functions.Function2):com.intellij.util.indexing.dependencies.IndexingDependenciesStorageBase
 com.intellij.util.indexing.dependencies.IndexingRequestToken
 - a:getFileIndexingStamp(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.indexing.dependencies.FileIndexingStamp
 f:com.intellij.util.indexing.dependencies.IndexingRequestTokenImpl
@@ -29405,18 +29353,6 @@ f:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 - f:requestHeavyScanningOnProjectOpen(java.lang.String):V
 f:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService$Companion
 - f:getNULL_STAMP():com.intellij.util.indexing.dependencies.FileIndexingStamp
-f:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesStorage
-- com.intellij.util.indexing.dependencies.IndexingDependenciesStorageBase
-- sf:Companion:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesStorage$Companion
-- sf:DEFAULT_APP_INDEXING_REQUEST_ID_OF_LAST_COMPLETED_SCANNING:I
-- <init>(java.nio.channels.FileChannel,java.nio.file.Path):V
-- f:readAppIndexingRequestIdOfLastScanning():I
-- f:readIncompleteScanningMark():Z
-- resetStorage():V
-- f:writeAppIndexingRequestIdOfLastScanning(I):V
-- f:writeIncompleteScanningMark(Z):V
-f:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesStorage$Companion
-- f:openOrInit(java.nio.file.Path):com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesStorage
 f:com.intellij.util.indexing.dependencies.ReadWriteFileIndexingStampImpl
 - com.intellij.util.indexing.dependencies.FileIndexingStamp
 - <init>(I):V
@@ -29649,7 +29585,7 @@ f:com.intellij.util.indexing.diagnostic.presentation.IndexingHtmlKt
 f:com.intellij.util.indexing.events.DirtyFiles
 - <init>():V
 - f:addFile(java.util.Collection,I):V
-- f:addProject(com.intellij.openapi.project.Project):V
+- f:addProject(com.intellij.openapi.project.Project):com.intellij.util.indexing.events.ProjectDirtyFiles
 - f:clear():V
 - f:getProjectDirtyFiles(com.intellij.openapi.project.Project):com.intellij.util.indexing.events.ProjectDirtyFiles
 - f:getProjects():java.util.List
@@ -29670,7 +29606,7 @@ c:com.intellij.util.indexing.events.FilesToUpdateCollector
 - isScheduledForUpdate(com.intellij.openapi.vfs.VirtualFile):Z
 - removeFileIdFromFilesScheduledForUpdate(I):V
 - removeScheduledFileFromUpdate(com.intellij.openapi.vfs.VirtualFile):V
-- scheduleForUpdate(com.intellij.util.indexing.events.FileIndexingRequest,java.util.Collection):V
+- scheduleForUpdate(com.intellij.util.indexing.events.FileIndexingRequest,java.util.Set,java.util.Collection):V
 a:com.intellij.util.indexing.events.IndexedFilesListener
 - com.intellij.openapi.vfs.AsyncFileListener
 - <init>():V
@@ -29684,9 +29620,11 @@ f:com.intellij.util.indexing.events.ProjectDirtyFiles
 - <init>():V
 - f:addAllTo(it.unimi.dsi.fastutil.ints.IntSet):V
 - f:addFile(I):Z
+- f:addFiles(java.util.Collection):V
 - f:clear():V
 - f:containsFile(I):Z
 - f:removeFile(I):Z
+- f:removeFiles(java.util.Collection):V
 f:com.intellij.util.indexing.impl.perFileVersion.AutoRefreshingOnVfsCloseRef
 - java.io.Closeable
 - <init>(kotlin.jvm.functions.Function1):V

@@ -58,7 +58,7 @@ class GHPRMetadataPanelFactory(private val model: GHPRMetadataModel,
 
     override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHPullRequestRequestedReviewer>> {
       return GHUIUtil
-        .showChooserPopup(parentComponent, GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider),
+        .showChooserPopup(parentComponent, GHUIUtil.SelectionPresenters.SelectablePRReviewers(avatarIconsProvider),
                           model.reviewers, model.loadPotentialReviewers())
     }
 

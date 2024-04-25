@@ -355,8 +355,7 @@ internal class WindowsDistributionBuilder(
 
       val communityHome = context.paths.communityHomeDir
       val inputPath = if (customizer.useXPlatLauncher) {
-        val (execPath, licensePath) = NativeLauncherDownloader.findLocalLauncher(context, OsFamily.WINDOWS, arch)
-                                      ?: NativeLauncherDownloader.downloadLauncher(context, OsFamily.WINDOWS, arch)
+        val (execPath, licensePath) = NativeLauncherDownloader.findLocalOrDownload(context, OsFamily.WINDOWS, arch)
         val licenses = winDistPath.resolve("license/launcher-third-party-libraries.html")
         if (!licenses.exists()) {
           copyFile(licensePath, licenses)
@@ -390,19 +389,19 @@ internal class WindowsDistributionBuilder(
       classpath.add(icoFilesDirectory.toString())
 
       try {
-        runIdea(
-          context = context,
+        runJava(
           mainClass = "com.pme.launcher.LauncherGeneratorMain",
           args = listOf(
-            inputPath.absolutePathString(),
-            appInfoForLauncher.absolutePathString(),
-            "$communityHome/native/WinLauncher/resource.h",
-            launcherPropertiesPath.absolutePathString(),
-            icoFile?.fileName?.toString() ?: " ",
-            outputPath.absolutePathString(),
-          ),
+                  inputPath.absolutePathString(),
+                  appInfoForLauncher.absolutePathString(),
+                  "$communityHome/native/WinLauncher/resource.h",
+                  launcherPropertiesPath.absolutePathString(),
+                  icoFile?.fileName?.toString() ?: " ",
+                  outputPath.absolutePathString(),
+                ),
           jvmArgs = listOf("-Djava.awt.headless=true"),
-          classPath = classpath
+          classPath = classpath,
+          javaExe = context.stableJavaExecutable
         )
       } catch (e: Throwable) {
         if (!customizer.useXPlatLauncher) throw e
@@ -486,6 +485,10 @@ private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path
 }
 
 private fun generateProductJson(targetDir: Path, context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
+  val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(context, arch, OsFamily.WINDOWS) {
+    "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
+  }
+
   val json = generateProductInfoJson(
     relativePathToBin = "bin",
     builtinModules = context.builtinModule,
@@ -498,7 +501,9 @@ private fun generateProductJson(targetDir: Path, context: BuildContext, arch: Jv
       startupWmClass = null,
       bootClassPathJarNames = context.bootClassPathJarNames,
       additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
-      mainClass = context.ideMainClassName)),
+      mainClass = context.ideMainClassName,
+      customCommands = listOfNotNull(jetbrainsClientCustomLaunchData),
+    )),
     context)
   writeProductInfoJson(targetDir.resolve(PRODUCT_INFO_FILE_NAME), json, context)
   return json

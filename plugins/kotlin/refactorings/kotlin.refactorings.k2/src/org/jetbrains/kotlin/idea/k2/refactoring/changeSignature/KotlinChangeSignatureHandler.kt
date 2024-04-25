@@ -12,6 +12,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -42,22 +43,37 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
             ChangeSignatureAction.getChangeSignatureHandler(callableDeclaration)?.invoke(project, arrayOf(callableDeclaration), dataContext)
             return
         }
-        runChangeSignature(project, editor, callableDeclaration)
+        runChangeSignature(project, editor, callableDeclaration, dataContext)
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
-    fun findDeclaration(element: KtElement, context: PsiElement, project: Project, editor: Editor?): PsiElement? {
+    fun findDeclaration(element: PsiElement, context: PsiElement, project: Project, editor: Editor?): PsiElement? {
+        if (element !is KtElement) return element
         val ktModule = ProjectStructureProvider.getInstance(project).getModule(context, null)
         return allowAnalysisOnEdt {
             analyze(ktModule) {
                 val ktSymbol = when (element) {
-                    is KtParameter -> if (element.hasValOrVar()) element.getSymbol() else null
-                    is KtCallableDeclaration -> element.getSymbol()
-                    is KtClass -> element.primaryConstructor?.getSymbol()
-                        ?: if (element.allConstructors.isEmpty()) element.takeUnless { it.isInterface() }?.getSymbol() else null
-                    is KtReferenceExpression -> element.mainReference.resolveToSymbols().firstOrNull()
-                        ?.takeIf { it !is KtValueParameterSymbol || it.generatedPrimaryConstructorProperty != null }
-                    else -> null
+                    is KtParameter -> {
+                        if (element.hasValOrVar()) element.getSymbol() else null
+                    }
+                    is KtCallableDeclaration -> {
+                        element.getSymbol()
+                    }
+                    is KtClass -> {
+                        element.primaryConstructor?.getSymbol()
+                            ?: if (element.allConstructors.isEmpty()) element.takeUnless { it.isInterface() }?.getSymbol() else null
+                    }
+                    is KtReferenceExpression -> {
+                        val symbol = element.mainReference.resolveToSymbol()
+                        when {
+                          symbol is KtValueParameterSymbol && symbol.generatedPrimaryConstructorProperty == null -> null
+                          symbol is KtConstructorSymbol && symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> symbol.getContainingSymbol()
+                          else -> symbol
+                        }
+                    }
+                    else -> {
+                        null
+                    }
                 }
 
                 val elementKind = when {
@@ -84,13 +100,18 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
 
 
     private fun runChangeSignature(
-        project: Project, editor: Editor?, callableDescriptor: KtNamedDeclaration
+        project: Project, editor: Editor?, callableDescriptor: KtNamedDeclaration, dataContext: DataContext?
     ) {
 
         val superMethods = checkSuperMethods(callableDescriptor, emptyList(), RefactoringBundle.message("to.refactor"))
 
-        val callableToRefactor = superMethods.firstOrNull() as? KtNamedDeclaration ?: return
+        val callableToRefactor = findDeclaration(superMethods.firstOrNull() ?: return, callableDescriptor, project, editor) ?: return
+
         when {
+            callableToRefactor !is KtNamedDeclaration -> {
+                ChangeSignatureAction.getChangeSignatureHandler(callableToRefactor)?.invoke(project, arrayOf(callableToRefactor), dataContext)
+            }
+
             callableToRefactor is KtFunction || callableToRefactor is KtClass -> {
                 KotlinChangeSignatureDialog(project, editor, KotlinMethodDescriptor(callableToRefactor), callableDescriptor, null).show()
             }
@@ -102,7 +123,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
             callableToRefactor is KtParameter -> {
                 val ownerFunction = callableToRefactor.ownerFunction
                 if (ownerFunction is KtCallableDeclaration) {
-                    runChangeSignature(project, editor, ownerFunction)
+                    runChangeSignature(project, editor, ownerFunction, dataContext)
                 }
             }
         }

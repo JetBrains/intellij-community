@@ -17,7 +17,7 @@ import java.util.List;
 public abstract class WrappingConverter extends Converter<Object> {
 
   @Override
-  public Object fromString(@Nullable @NonNls String s, final ConvertContext context) {
+  public Object fromString(@Nullable @NonNls String s, final @NotNull ConvertContext context) {
     final List<Converter> converters = getConverters((GenericDomValue)context.getInvocationElement());
     if (converters.isEmpty()) return s;
     for (Converter converter : converters) {
@@ -30,7 +30,7 @@ public abstract class WrappingConverter extends Converter<Object> {
   }
 
   @Override
-  public String toString(@Nullable Object t, final ConvertContext context) {
+  public String toString(@Nullable Object t, final @NotNull ConvertContext context) {
     final List<Converter> converters = getConverters((GenericDomValue)context.getInvocationElement());
     if (converters.isEmpty()) return String.valueOf(t);
     for (Converter converter : converters) {

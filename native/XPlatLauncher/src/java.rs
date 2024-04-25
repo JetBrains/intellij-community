@@ -93,6 +93,8 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
         // resetting stack overflow protection handler set by the runtime (`std/src/sys/unix/stack_overflow.rs`)
         reset_signal_handler(libc::SIGBUS)?;
         reset_signal_handler(libc::SIGSEGV)?;
+        // resetting interrupt handler masked when an IDE is launched in a particularly perverse way
+        reset_signal_handler(libc::SIGINT)?;
     }
 
     let jre_home = jre_home.to_owned();
@@ -107,7 +109,6 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
 
         let mut vm_options = vm_options.clone();
         vm_options.push(jvm_property!("sun.java.command", main_class));
-        vm_options.push(jvm_property!("ide.native.launcher", "true"));
 
         let jni_env_result = load_and_start_jvm(&jre_home, vm_options);
         let jni_env = match jni_env_result {

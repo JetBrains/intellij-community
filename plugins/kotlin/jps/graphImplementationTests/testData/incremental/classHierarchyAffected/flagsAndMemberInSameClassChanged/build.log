@@ -13,7 +13,6 @@ Cleaning output files:
   out/production/module/B.class
   out/production/module/BKt.class
   out/production/module/GetAKt.class
-  out/production/module/GetBKt.class
   out/production/module/META-INF/module.kotlin_module
   out/production/module/UseAKt.class
   out/production/module/UseBKt.class
@@ -21,7 +20,6 @@ End of files
 Compiling files:
   src/B.kt
   src/getA.kt
-  src/getB.kt
   src/useA.kt
   src/useB.kt
 End of files
@@ -46,7 +44,6 @@ Compiling files:
   src/A.kt
   src/B.kt
   src/getA.kt
-  src/getB.kt
   src/useA.kt
   src/useB.kt
 End of files
@@ -62,7 +59,6 @@ Compiling files:
   src/A.kt
   src/B.kt
   src/getA.kt
-  src/getB.kt
   src/useA.kt
   src/useB.kt
 End of files

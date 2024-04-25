@@ -3,7 +3,10 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.*
+import com.intellij.psi.JavaDirectoryService
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
@@ -14,7 +17,9 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
@@ -41,6 +46,19 @@ class K2MoveFilesHandler : MoveFileHandler() {
         return element is KtFile
     }
 
+    override fun findUsages(
+        psiFile: PsiFile,
+        newParent: PsiDirectory,
+        searchInComments: Boolean,
+        searchInNonJavaFiles: Boolean
+    ): List<UsageInfo> {
+        require(psiFile is KtFile) { "Can only find usages from Kotlin files" }
+        return if (psiFile.requiresPackageUpdate) {
+            val newPkgName = JavaDirectoryService.getInstance().getPackage(newParent)?.kotlinFqName ?: return emptyList()
+            psiFile.findUsages(searchInComments, searchInNonJavaFiles, newPkgName)
+        } else emptyList() // don't need to update usages when package doesn't change
+    }
+
     override fun detectConflicts(
         conflicts: MultiMap<PsiElement, String>,
         elementsToMove: Array<out PsiElement>,
@@ -54,19 +72,8 @@ class K2MoveFilesHandler : MoveFileHandler() {
             targetPkgFqn,
             usages.filterIsInstance<MoveRenameUsageInfo>()
         ))
-    }
-
-    override fun findUsages(
-        psiFile: PsiFile,
-        newParent: PsiDirectory,
-        searchInComments: Boolean,
-        searchInNonJavaFiles: Boolean
-    ): List<UsageInfo> {
-        require(psiFile is KtFile) { "Can only find usages from Kotlin files" }
-        return if (psiFile.requiresPackageUpdate) {
-            val newPkgName = JavaDirectoryService.getInstance().getPackage(newParent)?.kotlinFqName ?: return emptyList()
-            psiFile.findUsages(searchInComments, searchInNonJavaFiles, newPkgName)
-        } else emptyList() // don't need to update usages when package doesn't change
+        // after conflict checking, we don't need non-updatable usages anymore
+        unMarkNonUpdatableUsages(elementsToMove.filterIsInstance<KtElement>().toSet())
     }
 
     override fun prepareMovedFile(file: PsiFile, moveDestination: PsiDirectory, oldToNewMap: MutableMap<PsiElement, PsiElement>) {

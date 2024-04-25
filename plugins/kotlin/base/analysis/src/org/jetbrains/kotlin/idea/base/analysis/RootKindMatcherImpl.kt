@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_AND_RESOURCES_ROOT_TYPES
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
@@ -123,7 +123,7 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             }
 
           val classFileScope = when {
-            correctedFilter.includeScriptDependencies -> ScriptConfigurationManager.getInstance(
+            correctedFilter.includeScriptDependencies -> ScriptDependencyAware.getInstance(
               project).getAllScriptsDependenciesClassFilesScope()
             else -> null
           }
@@ -139,7 +139,7 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             }
 
             val sourceFileScope = when {
-                correctedFilter.includeScriptDependencies -> ScriptConfigurationManager.getInstance(project)
+                correctedFilter.includeScriptDependencies -> ScriptDependencyAware.getInstance(project)
                     .getAllScriptDependenciesSourcesScope()
 
                 else -> null

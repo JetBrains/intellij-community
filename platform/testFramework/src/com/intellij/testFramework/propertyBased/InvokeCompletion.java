@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -159,6 +160,7 @@ public class InvokeCompletion extends ActionOnFile {
       EditorActionManager.getInstance();
       TypedAction.getInstance().actionPerformed(editor, completionChar, EditorUtil.getEditorDataContext(lookup.getTopLevelEditor()));
     }
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
   private boolean checkHighlightingErrorsAtCaret(Editor editor, Environment env, String expectedVariant) {

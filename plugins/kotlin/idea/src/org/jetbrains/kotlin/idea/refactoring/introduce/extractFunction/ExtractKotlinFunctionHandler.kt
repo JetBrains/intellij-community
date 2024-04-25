@@ -10,7 +10,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator
@@ -73,14 +72,6 @@ class ExtractKotlinFunctionHandler(
         override fun createRestartHandler(): AbstractExtractKotlinFunctionHandler = ExtractKotlinFunctionHandler(
             allContainersEnabled, InteractiveExtractionHelper
         )
-
-        override fun extractDuplicates(
-            duplicateReplacers: Map<KotlinPsiRange, () -> Unit>,
-            project: Project,
-            editor: Editor
-        ) {
-            processDuplicates(duplicateReplacers, project, editor)
-        }
 
         override fun doRefactor(descriptor: IExtractableCodeDescriptor<KotlinType>, onFinish: (ExtractionResult) -> Unit) {
             val configuration = ExtractionGeneratorConfiguration(descriptor as ExtractableCodeDescriptor, ExtractionGeneratorOptions.DEFAULT)

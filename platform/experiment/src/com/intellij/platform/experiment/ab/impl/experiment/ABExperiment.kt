@@ -3,6 +3,7 @@ package com.intellij.platform.experiment.ab.impl.experiment
 
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -51,9 +52,9 @@ class ABExperiment {
     private val LOG = logger<ABExperiment>()
 
     private const val DEVICE_ID_PURPOSE = "A/B Experiment"
-    private const val DEVICE_ID_SALT = "ab experiment salt"
     private const val TOTAL_NUMBER_OF_BUCKETS = 1024
-    internal val TOTAL_NUMBER_OF_GROUPS = if (isPopularIDE()) 16 else 8
+    internal const val TOTAL_NUMBER_OF_GROUPS = 256
+    private val DEVICE_ID_SALT = ApplicationInfo.getInstance().shortVersion
 
     internal val OPTION_ID_FREE_GROUP = ABExperimentOptionId("free.option")
 
@@ -61,7 +62,7 @@ class ABExperiment {
       return AB_EXPERIMENTAL_OPTION_EP.extensionList.filter {
         val pluginDescriptor = it.getPluginDescriptor()
         val pluginInfo = getPluginInfoByDescriptor(pluginDescriptor)
-        pluginInfo.isDevelopedByJetBrains()
+        pluginInfo.isDevelopedByJetBrains() && it.isEnabled()
       }
     }
 

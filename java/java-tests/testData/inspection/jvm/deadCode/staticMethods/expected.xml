@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <problems>
+  <problem><!--TODO false positive, or at least incorrect message because there are references -->
+    <file>Test.kt</file>
+    <line>1</line>
+    <entry_point TYPE="class" FQNAME="A" />
+    <description>No class references has been found. Class static initializer is not reachable.</description>
+  </problem>
   <problem>
     <file>Test.kt</file>
     <line>2</line>

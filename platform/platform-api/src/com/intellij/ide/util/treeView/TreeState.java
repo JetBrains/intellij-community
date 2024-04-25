@@ -24,6 +24,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -39,6 +40,8 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.intellij.ide.util.treeView.CachedTreePresentationData.createFromTree;
+
 /**
  * @see #createOn(JTree)
  * @see #createOn(JTree, DefaultMutableTreeNode)
@@ -53,14 +56,17 @@ public final class TreeState implements JDOMExternalizable {
   public static final Key<WeakReference<ActionCallback>> CALLBACK = Key.create("Callback");
   private static final Key<Promise<Void>> EXPANDING = Key.create("TreeExpanding");
 
-  private static final String EXPAND_TAG = "expand";
-  private static final String SELECT_TAG = "select";
-  private static final String PATH_TAG = "path";
+  private static final @NotNull String EXPAND_TAG = "expand";
+  private static final @NotNull String SELECT_TAG = "select";
+  private static final @NotNull String PRESENTATION_TAG = "presentation";
+  private static final @NotNull String PRESENTATION_DATA_TAG = "data";
+  private static final @NotNull String PATH_TAG = "path";
+  private static final @NotNull String PATH_ELEMENT_TAG = "item";
 
   private enum Match {OBJECT, ID_TYPE}
 
   @Tag("item")
-  static final class PathElement {
+  static final class PathElement implements CachedTreePathElement {
     String id;
     String type;
     transient Object userObject;
@@ -84,6 +90,11 @@ public final class TreeState implements JDOMExternalizable {
       return id + ": " + type;
     }
 
+    @Override
+    public boolean matches(@NotNull Object node) {
+      return isMatchTo(node);
+    }
+
     private boolean isMatchTo(Object object) {
       return getMatchTo(object) != null;
     }
@@ -102,6 +113,7 @@ public final class TreeState implements JDOMExternalizable {
       this.id = id == null ? null : INTERNER.intern(id);
     }
 
+    @Override
     @Attribute("name")
     public String getId() {
       return id;
@@ -112,9 +124,90 @@ public final class TreeState implements JDOMExternalizable {
       this.type = type == null ? null : INTERNER.intern(type);
     }
 
+    @Override
     @Attribute("type")
     public String getType() {
       return type;
+    }
+  }
+
+  @Tag("data")
+  static final class CachedPresentationDataImpl implements CachedPresentationData {
+    String text;
+    String iconPath;
+    String iconPlugin;
+    String iconModule;
+
+    @SuppressWarnings("unused")
+    CachedPresentationDataImpl() { }
+
+    CachedPresentationDataImpl(
+      @NotNull String text,
+      @Nullable CachedIconPresentation iconPresentation
+    ) {
+      this.text = text;
+      if (iconPresentation != null) {
+        this.iconPath = iconPresentation.getPath();
+        this.iconPlugin = iconPresentation.getPlugin();
+        this.iconModule = iconPresentation.getModule();
+      }
+    }
+
+    @NotNull
+    @Override
+    @Attribute("text")
+    public String getText() {
+      return text;
+    }
+
+    @Attribute("text")
+    public void setText(String text) {
+      this.text = text;
+    }
+
+    @Nullable
+    @Attribute("iconPath")
+    public String getIconPath() {
+      return iconPath;
+    }
+
+    @Attribute("iconPath")
+    public void setIconPath(String iconPath) {
+      this.iconPath = iconPath;
+    }
+
+    @Nullable
+    @Attribute("iconPlugin")
+    public String getIconPlugin() {
+      return iconPlugin;
+    }
+
+    @Attribute("iconPlugin")
+    public void setIconPlugin(String iconPlugin) {
+      this.iconPlugin = iconPlugin;
+    }
+
+    @Nullable
+    @Attribute("iconModule")
+    public String getIconModule() {
+      return iconModule;
+    }
+
+    @Attribute("iconModule")
+    public void setIconModule(String iconModule) {
+      this.iconModule = iconModule;
+    }
+
+    @Nullable
+    @Override
+    public CachedIconPresentation getIconData() {
+      if (iconPath == null || iconPlugin == null) return null;
+      return new CachedIconPresentation(iconPath, iconPlugin, iconModule);
+    }
+
+    @Override
+    public String toString() {
+      return "'" + text + "' icon=" + iconPath;
     }
   }
 
@@ -122,17 +215,17 @@ public final class TreeState implements JDOMExternalizable {
   private final List<PathElement[]> myExpandedPaths;
   @XCollection(style = XCollection.Style.v2)
   private final List<PathElement[]> mySelectedPaths;
+  private @Nullable CachedTreePresentationData myPresentationData;
   private boolean myScrollToSelection;
 
-  // xml deserialization
-  @SuppressWarnings("unused")
   TreeState() {
-    this(new SmartList<>(), new SmartList<>());
+    this(new SmartList<>(), new SmartList<>(), null);
   }
 
-  private TreeState(List<PathElement[]> expandedPaths, List<PathElement[]> selectedPaths) {
+  private TreeState(List<PathElement[]> expandedPaths, List<PathElement[]> selectedPaths, @Nullable CachedTreePresentationData presentationData) {
     myExpandedPaths = expandedPaths;
     mySelectedPaths = selectedPaths;
+    myPresentationData = presentationData;
     myScrollToSelection = true;
   }
 
@@ -144,6 +237,7 @@ public final class TreeState implements JDOMExternalizable {
   public void readExternal(Element element) throws InvalidDataException {
     readExternal(element, myExpandedPaths, EXPAND_TAG);
     readExternal(element, mySelectedPaths, SELECT_TAG);
+    myPresentationData = readExternalPresentation(element);
   }
 
   private static void readExternal(@NotNull Element root, List<PathElement[]> list, @NotNull String name) {
@@ -156,13 +250,37 @@ public final class TreeState implements JDOMExternalizable {
     }
   }
 
+  private static @Nullable CachedTreePresentationData readExternalPresentation(Element element) {
+    var presentationChildren = element.getChildren(PRESENTATION_TAG);
+    if (presentationChildren.size() != 1) return null;
+    var presentations = new SmartList<CachedTreePresentationData>();
+    readExternalPresentation(presentationChildren.get(0), presentations);
+    return presentations.size() == 1 ? presentations.get(0) : null;
+  }
+
+  private static void readExternalPresentation(Element element, List<CachedTreePresentationData> result) {
+    var pathChildren = element.getChildren(PATH_ELEMENT_TAG);
+    if (pathChildren.size() != 1) return;
+    var path = XmlSerializer.deserialize(pathChildren.get(0), PathElement.class);
+    var presentationChildren = element.getChildren(PRESENTATION_DATA_TAG);
+    if (presentationChildren.size() != 1) return;
+    var presentation = XmlSerializer.deserialize(presentationChildren.get(0), CachedPresentationDataImpl.class);
+    var children = new SmartList<CachedTreePresentationData>();
+    var data = new CachedTreePresentationData(path, presentation, children);
+    for (Element child : element.getChildren(PRESENTATION_TAG)) {
+      readExternalPresentation(child, children);
+    }
+    result.add(data);
+  }
+
   public static @NotNull TreeState createOn(@NotNull JTree tree, @NotNull DefaultMutableTreeNode treeNode) {
     return createOn(tree, new CachingTreePath(treeNode.getPath()));
   }
 
   public static @NotNull TreeState createOn(@NotNull JTree tree, @NotNull TreePath rootPath) {
     return new TreeState(createPaths(tree, TreeUtil.collectExpandedPaths(tree, rootPath)),
-                         createPaths(tree, TreeUtil.collectSelectedPaths(tree, rootPath)));
+                         createPaths(tree, TreeUtil.collectSelectedPaths(tree, rootPath)),
+                         null);
   }
 
   public static @NotNull TreeState createOn(@NotNull JTree tree) {
@@ -170,23 +288,33 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   public static @NotNull TreeState createOn(@NotNull JTree tree, boolean persistExpand, boolean persistSelect) {
+    return createOn(tree, persistExpand, persistSelect, false);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull TreeState createOn(@NotNull JTree tree, boolean persistExpand, boolean persistSelect, boolean persistPresentation) {
     List<TreePath> expanded = persistExpand ? TreeUtil.collectExpandedPaths(tree) : Collections.emptyList();
     List<TreePath> selected = persistSelect ? TreeUtil.collectSelectedPaths(tree) : Collections.emptyList();
-    return createOn(tree, expanded, selected);
+    return createOn(tree, expanded, selected, persistPresentation);
   }
 
   public static @NotNull TreeState createOn(@NotNull JTree tree, @NotNull List<TreePath> expandedPaths, @NotNull List<TreePath> selectedPaths) {
+    return createOn(tree, expandedPaths, selectedPaths, false);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull TreeState createOn(@NotNull JTree tree, @NotNull List<TreePath> expandedPaths, @NotNull List<TreePath> selectedPaths, boolean persistPresentation) {
     List<PathElement[]> expandedPathElements = !expandedPaths.isEmpty()
       ? createPaths(tree, expandedPaths)
       : new ArrayList<>();
     List<PathElement[]> selectedPathElements = !selectedPaths.isEmpty()
       ? createPaths(tree, selectedPaths)
       : new ArrayList<>();
-    return new TreeState(expandedPathElements, selectedPathElements);
+    return new TreeState(expandedPathElements, selectedPathElements, persistPresentation ? createFromTree(tree) : null);
   }
 
   public static @NotNull TreeState createFrom(@Nullable Element element) {
-    TreeState state = new TreeState(new ArrayList<>(), new ArrayList<>());
+    TreeState state = new TreeState();
     try {
       if (element != null) {
         state.readExternal(element);
@@ -202,6 +330,18 @@ public final class TreeState implements JDOMExternalizable {
   public void writeExternal(Element element) {
     writeExternal(element, myExpandedPaths, EXPAND_TAG);
     writeExternal(element, mySelectedPaths, SELECT_TAG);
+    writeExternal(element, myPresentationData);
+  }
+
+  private static void writeExternal(Element element, @Nullable CachedTreePresentationData data) {
+    if (data == null) return;
+    Element root = new Element(PRESENTATION_TAG);
+    root.addContent(XmlSerializer.serialize(data.getPathElement()));
+    root.addContent(XmlSerializer.serialize(data.getPresentation()));
+    for (CachedTreePresentationData child : data.getChildren()) {
+      writeExternal(root, child);
+    }
+    element.addContent(root);
   }
 
   private static void writeExternal(Element element, List<PathElement[]> list, String name) {
@@ -238,7 +378,7 @@ public final class TreeState implements JDOMExternalizable {
     return result;
   }
 
-  private static @NotNull String calcId(@Nullable Object userObject) {
+  static @NotNull String calcId(@Nullable Object userObject) {
     if (userObject == null) return "";
     // The easiest case: the node provides an ID explicitly.
     if (userObject instanceof PathElementIdProvider userObjectWithPathId) {
@@ -251,8 +391,13 @@ public final class TreeState implements JDOMExternalizable {
     return StringUtil.notNullize(userObject.toString());
   }
 
-  private static @NotNull String calcType(@Nullable Object userObject) {
+  static @NotNull String calcType(@Nullable Object userObject) {
     if (userObject == null) return "";
+    if (userObject instanceof PathElementIdProvider userObjectWithPathId) {
+      // A special override for unusual cases, for example, nodes with cached presentations.
+      var providedType = userObjectWithPathId.getPathElementType();
+      if (providedType != null) return providedType;
+    }
     String name = userObject.getClass().getName();
     return Integer.toHexString(StringHash.murmur(name, 31)) + ":" + StringUtil.getShortName(name);
   }
@@ -263,6 +408,7 @@ public final class TreeState implements JDOMExternalizable {
 
   public void applyTo(@NotNull JTree tree, @Nullable Object root) {
     LOG.debug(new IllegalStateException("restore paths"));
+    applyCachedPresentation(tree);
     if (visit(tree)) return; // AsyncTreeModel#accept
     if (root == null) return;
     TreeFacade facade = TreeFacade.getFacade(tree);
@@ -281,6 +427,18 @@ public final class TreeState implements JDOMExternalizable {
           }
         }
       });
+    }
+  }
+
+  private void applyCachedPresentation(@NotNull JTree tree) {
+    if (myPresentationData != null && tree instanceof CachedTreePresentationSupport jbTree) {
+      jbTree.setCachedPresentation(myPresentationData.createTree());
+    }
+  }
+
+  private static void clearCachedPresentation(@NotNull JTree tree) {
+    if (tree instanceof CachedTreePresentationSupport jbTree) {
+      jbTree.setCachedPresentation(null);
     }
   }
 
@@ -410,6 +568,7 @@ public final class TreeState implements JDOMExternalizable {
 
     @Override
     void finishExpanding() {
+      clearCachedPresentation(tree);
       if (useBulkExpand) {
         TreeUtil.expandPaths(tree, pathsToExpand);
       }
@@ -497,6 +656,7 @@ public final class TreeState implements JDOMExternalizable {
       if (LOG.isDebugEnabled() && expanded != null) {
         LOG.debug("Expanded " + expanded.size() + " paths in " + (System.currentTimeMillis() - started) + " ms");
       }
+      clearCachedPresentation(tree);
       if (isSelectionNeeded(expanded, tree, promise)) {
         select(tree).onProcessed(selected -> promise.setResult(null));
       }

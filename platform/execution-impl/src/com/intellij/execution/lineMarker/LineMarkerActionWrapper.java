@@ -52,8 +52,8 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
     // See com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor.addActions(AnAction, List<? super IntentionActionDescriptor>, GutterIconRenderer, AtomicInteger, DataContext)`
     if (myOrigin instanceof ExecutorAction) {
       if (((ExecutorAction)myOrigin).getOrigin() instanceof ExecutorGroupActionGroup) {
-        final AnAction[] children =
-          ((ExecutorGroupActionGroup)((ExecutorAction)myOrigin).getOrigin()).getChildren(null);
+        AnAction[] children = ((ExecutorGroupActionGroup)((ExecutorAction)myOrigin).getOrigin()).getChildren(
+          e == null ? ActionManager.getInstance() : e.getActionManager());
         LOG.assertTrue(ContainerUtil.all(Arrays.asList(children), o -> o instanceof RunContextAction));
         return ContainerUtil.mapNotNull(children, o -> {
           PsiElement element = myElement.getElement();

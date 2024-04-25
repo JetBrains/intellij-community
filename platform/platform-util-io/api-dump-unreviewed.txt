@@ -549,6 +549,7 @@ c:com.intellij.execution.process.ScriptRunnerUtil$ScriptOutput
 - getOutputToParseArray():java.lang.String[]
 - onTextAvailable(com.intellij.execution.process.ProcessEvent,com.intellij.openapi.util.Key):V
 com.intellij.execution.process.SelfKiller
+- *:tryDestroyGracefully():Z
 f:com.intellij.execution.process.SynchronizedProcessOutput
 - com.intellij.execution.process.ProcessOutput
 - <init>():V

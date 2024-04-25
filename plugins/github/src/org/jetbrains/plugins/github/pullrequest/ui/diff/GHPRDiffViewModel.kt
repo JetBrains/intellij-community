@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.diff
 
-import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.async.computationState
-import com.intellij.collaboration.async.mapNullableScoped
-import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.model.*
@@ -22,16 +19,13 @@ import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import git4idea.changes.getDiffComputer
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
-import org.jetbrains.plugins.github.pullrequest.data.provider.fetchedChangesFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
@@ -66,7 +60,16 @@ internal class GHPRDiffViewModelImpl(
 
   override val reviewVm = DelegatingGHPRReviewViewModel(reviewVmHelper)
 
-  private val changesFetchFlow = dataProvider.changesData.fetchedChangesFlow().shareIn(cs, SharingStarted.Lazily, 1)
+  private val changesFetchFlow = with(dataProvider.changesData) {
+    changesNeedReloadSignal.withInitial(Unit).mapScoped(true) {
+      async {
+        loadChanges().also {
+          ensureAllRevisionsFetched()
+        }
+      }
+    }
+  }.shareIn(cs, SharingStarted.Lazily, 1)
+
   private val changesSorter = GithubPullRequestsProjectUISettings.getInstance(project).changesGroupingState
     .map { RefComparisonChangesSorter.Grouping(project, it) }
   private val helper =
@@ -80,7 +83,7 @@ internal class GHPRDiffViewModelImpl(
   private val changeVmsMap = mutableMapOf<RefComparisonChange, StateFlow<GHPRDiffChangeViewModelImpl?>>()
 
   private val threads: StateFlow<ComputedResult<List<GHPullRequestReviewThread>>> =
-    reviewDataProvider.createThreadsRequestsFlow().computationState().stateInNow(cs, ComputedResult.loading())
+    reviewDataProvider.threadsComputationFlow.stateInNow(cs, ComputedResult.loading())
 
   private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
   override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()
@@ -89,13 +92,11 @@ internal class GHPRDiffViewModelImpl(
     reviewResult.isInProgress || threadsResult.isInProgress
   }
 
-  init {
-    dataProvider.changesData.loadChanges()
-  }
-
   override fun reloadReview() {
-    reviewDataProvider.resetPendingReview()
-    reviewDataProvider.resetReviewThreads()
+    cs.launch {
+      reviewDataProvider.signalPendingReviewNeedsReload()
+      reviewDataProvider.signalThreadsNeedReload()
+    }
   }
 
   override val diffVm: StateFlow<ComputedResult<DiffProducersViewModel?>> =

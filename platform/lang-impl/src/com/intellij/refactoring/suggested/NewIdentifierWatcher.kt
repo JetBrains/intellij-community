@@ -4,6 +4,7 @@ package com.intellij.refactoring.suggested
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.util.TextRange
 import java.util.*
@@ -21,7 +22,7 @@ class NewIdentifierWatcher(private val maxIdentifiers: Int) {
     get() = newIdentifierMarkers.firstOrNull()?.marker?.takeIf { it.isValid }?.document
 
   fun lastNewIdentifierRanges(): List<TextRange> {
-    return newIdentifierMarkers.map { it.marker.range!! }
+    return newIdentifierMarkers.map { it.marker.asTextRange!! }
   }
 
   fun documentChanged(event: DocumentEvent, language: Language) {
@@ -37,7 +38,7 @@ class NewIdentifierWatcher(private val maxIdentifiers: Int) {
     val iterator = newIdentifierMarkers.iterator()
     while (iterator.hasNext()) {
       val ref = iterator.next()
-      val range = ref.marker.range
+      val range = ref.marker.asTextRange
       if (range == null) {
         iterator.remove()
         continue
@@ -68,7 +69,7 @@ class NewIdentifierWatcher(private val maxIdentifiers: Int) {
       newIdentifierMarkers.addLast(Ref(marker))
     }
     else {
-      if (newIdentifierMarkers.any { it.marker.range!!.contains(event.newRange) }) return
+      if (newIdentifierMarkers.any { it.marker.asTextRange!!.contains(event.newRange) }) return
 
       if (event.newFragment.any { refactoringSupport.isIdentifierStart(it) }) {
         reset()

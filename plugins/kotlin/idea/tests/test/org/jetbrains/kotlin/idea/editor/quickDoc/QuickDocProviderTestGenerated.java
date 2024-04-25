@@ -83,6 +83,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/ConstructorVarParameter.kt");
     }
 
+    @TestMetadata("DataClass.kt")
+    public void testDataClass() throws Exception {
+        runTest("testData/editor/quickDoc/DataClass.kt");
+    }
+
     @TestMetadata("DefinitelyNonNullType.kt")
     public void testDefinitelyNonNullType() throws Exception {
         runTest("testData/editor/quickDoc/DefinitelyNonNullType.kt");
@@ -371,6 +376,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("Tailrec.kt")
     public void testTailrec() throws Exception {
         runTest("testData/editor/quickDoc/Tailrec.kt");
+    }
+
+    @TestMetadata("TailrecFunction.kt")
+    public void testTailrecFunction() throws Exception {
+        runTest("testData/editor/quickDoc/TailrecFunction.kt");
     }
 
     @TestMetadata("TailrecName.kt")

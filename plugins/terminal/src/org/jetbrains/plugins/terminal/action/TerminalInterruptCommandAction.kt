@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.action
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.terminal.TerminalBundle
@@ -16,7 +15,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalUiUtils
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 
-class TerminalInterruptCommandAction : DumbAwareAction(TerminalBundle.message("action.Terminal.InterruptCommand.text")),
+internal class TerminalInterruptCommandAction : DumbAwareAction(TerminalBundle.message("action.Terminal.InterruptCommand.text")),
                                        ActionRemoteBehaviorSpecification.Disabled {
   init {
     shortcutSet = TerminalUiUtils.createSingleShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK)

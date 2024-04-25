@@ -1402,10 +1402,17 @@ public final class HighlightClassUtil {
       return null;
     }
 
-    HighlightInfo.Builder builder = HighlightUtil.checkFeature(member, JavaFeature.IMPLICIT_CLASSES, languageLevel, psiFile);
+    PsiElement anchor = member;
+    if (member instanceof PsiNameIdentifierOwner owner) {
+      PsiElement nameIdentifier = owner.getNameIdentifier();
+      if (nameIdentifier != null) {
+        anchor = nameIdentifier;
+      }
+    }
+    HighlightInfo.Builder builder = HighlightUtil.checkFeature(anchor, JavaFeature.IMPLICIT_CLASSES, languageLevel, psiFile);
     if (builder == null) return null;
 
-    if (!(member instanceof PsiClass) && !PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, member)) {
+    if (!(member instanceof PsiClass)) {
       boolean hasClassToRelocate = PsiTreeUtil.findChildOfType(implicitClass, PsiClass.class) != null;
       if (hasClassToRelocate) {
         MoveMembersIntoClassFix fix = new MoveMembersIntoClassFix(implicitClass);

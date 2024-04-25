@@ -51,7 +51,9 @@ f:com.intellij.UtilBundle
 *f:com.intellij.concurrency.ThreadContext
 - sf:captureThreadContext(java.lang.Runnable):java.lang.Runnable
 - sf:captureThreadContext(java.util.concurrent.Callable):java.util.concurrent.Callable
+- sf:captureThreadContext(java.util.function.Consumer):java.util.function.Consumer
 - sf:captureThreadContext(java.util.function.Function):java.util.function.Function
+- sf:captureThreadContext(java.util.function.Supplier):java.util.function.Supplier
 - sf:currentThreadContext():kotlin.coroutines.CoroutineContext
 - sf:currentThreadContextOrNull():kotlin.coroutines.CoroutineContext
 - sf:getContextSkeleton(kotlin.coroutines.CoroutineContext):java.util.Set
@@ -59,15 +61,12 @@ f:com.intellij.UtilBundle
 - bs:installThreadContext$default(kotlin.coroutines.CoroutineContext,Z,I,java.lang.Object):com.intellij.openapi.application.AccessToken
 - sf:resetThreadContext():com.intellij.openapi.application.AccessToken
 f:com.intellij.concurrency.client.ClientIdPropagation
-- sf:decorateBiConsumer(java.util.function.BiConsumer):java.util.function.BiConsumer
-- sf:decorateCallable(java.util.concurrent.Callable):java.util.concurrent.Callable
-- sf:decorateConsumer(java.util.function.Consumer):java.util.function.Consumer
-- sf:decorateFunction(java.util.function.Function):java.util.function.Function
-- sf:decorateFunction(kotlin.jvm.functions.Function0):kotlin.jvm.functions.Function0
-- sf:decorateFutureTask(java.util.concurrent.FutureTask):java.util.concurrent.FutureTask
-- sf:decorateProcessor(com.intellij.util.Processor):com.intellij.util.Processor
-- sf:decorateRunnable(java.lang.Runnable):java.lang.Runnable
-- sf:decorateSupplier(java.util.function.Supplier):java.util.function.Supplier
+- sf:captureClientId(kotlin.jvm.functions.Function0):kotlin.jvm.functions.Function0
+- sf:captureClientIdInBiConsumer(java.util.function.BiConsumer):java.util.function.BiConsumer
+- sf:captureClientIdInCallable(java.util.concurrent.Callable):java.util.concurrent.Callable
+- sf:captureClientIdInFunction(java.util.function.Function):java.util.function.Function
+- sf:captureClientIdInProcessor(com.intellij.util.Processor):com.intellij.util.Processor
+- sf:captureClientIdInRunnable(java.lang.Runnable):java.lang.Runnable
 c:com.intellij.diagnostic.tracing.MethodTracer
 - s:clearAll():V
 - s:getAllData():java.util.List
@@ -1974,6 +1973,7 @@ c:com.intellij.openapi.util.text.StringUtil
 - s:isEmptyOrSpaces(java.lang.String):Z
 - s:isEscapedBackslash(java.lang.CharSequence,I,I):Z
 - s:isHexDigit(C):Z
+- s:isJavaIdentifier(java.lang.CharSequence,I,I):Z
 - s:isJavaIdentifier(java.lang.String):Z
 - s:isJavaIdentifierPart(C):Z
 - s:isJavaIdentifierStart(C):Z
@@ -4783,12 +4783,15 @@ c:com.intellij.util.indexing.impl.ChangeTrackingValueContainer
 - p:myInvalidated:it.unimi.dsi.fastutil.ints.IntSet
 - <init>(com.intellij.openapi.util.Computable):V
 - addValue(I,java.lang.Object):V
+- containsCachedMergedData():Z
+- containsOnlyInvalidatedChange():Z
 - dropMergedData():V
 - getValueIterator():com.intellij.util.indexing.ValueContainer$ValueIterator
 - isDirty():Z
 - removeAssociatedValue(I):Z
 - p:removeFromAdded(I):Z
 - saveTo(java.io.DataOutput,com.intellij.util.io.DataExternalizer):V
+- setNeedsCompacting(Z):V
 - size():I
 f:com.intellij.util.indexing.impl.CollectionDataExternalizer
 - com.intellij.util.io.DataExternalizer

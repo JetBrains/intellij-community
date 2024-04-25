@@ -201,6 +201,13 @@
             "type": "string"
           }
         },
+        "ruby-gems": {
+          "description": "Ruby gem names, which enable framework support within the particular Ruby module.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "script-url-patterns": {
           "description": "RegExps to match script URLs, which enable framework support within a particular HTML.",
           "type": "array",
@@ -237,7 +244,16 @@
           }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": {
+        "$ref": "#/definitions/custom-enablement-rules"
+      }
+    },
+    "custom-enablement-rules": {
+      "description": "Custom package manager dependencies, which would enable context according to the rules of custom provider.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "disablement-rules": {
       "description": "Specify rules for disabling web framework support. These rules take precedence over enable-when rules. They allow to turn off framework support in case of some conflicts between frameworks priority.",
@@ -1077,7 +1093,7 @@
     },
     "css": {
       "type": "object",
-      "description": "Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.",
+      "description": "Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.",
       "allOf": [
         {
           "$ref": "#/definitions/css-contributions-host"

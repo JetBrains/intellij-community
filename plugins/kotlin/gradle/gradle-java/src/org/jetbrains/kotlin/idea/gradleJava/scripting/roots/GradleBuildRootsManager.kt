@@ -15,6 +15,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -27,15 +28,15 @@ import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
-import org.jetbrains.kotlin.idea.gradleJava.scripting.*
+import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleVersion
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslGradleBuildSync
+import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot.ImportingStatus.*
+import org.jetbrains.kotlin.idea.gradleJava.scripting.scriptConfigurationsNeedToBeUpdated
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -395,7 +396,7 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
                     DefaultScriptingSupport.getInstance(project).ensureNotificationsRemoved(it)
                 }
 
-                if (restartAnalyzer) {
+                if (KotlinPluginModeProvider.isK1Mode() && restartAnalyzer) {
                     KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
                     // this required only for "pause" state
                     PsiManager.getInstance(project).findFile(it)?.let { ktFile ->
@@ -412,8 +413,6 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
     private fun updateFloatingAction(file: VirtualFile) {
         if (isConfigurationOutOfDate(file)) {
             scriptConfigurationsNeedToBeUpdated(project, file)
-        } else {
-            scriptConfigurationsAreUpToDate(project)
         }
     }
 

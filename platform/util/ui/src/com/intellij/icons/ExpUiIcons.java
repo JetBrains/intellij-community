@@ -24,6 +24,8 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon DiffWithClipboard = load("expui/actions/diffWithClipboard.svg", 204552007, 2);
     /** 16x16 */ public static final @NotNull Icon Filterdups = load("expui/actions/filterdups.svg", -360208726, 2);
     /** 16x16 */ public static final @NotNull Icon Generated = load("expui/actions/generated.svg", -505251911, 2);
+    /** 16x16 */ public static final @NotNull Icon GroupByClass = load("expui/actions/groupByClass.svg", -78543826, 2);
+    /** 16x16 */ public static final @NotNull Icon GroupByFile = load("expui/actions/groupByFile.svg", -271612899, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByMethod = load("expui/actions/groupByMethod.svg", 300139270, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByModule = load("expui/actions/groupByModule.svg", 798805301, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByPackage = load("expui/actions/groupByPackage.svg", -694917992, 2);
@@ -217,13 +219,13 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ActionScript = load("expui/fileTypes/actionScript.svg", 268585626, 2);
     /** 16x16 */ public static final @NotNull Icon AddAny = load("expui/fileTypes/addAny.svg", 1483508531, 2);
     /** 16x16 */ public static final @NotNull Icon AngularJS = load("expui/fileTypes/angularJS.svg", -1837706255, 0);
-    /** 16x16 */ public static final @NotNull Icon AnyType = load("expui/fileTypes/anyType.svg", 1932881440, 2);
+    /** 16x16 */ public static final @NotNull Icon AnyType = load("expui/fileTypes/anyType.svg", 292179966, 2);
     /** 16x16 */ public static final @NotNull Icon Archive = load("expui/fileTypes/archive.svg", 501192247, 2);
     /** 16x16 */ public static final @NotNull Icon AspectJ = load("expui/fileTypes/aspectJ.svg", -911980166, 2);
     /** 16x16 */ public static final @NotNull Icon ChangedFile = load("expui/fileTypes/changedFile.svg", -726198123, 2);
     /** 16x16 */ public static final @NotNull Icon ChangedFiles = load("expui/fileTypes/changedFiles.svg", -1385878907, 2);
     /** 16x16 */ public static final @NotNull Icon Config = load("expui/fileTypes/config.svg", 704244194, 2);
-    /** 16x16 */ public static final @NotNull Icon Css = load("expui/fileTypes/css.svg", -516235191, 0);
+    /** 16x16 */ public static final @NotNull Icon Css = load("expui/fileTypes/css.svg", 577330500, 2);
     /** 16x16 */ public static final @NotNull Icon Csv = load("expui/fileTypes/csv.svg", -1498141192, 2);
     /** 16x16 */ public static final @NotNull Icon Cucumber = load("expui/fileTypes/cucumber.svg", -374073568, 0);
     /** 16x16 */ public static final @NotNull Icon Diagram = load("expui/fileTypes/diagram.svg", 273722886, 2);
@@ -433,6 +435,7 @@ public final class ExpUiIcons {
   public static final class Ide {
     /** 16x16 */ public static final @NotNull Icon ConfigFile = load("expui/ide/configFile.svg", -314971684, 2);
     /** 16x16 */ public static final @NotNull Icon ExternalLink = load("expui/ide/externalLink.svg", 979913203, 2);
+    /** 16x16 */ public static final @NotNull Icon ExternalLinkWhite = load("expui/ide/externalLinkWhite.svg", 1778158336, 0);
     /** 32x32 */ public static final @NotNull Icon FeedbackRating = load("expui/ide/feedbackRating.svg", -510323601, 2);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingFocused = load("expui/ide/feedbackRatingFocused.svg", -695408414, 2);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingFocusedOn = load("expui/ide/feedbackRatingFocusedOn.svg", -1501133017, 2);
@@ -478,7 +481,7 @@ public final class ExpUiIcons {
 
   public static final class Language {
     /** 16x16 */ public static final @NotNull Icon Php = load("expui/language/php.svg", 1115780116, 2);
-    /** 16x16 */ public static final @NotNull Icon Scala = load("expui/language/scala.svg", 570395828, 2);
+    /** 16x16 */ public static final @NotNull Icon Scala = load("expui/language/scala.svg", -745330940, 2);
   }
 
   public static final class MeetNewUi {
@@ -493,7 +496,7 @@ public final class ExpUiIcons {
   }
 
   public static final class Nodes {
-    /** 16x16 */ public static final @NotNull Icon AbstractException = load("expui/nodes/abstractException.svg", 557846383, 2);
+    /** 16x16 */ public static final @NotNull Icon AbstractException = load("expui/nodes/abstractException.svg", 1473228068, 2);
     /** 16x16 */ public static final @NotNull Icon AccessLocal = load("expui/nodes/accessLocal.svg", -1034596711, 2);
     /** 16x16 */ public static final @NotNull Icon AccessPrivate = load("expui/nodes/accessPrivate.svg", 1833439018, 2);
     /** 16x16 */ public static final @NotNull Icon AccessProtected = load("expui/nodes/accessProtected.svg", -493043417, 2);
@@ -513,9 +516,9 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon DataTables = load("expui/nodes/dataTables.svg", -1920718805, 2);
     /** 16x16 */ public static final @NotNull Icon Desktop = load("expui/nodes/desktop.svg", -1879263839, 2);
     /** 16x16 */ public static final @NotNull Icon EditFolder = load("expui/nodes/editFolder.svg", -1715842178, 2);
-    /** 16x16 */ public static final @NotNull Icon Enum = load("expui/nodes/enum.svg", -1860463909, 2);
+    /** 16x16 */ public static final @NotNull Icon Enum = load("expui/nodes/enum.svg", -1736290823, 2);
     /** 16x16 */ public static final @NotNull Icon ErrorIntroduction = load("expui/nodes/errorIntroduction.svg", 1066814848, 2);
-    /** 16x16 */ public static final @NotNull Icon Exception = load("expui/nodes/exception.svg", 74365265, 2);
+    /** 16x16 */ public static final @NotNull Icon Exception = load("expui/nodes/exception.svg", 1989999435, 2);
     /** 16x16 */ public static final @NotNull Icon ExcludedGenerated = load("expui/nodes/excludedGenerated.svg", -1741171970, 2);
     /** 16x16 */ public static final @NotNull Icon ExcludeRoot = load("expui/nodes/excludeRoot.svg", -1337025191, 2);
     /** 16x16 */ public static final @NotNull Icon Field = load("expui/nodes/field.svg", 2024455730, 2);

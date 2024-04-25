@@ -77,6 +77,6 @@ public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNa
 
   @Override
   public boolean isDumbAware() {
-    return FileBasedIndex.isIndexAccessDuringDumbModeEnabled();
+    return true;
   }
 }

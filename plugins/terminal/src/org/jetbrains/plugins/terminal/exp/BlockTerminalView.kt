@@ -26,7 +26,9 @@ import org.jetbrains.plugins.terminal.action.TerminalInterruptCommandAction
 import org.jetbrains.plugins.terminal.action.TerminalMoveCaretToLineEndAction
 import org.jetbrains.plugins.terminal.action.TerminalMoveCaretToLineStartAction
 import org.jetbrains.plugins.terminal.exp.BlockTerminalController.BlockTerminalControllerListener
-import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptController
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptController.PromptStateListener
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptView
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.awt.Dimension
 import java.awt.Rectangle
@@ -35,7 +37,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.max
 
-class BlockTerminalView(
+internal class BlockTerminalView(
   private val project: Project,
   private val session: BlockTerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase,
@@ -78,7 +80,7 @@ class BlockTerminalView(
     })
     promptView.controller.promptIsVisible = false
 
-    promptView.controller.addDocumentListener(object : DocumentListener {
+    promptView.controller.model.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         if (promptView.component.preferredHeight != promptView.component.height) {
           component.revalidate()

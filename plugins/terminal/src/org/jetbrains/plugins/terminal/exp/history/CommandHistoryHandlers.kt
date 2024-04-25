@@ -20,7 +20,7 @@ internal class TerminalCaretUpHandler(private val originalHandler: EditorActionH
       if (lookup?.isAvailableToUser == true) {
         originalHandler.execute(editor, caret, dataContext)
       }
-      else if (editor.offsetToLogicalPosition(editor.caretModel.offset).line == 0) {
+      else if (editor.offsetToLogicalPosition(editor.caretModel.offset).line == editor.offsetToLogicalPosition(promptController.model.commandStartOffset).line) {
         promptController.showCommandHistory()
       }
       else originalHandler.execute(editor, caret, dataContext)

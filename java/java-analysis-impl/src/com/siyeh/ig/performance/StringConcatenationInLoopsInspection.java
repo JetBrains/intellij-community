@@ -553,7 +553,7 @@ public final class StringConcatenationInLoopsInspection extends BaseInspection {
       String builderName = Objects.requireNonNull(builderVariable.getName());
       if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
         if (rValue instanceof PsiPolyadicExpression concat &&
-            ((PsiPolyadicExpression)rValue).getOperationTokenType().equals(JavaTokenType.PLUS)) {
+            concat.getOperationTokenType().equals(JavaTokenType.PLUS)) {
           PsiExpression[] operands = concat.getOperands();
           if (operands.length > 1) {
             // s = s + ...;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.memory;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -6,11 +6,13 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.io.MeasurableIndexStore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+@ApiStatus.Internal
 public final class InMemoryForwardIndex implements ForwardIndex, MeasurableIndexStore {
   private final IntObjectMap<byte[]> myMap = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 

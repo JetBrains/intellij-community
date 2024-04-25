@@ -9,7 +9,9 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.facet.FacetManager;
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -60,6 +62,8 @@ import java.util.stream.Stream;
  * @author egor
  */
 public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineBreakpointProperties> {
+  private static final Logger LOG = Logger.getInstance(JavaLineBreakpointType.class);
+
   public JavaLineBreakpointType() {
     super("java-line", JavaDebuggerBundle.message("line.breakpoints.tab.title"));
   }
@@ -268,7 +272,12 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   public boolean matchesPosition(@NotNull LineBreakpoint<?> breakpoint, @NotNull SourcePosition position) {
     JavaBreakpointProperties properties = breakpoint.getProperties();
     if (properties instanceof JavaLineBreakpointProperties) {
-      if (!(breakpoint instanceof RunToCursorBreakpoint) && ((JavaLineBreakpointProperties)properties).getLambdaOrdinal() == null) return true;
+      if (!(breakpoint instanceof RunToCursorBreakpoint) && ((JavaLineBreakpointProperties)properties).isAllPositions()) return true;
+
+      // Non-Java JVM languages sometimes use Java breakpoints but they should only use "all positions" variant.
+      // Because otherwise the code below is not able to analyze non-Java PSI.
+      LOG.assertTrue(position.getFile().getLanguage().isKindOf(JavaLanguage.INSTANCE));
+
       PsiElement containingMethod = getContainingMethod(breakpoint);
       if (containingMethod == null) return false;
       return DebuggerUtilsEx.inTheMethod(position, containingMethod);
@@ -342,7 +351,12 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
                                            @NotNull XLineBreakpointType<JavaLineBreakpointProperties>.XLineBreakpointVariant variant) {
     var props = breakpoint.getProperties();
     if (variant instanceof ExactJavaBreakpointVariant exactJavaVariant) {
-      return Objects.equals(props.getEncodedInlinePosition(), exactJavaVariant.myEncodedInlinePosition);
+      return Objects.equals(props.getEncodedInlinePosition(), exactJavaVariant.myEncodedInlinePosition) ||
+             // Coverage for the case:
+             // 1. User sets a breakpoint on a simple line (single println). "All positions" breakpoint is set (historical and compatibility reasons).
+             // 2. User adds lambda to the line.
+             // 3. Just for the simplicity of UI we ignore correctness and match this "all positions" breakpoint with a "line" breakpoint variant.
+             props.isAllPositions() && JavaLineBreakpointProperties.isLinePosition(exactJavaVariant.myEncodedInlinePosition);
 
     } else {
       // variant is a default line breakpoint variant or explicit "all" variant
@@ -352,10 +366,26 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
   public class JavaBreakpointVariant extends XLineBreakpointAllVariant {
     private final int lambdaCount;
+    protected final Integer myEncodedInlinePosition;
 
-    public JavaBreakpointVariant(@NotNull XSourcePosition position, int lambdaCount) {
+    public JavaBreakpointVariant(@NotNull XSourcePosition position, int lambdaCount, Integer myEncodedInlinePosition) {
       super(position);
       this.lambdaCount = lambdaCount;
+      this.myEncodedInlinePosition = myEncodedInlinePosition;
+    }
+
+    /**
+     * Create exact variant (i.e. line or exact lambda).
+     */
+    public JavaBreakpointVariant(@NotNull XSourcePosition position, Integer encodedInlinePosition) {
+      this(position, -1, encodedInlinePosition);
+    }
+
+    /**
+     * Create "Line and Lambdas" variant.
+     */
+    public JavaBreakpointVariant(@NotNull XSourcePosition position, int lambdaCount) {
+      this(position, lambdaCount, null);
     }
 
     public JavaBreakpointVariant(@NotNull XSourcePosition position) {
@@ -368,16 +398,22 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
              ? JavaDebuggerBundle.message("breakpoint.variant.text.line.and.lambda", lambdaCount)
              : JavaDebuggerBundle.message("breakpoint.variant.text.line.and.lambda.uknown.count");
     }
+
+    @Override
+    public @Nullable JavaLineBreakpointProperties createProperties() {
+      JavaLineBreakpointProperties properties = super.createProperties();
+      assert properties != null;
+      properties.setEncodedInlinePosition(myEncodedInlinePosition);
+      return properties;
+    }
   }
 
   public class ExactJavaBreakpointVariant extends JavaBreakpointVariant {
     private final PsiElement myElement;
-    private final Integer myEncodedInlinePosition;
 
     public ExactJavaBreakpointVariant(@NotNull XSourcePosition position, @Nullable PsiElement element, Integer encodedInlinePosition) {
-      super(position);
+      super(position, encodedInlinePosition);
       myElement = element;
-      myEncodedInlinePosition = encodedInlinePosition;
     }
 
     @Override
@@ -405,15 +441,6 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     @Override
     public boolean isMultiVariant() {
       return false;
-    }
-
-    @NotNull
-    @Override
-    public JavaLineBreakpointProperties createProperties() {
-      JavaLineBreakpointProperties properties = super.createProperties();
-      assert properties != null;
-      properties.setEncodedInlinePosition(myEncodedInlinePosition);
-      return properties;
     }
   }
 

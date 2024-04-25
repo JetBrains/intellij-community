@@ -97,7 +97,7 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
     myFixture.checkResult("""
                             import com.example.Age;
                             import com.example.Person;
-                                                         
+                            
                             class X {
                               void test(Object o) {
                                 if(o instanceof Person(String name, Age age))
@@ -119,7 +119,7 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
     selectItem(2);
     myFixture.checkResult("""
                             import com.example.Y;
-                                                         
+                            
                             class X {
                               void test(Object o) {
                                 if(o instanceof Y.Point(int x, int y))
@@ -185,7 +185,7 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
     selectItem(2);
     myFixture.checkResult("""
                             import com.example.Point;
-                                                         
+                            
                             class X {
                               void test(Object o) {
                                 switch(o) {
@@ -222,7 +222,7 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
     myFixture.completeBasic();
     myFixture.assertPreferredCompletionItems(0, "StrIncompatible", "String", "StrictMath", "StringBuffer", "StringBuilder");
   }
-  
+
   public void testUnnamedVariableAndWhen() {
     String text = """
         class X {
@@ -236,6 +236,85 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
     myFixture.configureByText("a.java", text);
     myFixture.completeBasic();
     myFixture.checkResult(text);
+  }
+
+  @NeedsIndex.Full
+  public void testDeconstructionListPrimitive() {
+    myFixture.configureByText("a.java", """
+      record Point(int x, String description, int y);
+      class X {
+        void test(Object o) {
+          if(o instanceof Point(in<caret>)
+        }
+      }""");
+    myFixture.completeBasic();
+    selectItem(1);
+    myFixture.checkResult("""
+                            record Point(int x, String description, int y);
+                            class X {
+                              void test(Object o) {
+                                if(o instanceof Point(int <caret>)
+                              }
+                            }""");
+  }
+
+  @NeedsIndex.Full
+  public void testDeconstructionListPrimitive2() {
+    myFixture.configureByText("a.java", """
+      record Point(int x, String description, int y);
+      class X {
+        void test(Object o) {
+          if(o instanceof Point(int x, String description, in<caret>)
+        }
+      }""");
+    myFixture.completeBasic();
+    myFixture.checkResult("""
+                            record Point(int x, String description, int y);
+                            class X {
+                              void test(Object o) {
+                                if(o instanceof Point(int x, String description, int <caret>)
+                              }
+                            }""");
+  }
+
+  @NeedsIndex.Full
+  public void testFullDeconstructionList() {
+    myFixture.configureByText("a.java", """
+      record Point(int x, String description, int y);
+      class X {
+        void test(Object o) {
+          if(o instanceof Point(in<caret>)
+        }
+      }""");
+    myFixture.completeBasic();
+    selectItem(0);
+    myFixture.checkResult("""
+                            record Point(int x, String description, int y);
+                            class X {
+                              void test(Object o) {
+                                if(o instanceof Point(int x, String description, int y<caret>)
+                              }
+                            }""");
+  }
+
+  @NeedsIndex.Full
+  public void testFullDeconstructionListGenerics() {
+    myFixture.configureByText("a.java", """
+      record Point<T>(int x, T description, int y);
+      class X {
+        void test(Object o) {
+          if(o instanceof Point<String>(in<caret>)
+        }
+      }""");
+    myFixture.completeBasic();
+    selectItem(0);
+    myFixture.checkResult("""
+                            record Point<T>(int x, T description, int y);
+                            class X {
+                              void test(Object o) {
+                                if(o instanceof Point<String>(int x, String description, int y<caret>)
+                              }
+                            }""");
   }
 
   private void selectItem(int index) {

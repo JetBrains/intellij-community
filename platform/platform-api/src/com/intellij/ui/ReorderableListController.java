@@ -275,7 +275,7 @@ public abstract class ReorderableListController <T> {
       };
       final BaseAction action = createAction(behaviour);
       if (myCreateShortcut) {
-        action.registerCustomShortcutSet(CommonShortcuts.INSERT, component);
+        action.registerCustomShortcutSet(CommonShortcuts.getInsert(), component);
       }
       return action;
     }

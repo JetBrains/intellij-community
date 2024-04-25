@@ -263,7 +263,8 @@ public final class JavaGenerateMemberCompletionContributor {
 
       newInfos.get(0).positionCaret(context.getEditor(), true);
       ApplicationManager.getApplication().invokeLater(
-        () -> GlobalInspectionContextBase.cleanupElements(context.getProject(), null, elements.toArray(PsiElement.EMPTY_ARRAY)));
+        () -> GlobalInspectionContextBase.cleanupElements(
+          context.getProject(), null, elements.stream().filter(e -> e.isValid()).toArray(PsiElement[]::new)));
     }
   }
 

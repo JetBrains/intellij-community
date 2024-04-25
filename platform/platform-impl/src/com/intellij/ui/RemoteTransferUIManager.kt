@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
 import java.util.*
@@ -121,4 +122,9 @@ object RemoteTransferUIManager {
     val component = (inlay.renderer as? ComponentInlayRenderer<*>)?.component as? JComponent ?: return false
     return component.getUserData(focusInlayOnShowKey) == true
   }
+}
+
+@ApiStatus.Internal
+object RemoteUIDataConstants {
+  const val BE_CONTROLS_SKIP = "BE_CONTROLS_SKIP"
 }

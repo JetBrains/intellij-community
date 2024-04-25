@@ -27,6 +27,8 @@
                         serviceImplementation="com.intellij.openapi.project.ProjectLocatorImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTablesRegistrar"
                         serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTablesRegistrarImpl"/>
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry" 
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistryImpl"/>
     <!-- Global Workspace Model -->
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl"/>

@@ -67,6 +67,7 @@ public final class PathManager {
   private static Path ourOriginalConfigDir;
   private static Path ourOriginalSystemDir;
   private static Path ourOriginalLogDir;
+  private static Map<String, String> ourArchivedCompiledClassesMapping;
 
   // IDE installation paths
 
@@ -167,6 +168,16 @@ public final class PathManager {
     Path result = null;
     String rootPath = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
     if (rootPath != null) {
+      String relevantJarsRoot = getArchivedCompliedClassesLocation();
+      if (relevantJarsRoot != null && rootPath.startsWith(relevantJarsRoot)) {
+        String home = System.getProperty(PROPERTY_HOME_PATH);
+        if (home != null) {
+          Path path = Paths.get(home).toAbsolutePath();
+          if (isIdeaHome(path)) {
+            return path;
+          }
+        }
+      }
       Path root = Paths.get(rootPath).toAbsolutePath();
       do root = root.getParent();
       while (root != null && !isIdeaHome(root));
@@ -817,5 +828,50 @@ public final class PathManager {
       System.setProperty(PROPERTY_VENDOR_NAME, property != null ? property : "JetBrains");
     }
     return property;
+  }
+
+  /**
+   * NB: actual jars might be in subdirectories
+   */
+  @ApiStatus.Internal
+  public static @Nullable String getArchivedCompliedClassesLocation() {
+    return System.getProperty("intellij.test.jars.location");
+  }
+
+  /**
+   * Returns map of IntelliJ modules to jar absolute paths, e.g.:
+   * "production/intellij.platform.util" => ".../production/intellij.platform.util/$hash.jar"
+   */
+  @ApiStatus.Internal
+  public static @Nullable Map<String, String> getArchivedCompiledClassesMapping() {
+    if (ourArchivedCompiledClassesMapping == null) {
+      ourArchivedCompiledClassesMapping = computeArchivedCompiledClassesMapping();
+    }
+    return ourArchivedCompiledClassesMapping;
+  }
+
+  private static @Nullable Map<String, String> computeArchivedCompiledClassesMapping() {
+    final String filePath = System.getProperty("intellij.test.jars.mapping.file");
+    if (StringUtilRt.isEmptyOrSpaces(filePath)) {
+      return null;
+    }
+    final List<String> lines;
+    try {
+      lines = Files.readAllLines(Paths.get(filePath));
+    }
+    catch (Exception e) {
+      log("Failed to load jars mappings from " + filePath);
+      return null;
+    }
+    final Map<String, String> mapping = new HashMap<>(lines.size());
+    for (String line : lines) {
+      String[] split = line.split("=", 2);
+      if (split.length < 2) {
+        log("Ignored jars mapping line: " + line);
+        continue;
+      }
+      mapping.put(split[0], split[1]);
+    }
+    return Collections.unmodifiableMap(mapping);
   }
 }

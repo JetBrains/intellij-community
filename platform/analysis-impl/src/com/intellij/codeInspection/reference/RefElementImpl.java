@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.SuppressionUtil;
@@ -277,6 +277,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     mySuppressions = text.split("[, ]");
   }
 
+  @Override
   public boolean isSuppressed(String @NotNull ... toolIds) {
     if (mySuppressions != null) {
       for (@NonNls String suppression : mySuppressions) {

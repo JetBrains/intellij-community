@@ -1,149 +1,161 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
+import com.google.common.graph.GraphBuilder
+import com.google.common.graph.ImmutableGraph
 import com.google.common.graph.Traverser
 import com.intellij.collaboration.async.classAsCoroutineName
-import com.intellij.execution.process.ProcessIOExecutorService
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.impl.patch.FilePatch
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.platform.util.coroutines.childScope
+import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.filePath
-import git4idea.commands.Git
-import git4idea.commands.GitCommand
-import git4idea.commands.GitLineHandler
-import git4idea.remote.hosting.infoFlow
-import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.github.api.data.GHCommit
+import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesService
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
-import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
 
-class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
-                                  private val repositoryDataService: GHPRRepositoryDataService,
-                                  private val changesService: GHPRChangesService,
-                                  private val pullRequestId: GHPRIdentifier,
-                                  private val detailsData: GHPRDetailsDataProviderImpl)
-  : GHPRChangesDataProvider, Disposable {
+internal class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
+                                           private val changesService: GHPRChangesService,
+                                           private val loadReferences: suspend () -> GHPRBranchesRefs,
+                                           private val pullRequestId: GHPRIdentifier)
+  : GHPRChangesDataProvider {
   private val cs = parentCs.childScope(classAsCoroutineName())
 
-  private var lastKnownBaseSha: String? = null
-  private var lastKnownHeadSha: String? = null
+  private var requests: ChangesDataLoader? = null
+  private val requestsGuard = Mutex()
 
-  init {
-    detailsData.addDetailsLoadedListener(this) {
-      val details = detailsData.loadedDetails ?: return@addDetailsLoadedListener
+  private val _changesNeedReloadSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  override val changesNeedReloadSignal: Flow<Unit> = _changesNeedReloadSignal.asSharedFlow()
 
-      if (details.baseRefOid != lastKnownBaseSha || details.headRefOid != lastKnownHeadSha) {
-        lastKnownBaseSha = details.baseRefOid
-        lastKnownHeadSha = details.headRefOid
-        reloadChanges()
+  override suspend fun loadCommits(): List<GHCommit> {
+    val refs = loadReferences()
+    return getLoader(refs).loadCommits()
+  }
+
+  override suspend fun loadChanges(): GitBranchComparisonResult {
+    val refs = loadReferences()
+    return getLoader(refs).loadChanges()
+  }
+
+  private suspend fun getLoader(refs: GHPRBranchesRefs): ChangesDataLoader =
+    requestsGuard.withLock {
+      val current = requests
+      val new = if (current == null) {
+        ChangesDataLoader(cs, refs)
+      }
+      else if (current.refs != refs) {
+        current.cancel()
+        ChangesDataLoader(cs, refs)
       }
       else {
-        lastKnownBaseSha = details.baseRefOid
-        lastKnownHeadSha = details.headRefOid
+        current
+      }
+      requests = new
+      new
+    }
+
+  override suspend fun signalChangesNeedReload() {
+    requestsGuard.withLock {
+      requests?.cancel()
+      requests = null
+    }
+    _changesNeedReloadSignal.tryEmit(Unit)
+  }
+
+  //TODO: don't fetch when all revision already present
+  override suspend fun ensureAllRevisionsFetched() {
+    coroutineScope {
+      launch {
+        val refs = loadReferences()
+        changesService.fetch(refs.baseRef)
+      }
+      launch {
+        changesService.fetch("refs/pull/${pullRequestId.number}/head:")
       }
     }
   }
 
-  private val baseBranchFetchRequestValue = LazyCancellableBackgroundProcessValue.create { indicator ->
-    detailsData.loadDetails().thenCompose {
-      changesService.fetchBranch(indicator, it.baseRefName)
-    }
-  }
-
-  private val headBranchFetchRequestValue = LazyCancellableBackgroundProcessValue.create {
-    changesService.fetch(it, "refs/pull/${pullRequestId.number}/head:")
-  }
-
-  private val apiCommitsRequestValue = LazyCancellableBackgroundProcessValue.create {
-    changesService.loadCommitsFromApi(it, pullRequestId)
-  }
-
-  private val changesProviderValue = LazyCancellableBackgroundProcessValue.create { indicator ->
-    val commitsRequest = apiCommitsRequestValue.value
-
-    detailsData.loadDetails()
-      .thenCompose {
-        changesService.loadMergeBaseOid(indicator, it.baseRefOid, it.headRefOid).thenCombine(commitsRequest) { mergeBaseRef, commits ->
-          mergeBaseRef to commits
-        }.thenCompose { (mergeBaseRef, commits) ->
-          changesService.createChangesProvider(indicator, pullRequestId, it.baseRefOid, mergeBaseRef, it.headRefOid, commits)
-        }
-      }
-  }
-
-  @OptIn(ExperimentalCoroutinesApi::class)
-  override val newChangesInReviewRequest: SharedFlow<Deferred<Boolean>> = run {
-    val repository = repositoryDataService.remoteCoordinates.repository
-    val currentRevFlow = repository.infoFlow().map { it.currentRevision }
-    val headRevFlow = detailsData.detailsRequestFlow().transformLatest {
-      runCatching { it.await() }.onSuccess { emit(it.headRefOid) }
-    }
-
-    // cant just do combineTransform bc it will not cancel previous computation
-    currentRevFlow.combine(headRevFlow) { currentRev, headRev ->
-      currentRev to headRev
-    }.distinctUntilChanged().transformLatest { (currentRev, headRev) ->
-      when (currentRev) {
-        null -> emit(CompletableDeferred(true))
-        headRev -> emit(CompletableDeferred(false))
-        else -> supervisorScope {
-          val request = async {
-            !isAncestor(repository, headRev, currentRev)
-          }
-          emit(request)
-        }
-      }
-    }.shareIn(cs, SharingStarted.Lazily, 1)
-  }
-
-  private suspend fun isAncestor(repository: GitRepository, potentialAncestorRev: String, rev: String): Boolean =
-    coroutineToIndicator {
-      val h = GitLineHandler(repository.project, repository.root, GitCommand.MERGE_BASE)
-      h.setSilent(true)
-      h.addParameters("--is-ancestor", potentialAncestorRev, rev)
-      Git.getInstance().runCommand(h).success()
-    }
-
-  override fun loadChanges() = changesProviderValue.value
-
-  override fun loadPatchFromMergeBase(progressIndicator: ProgressIndicator, commitSha: String, filePath: String)
-    : CompletableFuture<FilePatch?> {
+  override suspend fun loadPatchFromMergeBase(commitSha: String, filePath: String): FilePatch? {
     // cache merge base
-    return detailsData.loadDetails().thenCompose {
-      changesService.loadMergeBaseOid(progressIndicator, it.baseRefOid, it.headRefOid)
-    }.thenCompose {
-      changesService.loadPatch(it, commitSha)
-    }.thenApplyAsync({ it.find { it.filePath == filePath } }, ProcessIOExecutorService.INSTANCE)
+    val refs = loadReferences()
+    val mergeBase = changesService.loadMergeBaseOid(refs.baseRef, refs.headRef)
+    return changesService.loadPatch(mergeBase, commitSha).find { it.filePath == filePath }
   }
 
-  override fun reloadChanges() {
-    baseBranchFetchRequestValue.drop()
-    headBranchFetchRequestValue.drop()
-    apiCommitsRequestValue.drop()
-    changesProviderValue.drop()
+  @Deprecated("Please migrate ro coroutines and use apiCommitsRequest")
+  override fun loadCommitsFromApi(): CompletableFuture<List<GHCommit>> =
+    cs.async { loadCommits() }.asCompletableFuture()
+
+  private inner class ChangesDataLoader(parentCs: CoroutineScope, val refs: GHPRBranchesRefs) {
+    private val cs = parentCs.childScope()
+
+    private val referencesRequest = cs.async(start = CoroutineStart.LAZY) {
+      val mergeBaseRef = changesService.loadMergeBaseOid(refs.baseRef, refs.headRef)
+      val commits = changesService.loadCommitsFromApi(pullRequestId)
+      val sortedCommits = sortCommits(commits, refs.headRef)
+      AllPRReferences(refs.baseRef, mergeBaseRef, refs.headRef, sortedCommits)
+    }
+
+    private val changesRequest = cs.async(start = CoroutineStart.LAZY) {
+      val references = referencesRequest.await()
+      changesService.createChangesProvider(pullRequestId, references.baseRefOid, references.mergeBaseRefOid, references.headRefOid, references.commits)
+    }
+
+    suspend fun loadCommits(): List<GHCommit> = referencesRequest.await().commits
+    suspend fun loadChanges(): GitBranchComparisonResult = changesRequest.await()
+
+    fun cancel() {
+      referencesRequest.cancel()
+      changesRequest.cancel()
+    }
+  }
+}
+
+private data class AllPRReferences(
+  val baseRefOid: String, val mergeBaseRefOid: String, val headRefOid: String, val commits: List<GHCommit>
+)
+
+// TODO: can we get rid of the tree?
+private fun sortCommits(commits: Collection<GHCommit>, lastCommitSha: String): List<GHCommit> {
+  val commitsBySha = mutableMapOf<String, GHCommit>()
+  val parentCommits = mutableSetOf<GHCommitHash>()
+
+  var lastCommit: GHCommit? = null
+  for (commit in commits) {
+    if (commit.oid == lastCommitSha) {
+      lastCommit = commit
+    }
+    commitsBySha[commit.oid] = commit
+    parentCommits.addAll(commit.parents)
+  }
+  checkNotNull(lastCommit) { "Could not determine last commit" }
+
+  fun ImmutableGraph.Builder<GHCommit>.addCommits(commit: GHCommit) {
+    addNode(commit)
+    for (parent in commit.parents) {
+      val parentCommit = commitsBySha[parent.oid]
+      if (parentCommit != null) {
+        putEdge(commit, parentCommit)
+        addCommits(parentCommit)
+      }
+    }
   }
 
-  override fun addChangesListener(disposable: Disposable, listener: () -> Unit) =
-    changesProviderValue.addDropEventListener(disposable, listener)
-
-  override fun loadCommitsFromApi(): CompletableFuture<List<GHCommit>> = apiCommitsRequestValue.value.thenApply {
-    val (lastCommit, graph) = it
-    Traverser.forGraph(graph).depthFirstPostOrder(lastCommit).toList()
-  }
-
-  override fun addCommitsListener(disposable: Disposable, listener: () -> Unit) =
-    apiCommitsRequestValue.addDropEventListener(disposable, listener)
-
-  override fun fetchBaseBranch() = baseBranchFetchRequestValue.value
-
-  override fun fetchHeadBranch() = headBranchFetchRequestValue.value
-
-  override fun dispose() {}
+  val graph = GraphBuilder
+    .directed()
+    .allowsSelfLoops(false)
+    .immutable<GHCommit>()
+    .apply {
+      addCommits(lastCommit)
+    }.build()
+  return Traverser.forGraph(graph).depthFirstPostOrder(lastCommit).toList()
 }

@@ -200,7 +200,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private boolean myRightFreePaintersAreaShown;
   private @NotNull EditorGutterFreePainterAreaState myLeftFreePaintersAreaState = EditorGutterFreePainterAreaState.ON_DEMAND;
   private @NotNull EditorGutterFreePainterAreaState myRightFreePaintersAreaState = EditorGutterFreePainterAreaState.ON_DEMAND;
-  private int myLeftFreePaintersAreaReserveWidth = 0;
+  private int myLeftFreePaintersAreaReserveWidth = 0; // Unscaled
   private int myRightFreePaintersAreaReserveWidth = 0;
   private short myForcedLeftFreePaintersAreaWidth = -1;
   private int myLastNonDumbModeIconAreaWidth;
@@ -1940,11 +1940,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (!myLeftFreePaintersAreaShown) return 0;
     if (myForcedLeftFreePaintersAreaWidth >= 0) return myForcedLeftFreePaintersAreaWidth;
 
-    int width = Math.max(FREE_PAINTERS_LEFT_AREA_WIDTH.get(), myLeftFreePaintersAreaReserveWidth);
     if (ExperimentalUI.isNewUI()) {
-      return scaleWithEditor(width) + 2;
+      return scaleWithEditor(Math.max(FREE_PAINTERS_LEFT_AREA_WIDTH.get(), JBUI.scale(myLeftFreePaintersAreaReserveWidth))) + 2;
     }
-    return width;
+    return Math.max(FREE_PAINTERS_LEFT_AREA_WIDTH.get(), myLeftFreePaintersAreaReserveWidth);
   }
 
   int getRightFreePaintersAreaWidth() {

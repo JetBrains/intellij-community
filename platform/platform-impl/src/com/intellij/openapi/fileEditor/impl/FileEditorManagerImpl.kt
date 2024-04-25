@@ -46,6 +46,7 @@ import com.intellij.openapi.fileEditor.impl.EditorComposite.Companion.retrofit
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.isSingletonFileEditor
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TEXT_EDITOR_PROVIDER_TYPE_ID
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
@@ -2344,13 +2345,21 @@ private fun triggerOpen(project: Project, file: VirtualFile, start: Long, compos
   }
   else {
     // use ContextAwareRunnable to avoid unnecessary thread context capturing
-    AsyncEditorLoader.performWhenLoaded(editor = textEditor.editor, ContextAwareRunnable {
+    val runnable = ContextAwareRunnable {
       val durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
       coroutineScope.launch {
         StartUpMeasurer.addCompletedActivity(start, "editor time-to-edit", ActivityCategory.DEFAULT, null)
         FileTypeUsageCounterCollector.logOpened(project, file, fileEditor, timeToShow, durationMs, composite)
       }
-    })
+    }
+    // Calling textEditor.editor can lead to the creation of an editor.
+    // This might not only be a performance issue, but it can also result in threading issues, as the EDT might be required.
+    if (textEditor is TextEditorImpl) {
+      AsyncEditorLoader.performWhenLoaded(editor = textEditor.editor, runnable)
+    }
+    else {
+      runnable.run()
+    }
   }
 }
 

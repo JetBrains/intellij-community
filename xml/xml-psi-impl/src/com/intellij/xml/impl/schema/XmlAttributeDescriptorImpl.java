@@ -132,7 +132,7 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
           if (myReferenceName != null) {
             return myReferenceName.indexOf(':') != 0;
           }
-          XmlAttributeDescriptor[] attributes = ((ComplexTypeDescriptor)type).getAttributes(contextTag);
+          XmlAttributeDescriptor[] attributes = typeDescriptor.getAttributes(contextTag);
           if (ArrayUtil.contains(this, attributes)) {
             return false;
           }

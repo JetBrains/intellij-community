@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
@@ -32,7 +33,6 @@ import org.jetbrains.kotlin.idea.debugger.core.getClassName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import javax.swing.Icon
 
 class KotlinMethodSmartStepTarget(
@@ -113,18 +113,25 @@ internal fun <T : PsiElement> SmartPsiElementPointer<T>?.getElementInReadAction(
 
 
 private val NO_RETURN_TYPE = object : KtCallableReturnTypeFilter {
-    context(KtAnalysisSession)
-    override fun shouldRenderReturnType(type: KtType, symbol: KtCallableSymbol): Boolean = false
+    override fun shouldRenderReturnType(analysisSession: KtAnalysisSession, type: KtType, symbol: KtCallableSymbol): Boolean = false
 }
 
 private val NO_CALLABLE_RECEIVER = object : KtCallableReceiverRenderer {
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    override fun renderReceiver(symbol: KtReceiverParameterSymbol, printer: PrettyPrinter) {}
+    override fun renderReceiver(
+        analysisSession: KtAnalysisSession,
+        symbol: KtReceiverParameterSymbol,
+        declarationRenderer: KtDeclarationRenderer,
+        printer: PrettyPrinter
+    ) {}
 }
 
 private val NO_MODIFIER_LIST = object : KtModifierListRenderer {
-    context(KtAnalysisSession, KtDeclarationModifiersRenderer)
-    override fun renderModifiers(symbol: KtDeclarationSymbol, printer: PrettyPrinter) {}
+    override fun renderModifiers(
+        analysisSession: KtAnalysisSession,
+        symbol: KtDeclarationSymbol,
+        declarationModifiersRenderer: KtDeclarationModifiersRenderer,
+        printer: PrettyPrinter
+    ) {}
 
 }
 

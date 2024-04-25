@@ -20,7 +20,7 @@ public final class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConvert
   private static final @NonNls String ARRAY_PREFIX = "[L";
 
   @Override
-  public PsiType fromString(final String s, final ConvertContext context) {
+  public PsiType fromString(final String s, final @NotNull ConvertContext context) {
     if (s == null) {
       return null;
     }
@@ -34,7 +34,7 @@ public final class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConvert
   }
 
   @Override
-  public String toString(final PsiType t, final ConvertContext context) {
+  public String toString(final PsiType t, final @NotNull ConvertContext context) {
     return t == null ? null : t.getCanonicalText();
   }
 

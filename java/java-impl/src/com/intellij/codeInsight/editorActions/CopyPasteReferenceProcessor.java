@@ -41,7 +41,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> extends CopyPastePostProcessor<ReferenceTransferableData> {
+public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> extends CopyPastePostProcessor<ReferenceTransferableData>
+  implements ReferenceCopyPasteProcessor {
   private static final Logger LOG = Logger.getInstance(CopyPasteReferenceProcessor.class);
   
   @Override

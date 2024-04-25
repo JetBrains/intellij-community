@@ -12,7 +12,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalFocus
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
 
-class TerminalClearAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalClearAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     e.terminalFocusModel?.focusPrompt()
     e.outputController?.outputModel?.clearBlocks()

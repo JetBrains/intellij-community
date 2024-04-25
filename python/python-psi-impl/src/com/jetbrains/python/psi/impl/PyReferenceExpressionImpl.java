@@ -125,7 +125,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
       for (ResolveResult resolveResult : node.myReferenceExpression.getReference(resolveContext).multiResolve(false)) {
         final PsiElement element = resolveResult.getElement();
-        if (element instanceof PyTargetExpression target && follow.test((PyTargetExpression)element)) {
+        if (element instanceof PyTargetExpression target && follow.test(target)) {
 
           final List<PsiElement> assignedFromElements = context.maySwitchToAST(target)
                                                         ? Collections.singletonList(target.findAssignedValue())

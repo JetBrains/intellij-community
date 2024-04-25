@@ -89,8 +89,13 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
                   "getClassRoots", MethodType.methodType(List.class))
       .invokeExact();
     if (paths == null) return null;
-    // Skip jars and any other archives, otherwise we will end up with test classes from dependencies.
-    return paths.stream().filter(Files::isDirectory).collect(Collectors.toSet());
+    // Skip unrelated jars and any other archives, otherwise we will end up with test classes from dependencies.
+    String relevantJarsRoot = System.getProperty("intellij.test.jars.location");
+    return paths.stream()
+      .filter(path ->
+                Files.isDirectory(path) ||
+                (relevantJarsRoot != null && path.getFileName().toString().endsWith(".jar") && path.startsWith(relevantJarsRoot)))
+      .collect(Collectors.toSet());
   }
 
   private static ClassNameFilter createClassNameFilter(ClassLoader classLoader)

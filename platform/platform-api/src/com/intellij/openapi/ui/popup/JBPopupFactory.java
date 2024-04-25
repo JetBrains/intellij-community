@@ -327,7 +327,7 @@ public abstract class JBPopupFactory {
                                                             boolean honorActionMnemonics,
                                                             @Nullable Runnable disposeCallback,
                                                             int maxRowCount,
-                                                            @Nullable Condition<? super AnAction> preselectActionCondition);
+                                                            @Nullable Condition<? super AnAction> preselectCondition);
 
   public abstract @NotNull ListPopup createActionGroupPopup(@PopupTitle String title,
                                                             @NotNull ActionGroup actionGroup,
@@ -336,7 +336,7 @@ public abstract class JBPopupFactory {
                                                             boolean showDisabledActions,
                                                             @Nullable Runnable disposeCallback,
                                                             int maxRowCount,
-                                                            @Nullable Condition<? super AnAction> preselectActionCondition,
+                                                            @Nullable Condition<? super AnAction> preselectCondition,
                                                             @Nullable String actionPlace);
 
   /**

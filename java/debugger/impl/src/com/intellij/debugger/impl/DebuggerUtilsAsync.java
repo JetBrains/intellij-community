@@ -418,6 +418,11 @@ public final class DebuggerUtilsAsync {
   }
 
   public static CompletableFuture<Void> resume(VirtualMachine vm) {
+    if (DebuggerUtils.isEnabledConsistencyChecks()) {
+      for (ThreadReference thread : vm.allThreads()) {
+        LOG.assertTrue(thread.suspendCount() > 0, "In all threads suspend count must be greater zero before resume VM");
+      }
+    }
     if (vm instanceof VirtualMachineImpl && isAsyncEnabled()) {
       return ((VirtualMachineImpl)vm).resumeAsync();
     }
@@ -425,6 +430,9 @@ public final class DebuggerUtilsAsync {
   }
 
   public static CompletableFuture<Void> resume(ThreadReference thread) {
+    if (DebuggerUtils.isEnabledConsistencyChecks()) {
+      LOG.assertTrue(thread.suspendCount() > 0, "Suspend count must be greater zero before resume");
+    }
     if (thread instanceof ThreadReferenceImpl && isAsyncEnabled()) {
       return ((ThreadReferenceImpl)thread).resumeAsync();
     }

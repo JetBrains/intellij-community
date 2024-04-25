@@ -141,6 +141,10 @@ else {
                listOf("python3.7"))
 }
 
+createPython("py27", "2.7",
+             listOf(),
+             listOf("python2.7"))
+
 createPython("py38", "3.8",
              listOf("ipython==7.8", "django==2.2", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
                     "pytest-xdist", "untangle", "numpy", "pandas"),

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -221,24 +222,6 @@ public class IdeaGateway {
     return f;
   }
 
-  public List<VirtualFile> getAllFilesFrom(@NotNull String path) {
-    VirtualFile f = findVirtualFile(path);
-    if (f == null) return Collections.emptyList();
-    return collectFiles(f, new ArrayList<>());
-  }
-
-  private static @NotNull List<VirtualFile> collectFiles(@NotNull VirtualFile f, @NotNull List<VirtualFile> result) {
-    if (f.isDirectory()) {
-      for (VirtualFile child : iterateDBChildren(f)) {
-        collectFiles(child, result);
-      }
-    }
-    else {
-      result.add(f);
-    }
-    return result;
-  }
-
   public static @NotNull Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
     if (!(f instanceof NewVirtualFile nf)) return Collections.emptyList();
     return nf.iterInDbChildrenWithoutLoadingVfsFromOtherProjects();
@@ -249,15 +232,15 @@ public class IdeaGateway {
     return Arrays.asList(nf.getChildren());
   }
 
+  @RequiresReadLock
   public @NotNull RootEntry createTransientRootEntry() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     RootEntry root = new RootEntry();
     doCreateChildren(root, getLocalRoots(), false);
     return root;
   }
 
+  @RequiresReadLock
   public @NotNull RootEntry createTransientRootEntryForPathOnly(@NotNull String path) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     RootEntry root = new RootEntry();
     doCreateChildrenForPathOnly(root, path, getLocalRoots());
     return root;
@@ -304,13 +287,13 @@ public class IdeaGateway {
     return newDir;
   }
 
+  @RequiresReadLock
   public @Nullable Entry createTransientEntry(@NotNull VirtualFile file) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     return doCreateEntry(file, false);
   }
 
+  @RequiresReadLock
   public @Nullable Entry createEntryForDeletion(@NotNull VirtualFile file) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     return doCreateEntry(file, true);
   }
 

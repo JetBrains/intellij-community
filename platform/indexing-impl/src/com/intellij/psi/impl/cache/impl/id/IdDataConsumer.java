@@ -104,7 +104,6 @@ public final class IdDataConsumer {
       myOccurrences.forEach((hash, value) -> consumer.accept(new IdIndexEntry(hash), value));
     }
   };
-
   public @NotNull Map<IdIndexEntry, Integer> getResult() {
     return myResult;
   }

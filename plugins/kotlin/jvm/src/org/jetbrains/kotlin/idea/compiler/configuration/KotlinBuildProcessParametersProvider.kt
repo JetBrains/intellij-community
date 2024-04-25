@@ -25,7 +25,9 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
         }
 
         if (compilerWorkspaceSettings.daemonVmOptions.isNotEmpty()) {
-            arguments += compilerWorkspaceSettings.daemonVmOptions
+            compilerWorkspaceSettings.daemonVmOptions.split(" ").forEach {
+                arguments += it
+            }
         }
 
         PluginStartupApplicationService.getInstance().getAliveFlagPath().let {

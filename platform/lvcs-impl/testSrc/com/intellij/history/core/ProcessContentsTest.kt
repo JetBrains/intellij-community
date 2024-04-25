@@ -4,7 +4,6 @@ package com.intellij.history.core
 import com.intellij.history.LocalHistory
 import com.intellij.history.integration.IntegrationTestCase
 import com.intellij.history.integration.LocalHistoryImpl
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import junit.framework.TestCase
@@ -84,14 +83,11 @@ class ProcessContentsTest : IntegrationTestCase() {
     TestCase.assertEquals(listOf(intermediateContent, initialContent, initialContent, ""), actualContents)
   }
 
-  private fun collectLocalHistoryContents(file: VirtualFile): MutableList<String> {
-    val path = myGateway.getPathOrUrl(file)
-    val changeSets = mutableSetOf<Long>()
-    facade.collectChanges(myProject.locationHash, path, null) { changeSet -> changeSets.add(changeSet.id) }
+  private fun collectLocalHistoryContents(file: VirtualFile): List<String> {
+    val changeSets = getChangesFor(file).mapTo(mutableSetOf()) { it.id }
 
     val actualContents = mutableListOf<String>()
-    val rootEntry = runReadAction { myGateway.createTransientRootEntry() }
-    facade.processContents(myGateway, rootEntry, path, changeSets, true) { _, content ->
+    facade.processContents(myGateway, rootEntry, myGateway.getPathOrUrl(file), changeSets, true) { _, content ->
       if (content != null) actualContents.add(content)
       true
     }

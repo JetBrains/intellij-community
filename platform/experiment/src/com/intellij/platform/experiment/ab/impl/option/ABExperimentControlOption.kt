@@ -15,6 +15,14 @@ internal class ABExperimentControlOption : ABExperimentOptionBase() {
   override val id: ABExperimentOptionId = ABExperimentOptionId("control.option")
 
   override fun getGroupSizeForIde(isPopular: Boolean): ABExperimentOptionGroupSize {
-    return ABExperimentOptionGroupSize.MEDIUM
+    return ABExperimentOptionGroupSize(32)
+  }
+
+  override fun checkIdeIsSuitable(): Boolean {
+    return true
+  }
+
+  override fun checkIdeVersionIsSuitable(): Boolean {
+    return true
   }
 }

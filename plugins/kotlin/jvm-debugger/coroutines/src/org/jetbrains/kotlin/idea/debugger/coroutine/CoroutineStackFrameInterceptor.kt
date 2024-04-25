@@ -22,6 +22,9 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineFilter
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
@@ -32,20 +35,38 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 class CoroutineStackFrameInterceptor : StackFrameInterceptor {
-    override fun createStackFrame(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): XStackFrame? {
+    override fun createStackFrames(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): List<XStackFrame>? {
         if (debugProcess.xdebugProcess?.session is XDebugSessionImpl
             && frame !is SkipCoroutineStackFrameProxyImpl
             && AsyncStacksToggleAction.isAsyncStacksEnabled(debugProcess.xdebugProcess?.session as XDebugSessionImpl)) {
+            // skip -1 line in invokeSuspend and main
+            val location = frame.safeLocation()
+            if (location != null && location.safeLineNumber() < 0 &&
+                (location.safeMethod()?.name() == "main" || location.isInvokeSuspend())) {
+                return emptyList()
+            }
+
             val suspendContextImpl = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager)
             val stackFrame = suspendContextImpl?.let {
                 CoroutineFrameBuilder.coroutineExitFrame(frame, it)
+            } ?: return null
+
+            // only leave the first suspend frame
+            if (!stackFrame.isFirstSuspendFrame) {
+                return emptyList() // skip
             }
 
-            if (stackFrame != null && Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
+            if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
                 showCoroutinePanel(debugProcess)
             }
 
-            return stackFrame
+            val resumeWithFrame = stackFrame.threadPreCoroutineFrames.firstOrNull()
+
+            if (threadAndContextSupportsEvaluation(suspendContextImpl, resumeWithFrame)) {
+                val frameItemLists = CoroutineFrameBuilder.build(stackFrame, suspendContextImpl, withPreFrames = false)
+                return listOf(stackFrame) + frameItemLists.frames.mapNotNull { it.createFrame(debugProcess) }
+            }
+            return listOf(stackFrame)
         }
         return null
     }
@@ -172,7 +193,9 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         context: DefaultExecutionContext,
         debugProbesImpl: DebugProbesImpl
     ): Set<Long>? {
-        val result = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutinesRunningOnCurrentThread", listOf(debugProbesImpl.getObject()))
+        val threadReferenceProxyImpl = context.suspendContext.thread ?: return null
+        val args = listOf(debugProbesImpl.getObject(), threadReferenceProxyImpl.threadReference)
+        val result = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutinesRunningOnCurrentThread", args)
         result ?: return null
         return (result as ArrayReference).values.asSequence().map { (it as LongValue).value() }.toHashSet()
     }

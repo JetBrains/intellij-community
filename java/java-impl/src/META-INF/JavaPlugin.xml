@@ -239,6 +239,9 @@
     <extensionPoint qualifiedName="com.intellij.debugger.asyncStackTraceProvider"
                     interface="com.intellij.debugger.engine.AsyncStackTraceProvider" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.debugger.creationStackTraceProvider"
+                    interface="com.intellij.debugger.engine.CreationStackTraceProvider" dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.debugger.sourcePositionProvider"
                     interface="com.intellij.debugger.engine.SourcePositionProvider" dynamic="true"/>
 
@@ -306,6 +309,8 @@
     <notificationGroup id="Infer Nullity" displayType="TOOL_WINDOW" toolWindowId="Infer Nullity" bundle="messages.JavaBundle" key="dialog.title.infer.nullity"/>
     <notificationGroup id="JDK Arch Check" displayType="STICKY_BALLOON" bundle="messages.JavaBundle" key="notification.group.arch.checker"/>
 
+    <registryKey key="index.ids.from.java.sources.in.jar" defaultValue="true" description="Index ids from class files instead of source files in JARs" restartRequired="false"/>
+    
     <registryKey key="ide.jps.use.build.tool.window" defaultValue="true" description="Enables 'Build' toolwindow for JPS compilation messages"/>
     <registryKey key="java.jps.backward.ref.index.builder.fs.case.sensitive"  defaultValue="BY_ROOT"
                  description="Case sensitivity of the project file system for compiler references. Available values: SENSITIVE, INSENSITIVE, BY_OS (Defined by OS or VM options), BY_ROOT (Defined by first root)"/>
@@ -475,6 +480,8 @@
     <statistics.projectUsagesCollector implementation="com.intellij.codeInspection.deadCode.EntryPointsUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.compiler.impl.BuildUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.statistics.DebuggerStatistics"/>
+
+    <feedback.idleFeedbackSurvey implementation="com.intellij.debugger.feedback.KotlinDebuggerFeedbackSurvey"/>
 
     <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
                         serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>
@@ -1005,6 +1012,7 @@
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.JavaRainbowVisitor"/>
     <problemHighlightFilter implementation="com.intellij.codeInsight.daemon.JavaProblemHighlightFilter"/>
     <todoIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaTodoIndexer"/>
+    <idIndexer filetype="CLASS" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexer"/>
     <idIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexer"/>
     <fileIconPatcher id="javaFileIconPatcher" implementation="com.intellij.ide.JavaFileIconPatcher"/>
     <basicWordSelectionFilter implementation="com.intellij.codeInsight.editorActions.wordSelection.JavaBasicWordSelectionFilter"/>
@@ -1162,6 +1170,7 @@
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.JavadocCopyPastePreProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
+    <importBlockRangeProvider implementation="com.intellij.codeInsight.editorActions.JavaImportBlockRangeProvider"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ArrayVariableMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.VariableOfTypeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ComponentTypeOfMacro"/>
@@ -1265,6 +1274,7 @@
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterInTextBlockHandler"/>
     <breadcrumbsInfoProvider implementation="com.intellij.lang.java.JavaBreadcrumbsInfoProvider"/>
     <editorFileSwapper implementation="com.intellij.codeEditor.JavaEditorFileSwapper"/>
+    <binaryFileSourceProvider implementation="com.intellij.codeEditor.JavaBinaryFileSourceProvider" />
     <flipCommaIntention.flipper language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaFlipper"/>
     <listSplitJoinContext language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinArgumentsContext"/>
     <listSplitJoinContext language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinParametersContext"/>
@@ -1405,6 +1415,7 @@
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeLoggerFromCompletionLookupActionProvider" id="loggerExcludeFromCompletion"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ImportStaticLookupActionProvider" id="importStatic"/>
     <fileType extensions="java" hashBangs="java" name="JAVA" language="JAVA" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaFileType"/>
+    <fileType fileNames="module-info.java" name="Java module" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaModuleFileType"/>
     <fileType extensions="class" name="CLASS" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JavaClassFileType"/>
     <fileType extensions="snippet" name="JSHELL" language="JShellLanguage" fieldName="INSTANCE" implementationClass="com.intellij.ide.highlighter.JShellFileType"/>
     <customPropertyScopeProvider implementation="com.intellij.psi.impl.search.SimpleAccessorScopeProvider"/>
@@ -1903,7 +1914,7 @@
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.dataFlow.ConstantValueInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnreachableCode" bundle="messages.JavaBundle" key="inspection.data.flow.unreachable.code.display.name"
-                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.intellij.codeInspection.dataFlow.UnreachableCodeInspection"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.dataFlow.OptionalOfNullableMisuseInspectionMerger" />
     <inspectionElementsMerger implementation="com.intellij.codeInspection.dataFlow.ConstantValueInspectionMerger" />
@@ -2512,8 +2523,8 @@
 
     <pluginSuggestionProvider implementation="com.intellij.ide.ant.AntSuggestionProvider"/>
     <pluginSuggestionProvider implementation="com.intellij.ide.android.AndroidSuggestionProvider"/>
-      <statistics.counterUsagesCollector
-              implementationClass="com.intellij.codeInsight.generation.analysis.GenerateLoggerStatisticsCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.codeInsight.generation.analysis.GenerateLoggerStatisticsCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -2534,6 +2545,9 @@
             class="com.intellij.openapi.projectRoots.impl.ParseSdkmanrcAction">
       <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
     </action>
+
+    <action id="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction"
+            class="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction" internal="true"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -2544,6 +2558,8 @@
   <applicationListeners>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    <listener class="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexRegistryValueListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener" />
   </applicationListeners>
 
   <projectListeners>

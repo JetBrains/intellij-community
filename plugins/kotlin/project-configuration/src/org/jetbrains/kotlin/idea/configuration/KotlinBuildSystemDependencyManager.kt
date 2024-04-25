@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
@@ -12,6 +13,10 @@ interface KotlinBuildSystemDependencyManager {
     companion object {
         val EP_NAME: ExtensionPointName<KotlinBuildSystemDependencyManager> =
             ExtensionPointName.create("org.jetbrains.kotlin.buildSystemDependencyManager")
+
+        fun findApplicableConfigurator(module: Module): KotlinBuildSystemDependencyManager? {
+            return module.project.extensionArea.getExtensionPoint(EP_NAME).extensionList.firstOrNull { it.isApplicable(module) }
+        }
     }
 
     /**
@@ -47,6 +52,15 @@ interface KotlinBuildSystemDependencyManager {
      */
     fun startProjectSync()
 }
+
+fun ExternalLibraryDescriptor.withScope(newScope: DependencyScope) = ExternalLibraryDescriptor(
+    libraryGroupId,
+    libraryArtifactId,
+    minVersion,
+    maxVersion,
+    preferredVersion,
+    newScope
+)
 
 @ApiStatus.Internal
 fun KotlinBuildSystemDependencyManager.isProjectSyncPendingOrInProgress(): Boolean {

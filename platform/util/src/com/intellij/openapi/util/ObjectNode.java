@@ -39,8 +39,8 @@ final class ObjectNode {
         "Memory leak detected: '" + object + "' (" + object.getClass() + ") was registered in Disposer" +
         " as a child of '"+getObject()+"' (" + getObject().getClass() + ")"+
         " but wasn't disposed.\n" +
-        "Register it with a proper parentDisposable or ensure that it's always disposed by direct Disposer.dispose call.\n" +
-        "See https://jetbrains.org/intellij/sdk/docs/basics/disposers.html for more details.\n" +
+        "Register it with a proper 'parentDisposable' or ensure that it's always disposed by direct Disposer.dispose() call.\n" +
+        "See https://plugins.jetbrains.com/docs/intellij/disposers.html for more details.\n" +
         "The corresponding Disposer.register() stacktrace is shown as the cause:\n";
       RuntimeException exception = new RuntimeException(message, trace);
       if (throwError) {

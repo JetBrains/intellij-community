@@ -3,22 +3,22 @@ package git4idea.rebase.log
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.ui.components.JBLabel
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
 import git4idea.rebase.log.GitCommitEditingActionBase.Companion.findContainingBranches
 import org.jetbrains.annotations.Nls
+import java.awt.Dimension
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 
@@ -65,14 +65,23 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
     return null
   }
 
-  override fun createCenterPanel(): BorderLayoutPanel {
-    return JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
-      .addToTop(
-        JBUI.Panels.simplePanel()
-          .addToCenter(JBLabel(dialogLabel))
-          .addToRight(createToolbar())
-      )
-      .addToCenter(commitEditor)
+  override fun createCenterPanel(): JComponent {
+    return panel {
+      row {
+        label(dialogLabel)
+          .resizableColumn()
+          .align(Align.FILL)
+        cell(createToolbar())
+      }
+      row {
+        cell(commitEditor)
+          .resizableColumn()
+          .align(Align.FILL)
+      }.resizableRow()
+    }.also {
+      // Temporary workaround for IDEA-302779
+      it.minimumSize = JBUI.size(400, 120)
+    }
   }
 
   private fun createToolbar(): JComponent {
@@ -98,13 +107,6 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
     }
     editor.text = originMessage
     editor.editorField.setCaretPosition(0)
-    editor.editorField.addSettingsProvider { editorEx ->
-      // display at least several rows for one-line messages
-      val MIN_ROWS = 3
-      if ((editorEx as EditorImpl).visibleLineCount < MIN_ROWS) {
-        verticalStretch = 1.5F
-      }
-    }
     return editor
   }
 

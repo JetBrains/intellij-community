@@ -90,7 +90,7 @@ public final class PropertyFoldingBuilder extends FoldingBuilderEx {
     final UElement parent = injectionHost.getUastParent();
     if (!msg.equals(UastLiteralUtils.getValueIfStringLiteral(injectionHost)) &&
         parent instanceof UCallExpression expressions &&
-        ((UCallExpression)parent).getValueArguments().get(0).getSourcePsi() == injectionHost.getSourcePsi()) {
+        expressions.getValueArguments().get(0).getSourcePsi() == injectionHost.getSourcePsi()) {
       PsiElement callSourcePsi = expressions.getSourcePsi();
       if (callSourcePsi == null) return;
       final int count = JavaI18nUtil.getPropertyValueParamsMaxCount(injectionHost);

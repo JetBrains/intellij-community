@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.diff.impl.DiffEditorViewer
@@ -13,7 +13,8 @@ import java.lang.ref.WeakReference
 class SavedPatchesEditorDiffPreview(
   private val changesBrowser: SavedPatchesChangesBrowser,
   private val focusMainComponent: (Component?) -> Unit,
-) : TreeHandlerEditorDiffPreview(changesBrowser.viewer, SavedPatchesDiffPreviewHandler) {
+  private val isShowDiffWithLocal: () -> Boolean
+) : TreeHandlerEditorDiffPreview(changesBrowser.viewer, SavedPatchesDiffPreviewHandler(isShowDiffWithLocal)) {
 
   private var lastFocusOwner: WeakReference<Component>? = null
 
@@ -23,7 +24,7 @@ class SavedPatchesEditorDiffPreview(
   }
 
   override fun createViewer(): DiffEditorViewer {
-    return SavedPatchesDiffProcessor(tree, true)
+    return SavedPatchesDiffProcessor(tree, true, isShowDiffWithLocal)
   }
 
   override fun getEditorTabName(wrapper: ChangeViewDiffRequestProcessor.Wrapper?): String {

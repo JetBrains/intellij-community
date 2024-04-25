@@ -5,7 +5,9 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.general.Injection;
 import com.intellij.lang.injection.general.LanguageInjectionContributor;
 import com.intellij.lang.injection.general.SimpleInjection;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +18,7 @@ public final class TemporaryPlacesInjector implements LanguageInjectionContribut
 
   @Override
   public @Nullable Injection getInjection(@NotNull PsiElement context) {
-    if (!(context instanceof PsiLanguageInjectionHost host) || !((PsiLanguageInjectionHost)context).isValidHost()) {
+    if (!(context instanceof PsiLanguageInjectionHost host) || !host.isValidHost()) {
       return null;
     }
 

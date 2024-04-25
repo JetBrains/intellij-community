@@ -73,6 +73,6 @@ public class PyGotoClassContributor implements GotoClassContributor, ChooseByNam
 
   @Override
   public boolean isDumbAware() {
-    return FileBasedIndex.isIndexAccessDuringDumbModeEnabled();
+    return true;
   }
 }

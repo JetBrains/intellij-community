@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,6 +119,7 @@ public abstract class EditorFactory {
   /**
    * Disposes the specified editor instance. Must be invoked in EDT.
    */
+  @RequiresEdt
   public abstract void releaseEditor(@NotNull Editor editor);
 
   /**

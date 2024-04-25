@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.KtTypeProjection
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KtCapturedType
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
@@ -127,40 +128,47 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
 
 context(KtAnalysisSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KtNonErrorClassType, anotherType: KtNonErrorClassType? = null) {
-    val classId = type.classId
-    printClassId(classId, shortNameWithCompanionNameSkip(classId))
+    type.classId.let { printClassId(it, shortNameWithCompanionNameSkip(it)) }
+
     val ownTypeArguments = type.ownTypeArguments
-    val anotherOwnTypeArguments = anotherType?.ownTypeArguments
     if (ownTypeArguments.isNotEmpty()) {
         text("<")
+
+        val anotherOwnTypeArguments = anotherType?.ownTypeArguments
         val iterator = ownTypeArguments.iterator()
         val anotherIterator = anotherOwnTypeArguments?.iterator()
         while (iterator.hasNext()) {
             val projection = iterator.next()
             val anotherProjection = anotherIterator?.takeIf { it.hasNext() }?.next()
-            val optionalProjection = anotherProjection != null && projection != anotherProjection
-            when (projection) {
-                is KtStarTypeProjection -> {
-                    if (optionalProjection) text("(")
-                    text("*")
-                    if (optionalProjection) text(")")
-                }
-                is KtTypeArgumentWithVariance -> {
-                    val label = projection.variance.label
-                    if (label.isNotEmpty()) {
-                        if (optionalProjection) text("(")
-                        text(label)
-                        if (optionalProjection) text(")")
-                        text(" ")
-                    }
-                    printKtType(projection.type)
-                }
-            }
+
+            printProjection(projection, anotherProjection != null && projection != anotherProjection)
+
             if (iterator.hasNext()) text(", ")
         }
+
         text(">")
     }
 }
+
+
+context(KtAnalysisSession)
+private fun PresentationTreeBuilder.printProjection(projection: KtTypeProjection, optionalProjection: Boolean) {
+    fun String.asOptional(optional: Boolean): String =
+        if (optional) "($this)" else this
+
+    when (projection) {
+        is KtStarTypeProjection -> {
+            text("*".asOptional(optionalProjection))
+        }
+        is KtTypeArgumentWithVariance -> {
+            projection.variance.label.takeIf { it.isNotEmpty() }?.let {
+                text("${it.asOptional(optionalProjection)} ")
+            }
+            printKtType(projection.type)
+        }
+    }
+}
+
 
 private fun PresentationTreeBuilder.printClassId(classId: ClassId, name: String) {
     text(
@@ -201,16 +209,10 @@ private fun isNonNullableFlexibleType(lower: KtType, upper: KtType): Boolean {
     ) {
         val lowerTypeArguments = lower.ownTypeArguments
         val upperTypeArguments = upper.ownTypeArguments
-        if (lowerTypeArguments.isNotEmpty() && upperTypeArguments.isNotEmpty()) {
-            // by isSimilarTypes(lower, upper) lowerTypeArguments is the same size as upperTypeArguments
-            val lowerIterator = lowerTypeArguments.iterator()
-            val upperIterator = upperTypeArguments.iterator()
-            while (lowerIterator.hasNext()) {
-                val lowerNext = lowerIterator.next()
-                val upperNext = upperIterator.next()
-                if (lowerNext != upperNext) return true
+        return lowerTypeArguments.isNotEmpty() && lowerTypeArguments.zip(upperTypeArguments)
+            .any { (lowerTypeArg, upperTypeArg) ->
+                lowerTypeArg != upperTypeArg
             }
-        }
     }
     return false
 }
@@ -218,19 +220,8 @@ private fun isNonNullableFlexibleType(lower: KtType, upper: KtType): Boolean {
 private fun isSimilarTypes(
     lower: KtNonErrorClassType,
     upper: KtNonErrorClassType
-): Boolean {
-    val lowerOwnTypeArguments = lower.ownTypeArguments
-    val upperOwnTypeArguments = upper.ownTypeArguments
-    if (lowerOwnTypeArguments.size == upperOwnTypeArguments.size) {
-        for ((index, ktTypeProjection) in lowerOwnTypeArguments.withIndex()) {
-            if (upperOwnTypeArguments[index].type != ktTypeProjection.type) {
-                return false
-            }
-        }
-        return true
-    }
-    return false
-}
+): Boolean = lower.ownTypeArguments.zip(upper.ownTypeArguments)
+    .none { (lowerTypeArg, upperTypeArg) -> lowerTypeArg.type != upperTypeArg.type }
 
 private fun shortNameWithCompanionNameSkip(classId: ClassId): String {
     return classId.relativeClassName.pathSegments()

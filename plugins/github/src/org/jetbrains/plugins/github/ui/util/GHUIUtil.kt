@@ -7,6 +7,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
+import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.collaboration.ui.util.popup.SelectablePopupItemPresentation
 import com.intellij.collaboration.ui.util.popup.SimpleSelectablePopupItemRenderer
 import com.intellij.collaboration.util.CollectionDelta
@@ -188,12 +189,21 @@ object GHUIUtil {
   }
 
   object SelectionPresenters {
-    fun PRReviewers(avatarIconsProvider: GHAvatarIconsProvider): (SelectableWrapper<GHPullRequestRequestedReviewer>) -> SelectablePopupItemPresentation.Simple = { wrapper ->
+    fun SelectablePRReviewers(avatarIconsProvider: GHAvatarIconsProvider)
+      : (SelectableWrapper<GHPullRequestRequestedReviewer>) -> SelectablePopupItemPresentation.Simple = { wrapper ->
       SelectablePopupItemPresentation.Simple(
         wrapper.value.shortName,
         avatarIconsProvider.getIcon(wrapper.value.avatarUrl, Avatar.Sizes.BASE),
         null,
         isSelected = wrapper.isSelected
+      )
+    }
+
+    fun PRReviewers(avatarIconsProvider: GHAvatarIconsProvider): (GHPullRequestRequestedReviewer) -> PopupItemPresentation.Simple = {
+      PopupItemPresentation.Simple(
+        it.shortName,
+        avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE),
+        null
       )
     }
 

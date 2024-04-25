@@ -2,10 +2,12 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
@@ -80,6 +82,30 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
 
     fun testHeaderSecondaryConstructor() = doTest("Common/src/test/test.kt") {
         addParameter("b", "Boolean", "false")
+    }
+
+    fun testJavaUsage() = ConflictsInTestsException.withIgnoredConflicts<Throwable> {
+        doTest("Common/src/test/test.kt") {
+            addParameter("b", "Boolean", "false")
+        }
+    }
+
+    fun testJavaConstructorUsage() = ConflictsInTestsException.withIgnoredConflicts<Throwable> {
+        doTest("Common/src/test/test.kt") {
+            addParameter("b", "Boolean", "false")
+        }
+    }
+
+    //have explicit primary constructor in common and only implicit constructor in jvm
+    fun testJavaConstructorUsage1() = ConflictsInTestsException.withIgnoredConflicts<Throwable> {
+        doTest("Common/src/test/test.kt") {
+            addParameter("b", "Boolean", "false")
+        }
+    }
+
+    fun testKeepValVarInPlatform() = doTest("Common/src/test/test.kt") {
+        newParameters[0].valOrVar = KotlinValVar.None
+        newParameters[0].currentType = KotlinTypeInfo("Boolean", method)
     }
 
     fun testImplPrimaryConstructorNoParams() = doTest("JVM/src/test/test.kt") {

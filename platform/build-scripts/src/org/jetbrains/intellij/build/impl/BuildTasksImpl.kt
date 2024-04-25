@@ -32,6 +32,7 @@ import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
+import org.jetbrains.intellij.build.impl.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.includedModules
 import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
@@ -50,6 +51,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.*
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
@@ -180,7 +182,14 @@ private suspend fun localizeModules(context: BuildContext, moduleNames: Collecti
   }
 
   val localizationDir = getLocalizationDir(context) ?: return
-  val modules = if (moduleNames.isEmpty()) context.project.modules else moduleNames.mapNotNull { context.findModule(it) }
+
+  val modules = if (moduleNames.isEmpty()) {
+    context.project.modules
+  } else {
+    moduleNames.asSequence().mapNotNull { context.findModule(it) }.flatMap { m ->
+      m.dependenciesList.dependencies.asSequence().filterIsInstance<JpsModuleDependency>().mapNotNull { it.module } + sequenceOf(m)
+    }.distinctBy { m -> m.name }.toList()
+  }
   spanBuilder("bundle localizations").setAttribute("moduleCount", modules.size.toLong()).useWithScope {
     for (module in modules) {
       launch(Dispatchers.IO) {
@@ -659,10 +668,8 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
 
       val builtinModuleData = spanBuilder("build provided module list").useWithScope {
         Files.deleteIfExists(providedModuleFile)
-        val tempDir = context.paths.tempDir.resolve("builtinModules")
         // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-        createDevIdeBuild(context = context).runProduct(
-          tempDir = tempDir,
+        IntellijProductRunner.createRunner(context = context).runProduct(
           listOf("listBundledPlugins", providedModuleFile.toString()),
         )
 
@@ -1398,7 +1405,7 @@ fun collectModulesToCompile(context: BuildContext, result: MutableSet<String>) {
 // Captures information about all available inspections in a JSON format as part of an Inspectopedia project.
 // This is later used by Qodana and other tools.
 // Keymaps are extracted as an XML file and also used in authoring help.
-internal suspend fun buildAdditionalAuthoringArtifacts(ide: DevIdeBuild, context: BuildContext) {
+internal suspend fun buildAdditionalAuthoringArtifacts(productRunner: IntellijProductRunner, context: BuildContext) {
   context.executeStep(spanBuilder("build authoring asserts"), BuildOptions.DOC_AUTHORING_ASSETS_STEP) {
     val commands = listOf(
       Pair("inspectopedia-generator", "inspections-${context.applicationInfo.productCode.lowercase()}"),
@@ -1407,9 +1414,8 @@ internal suspend fun buildAdditionalAuthoringArtifacts(ide: DevIdeBuild, context
     val temporaryBuildDirectory = context.paths.tempDir
     for (command in commands) {
       launch {
-        val temporaryStepDirectory = temporaryBuildDirectory.resolve(command.first)
-        val targetPath = temporaryStepDirectory.resolve(command.second)
-        ide.runProduct(temporaryStepDirectory, arguments = listOf(command.first, targetPath.toString()), isLongRunning = true)
+        val targetPath = temporaryBuildDirectory.resolve(command.first).resolve(command.second)
+        productRunner.runProduct(arguments = listOf(command.first, targetPath.toString()), isLongRunning = true)
 
         val targetFile = context.paths.artifactDir.resolve("${command.second}.zip")
         zipWithCompression(

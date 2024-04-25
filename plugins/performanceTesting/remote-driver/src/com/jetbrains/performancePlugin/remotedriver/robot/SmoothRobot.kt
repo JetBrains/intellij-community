@@ -3,6 +3,7 @@
 package com.jetbrains.performancePlugin.remotedriver.robot
 
 import com.intellij.driver.model.RemoteMouseButton
+import com.intellij.ide.IdeEventQueue
 import com.jetbrains.performancePlugin.remotedriver.waitFor
 import org.assertj.swing.awt.AWT.translate
 import org.assertj.swing.awt.AWT.visibleCenterOf
@@ -16,6 +17,7 @@ import org.assertj.swing.keystroke.KeyStrokeMap
 import org.assertj.swing.timing.Pause.pause
 import org.assertj.swing.util.Modifiers
 import java.awt.*
+import java.awt.event.MouseEvent
 import java.io.ByteArrayOutputStream
 import java.time.Duration
 import javax.imageio.ImageIO
@@ -60,8 +62,7 @@ internal class SmoothRobot : Robot {
 
 
   override fun click(component: Component) {
-    moveMouse(component)
-    basicRobot.click(component)
+    click(component, MouseButton.LEFT_BUTTON)
   }
 
   private fun RemoteMouseButton.toAssertJ() = when(this) {
@@ -74,21 +75,23 @@ internal class SmoothRobot : Robot {
     click(component, mouseButton.toAssertJ())
   }
   override fun click(component: Component, mouseButton: MouseButton) {
-    moveMouse(component)
-    basicRobot.click(component, mouseButton)
+    click(component, mouseButton, 1)
   }
 
   fun click(component: Component, mouseButton: RemoteMouseButton, counts: Int) {
     click(component, mouseButton.toAssertJ(), counts)
   }
   override fun click(component: Component, mouseButton: MouseButton, counts: Int) {
-    moveMouse(component)
-    basicRobot.click(component, mouseButton, counts)
+    if (useInputEvents()) {
+      postClickEvent(component, mouseButton, counts)
+    } else {
+      moveMouse(component)
+      basicRobot.click(component, mouseButton, counts)
+    }
   }
 
   override fun click(component: Component, point: Point) {
-    moveMouse(component, point)
-    basicRobot.click(component, point)
+    click(component, point, MouseButton.LEFT_BUTTON, 1)
   }
 
   override fun showWindow(window: Window) {
@@ -209,8 +212,12 @@ internal class SmoothRobot : Robot {
   }
 
   override fun rightClick(component: Component) {
-    moveMouse(component)
-    basicRobot.rightClick(component)
+    if (useInputEvents()) {
+      postClickEvent(component, button = MouseButton.RIGHT_BUTTON)
+    } else {
+      moveMouse(component)
+      basicRobot.rightClick(component)
+    }
   }
 
   override fun focus(component: Component) {
@@ -301,7 +308,11 @@ internal class SmoothRobot : Robot {
     click(c, where, button.toAssertJ(), times)
   }
   override fun click(c: Component, where: Point, button: MouseButton, times: Int) {
-    moveMouseAndClick(c, where, button, times)
+    if (useInputEvents()) {
+      postClickEvent(c, button, times, where)
+    } else {
+      moveMouseAndClick(c, where, button, times)
+    }
   }
 
   //we are replacing BasicRobot click with our click because the original one cannot handle double click rightly (BasicRobot creates unnecessary move event between click event which breaks clickCount from 2 to 1)
@@ -468,6 +479,26 @@ internal class SmoothRobot : Robot {
     return unified
   }
 
+  private fun postClickEvent(component: Component, button: MouseButton = MouseButton.LEFT_BUTTON, clickCount: Int = 1, where: Point? = null) {
+    val awtMouseButton = when (button) {
+      MouseButton.LEFT_BUTTON -> MouseEvent.BUTTON1
+      MouseButton.RIGHT_BUTTON -> MouseEvent.BUTTON3
+      MouseButton.MIDDLE_BUTTON -> MouseEvent.BUTTON2
+    }
+    val eventQueue = IdeEventQueue.getInstance()
+
+    val window = SwingUtilities.getWindowAncestor(component)
+    val clickPoint = SwingUtilities.convertPoint(component, where ?: visibleCenterOf(component), window)
+    repeat(clickCount) {
+      val mousePressedEvent = MouseEvent(window, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0,
+                                         clickPoint.x, clickPoint.y, 1, awtMouseButton == MouseEvent.BUTTON3, awtMouseButton)
+      eventQueue.postEvent(mousePressedEvent)
+      val mouseReleasedEvent = MouseEvent(window, MouseEvent.MOUSE_RELEASED, System.currentTimeMillis(), 0,
+                                          clickPoint.x, clickPoint.y, 1, false, awtMouseButton)
+      eventQueue.postEvent(mouseReleasedEvent)
+    }
+  }
+
   fun selectAndDrag(component: Component, from: Point, to: Point, delayMs: Int) {
     moveMouse(component, from)
 
@@ -480,4 +511,6 @@ internal class SmoothRobot : Robot {
     Thread.sleep(delayMs.toLong())
     releaseMouse(RemoteMouseButton.LEFT)
   }
+
+  private fun useInputEvents(): Boolean = System.getProperty("driver.robot.use.input.events").toBoolean()
 }

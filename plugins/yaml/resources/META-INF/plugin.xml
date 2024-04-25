@@ -46,6 +46,9 @@
 
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
 
+    <completion.contributor language="yaml"
+                            implementationClass="org.jetbrains.yaml.completion.YamlStructuralKeysCompletionContributor"/>
+    <codeInsight.wordCompletionFilter language="yaml" implementationClass="org.jetbrains.yaml.completion.YamlWordCompletionFilter"/>
     <completion.contributor order="after InplaceRename" language="yaml" id="YamlJsonSchema"
                             implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaCompletionContributor"/>
     <lang.documentationProvider language="yaml" implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDocumentationProvider"

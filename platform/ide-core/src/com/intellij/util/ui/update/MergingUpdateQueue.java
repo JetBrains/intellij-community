@@ -25,7 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
+import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 
 /**
  * Use this class to postpone task execution and optionally merge identical tasks. This is needed, e.g., to reflect in UI status of some
@@ -371,7 +371,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       return;
     }
 
-    ChildContext context = propagateContextOrCancellation() ? Propagation.createChildContext() : null;
+    ChildContext context = propagateContext() ? Propagation.createChildContext() : null;
     if (context == null) {
       queue2(update);
     }

@@ -3,13 +3,16 @@ package com.intellij.ide.startup.importSettings.ui.representation.ideVersion.sec
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.startup.importSettings.models.*
+import com.intellij.ide.startup.importSettings.models.DummyKeyboardShortcut
+import com.intellij.ide.startup.importSettings.models.KeyBinding
+import com.intellij.ide.startup.importSettings.models.PatchedKeymap
+import com.intellij.ide.startup.importSettings.models.SettingsPreferencesKind
 import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.JBColor
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.components.JBScrollPane
@@ -29,14 +32,14 @@ import javax.swing.border.CompoundBorder
 
 class KeymapSection(private val ideVersion: IdeVersion) : IdeRepresentationSection(ideVersion.settingsCache.preferences, SettingsPreferencesKind.Keymap, AllIcons.TransferSettings.Keymap) {
   companion object {
-    @Nls
-    private val delim = if (SystemInfo.isMac) "" else "+"
+    private val delim: @Nls String
+      get() = if (ClientSystemInfo.isMac()) "" else "+"
     private const val DELIM_TO_PARSE = "+"
 
     private fun getKeystrokeText(accelerator: KeyStroke?): String {
       if (accelerator == null) return ""
 
-      return if (SystemInfo.isMac)
+      return if (ClientSystemInfo.isMac())
         MacKeymapUtil.getKeyStrokeText(accelerator, DELIM_TO_PARSE, true)
       else KeymapUtil.getKeystrokeText(accelerator)
     }

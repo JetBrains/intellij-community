@@ -16,6 +16,7 @@ import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollect
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
@@ -53,6 +54,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -320,7 +322,9 @@ public final class PluginManagerConfigurable
 
     DataContext context = DataManager.getInstance().getDataContext(component);
 
-    JBPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actions, context, false, false, false, true, null, -1, null, null);
+    JBPopup popup = new PopupFactoryImpl.ActionGroupPopup(
+      null, null, actions, context, ActionPlaces.POPUP, new PresentationFactory(),
+      ActionPopupOptions.honorMnemonics(), null);
     popup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(@NotNull LightweightWindowEvent event) {
@@ -686,7 +690,7 @@ public final class PluginManagerConfigurable
           MarketplaceSortByAction addAction = null;
 
           if (updateAction.myState) {
-            for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
+            for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
               MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
               if (sortByAction != updateAction && sortByAction.myState) {
                 sortByAction.myState = false;
@@ -702,7 +706,7 @@ public final class PluginManagerConfigurable
               return;
             }
 
-            for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
+            for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
               MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
               if (sortByAction.myOption == SortBy.RELEVANCE) {
                 sortByAction.myState = true;
@@ -840,7 +844,7 @@ public final class PluginManagerConfigurable
                   if (!result.descriptors.isEmpty()) {
                     String title = IdeBundle.message("plugin.manager.action.label.sort.by.1");
 
-                    for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
+                    for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
                       MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
                       sortByAction.setState(parser);
                       if (sortByAction.myState) {
@@ -1039,7 +1043,7 @@ public final class PluginManagerConfigurable
       public void hideSearchPanel() {
         super.hideSearchPanel();
         if (myInstalledSearchSetState) {
-          for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
+          for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
             ((InstalledSearchOptionAction)action).setState(null);
           }
         }
@@ -1115,7 +1119,7 @@ public final class PluginManagerConfigurable
           };
 
           if (updateAction.myState) {
-            for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
+            for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
               if (action != updateAction) {
                 ((InstalledSearchOptionAction)action).myState = false;
               }
@@ -1165,7 +1169,7 @@ public final class PluginManagerConfigurable
             SearchQueryParser.Installed parser = new SearchQueryParser.Installed(query);
 
             if (myInstalledSearchSetState) {
-              for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
+              for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
                 ((InstalledSearchOptionAction)action).setState(parser);
               }
             }

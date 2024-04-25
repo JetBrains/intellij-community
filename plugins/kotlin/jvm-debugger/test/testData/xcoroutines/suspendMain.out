@@ -1,24 +1,42 @@
-LineBreakpoint created at suspendMain.kt:15
+LineBreakpoint created at suspendMain.kt:16
 Run Java
 Connected to the target VM
-suspendMain.kt:15
+suspendMain.kt:16
 Thread stack trace:
 	CoroutinePreflightFrame invokeSuspend:!LINE_NUMBER!, SuspendMainKt$main$2 (continuation)
 		($result, $this$coroutineScope, this)
 CoroutineInfo: -1 coroutine UNKNOWN
-	CoroutineStackFrame startUndispatchedOrReturn:!LINE_NUMBER!, UndispatchedKt (kotlinx.coroutines.intrinsics)
+	KotlinStackFrame FRAME:invoke:-1, SuspendMainKt$main$2 (continuation)
+		(p1, p2, this)
+	KotlinStackFrame FRAME:invoke:-1, SuspendMainKt$main$2 (continuation)
+		(p1, p2, this)
+	InlineStackFrame lambda 'undispatchedResult' in 'startUndispatchedOrReturn':!LINE_NUMBER!, UndispatchedKt (kotlinx.coroutines.intrinsics)
 		($i$a$-undispatchedResult-UndispatchedKt$startUndispatchedOrReturn$2, $i$f$undispatchedResult, $this$startUndispatchedOrReturn, $this$undispatchedResult$iv, block, receiver)
-	CoroutineStackFrame coroutineScope:!LINE_NUMBER!, CoroutineScopeKt (kotlinx.coroutines)
+	InlineStackFrame undispatchedResult:!LINE_NUMBER!, UndispatchedKt (kotlinx.coroutines.intrinsics)
+		($i$a$-undispatchedResult-UndispatchedKt$startUndispatchedOrReturn$2, $i$f$undispatchedResult, $this$startUndispatchedOrReturn, $this$undispatchedResult$iv, block, receiver)
+	KotlinStackFrame startUndispatchedOrReturn:!LINE_NUMBER!, UndispatchedKt (kotlinx.coroutines.intrinsics)
+		($i$a$-undispatchedResult-UndispatchedKt$startUndispatchedOrReturn$2, $i$f$undispatchedResult, $this$startUndispatchedOrReturn, $this$undispatchedResult$iv, block, receiver)
+	InlineStackFrame lambda 'suspendCoroutineUninterceptedOrReturn' in 'coroutineScope':!LINE_NUMBER!, CoroutineScopeKt (kotlinx.coroutines)
 		($completion, $i$a$-suspendCoroutineUninterceptedOrReturn-CoroutineScopeKt$coroutineScope$3, block, coroutine, uCont)
-	CoroutineStackFrame main:!LINE_NUMBER!, SuspendMainKt (continuation)
+	KotlinStackFrame coroutineScope:!LINE_NUMBER!, CoroutineScopeKt (kotlinx.coroutines)
+		($completion, $i$a$-suspendCoroutineUninterceptedOrReturn-CoroutineScopeKt$coroutineScope$3, block, coroutine, uCont)
+	KotlinStackFrame main:!LINE_NUMBER!, SuspendMainKt (continuation)
 		($completion)
-	CoroutineStackFrame invokeSuspend:!LINE_NUMBER!, IntrinsicsKt__IntrinsicsJvmKt$createCoroutineUnintercepted$$inlined$createCoroutineFromSuspendFunction$IntrinsicsKt__IntrinsicsJvmKt$1 (kotlin.coroutines.intrinsics)
+	KotlinStackFrame FRAME:invoke:-1, SuspendMainKt$main$3 (continuation)
+		($completion, this)
+	KotlinStackFrame FRAME:invoke:-1, SuspendMainKt$main$3 (continuation)
+		($completion, this)
+	InlineStackFrame lambda 'createCoroutineFromSuspendFunction' in 'createCoroutineUnintercepted':!LINE_NUMBER!, IntrinsicsKt__IntrinsicsJvmKt$createCoroutineUnintercepted$$inlined$createCoroutineFromSuspendFunction$IntrinsicsKt__IntrinsicsJvmKt$1 (kotlin.coroutines.intrinsics)
 		($i$a$-createCoroutineFromSuspendFunction-IntrinsicsKt__IntrinsicsJvmKt$createCoroutineUnintercepted$1, it, result, this)
-	CoroutineStackFrame resumeWith:!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+	KotlinStackFrame invokeSuspend:!LINE_NUMBER!, IntrinsicsKt__IntrinsicsJvmKt$createCoroutineUnintercepted$$inlined$createCoroutineFromSuspendFunction$IntrinsicsKt__IntrinsicsJvmKt$1 (kotlin.coroutines.intrinsics)
+		($i$a$-createCoroutineFromSuspendFunction-IntrinsicsKt__IntrinsicsJvmKt$createCoroutineUnintercepted$1, it, result, this)
+	InlineStackFrame lambda 'with' in 'resumeWith':!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
 		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
-	CoroutineStackFrame startCoroutine:!LINE_NUMBER!, ContinuationKt (kotlin.coroutines)
+	KotlinStackFrame resumeWith:!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
+	KotlinStackFrame startCoroutine:!LINE_NUMBER!, ContinuationKt (kotlin.coroutines)
 		($this$startCoroutine, completion)
-	CoroutineStackFrame runSuspend:!LINE_NUMBER!, RunSuspendKt (kotlin.coroutines.jvm.internal)
+	KotlinStackFrame runSuspend:!LINE_NUMBER!, RunSuspendKt (kotlin.coroutines.jvm.internal)
 		(block, run)
 Disconnected from the target VM
 

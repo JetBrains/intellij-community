@@ -1,0 +1,3 @@
+class Foo(i: Int, n: Int = 1 + 2) {
+    val x = n + 3
+}

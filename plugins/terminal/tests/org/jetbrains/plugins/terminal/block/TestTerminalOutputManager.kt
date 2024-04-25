@@ -13,7 +13,7 @@ import com.intellij.ui.ExperimentalUI
 import org.jetbrains.plugins.terminal.exp.*
 import org.junit.Assert
 
-class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) {
+internal class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) {
   private val editor: EditorEx = createEditor(project, parentDisposable)
   private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
 
@@ -27,18 +27,23 @@ class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) 
   val document: DocumentEx
     get() = editor.document
 
-  fun createBlock(command: String?, output: TestCommandOutput): Pair<CommandBlock, TestCommandOutput> {
+  fun createBlock(command: String?, output: TextWithHighlightings): Pair<CommandBlock, TextWithHighlightings> {
     val lastBlockEndOffset = outputModel.getLastBlock()?.endOffset ?: 0
     Assert.assertEquals(lastBlockEndOffset, document.textLength)
-    val updatedHighlightings = output.highlightings.map {
-      HighlightingInfo(it.startOffset + lastBlockEndOffset, it.endOffset + lastBlockEndOffset, it.textAttributesProvider)
+    // Terminal width is important only when there is a right prompt
+    val block = outputModel.createBlock(command, null, terminalWidth = 80)
+    if (output.text.isNotEmpty()) {
+      val promptAndCommandHighlightings = outputModel.getHighlightings(block)
+      val outputHighlightings = output.highlightings.map {
+        HighlightingInfo(it.startOffset + block.outputStartOffset, it.endOffset + block.outputStartOffset, it.textAttributesProvider)
+      }
+      val prefix = "\n".takeIf { block.withPrompt || block.withCommand }.orEmpty()
+      outputModel.putHighlightings(block, promptAndCommandHighlightings + outputHighlightings)
+      editor.document.replaceString(block.outputStartOffset - prefix.length, block.endOffset, prefix + output.text)
     }
-    val block = outputModel.createBlock(command, null)
-    outputModel.putHighlightings(block, updatedHighlightings)
-    editor.document.replaceString(block.startOffset, block.endOffset, output.text)
     outputModel.trimOutput()
     outputModel.finalizeBlock(block)
-    return block to TestCommandOutput(output.text, updatedHighlightings)
+    return block to TextWithHighlightings(document.getText(block.textRange), outputModel.getHighlightings(block))
   }
 
   companion object {
@@ -53,5 +58,3 @@ class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) 
     }
   }
 }
-
-data class TestCommandOutput(val text: String, val highlightings: List<HighlightingInfo>)

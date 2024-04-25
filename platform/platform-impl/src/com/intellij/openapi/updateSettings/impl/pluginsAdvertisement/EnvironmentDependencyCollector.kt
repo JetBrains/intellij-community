@@ -27,7 +27,7 @@ internal class EnvironmentDependencyCollector : DependencyCollector {
     "aws"
   )
 
-  override fun collectDependencies(project: Project): Collection<String> {
+  override suspend fun collectDependencies(project: Project): Collection<String> {
     val pathNames = EnvironmentScanner.getPathNames()
 
     return ALLOWED_EXECUTABLES
@@ -39,7 +39,7 @@ internal class EnvironmentDependencyCollector : DependencyCollector {
 object EnvironmentScanner {
   fun getPathNames(): List<Path> {
     val fs = FileSystems.getDefault()
-    val pathNames = EnvironmentUtil.getEnvironmentMap().get("PATH")?.split(File.pathSeparatorChar)
+    val pathNames = EnvironmentUtil.getEnvironmentMap()["PATH"]?.split(File.pathSeparatorChar)
       ?.mapNotNull {
         try {
           fs.getPath(it)

@@ -463,7 +463,6 @@ c:com.intellij.history.integration.IdeaGateway
 - findOrCreateFileSafely(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):com.intellij.openapi.vfs.VirtualFile
 - findOrCreateFileSafely(java.lang.String,Z):com.intellij.openapi.vfs.VirtualFile
 - findVirtualFile(java.lang.String):com.intellij.openapi.vfs.VirtualFile
-- getAllFilesFrom(java.lang.String):java.util.List
 - getDocument(java.lang.String):com.intellij.openapi.editor.Document
 - getFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
 - getPathOrUrl(com.intellij.openapi.vfs.VirtualFile):java.lang.String

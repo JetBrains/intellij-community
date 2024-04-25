@@ -758,7 +758,7 @@ public class ExpressionGenerator extends Generator {
     final GroovyResolveResult resolveResult = rValueReference == null ? EmptyGroovyResolveResult.INSTANCE
                                                                       : rValueReference.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
-    if (resolved instanceof PsiMethod getter && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)resolved)) {
+    if (resolved instanceof PsiMethod getter && GroovyPropertyUtils.isSimplePropertyGetter(getter)) {
       final String propertyName = GroovyPropertyUtils.getPropertyNameByGetter(getter);
       final PsiType type;
       if (qualifier == null) {

@@ -746,6 +746,10 @@
       }
     },
 
+    "ScrollPane": {
+      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaScrollPaneBorder"
+    },
+
     "SearchEverywhere": {
       "Advertiser.background": "panel",
       "Advertiser.foreground": "infoPanelForeground",
@@ -1077,6 +1081,13 @@
       "Projects.actions.selectionBorderColor": "#3574F0",
       "Projects.actions.background": "#DCEDFE",
       "separatorColor": "border"
+    },
+
+    "CombinedDiff": {
+      "BlockBorder": {
+        "selectedActiveColor": "#A0BDF8",
+        "selectedInactiveColor": "#C9CCD6"
+      }
     },
 
     "ToolbarComboWidget": {

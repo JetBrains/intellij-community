@@ -11,19 +11,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiSearchHelper
-import com.intellij.psi.search.PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES
-import com.intellij.psi.search.PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import com.intellij.psi.util.parentOfTypes
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.getScopeToSearchParameterReferences
 import org.jetbrains.kotlin.idea.quickfix.RemoveValVarFromParameterFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
-import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
-import org.jetbrains.kotlin.idea.search.usagesSearch.getAccessorNames
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -56,11 +50,13 @@ class CanBeParameterInspection : AbstractKotlinInspection() {
         // init / constructor / non-local property?
         var parameterUser: PsiElement = nameExpression
         do {
-            parameterUser = PsiTreeUtil.getParentOfType(
-                parameterUser, KtProperty::class.java, KtPropertyAccessor::class.java,
-                KtClassInitializer::class.java,
-                KtFunction::class.java, KtObjectDeclaration::class.java,
-                KtSuperTypeCallEntry::class.java
+            parameterUser = parameterUser.parentOfTypes(
+                KtProperty::class,
+                KtPropertyAccessor::class,
+                KtClassInitializer::class,
+                KtFunction::class,
+                KtObjectDeclaration::class,
+                KtSuperTypeCallEntry::class
             ) ?: return true
         } while (parameterUser is KtProperty && parameterUser.isLocal)
         return when (parameterUser) {
@@ -73,34 +69,19 @@ class CanBeParameterInspection : AbstractKotlinInspection() {
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return parameterVisitor(fun(parameter) {
+        return parameterVisitor(fun(parameter: KtParameter) {
             // Applicable to val / var parameters of a class / object primary constructors
             val valOrVar = parameter.valOrVarKeyword ?: return
-            val name = parameter.name ?: return
             if (parameter.hasModifier(OVERRIDE_KEYWORD) || parameter.hasModifier(ACTUAL_KEYWORD)) return
             if (parameter.annotationEntries.isNotEmpty()) return
             val constructor = parameter.parents.match(KtParameterList::class, last = KtPrimaryConstructor::class) ?: return
             val klass = constructor.getContainingClassOrObject() as? KtClass ?: return
             if (klass.isData()) return
 
-            val useScope = parameter.useScope
-            val restrictedScope = if (useScope is GlobalSearchScope) {
-                val psiSearchHelper = PsiSearchHelper.getInstance(parameter.project)
-                for (accessorName in parameter.getAccessorNames()) {
-                    when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(accessorName, useScope, null)) {
-                        ZERO_OCCURRENCES -> {
-                        } // go on
-                        else -> return         // accessor in use: should remain a property
-                    }
-                }
-                // TOO_MANY_OCCURRENCES: too expensive
-                // ZERO_OCCURRENCES: unused at all, reported elsewhere
-                if (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null) != FEW_OCCURRENCES) return
-                KotlinSourceFilterScope.projectSources(useScope, parameter.project)
-            } else useScope
+            val scopeToSearch = getScopeToSearchParameterReferences(parameter) ?: return
             // Find all references and check them
-            val references = ReferencesSearch.search(parameter, restrictedScope)
-            if (references.none()) return
+            val references = ReferencesSearch.search(parameter, scopeToSearch).findAll()
+            if (references.isEmpty()) return
             if (references.any { it.element.parent is KtCallableReferenceExpression || it.usedAsPropertyIn(klass) }) return
             holder.registerProblem(
                 valOrVar,
@@ -122,7 +103,7 @@ class CanBeParameterInspection : AbstractKotlinInspection() {
             val parameter = descriptor.psiElement.getParentOfType<KtParameter>(strict = true) ?: return
             parameter.valOrVarKeyword?.delete()
             // Delete visibility / open / final / lateinit, if any
-            // Retain annotations / vararg
+            // Retain vararg
             // override should never be here
             val modifierList = parameter.modifierList ?: return
             for (modifier in CONSTRUCTOR_VAL_VAR_MODIFIERS) {

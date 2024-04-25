@@ -52,8 +52,7 @@ public final class IntegerDivisionInFloatingPointContextInspection extends BaseI
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "integer.division.in.floating.point.context.problem.descriptor");
+    return InspectionGadgetsBundle.message("integer.division.in.floating.point.context.problem.descriptor");
   }
 
   @Override
@@ -86,14 +85,10 @@ public final class IntegerDivisionInFloatingPointContextInspection extends BaseI
       if (contextType == null) {
         contextType = context.getType();
       }
-      String castTo;
-      if (PsiTypes.floatType().equals(contextType) || PsiTypes.doubleType().equals(contextType)) {
-        castTo = contextType.getCanonicalText();
-      }
-      else {
+      if (!PsiTypes.floatType().equals(contextType) && !PsiTypes.doubleType().equals(contextType)) {
         return;
       }
-      registerError(expression, castTo);
+      registerError(expression, contextType.getCanonicalText());
     }
 
     private static boolean hasIntegerDivision(@NotNull PsiPolyadicExpression expression) {

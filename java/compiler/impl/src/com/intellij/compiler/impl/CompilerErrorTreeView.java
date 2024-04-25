@@ -48,9 +48,10 @@ public final class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     });
     group.add(new SuppressJavacWarningsAction());
     group.add(new SuppressJavacWarningForClassAction());
-    ActionGroup popupGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_COMPILER_ERROR_VIEW_POPUP);
+    ActionManager actionManager = ActionManager.getInstance();
+    DefaultActionGroup popupGroup = (DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_COMPILER_ERROR_VIEW_POPUP);
     if (popupGroup != null) {
-      for (AnAction action : popupGroup.getChildren(null)) {
+      for (AnAction action : popupGroup.getChildren(actionManager)) {
         group.add(action);
       }
     }

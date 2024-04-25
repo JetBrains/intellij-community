@@ -4,19 +4,21 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.terminal.BlockTerminalColors
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.plugins.terminal.exp.prompt.PromptRenderingInfo
 import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max
 import kotlin.math.min
 
-class TerminalOutputModel(val editor: EditorEx) {
+internal class TerminalOutputModel(val editor: EditorEx) {
   private val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
   private val blockInfos: MutableMap<CommandBlock, CommandBlockInfo> = HashMap()
@@ -32,18 +34,43 @@ class TerminalOutputModel(val editor: EditorEx) {
     }
   }
 
+  /**
+   * @param terminalWidth number of columns at the moment of block creation. It is used to properly position the right prompt.
+   */
   @RequiresEdt
-  fun createBlock(command: String?, prompt: PromptRenderingInfo?): CommandBlock {
-    if (document.textLength > 0) {
-      document.insertString(document.textLength, "\n")
+  fun createBlock(command: String?, prompt: PromptRenderingInfo?, terminalWidth: Int): CommandBlock {
+    // Execute document insertions in bulk to make sure that EditorHighlighter
+    // is not requesting the highlightings before we set them.
+    val block = document.executeInBulk {
+      if (document.textLength > 0) {
+        document.insertString(document.textLength, "\n")
+      }
+      val startOffset = document.textLength
+
+      val blockHighlightings = mutableListOf<HighlightingInfo>()
+
+      fun appendTextWithHighlightings(text: String, highlightings: List<HighlightingInfo>) {
+        val adjustedHighlightings = highlightings.rebase(document.textLength)
+        document.insertString(document.textLength, text)
+        blockHighlightings.addAll(adjustedHighlightings)
+      }
+
+      if (prompt != null) {
+        appendTextWithHighlightings(prompt.text, prompt.highlightings)
+      }
+      val commandAttributes = TextAttributesKeyAdapter(editor, BlockTerminalColors.COMMAND)
+      val commandAndRightPrompt: TextWithHighlightings = createCommandAndRightPromptText(command, prompt, commandAttributes, terminalWidth)
+      if (commandAndRightPrompt.text.isNotEmpty()) {
+        appendTextWithHighlightings(commandAndRightPrompt.text, commandAndRightPrompt.highlightings)
+      }
+
+      val marker = document.createRangeMarker(startOffset, document.textLength)
+      marker.isGreedyToRight = true
+      val block = CommandBlockImpl(command, prompt?.text, prompt?.rightText, marker, commandAndRightPrompt.text.length)
+      blocks.add(block)
+      putHighlightings(block, blockHighlightings)
+      block
     }
-    val startOffset = document.textLength
-    val marker = document.createRangeMarker(startOffset, startOffset)
-    marker.isGreedyToRight = true
-
-    val block = CommandBlock(command, prompt, marker)
-    blocks.add(block)
-
     listeners.forEach { it.blockCreated(block) }
     return block
   }
@@ -51,7 +78,7 @@ class TerminalOutputModel(val editor: EditorEx) {
   @RequiresEdt
   internal fun finalizeBlock(activeBlock: CommandBlock) {
     // restrict block expansion
-    activeBlock.range.isGreedyToRight = false
+    (activeBlock as CommandBlockImpl).range.isGreedyToRight = false
     listeners.forEach { it.blockFinalized(activeBlock) }
   }
 
@@ -73,7 +100,7 @@ class TerminalOutputModel(val editor: EditorEx) {
     // Remove the text after removing the highlightings because removing text will trigger rehighlight
     // and there should be no highlightings at this moment.
     document.deleteString(rangeToDelete.startOffset, rangeToDelete.endOffset)
-    block.range.dispose()
+    (block as CommandBlockImpl).range.dispose()
   }
 
   private fun findBlockRangeToDelete(block: CommandBlock): TextRange {
@@ -151,8 +178,8 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun getHighlightings(block: CommandBlock): List<HighlightingInfo>? {
-    return highlightings[block]
+  fun getHighlightings(block: CommandBlock): List<HighlightingInfo> {
+    return highlightings[block] ?: emptyList()
   }
 
   @RequiresEdt
@@ -219,7 +246,7 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   private fun deleteDocumentRangeInHighlightings(block: CommandBlock, deleteRange: TextRange) {
-    val highlightings = getHighlightings(block) ?: emptyList()
+    val highlightings = getHighlightings(block)
     val updatedHighlightings: List<HighlightingInfo> = highlightings.mapNotNull {
       when {
         it.endOffset <= deleteRange.startOffset -> it
@@ -258,6 +285,51 @@ class TerminalOutputModel(val editor: EditorEx) {
     /** Block length is finalized, so block bounds won't expand if the text is added before or after the block. */
     fun blockFinalized(block: CommandBlock) {}
     fun blockInfoUpdated(block: CommandBlock, newInfo: CommandBlockInfo) {}
+  }
+
+  companion object {
+    @VisibleForTesting
+    internal fun createCommandAndRightPromptText(command: String?,
+                                                 prompt: PromptRenderingInfo?,
+                                                 commandAttributes: TextAttributesProvider,
+                                                 terminalWidth: Int): TextWithHighlightings {
+      val commandText = command ?: ""
+      val rightPromptText = prompt?.rightText ?: ""
+      if (rightPromptText.isEmpty()) {
+        // Most simple case, no right prompt, only command
+        return createCommandText(commandText, commandAttributes)
+      }
+      val promptText = prompt!!.text // if the right prompt text is not empty, prompt is definitely not null
+      val promptLastLineLength = promptText.length - (promptText.indexOfLast { it == '\n' } + 1)
+      val commandFirstLineLength = commandText.indexOf('\n').takeIf { it != -1 } ?: commandText.length
+
+      return if (promptLastLineLength + commandFirstLineLength + rightPromptText.length < terminalWidth) {
+        // The right prompt is fit into the first line of the command. Build the command with the right prompt text.
+        val spacesCount = terminalWidth - promptLastLineLength - commandFirstLineLength - rightPromptText.length
+        val components = buildList {
+          if (commandFirstLineLength > 0) {
+            add(TextWithAttributes(commandText.substring(0, commandFirstLineLength), commandAttributes))
+          }
+          add(TextWithAttributes(" ".repeat(spacesCount), EmptyTextAttributesProvider))
+          for (highlighting in prompt.rightHighlightings) {
+            add(TextWithAttributes(rightPromptText.substring(highlighting.startOffset, highlighting.endOffset), highlighting.textAttributesProvider))
+          }
+          if (commandFirstLineLength < commandText.length) {
+            add(TextWithAttributes(commandText.substring(commandFirstLineLength), commandAttributes))
+          }
+        }
+        components.toTextWithHighlightings()
+      }
+      else {
+        // The right prompt is not fit into the first line of the command. Return only command.
+        createCommandText(commandText, commandAttributes)
+      }
+    }
+
+    private fun createCommandText(command: String, commandAttributes: TextAttributesProvider): TextWithHighlightings {
+      val highlightings = if (command.isNotEmpty()) listOf(HighlightingInfo(0, command.length, commandAttributes)) else emptyList()
+      return TextWithHighlightings(command, highlightings)
+    }
   }
 }
 
@@ -317,26 +389,6 @@ private fun buildAndSortHighlightings(document: Document, highlightings: List<Hi
   return result
 }
 
-data class CommandBlock(val command: String?, val prompt: PromptRenderingInfo?, val range: RangeMarker) {
-  val startOffset: Int
-    get() = range.startOffset
-  val endOffset: Int
-    get() = range.endOffset
-  val commandStartOffset: Int
-    get() = range.startOffset + if (withPrompt) prompt!!.text.length + 1 else 0
-  val outputStartOffset: Int
-    get() = commandStartOffset + if (withCommand) command!!.length + 1 else 0
-  val textRange: TextRange
-    get() = range.textRange
-
-  val withPrompt: Boolean = !prompt?.text.isNullOrEmpty()
-  val withCommand: Boolean = !command.isNullOrEmpty()
-
-  /** If block is finalized it means that its length won't be expanded if some text is added before or after it */
-  val isFinalized: Boolean
-    get() = !range.isGreedyToRight
-}
-
-data class CommandBlockInfo(val exitCode: Int)
+internal data class CommandBlockInfo(val exitCode: Int)
 
 internal const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"

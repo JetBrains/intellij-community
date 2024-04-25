@@ -25,7 +25,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
@@ -85,22 +84,32 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
   private fun createAction(activateAction: ActivateToolWindowAction) = MyButtonAction(activateAction)
 
-  private class MyButtonAction(val activateAction: ActivateToolWindowAction)
-    : DumbAwareToggleAction(activateAction.templateText, null, activateAction.templatePresentation.icon), CustomComponentAction {
+  private class MyButtonAction(activateAction: ActivateToolWindowAction)
+    : AnActionWrapper(activateAction), DumbAware, Toggleable, CustomComponentAction {
     private var project: Project? = null
 
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+    private val toolWindowId get() = (delegate as ActivateToolWindowAction).toolWindowId
 
-    override fun isSelected(e: AnActionEvent): Boolean {
-      activateAction.update(e)
-      e.presentation.isVisible = buttonState.isPinned(activateAction.toolWindowId)
-      return e.project?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(activateAction.toolWindowId)?.isVisible == true
+    override fun actionPerformed(e: AnActionEvent) {
+      val state = !isSelected(e)
+      setSelected(e, state)
+      Toggleable.setSelected(e.presentation, state)
     }
 
-    override fun setSelected(e: AnActionEvent, state: Boolean) {
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isVisible = buttonState.isPinned(toolWindowId)
+      Toggleable.setSelected(e.presentation, isSelected(e))
+    }
+
+    private fun isSelected(e: AnActionEvent): Boolean {
+      return e.project?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(toolWindowId)?.isVisible == true
+    }
+
+    private fun setSelected(e: AnActionEvent, state: Boolean) {
       val project = e.project ?: return
       val twm = ToolWindowManager.getInstance(project)
-      val toolWindowId = activateAction.toolWindowId
+      val toolWindowId = toolWindowId
       val toolWindow = twm.getToolWindow(toolWindowId)
       val visible = toolWindow?.isVisible == true
       if (visible == state) {
@@ -115,7 +124,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
         }
       }
       else {
-        activateAction.actionPerformed(e)
+        super.actionPerformed(e)
       }
     }
 
@@ -128,14 +137,14 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
         private fun createPopupGroup(): DefaultActionGroup {
           val group = DefaultActionGroup()
-          group.add(TogglePinActionBase(activateAction.toolWindowId))
+          group.add(TogglePinActionBase(toolWindowId))
           group.addSeparator()
           group.add(SquareStripeButton.createMoveGroup())
           return group
         }
 
         override val toolWindow: ToolWindowImpl?
-          get() = project?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(activateAction.toolWindowId) as? ToolWindowImpl
+          get() = project?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(toolWindowId) as? ToolWindowImpl
 
         override fun addNotify() {
           super.addNotify()
@@ -162,6 +171,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
         object : AnActionWrapper(ac) {
           override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
           override fun update(e: AnActionEvent) {
+            super.update(e)
             e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(TogglePinAction(ac.toolWindowId)))
           }
         }

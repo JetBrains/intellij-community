@@ -34,6 +34,7 @@ internal fun downloadCompilationCache(serverUrl: String,
                                       client: OkHttpClient,
                                       bufferPool: DirectFixedSizeByteBufferPool,
                                       downloadedBytes: AtomicLong,
+                                      skipUnpack: Boolean,
                                       saveHash: Boolean): List<Throwable> {
   var urlWithPrefix = "$serverUrl/$prefix/"
   // first let's check for initial redirect (mirror selection)
@@ -80,8 +81,10 @@ internal fun downloadCompilationCache(serverUrl: String,
             response.body.contentLength()
           }
         })
-        spanBuilder("unpack").setAttribute("name", item.name).use {
-          unpackArchive(item, saveHash)
+        if (!skipUnpack) {
+          spanBuilder("unpack").setAttribute("name", item.name).use {
+            unpackArchive(item, saveHash)
+          }
         }
       }
       catch (e: Throwable) {

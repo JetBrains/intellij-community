@@ -1,2 +1,2 @@
-  // Public field within private class can be written/read via reflection even without setAccessible hacks
-  // <caret><GRAMMAR_ERROR descr="COMMA_COMPOUND_SENTENCE">so</GRAMMAR_ERROR> we don't analyze such fields to reduce false-positives
+  // She really purchased the car
+  // <caret><GRAMMAR_ERROR descr="COMMA_COMPOUND_SENTENCE">but</GRAMMAR_ERROR> she declined the extended warranty.

@@ -1069,6 +1069,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/core/intellij.platform.testFramework.core.iml" filepath="$PROJECT_DIR$/platform/testFramework/core/intellij.platform.testFramework.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/impl/intellij.platform.testFramework.impl.iml" filepath="$PROJECT_DIR$/platform/testFramework/impl/intellij.platform.testFramework.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/junit5/intellij.platform.testFramework.junit5.iml" filepath="$PROJECT_DIR$/platform/testFramework/junit5/intellij.platform.testFramework.junit5.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/testFramework/junit5/jimfs/intellij.platform.testFramework.junit5Jimfs/intellij.platform.testFramework.junit5Jimfs.iml" filepath="$PROJECT_DIR$/platform/testFramework/junit5/jimfs/intellij.platform.testFramework.junit5Jimfs/intellij.platform.testFramework.junit5Jimfs.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/teamCity/intellij.platform.testFramework.teamCity.iml" filepath="$PROJECT_DIR$/platform/testFramework/teamCity/intellij.platform.testFramework.teamCity.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/ui/intellij.platform.testFramework.ui.iml" filepath="$PROJECT_DIR$/platform/testFramework/ui/intellij.platform.testFramework.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testRunner/intellij.platform.testRunner.iml" filepath="$PROJECT_DIR$/platform/testRunner/intellij.platform.testRunner.iml" />
@@ -1093,6 +1094,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/util-ex/intellij.platform.util.ex.iml" filepath="$PROJECT_DIR$/platform/util-ex/intellij.platform.util.ex.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/http/intellij.platform.util.http.iml" filepath="$PROJECT_DIR$/platform/util/http/intellij.platform.util.http.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/immutable-key-value-store/benchmark/intellij.platform.util.immutableKeyValueStore.benchmark.iml" filepath="$PROJECT_DIR$/platform/util/immutable-key-value-store/benchmark/intellij.platform.util.immutableKeyValueStore.benchmark.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/util/storages/intellij.platform.util.io.storages.iml" filepath="$PROJECT_DIR$/platform/util/storages/intellij.platform.util.io.storages.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/jdom/intellij.platform.util.jdom.iml" filepath="$PROJECT_DIR$/platform/util/jdom/intellij.platform.util.jdom.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/nanoxml/intellij.platform.util.nanoxml.iml" filepath="$PROJECT_DIR$/platform/util/nanoxml/intellij.platform.util.nanoxml.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/progress/intellij.platform.util.progress.iml" filepath="$PROJECT_DIR$/platform/util/progress/intellij.platform.util.progress.iml" />

@@ -6,6 +6,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.addOptionTag
 import org.jdom.Element
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings.KotlinScriptDefinitionValue.Companion.DEFAULT
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
@@ -76,9 +77,11 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
             scriptDefinitions[scriptDefinitionElement.toKey()] = scriptDefinitionElement.toValue()
         }
 
-        if (scriptDefinitionsList.isNotEmpty()) {
-            executeOnPooledThread {
-                ScriptDefinitionsManager.getInstance(project).reorderDefinitions()
+        if (KotlinPluginModeProvider.isK1Mode()) { // TODO: separate KotlinScriptingSettings implementation for K2
+            if (scriptDefinitionsList.isNotEmpty()) {
+                executeOnPooledThread {
+                    ScriptDefinitionsManager.getInstance(project).reorderDefinitions()
+                }
             }
         }
     }

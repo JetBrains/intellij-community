@@ -213,6 +213,8 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
           && pluginId.idString != "com.intellij.kmm"
           && pluginId.idString != "com.intellij.clion.plugin"
           && pluginId.idString != "com.jetbrains.codeWithMe"
+          && pluginId.idString != "intellij.rider.plugins.cwm"
+          && pluginId.idString != "com.intellij.clion.cwm"
           && pluginId.idString != "org.jetbrains.plugins.clion.radler") {
         LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
         continue

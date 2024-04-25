@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.intellij.collaboration.async
 
 import com.intellij.collaboration.util.ComputedResult
@@ -11,6 +13,7 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.sync.Mutex
@@ -166,33 +169,46 @@ private class DerivedStateFlow<T>(
 }
 
 @ApiStatus.Experimental
-fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> = mapScoped2(mapper)
+fun <T, R> Flow<T>.mapScoped(supervisor: Boolean, mapper: CoroutineScope.(T) -> R): Flow<R> = mapScoped2(supervisor, mapper)
 
 @ApiStatus.Experimental
-private fun <T, R> Flow<T>.mapScoped2(mapper: suspend CoroutineScope.(T) -> R): Flow<R> =
+fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> = mapScoped2(false, mapper)
+
+/**
+ * Maps each value from a source flow to a distinct [CoroutineScope]
+ *
+ * Can handle [CoroutineStart.UNDISPATCHED]
+ */
+@ApiStatus.Experimental
+private fun <T, R> Flow<T>.mapScoped2(supervisor: Boolean, mapper: suspend CoroutineScope.(T) -> R): Flow<R> =
   flow {
     coroutineScope {
-      var lastScope: CoroutineScope? = null
-      val breaker = MutableSharedFlow<R>(1)
-      try {
-        launchNow {
+      var lastScope: Job? = null
+      // need a breaker to allow re-emitting in the same coroutine that started the flow
+      val breaker = Channel<R>()
+      launchNow {
+        try {
           collect { state ->
             lastScope?.cancelAndJoinSilently()
-            lastScope = childScope().apply {
-              launchNow {
+            lastScope = launchNow {
+              val scopeBody: suspend CoroutineScope.() -> Unit = {
                 val result = mapper(state)
-                breaker.emit(result)
+                breaker.send(result)
               }
+              if (supervisor) supervisorScope(scopeBody) else coroutineScope(scopeBody)
             }
           }
         }
-        breaker.collect(this@flow)
+        finally {
+          breaker.close()
+        }
       }
-      finally {
-        lastScope?.cancelAndJoinSilently()
-      }
+      breaker.consumeAsFlow().collect(this@flow)
     }
   }
+
+@ApiStatus.Experimental
+private fun <T, R> Flow<T>.mapScoped2(mapper: suspend CoroutineScope.(T) -> R): Flow<R> = mapScoped2(false, mapper)
 
 /**
  * Performs mapping only if the source value is not null
@@ -542,6 +558,40 @@ fun <T> Flow<Deferred<T>>.computationState(): Flow<ComputedResult<T>> =
       }
     }
   }
+
+
+@OptIn(ExperimentalCoroutinesApi::class)
+inline fun <A, T> computationStateFlow(arguments: Flow<A>, crossinline computer: suspend (A) -> T): Flow<ComputedResult<T>> =
+  arguments.transformLatest { parameters ->
+    supervisorScope {
+      val req = async(start = CoroutineStart.UNDISPATCHED) {
+        computer(parameters)
+      }
+      if (!req.isCompleted) {
+        emit(ComputedResult.loading())
+      }
+
+      val toEmit = ComputedResult.compute { req.await() }
+      currentCoroutineContext().ensureActive()
+      if (toEmit != null) {
+        emit(toEmit)
+      }
+    }
+  }
+
+/**
+ * Awaits the first non-canceled computation and returns the result or throws the exception
+ */
+@JvmName("awaitCompletedDeferred")
+@ApiStatus.Internal
+suspend fun <T> Flow<Deferred<T>>.awaitCompleted(): T =
+  mapLatest {
+    runCatching { it.await() }.also {
+      currentCoroutineContext().ensureActive()
+    }
+  }.filter {
+    it.exceptionOrNull() !is CancellationException
+  }.first().getOrThrow()
 
 /**
  * Maps the flow of requests to a flow of successfully computed values

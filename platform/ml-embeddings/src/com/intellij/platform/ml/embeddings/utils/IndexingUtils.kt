@@ -7,51 +7,37 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import kotlin.math.sqrt
 
-private const val SEPARATOR = "~"
-
-private object SplittingRegExps {
-  val wordsEndingLocations: List<Regex> = arrayOf(
-    "(?<=[A-Za-z])(?=[A-Z][a-z])", "[^\\w\\s]", "[_\\-]").map { it.toRegex() }
-
-  val boundDigitsLocation: Regex = "(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)".toRegex()
-}
-
-fun splitIdentifierIntoTokens(identifier: String): List<String> {
-  var transformedIdentifier = identifier
-  for (regex in SplittingRegExps.wordsEndingLocations) {
-    transformedIdentifier = transformedIdentifier.replace(regex, SEPARATOR)
-  }
-
-  return buildList {
-    for (token in transformedIdentifier.split(SEPARATOR)) {
-      if (token.isEmpty()) continue
-      var isNextCharUpperCase = Character.isUpperCase(token.last())
-      var transformedToken = token
-
-      for (index in token.length - 2 downTo 0) {
-        val isCurCharUpperCase = Character.isUpperCase(transformedToken[index])
-        val isCaseChanging = isNextCharUpperCase xor isCurCharUpperCase
-        if (isCaseChanging) {
-          val splitPosition = index + if (isNextCharUpperCase) 1 else 0
-          transformedToken = transformedToken.substring(0, splitPosition) + SEPARATOR + transformedToken.substring(splitPosition)
-          isNextCharUpperCase = isCurCharUpperCase
-        }
+// Equivalent to splitting by the following regexp: "(?<=[A-Z])(?=[A-Z][a-z])|(?<=[^A-Z])(?=[A-Z])|(?<=[A-Za-z])(?=[^A-Za-z])"
+fun splitIdentifierIntoTokens(identifier: String, lowercase: Boolean = true): String {
+  val result = buildString {
+    var isPrevUppercase = false
+    var isPrevLetter = false
+    for (index in identifier.indices) {
+      if (
+        lastOrNull() != ' ' &&
+        ((index < identifier.length - 1 && isPrevUppercase
+          && identifier[index].isUpperCase() && (identifier[index + 1].isLetter() && !identifier[index + 1].isUpperCase()))
+         || (index > 0 && !isPrevUppercase && identifier[index].isUpperCase())
+         || (isPrevLetter && !identifier[index].isLetter()))
+      ) {
+        append(" ")
       }
-
-      transformedToken.split(SEPARATOR)
-        .flatMap { it.split(SplittingRegExps.boundDigitsLocation) }
-        .filterNot(String::isEmpty)
-        .map { it.lowercase() }
-        .forEach(this::add)
+      isPrevUppercase = identifier[index].isUpperCase()
+      isPrevLetter = identifier[index].isLetter()
+      if (identifier[index] != '_' && !(identifier[index] == ' ' && lastOrNull() == ' ')) {
+        append(identifier[index])
+      }
     }
   }
+  return if (lowercase) result.lowercase() else result
 }
 
 fun convertNameToNaturalLanguage(pattern: String): String {
   val meaningfulName = if (pattern.contains(".")) {
     pattern.split(".").dropLast(1).joinToString(".")
-  } else pattern
-  return splitIdentifierIntoTokens(meaningfulName).joinToString(" ")
+  }
+  else pattern
+  return splitIdentifierIntoTokens(meaningfulName)
 }
 
 fun generateEmbeddingBlocking(indexableRepresentation: String, downloadArtifacts: Boolean = false): FloatTextEmbedding? {

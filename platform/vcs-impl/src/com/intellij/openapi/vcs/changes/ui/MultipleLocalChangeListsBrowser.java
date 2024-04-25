@@ -74,8 +74,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
   @NotNull private final PartialCommitInclusionModel myInclusionModel;
   @NotNull private LocalChangeList myChangeList;
-  private final List<Change> myChanges = new ArrayList<>();
-  private final List<FilePath> myUnversioned = new ArrayList<>();
+  private List<Change> myChanges = Collections.emptyList();
+  private List<FilePath> myUnversioned = Collections.emptyList();
 
   @Nullable private SingleChangeListCommitWorkflowUi.ChangeListListener mySelectedListChangeListener;
 
@@ -250,15 +250,9 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   }
 
   public void updateDisplayedChanges() {
-    myChanges.clear();
-    myUnversioned.clear();
-
-    myChanges.addAll(myChangeList.getChanges());
-
-    if (myEnableUnversioned) {
-      List<FilePath> unversioned = ChangeListManager.getInstance(myProject).getUnversionedFilesPaths();
-      myUnversioned.addAll(unversioned);
-    }
+    myChanges = new ArrayList<>(myChangeList.getChanges());
+    myUnversioned = myEnableUnversioned ? ChangeListManager.getInstance(myProject).getUnversionedFilesPaths()
+                                        : Collections.emptyList();
 
     myViewer.rebuildTree();
   }
@@ -334,7 +328,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
     VcsTreeModelData treeModelData = VcsTreeModelData.allUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
     if (containsCollapsedUnversionedNode(treeModelData)) {
-      return List.copyOf(myUnversioned);
+      return myUnversioned;
     }
 
     return treeModelData.userObjects(FilePath.class);
@@ -347,7 +341,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
     VcsTreeModelData treeModelData = VcsTreeModelData.selectedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
     if (containsCollapsedUnversionedNode(treeModelData)) {
-      return List.copyOf(myUnversioned);
+      return myUnversioned;
     }
 
     return treeModelData.userObjects(FilePath.class);
@@ -360,7 +354,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
     VcsTreeModelData treeModelData = VcsTreeModelData.includedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
     if (containsCollapsedUnversionedNode(treeModelData)) {
-      return List.copyOf(myUnversioned);
+      return myUnversioned;
     }
 
     return treeModelData.userObjects(FilePath.class);

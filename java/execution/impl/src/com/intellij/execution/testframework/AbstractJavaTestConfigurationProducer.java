@@ -166,7 +166,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
         PsiPackage aPackage;
         try {
           aPackage = dumbService.computeWithAlternativeResolveEnabled(
-            (ThrowableComputable<PsiPackage, Throwable>)() -> JavaDirectoryService.getInstance().getPackage((PsiDirectory)directory));
+            (ThrowableComputable<PsiPackage, Throwable>)() -> JavaDirectoryService.getInstance().getPackage(directory));
         }
         catch (IndexNotReadyException e) {
           LOG.error(e);

@@ -125,7 +125,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     T newTask = task;
     SubmissionReceipt receipt;
 
-    var childContext = AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : null;
+    var childContext = AppExecutorUtil.propagateContext() ? Propagation.createChildContext() : null;
     CoroutineContext currentContext = childContext == null ? null : childContext.getContext();
     Job job = childContext == null ? null : childContext.getJob();
 
@@ -153,7 +153,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
         T mergedTask = task.tryMergeWith(oldTask);
         boolean contextsEqual;
-        if (AppExecutorUtil.propagateContextOrCancellation()) {
+        if (AppExecutorUtil.propagateContext()) {
           if ((currentContext == null) != (otherContext == null)) {
             contextsEqual = false;
           } else {
@@ -327,7 +327,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       indicator.checkCanceled();
 
       beforeTask();
-      if (AppExecutorUtil.propagateContextOrCancellation() && myChildContext != null) {
+      if (AppExecutorUtil.propagateContext() && myChildContext != null) {
         try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
           myChildContext.runAsCoroutine(() -> task.perform(indicator));
         }

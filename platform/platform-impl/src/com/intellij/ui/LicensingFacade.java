@@ -29,6 +29,10 @@ public final class LicensingFacade {
   public boolean ai_enabled;
   public static volatile boolean isUnusedSignalled;
 
+  /**
+   * @deprecated Use {@link #getInstance()} instead.
+   */
+  @Deprecated
   public static volatile LicensingFacade INSTANCE;
 
   public static @Nullable LicensingFacade getInstance() {

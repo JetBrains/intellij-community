@@ -30,7 +30,8 @@ class MavenKotlinBuildSystemDependencyManager(
     override fun addDependency(module: Module, libraryDescriptor: ExternalLibraryDescriptor) {
         val pomFile = findPomFile(module) ?: return
         val pom = PomFile.forFileOrNull(pomFile) ?: return
-        val mavenId = MavenId(libraryDescriptor.libraryGroupId, libraryDescriptor.libraryArtifactId, libraryDescriptor.preferredVersion)
+        val version = libraryDescriptor.preferredVersion ?: libraryDescriptor.maxVersion ?: libraryDescriptor.minVersion
+        val mavenId = MavenId(libraryDescriptor.libraryGroupId, libraryDescriptor.libraryArtifactId, version)
 
         val scope = when (libraryDescriptor.preferredScope) {
             DependencyScope.COMPILE -> MavenArtifactScope.COMPILE

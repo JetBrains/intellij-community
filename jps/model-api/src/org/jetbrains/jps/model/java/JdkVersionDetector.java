@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -69,10 +69,10 @@ public abstract class JdkVersionDetector {
     }
 
     public @NotNull @NlsSafe String displayVersionString() {
-      String s = "";
+      var s = "";
       if (variant.displayName != null) s += variant.displayName + ' ';
-      if (graalVersion != null) s += graalVersion + " - Java ";
       s += version;
+      if (graalVersion != null) s += " - VM " + graalVersion;
       if (arch == CpuArch.ARM64) s += " - aarch64";
       return s;
     }

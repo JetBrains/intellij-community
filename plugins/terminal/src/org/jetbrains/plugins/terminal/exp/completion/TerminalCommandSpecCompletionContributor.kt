@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.CommandSpecCompletion
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.findIconForSuggestion
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.getNextSuggestionsString
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -22,9 +23,10 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY)
     val runtimeDataProvider = parameters.editor.getUserData(IJShellRuntimeDataProvider.KEY)
+    val promptModel = parameters.editor.terminalPromptModel
     if (session == null ||
         session.model.isCommandRunning ||
-        runtimeDataProvider == null ||
+        runtimeDataProvider == null || promptModel == null ||
         parameters.completionType != CompletionType.BASIC) {
       return
     }
@@ -36,7 +38,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
 
     val document = parameters.editor.document
     val caretOffset = parameters.editor.caretModel.offset
-    val command = document.getText(TextRange.create(0, caretOffset))
+    val command = document.getText(TextRange.create(promptModel.commandStartOffset, caretOffset))
     val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
     val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
       tokens + ""  // user inserted space after the last token, so add empty incomplete token as last

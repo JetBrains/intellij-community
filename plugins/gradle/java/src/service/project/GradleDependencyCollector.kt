@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.ide.plugins.DependencyCollector
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -17,21 +18,31 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 
 internal class GradleDependencyCollector : DependencyCollector {
 
-  override fun collectDependencies(project: Project): Set<String> {
-    return ProjectDataManager.getInstance()
-      .getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
-      .asSequence()
-      .mapNotNull { it.externalProjectStructure }
-      .flatMap { projectStructure ->
-        projectStructure.getChildrenSequence(ProjectKeys.MODULE)
+  override suspend fun collectDependencies(project: Project): Collection<String> {
+    val projectStructures = readAction {
+      ProjectDataManager.getInstance()
+        .getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
+        .mapNotNull { it.externalProjectStructure }
+    }
+
+    val allDependencies = HashSet<Pair<String, String>>()
+    for (node in projectStructures) {
+      readAction {
+        node.getChildrenSequence(ProjectKeys.MODULE)
           .flatMap { it.getChildrenSequence(GradleSourceSetData.KEY) }
           .flatMap { it.getChildrenSequence(ProjectKeys.LIBRARY_DEPENDENCY) }
-      }.map { it.data.target }
-      .mapNotNull { libraryData ->
-        val groupId = libraryData.groupId
-        val artifactId = libraryData.artifactId
-        if (groupId != null && artifactId != null) "$groupId:$artifactId" else null
-      }.toSet()
+          .forEach { libraryData ->
+            val target = libraryData.data.target
+            val groupId = target.groupId
+            val artifactId = target.artifactId
+            if (groupId != null && artifactId != null) {
+              allDependencies.add(Pair(groupId, artifactId))
+            }
+          }
+      }
+    }
+
+    return allDependencies.map { (g, a) -> "$g:$a" }
   }
 
   private fun <T> DataNode<*>.getChildrenSequence(key: Key<T>) = ExternalSystemApiUtil.getChildren(this, key).asSequence()

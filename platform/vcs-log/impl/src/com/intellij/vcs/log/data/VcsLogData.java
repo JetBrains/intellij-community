@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.*;
@@ -29,8 +28,6 @@ import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.context.Scope;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -176,25 +173,22 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   public void initialize() {
+    myRefresher.initialize();
+    readCurrentUser();
+  }
+
+  private void readCurrentUser() {
     synchronized (myLock) {
       if (myState.equals(State.CREATED)) {
         myState = State.INITIALIZED;
-        Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.Initializing.getName()).startSpan();
         Task.Backgroundable backgroundable = new Task.Backgroundable(myProject,
-                                                                     VcsLogBundle.message("vcs.log.initial.loading.process"),
+                                                                     VcsLogBundle.message("vcs.log.initial.reading.current.user.process"),
                                                                      false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            try (Scope ignored = span.makeCurrent()) {
-              TraceKt.useWithoutActiveScope(span, (Span __) -> {
-                indicator.setIndeterminate(true);
-                resetState();
-                readCurrentUser();
-                myRefresher.readFirstBlock();
-                fireDataPackChangeEvent(myRefresher.getCurrentDataPack());
-                return Unit.INSTANCE;
-              });
-            }
+            indicator.setIndeterminate(true);
+            resetState();
+            doReadCurrentUser();
           }
 
           @Override
@@ -242,7 +236,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     }
   }
 
-  private void readCurrentUser() {
+  private void doReadCurrentUser() {
     Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.ReadingCurrentUser.getName()).startSpan();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
       VirtualFile root = entry.getKey();

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.compatibility.libraries
 
 import com.google.gson.JsonObject
+import org.apache.velocity.VelocityContext
 import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataParser
 import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataState
 import org.jetbrains.plugins.gradle.jvmcompat.asSafeJsonObject
@@ -36,27 +37,9 @@ internal object KotlinLibraryCompatibilityParser : IdeVersionedDataParser<Kotlin
     }
 }
 
-internal fun KotlinLibraryCompatibilityState.generateDefaultData(variableName: String): String {
-    val versions = versions.toList().sortedBy { it.first }
-    return """
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.tools.projectWizard.compatibility.libraries;
-
-import org.jetbrains.kotlin.tools.projectWizard.compatibility.libraries.KotlinLibraryCompatibilityState
-
-/**
- * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run "Generate Kotlin Wizard Default Data" configuration instead
- */
-internal val $variableName = KotlinLibraryCompatibilityState(
-    groupId = "$groupId",
-    artifactId = "$artifactId",
-    versions = mapOf(
-${versions.joinToString("," + System.lineSeparator()) {
-        " ".repeat(8) + "\"${it.first}\" to \"${it.second}\""
-    }}
-    )
-)
-""".trimIndent()
+internal fun KotlinLibraryCompatibilityState.provideDefaultDataContext(defaultDataName: String, context: VelocityContext) {
+    context.put("DEFAULT_DATA_NAME", defaultDataName)
+    context.put("GROUP_ID", groupId)
+    context.put("ARTIFACT_ID", artifactId)
+    context.put("VERSIONS", versions.toList().sortedByDescending { it.first })
 }

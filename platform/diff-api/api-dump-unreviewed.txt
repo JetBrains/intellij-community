@@ -220,6 +220,7 @@ a:com.intellij.diff.comparison.ComparisonManager
 - a:isEquals(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy):Z
 - a:mergeLines(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - a:mergeLinesAdditions(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.openapi.progress.ProgressIndicator):java.lang.String
+- a:mergeLinesWithinRange(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.diff.util.MergeRange,com.intellij.openapi.progress.ProgressIndicator):java.util.List
 - a:processBlocks(java.util.List,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,Z,Z):java.util.List
 - a:squash(java.util.List):java.util.List
 e:com.intellij.diff.comparison.InnerFragmentsPolicy

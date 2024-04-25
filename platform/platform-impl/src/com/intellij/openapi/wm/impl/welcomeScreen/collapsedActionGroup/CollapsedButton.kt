@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup
 
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.panel
@@ -15,7 +16,7 @@ import javax.swing.JComponent
 fun createCollapsedButton(actionGroup: CollapsedActionGroup, getActionWidth: (childAction: AnAction) -> Int): JComponent {
   val button = collapsedButton(actionGroup.templateText)
 
-  val maxChildWidth = actionGroup.getChildren(null).maxOfOrNull { getActionWidth(it) }
+  val maxChildWidth = actionGroup.getChildren(ActionManager.getInstance()).maxOfOrNull { getActionWidth(it) }
   val preferredSize = button.preferredSize
   if (maxChildWidth != null && maxChildWidth > preferredSize.width) {
     button.preferredSize = Dimension(maxChildWidth, button.preferredSize.height)

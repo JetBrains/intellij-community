@@ -15,7 +15,6 @@ class ProjectGradleSettingsListener(val project: Project, private val cs: Corout
 
     private val buildRootsManager = GradleBuildRootsManager.getInstanceSafe(project)
 
-
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         settings.forEach {
             cs.launch(Dispatchers.IO) {

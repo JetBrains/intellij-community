@@ -881,13 +881,6 @@ f:com.intellij.codeInsight.editorActions.TextBlockTransferable
 - getTransferData(java.awt.datatransfer.DataFlavor):java.lang.Object
 - getTransferDataFlavors():java.awt.datatransfer.DataFlavor[]
 - isDataFlavorSupported(java.awt.datatransfer.DataFlavor):Z
-com.intellij.codeInsight.editorActions.TextBlockTransferableData
-- sf:PLAIN_TEXT_PRIORITY:I
-- a:getFlavor():java.awt.datatransfer.DataFlavor
-- getOffsetCount():I
-- getOffsets(I[],I):I
-- getPriority():I
-- setOffsets(I[],I):I
 f:com.intellij.codeInsight.folding.impl.FoldingUtil
 - s:createFoldTreeIterator(com.intellij.openapi.editor.Editor):java.util.Iterator
 - s:findFoldRegion(com.intellij.openapi.editor.Editor,I,I):com.intellij.openapi.editor.FoldRegion
@@ -3205,7 +3198,7 @@ f:com.intellij.execution.filters.ShowTextPopupHyperlinkInfo
 *f:com.intellij.execution.ijent.IjentChildProcessAdapter
 - java.lang.Process
 - com.intellij.execution.process.SelfKiller
-- <init>(kotlinx.coroutines.CoroutineScope,com.intellij.platform.ijent.IjentChildProcess):V
+- <init>(kotlinx.coroutines.CoroutineScope,com.intellij.platform.ijent.IjentId,com.intellij.platform.ijent.IjentChildProcess):V
 - destroy():V
 - destroyForcibly():java.lang.Process
 - exitValue():I
@@ -3217,12 +3210,13 @@ f:com.intellij.execution.filters.ShowTextPopupHyperlinkInfo
 - pid():J
 - supportsNormalTermination():Z
 - toString():java.lang.String
+- tryDestroyGracefully():Z
 - waitFor():I
 - waitFor(J,java.util.concurrent.TimeUnit):Z
 f:com.intellij.execution.ijent.IjentChildPtyProcessAdapter
 - com.pty4j.PtyProcess
 - com.intellij.execution.process.SelfKiller
-- <init>(kotlinx.coroutines.CoroutineScope,com.intellij.platform.ijent.IjentChildProcess):V
+- <init>(kotlinx.coroutines.CoroutineScope,com.intellij.platform.ijent.IjentId,com.intellij.platform.ijent.IjentChildProcess):V
 - destroy():V
 - destroyForcibly():java.lang.Process
 - exitValue():I
@@ -3236,6 +3230,7 @@ f:com.intellij.execution.ijent.IjentChildPtyProcessAdapter
 - setWinSize(com.pty4j.WinSize):V
 - supportsNormalTermination():Z
 - toString():java.lang.String
+- tryDestroyGracefully():Z
 - waitFor():I
 - waitFor(J,java.util.concurrent.TimeUnit):Z
 f:com.intellij.execution.impl.ConsoleViewUtil
@@ -4764,11 +4759,6 @@ f:com.intellij.ide.actions.LayoutNameInputDialog
 - com.intellij.openapi.ui.Messages$InputDialog
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
 f:com.intellij.ide.actions.LayoutNameInputDialogKt
-f:com.intellij.ide.actions.LayoutsGroup
-- com.intellij.openapi.actionSystem.DefaultActionGroup
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.ide.actions.MacWindowActionBase
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
@@ -7459,7 +7449,7 @@ f:com.intellij.ide.plugins.DefaultPluginManagementPolicy
 - isInstallFromDiskAllowed():Z
 - isUpgradeAllowed(com.intellij.ide.plugins.IdeaPluginDescriptor,com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 com.intellij.ide.plugins.DependencyCollector
-- a:collectDependencies(com.intellij.openapi.project.Project):java.util.Collection
+- a:collectDependencies(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.ide.plugins.DependencyCollectorKt
 f:com.intellij.ide.plugins.DynamicPluginEnablerKt
 f:com.intellij.ide.plugins.DynamicPluginVfsListenerKt
@@ -9707,7 +9697,6 @@ f:com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
 - <init>():V
 - equals(java.lang.Object):Z
 - hashCode():I
-f:com.intellij.ide.ui.laf.darcula.DarculaNewUIUtilsKt
 f:com.intellij.ide.ui.laf.darcula.DarculaTableHeaderBorder
 - javax.swing.border.Border
 - javax.swing.plaf.UIResource
@@ -10286,7 +10275,9 @@ c:com.intellij.ide.ui.laf.darcula.ui.DarculaTextAreaUI
 - s:createUI(javax.swing.JComponent):javax.swing.plaf.ComponentUI
 - getNextVisualPositionFrom(javax.swing.text.JTextComponent,I,javax.swing.text.Position$Bias,I,javax.swing.text.Position$Bias[]):I
 - p:installKeyboardActions():V
+- p:installListeners():V
 - p:paintSafely(java.awt.Graphics):V
+- p:uninstallListeners():V
 c:com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder
 - com.intellij.openapi.ui.ErrorBorderCapable
 - javax.swing.border.Border
@@ -15162,7 +15153,6 @@ a:com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsing
 - onRecalculationEnd(com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent):V
 - recalculationEnds():V
 - reset():V
-f:com.intellij.openapi.editor.impl.stickyLines.StickyLineShadowPainterKt
 f:com.intellij.openapi.editor.impl.view.EditorPainter
 - com.intellij.openapi.editor.impl.TextDrawingCallback
 - sf:EDITOR_TAB_PAINTING:java.lang.String
@@ -19168,7 +19158,7 @@ f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiser
 c:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserServiceImpl
 - sf:Companion:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserServiceImpl$Companion
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
-- collectDependencyUnknownFeatures(Z):V
+- collectDependencyUnknownFeatures(Z,kotlin.coroutines.Continuation):java.lang.Object
 - fetch(java.util.List,java.util.Collection,Z,kotlin.coroutines.Continuation):java.lang.Object
 - getAddressedMessagePresentation(java.util.Collection,java.util.Collection,com.intellij.util.containers.MultiMap):java.lang.String
 - rescanDependencies(kotlin.jvm.functions.Function2):V
@@ -20295,7 +20285,7 @@ f:com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStor
 - java.io.Closeable
 - java.lang.AutoCloseable
 - sf:STORAGE_VERSION_CURRENT:I
-- <init>(com.intellij.util.io.dev.mmapped.MMappedFileStorage,com.intellij.util.io.blobstorage.SpaceAllocationStrategy):V
+- <init>(com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage,com.intellij.util.io.blobstorage.SpaceAllocationStrategy):V
 - close():V
 - closeAndClean():V
 - deleteRecord(I):V
@@ -20325,79 +20315,6 @@ f:com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStor
 - setDataFormatVersion(I):V
 - sizeInBytes():J
 - writeToRecord(I,com.intellij.util.io.blobstorage.ByteBufferWriter,I,Z):I
-com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo
-- sf:LZ4_ID:I
-- sf:NONE_ID:I
-- sf:ZIP_ID:I
-- a:algoID():I
-- compress(com.intellij.openapi.util.io.ByteArraySequence):com.intellij.openapi.util.io.ByteArraySequence
-- a:compress(com.intellij.openapi.util.io.ByteArraySequence,Z):com.intellij.openapi.util.io.ByteArraySequence
-- a:decompress(java.nio.ByteBuffer,B[]):V
-- a:shouldCompress(com.intellij.openapi.util.io.ByteArraySequence):Z
-c:com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo$Lz4Algo
-- com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo
-- <init>(I):V
-- algoID():I
-- compress(com.intellij.openapi.util.io.ByteArraySequence,Z):com.intellij.openapi.util.io.ByteArraySequence
-- decompress(java.nio.ByteBuffer,B[]):V
-- shouldCompress(com.intellij.openapi.util.io.ByteArraySequence):Z
-- toString():java.lang.String
-c:com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo$NoCompressionAlgo
-- com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo
-- <init>():V
-- algoID():I
-- compress(com.intellij.openapi.util.io.ByteArraySequence,Z):com.intellij.openapi.util.io.ByteArraySequence
-- decompress(java.nio.ByteBuffer,B[]):V
-- shouldCompress(com.intellij.openapi.util.io.ByteArraySequence):Z
-- toString():java.lang.String
-c:com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo$ZipAlgo
-- com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo
-- <init>(I):V
-- algoID():I
-- compress(com.intellij.openapi.util.io.ByteArraySequence,Z):com.intellij.openapi.util.io.ByteArraySequence
-- decompress(java.nio.ByteBuffer,B[]):V
-- shouldCompress(com.intellij.openapi.util.io.ByteArraySequence):Z
-- toString():java.lang.String
-f:com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentStorageAdapter
-- com.intellij.openapi.Forceable
-- com.intellij.util.io.CleanableStorage
-- java.io.Closeable
-- <init>(com.intellij.util.io.storage.RefCountingContentStorage,com.intellij.openapi.util.ThrowableComputable):V
-- checkRecord(I,Z):V
-- close():V
-- closeAndClean():V
-- contentHash(I):B[]
-- createRecordIdIterator():com.intellij.util.io.storage.RecordIdIterator
-- force():V
-- getRecordsCount():I
-- getVersion():I
-- isDirty():Z
-- isEmpty():Z
-- readStream(I):java.io.DataInputStream
-- setVersion(I):V
-- storeRecord(com.intellij.openapi.util.io.ByteArraySequence):I
-f:com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentStorageAdapterKt
-c:com.intellij.openapi.vfs.newvfs.persistent.dev.content.VFSContentStorageOverMMappedFile
-- com.intellij.openapi.Forceable
-- com.intellij.util.io.CleanableStorage
-- com.intellij.util.io.Unmappable
-- java.io.Closeable
-- <init>(java.nio.file.Path,I,com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo):V
-- checkRecord(I,Z):V
-- close():V
-- closeAndClean():V
-- closeAndUnsafelyUnmap():V
-- contentHash(I):B[]
-- createRecordIdIterator():com.intellij.util.io.storage.RecordIdIterator
-- force():V
-- getRecordsCount():I
-- getVersion():I
-- isDirty():Z
-- isEmpty():Z
-- readStream(I):java.io.InputStream
-- setVersion(I):V
-- s:setupOTelMonitoring(com.intellij.openapi.vfs.newvfs.persistent.dev.content.VFSContentStorageOverMMappedFile,io.opentelemetry.api.metrics.Meter):io.opentelemetry.api.metrics.BatchCallback
-- storeRecord(com.intellij.openapi.util.io.ByteArraySequence):I
 com.intellij.openapi.vfs.newvfs.persistent.intercept.AttributesInterceptor
 - com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
 - onDeleteAttributes(kotlin.jvm.functions.Function2):kotlin.jvm.functions.Function2
@@ -22108,6 +22025,13 @@ f:com.intellij.openapi.wm.impl.LibraryDependentToolWindowManagerKt
 com.intellij.openapi.wm.impl.LinuxGlobalMenuEventHandler
 - com.sun.jna.Callback
 - a:handleEvent(I,I):V
+a:com.intellij.openapi.wm.impl.ListenableToolbarComboButton
+- com.intellij.openapi.wm.impl.ToolbarComboButton
+- <init>(com.intellij.openapi.wm.impl.ToolbarComboButtonModel):V
+- addNotify():V
+- pa:installListeners(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
+- removeNotify():V
+- f:updateWidgetAction():V
 f:com.intellij.openapi.wm.impl.MaximizeToolWindowAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.actionSystem.impl.FusAwareAction
@@ -27935,7 +27859,7 @@ f:com.intellij.ui.components.BasicOptionButtonUI$OptionButtonPopup
 - <init>(com.intellij.ui.components.BasicOptionButtonUI,com.intellij.ui.popup.ActionPopupStep,com.intellij.openapi.actionSystem.DataContext,Z):V
 c:com.intellij.ui.components.BasicOptionButtonUI$OptionButtonPopupStep
 - com.intellij.ui.popup.ActionPopupStep
-- <init>(com.intellij.ui.components.BasicOptionButtonUI,java.util.List,java.lang.String,com.intellij.openapi.util.Condition):V
+- <init>(com.intellij.ui.components.BasicOptionButtonUI,java.util.List,java.lang.String,com.intellij.openapi.util.Condition,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.impl.PresentationFactory):V
 - getDefaultOptionIndex():I
 - isSpeedSearchEnabled():Z
 f:com.intellij.ui.components.ComponentsKt
@@ -28098,11 +28022,16 @@ f:com.intellij.ui.content.ContentManagerUtil
 - s:cleanupContents(com.intellij.ui.content.Content,com.intellij.openapi.project.Project,java.lang.String):V
 - s:getContentManagerFromContext(com.intellij.openapi.actionSystem.DataContext,Z):com.intellij.ui.content.ContentManager
 com.intellij.ui.content.MessageView
+- sf:Companion:com.intellij.ui.content.MessageView$Companion
+- a:awaitInitialized(kotlin.coroutines.Continuation):java.lang.Object
 - a:getContentManager():com.intellij.ui.content.ContentManager
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.ui.content.MessageView
 - a:runWhenInitialized(java.lang.Runnable):V
+f:com.intellij.ui.content.MessageView$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.ui.content.MessageView
 f:com.intellij.ui.content.MessageView$SERVICE
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.ui.content.MessageView
+- sf:INSTANCE:com.intellij.ui.content.MessageView$SERVICE
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.ui.content.MessageView
 f:com.intellij.ui.content.TabbedPaneContentUI
 - com.intellij.ui.content.ContentUI
 - java.beans.PropertyChangeListener
@@ -28847,6 +28776,88 @@ e:com.intellij.ui.dsl.validation.Level
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.validation.Level
 - s:values():com.intellij.ui.dsl.validation.Level[]
 f:com.intellij.ui.dsl.validation.impl.UtilsKt
+f:com.intellij.ui.filterField.FilterAllAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>(java.lang.String,com.intellij.ui.filterField.FilterApplier):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+com.intellij.ui.filterField.FilterApplier
+- a:applyFilter(java.lang.String,java.util.Collection):V
+a:com.intellij.ui.filterField.FilterField
+- javax.swing.JPanel
+- <init>(java.lang.String):V
+- pa:buildActions():java.util.Collection
+- p:createUnfocusedBorder():javax.swing.border.Border
+- getAccessibleContext():javax.accessibility.AccessibleContext
+- a:getCurrentText():java.lang.String
+- f:getOriginalMessage():java.lang.String
+f:com.intellij.ui.filterField.FilterFieldAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.actionSystem.ex.CustomComponentAction
+- <init>(kotlin.jvm.functions.Function0):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- f:getSupplier():kotlin.jvm.functions.Function0
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ui.filterField.FilterFieldKt
+f:com.intellij.ui.filterField.FilterItem
+- <init>(java.lang.String,java.lang.String):V
+- <init>(java.util.function.Supplier,java.lang.String):V
+- f:getTitle():java.lang.String
+- f:getValue():java.lang.String
+f:com.intellij.ui.filterField.FilterMultiSelectAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>(java.lang.String,java.lang.String,java.awt.Component,java.util.List,java.util.Collection,com.intellij.ui.filterField.FilterApplier):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.ui.filterField.FilterSearchTextField
+- com.intellij.ui.SearchTextField
+- <init>():V
+- addNotify():V
+- f:isSkipDocumentEvents():Z
+- removeNotify():V
+- setBounds(I,I,I,I):V
+- p:setEmptyHistory():V
+- setSelectedItem(java.lang.String):V
+- f:setTextIgnoreEvents(java.lang.String):V
+- p:showCompletionPopup():V
+f:com.intellij.ui.filterField.FilterSideTabs
+- com.intellij.ui.tabs.impl.SingleHeightTabs
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
+f:com.intellij.ui.filterField.FilterValueAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>(java.lang.String,java.lang.String,java.lang.String,com.intellij.ui.filterField.FilterApplier):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ui.filterField.FiltersKt
+- sf:createFilterActions(java.awt.Component,java.lang.String,java.lang.String,java.util.List,java.util.Collection,com.intellij.ui.filterField.FilterApplier):java.util.Collection
+- sf:fillFilterItems(java.util.List,java.lang.String,java.util.Collection,java.util.List,com.intellij.ui.filterField.FilterApplier):V
+a:com.intellij.ui.filterField.SearchPopupControllerBase
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,com.intellij.ui.filterField.FilterSearchTextField,javax.swing.JList):V
+- pa:getAttributes():java.util.List
+- pa:getCompletionValues(java.lang.String):java.util.List
+- f:handleEnter(java.awt.event.KeyEvent):Z
+- f:handleShowPopup():V
+- f:handleUpDown(java.awt.event.KeyEvent):Z
+- f:hidePopup():V
+- f:isPopupShow():Z
+- f:showAttributesPopup(java.lang.String,I):V
+a:com.intellij.ui.filterField.SearchQueryParserBase
+- sf:Companion:com.intellij.ui.filterField.SearchQueryParserBase$Companion
+- <init>():V
+- pf:addWords(java.lang.String):V
+- pa:getAttributes():java.util.Set
+- f:getWords():java.util.Set
+- pa:handleAttribute(java.lang.String,java.lang.String):V
+- f:parse(java.lang.String):V
+- sf:parseAttributeInQuery(java.lang.String,I):com.intellij.ui.filterField.SearchQueryParserBase$QueryCompletionPosition
+- sf:wrapAttribute(java.lang.String):java.lang.String
+f:com.intellij.ui.filterField.SearchQueryParserBase$Companion
+- f:parseAttributeInQuery(java.lang.String,I):com.intellij.ui.filterField.SearchQueryParserBase$QueryCompletionPosition
+- f:wrapAttribute(java.lang.String):java.lang.String
+f:com.intellij.ui.filterField.SearchQueryParserBase$QueryCompletionPosition
+- <init>(java.lang.String,java.lang.String,I):V
+- f:getAttributeName():java.lang.String
+- f:getAttributeValue():java.lang.String
+- f:getStartPosition():I
 *c:com.intellij.ui.jcef.HwFacadeHelper
 - sf:TRANSPARENT_COLOR:java.awt.Color
 - addNotify():V
@@ -29463,15 +29474,26 @@ c:com.intellij.ui.popup.AbstractPopup$MyContentPanel
 - computePreferredSize():java.awt.Dimension
 - getData(java.lang.String):java.lang.Object
 - setDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
+f:com.intellij.ui.popup.ActionPopupOptions
+- s:create(Z,Z,Z,Z,I,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
+- s:empty():com.intellij.ui.popup.ActionPopupOptions
+- s:forStep(Z,Z,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
+- s:forStepAndItems(Z,Z,Z,Z,Z,com.intellij.openapi.util.Condition,I):com.intellij.ui.popup.ActionPopupOptions
+- s:honorMnemonics():com.intellij.ui.popup.ActionPopupOptions
+- s:mnemonicsAndDisabled():com.intellij.ui.popup.ActionPopupOptions
+- s:showDisabled():com.intellij.ui.popup.ActionPopupOptions
 c:com.intellij.ui.popup.ActionPopupStep
 - com.intellij.openapi.ui.popup.ListPopupStepEx
 - com.intellij.openapi.ui.popup.MnemonicNavigationFilter
 - com.intellij.openapi.ui.popup.SpeedSearchFilter
+- <init>(java.util.List,java.lang.String,java.util.function.Supplier,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions):V
 - <init>(java.util.List,java.lang.String,java.util.function.Supplier,java.lang.String,Z,com.intellij.openapi.util.Condition,Z,Z,com.intellij.openapi.actionSystem.impl.PresentationFactory):V
 - canceled():V
+- s:createActionItems(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions):java.util.List
 - s:createActionItems(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory):java.util.List
-- s:createActionsStep(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,java.lang.String,Z,Z,java.util.function.Supplier,java.lang.String,com.intellij.openapi.util.Condition,I,com.intellij.openapi.actionSystem.impl.PresentationFactory):com.intellij.openapi.ui.popup.ListPopupStep
+- s:createActionsStep(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,java.util.function.Supplier,com.intellij.ui.popup.ActionPopupOptions):com.intellij.openapi.ui.popup.ListPopupStep
 - createAnActionEvent(com.intellij.openapi.actionSystem.AnAction,java.awt.event.InputEvent):com.intellij.openapi.actionSystem.AnActionEvent
+- getActionPlace():java.lang.String
 - getDefaultOptionIndex():I
 - getFinalRunnable():java.lang.Runnable
 - getIconFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):javax.swing.Icon
@@ -29480,11 +29502,12 @@ c:com.intellij.ui.popup.ActionPopupStep
 - getMnemonicNavigationFilter():com.intellij.openapi.ui.popup.MnemonicNavigationFilter
 - getMnemonicPos(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):I
 - getMnemonicString(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
+- getPresentationFactory():com.intellij.openapi.actionSystem.impl.PresentationFactory
 - getSecondaryTextFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
 - getSelectedIconFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):javax.swing.Icon
 - getSeparatorAbove(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):com.intellij.openapi.ui.popup.ListSeparator
 - getSpeedSearchFilter():com.intellij.openapi.ui.popup.SpeedSearchFilter
-- p:getSubStep(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,java.lang.String,Z,Z,java.util.function.Supplier,java.lang.String,com.intellij.openapi.util.Condition,I,com.intellij.openapi.actionSystem.impl.PresentationFactory):com.intellij.openapi.ui.popup.ListPopupStep
+- p:getSubStep(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z,Z,Z,java.lang.String,Z,Z,java.util.function.Supplier,com.intellij.openapi.util.Condition,I):com.intellij.openapi.ui.popup.ListPopupStep
 - getTextFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
 - getTitle():java.lang.String
 - getTooltipTextFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
@@ -29693,11 +29716,12 @@ c:com.intellij.ui.popup.PopupFactoryImpl
 c:com.intellij.ui.popup.PopupFactoryImpl$ActionGroupPopup
 - com.intellij.ui.popup.list.ListPopupImpl
 - p:<init>(com.intellij.ui.popup.WizardPopup,com.intellij.openapi.ui.popup.ListPopupStep,java.lang.Runnable,com.intellij.openapi.actionSystem.DataContext,I):V
+- <init>(com.intellij.ui.popup.WizardPopup,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions,java.lang.Runnable):V
 - <init>(com.intellij.ui.popup.WizardPopup,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,Z):V
-- ps:createStep(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,com.intellij.openapi.util.Condition,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z):com.intellij.openapi.ui.popup.ListPopupStep
+- ps:createStep(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions):com.intellij.openapi.ui.popup.ListPopupStep
 - dispose():V
 - p:handleLeftKeyPressed(java.awt.event.KeyEvent):V
 - p:handleRightKeyPressed(java.awt.event.KeyEvent):V
@@ -29751,7 +29775,7 @@ f:com.intellij.ui.popup.StackingPopupDispatcherImpl
 - setRestoreFocusSilently():V
 c:com.intellij.ui.popup.StateActionGroupPopup
 - com.intellij.ui.popup.PopupFactoryImpl$ActionGroupPopup
-- <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,Z,kotlin.jvm.functions.Function1):V
+- <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions,java.lang.Runnable,kotlin.jvm.functions.Function1):V
 - p:createPopup(com.intellij.ui.popup.WizardPopup,com.intellij.openapi.ui.popup.PopupStep,java.lang.Object):com.intellij.ui.popup.WizardPopup
 - f:getGetState():kotlin.jvm.functions.Function1
 - p:getListElementRenderer():javax.swing.ListCellRenderer
@@ -30166,9 +30190,9 @@ a:com.intellij.ui.tree.AbstractTreeWalker
 - start(java.lang.Object):V
 - start(javax.swing.tree.TreePath,java.lang.Object):V
 f:com.intellij.ui.tree.AsyncTreeModel
-- com.intellij.util.ui.tree.AbstractTreeModel
 - com.intellij.ui.tree.Searchable
 - com.intellij.ui.tree.TreeVisitor$Acceptor
+- com.intellij.util.ui.tree.AbstractTreeModel
 - <init>(javax.swing.tree.TreeModel,com.intellij.openapi.Disposable):V
 - <init>(javax.swing.tree.TreeModel,Z,com.intellij.openapi.Disposable):V
 - accept(com.intellij.ui.tree.TreeVisitor):org.jetbrains.concurrency.Promise

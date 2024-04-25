@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.GHNode
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
@@ -219,9 +220,11 @@ internal class GHPRTimelineViewModelImpl(
   }
 
   override fun updateAll() {
-    detailsData.reloadDetails()
-    timelineLoader.loadMore(true)
-    reviewData.resetReviewThreads()
+    cs.launch {
+      detailsData.signalDetailsNeedReload()
+      timelineLoader.loadMore(true)
+      reviewData.signalThreadsNeedReload()
+    }
   }
 
   override fun showCommit(oid: String) {

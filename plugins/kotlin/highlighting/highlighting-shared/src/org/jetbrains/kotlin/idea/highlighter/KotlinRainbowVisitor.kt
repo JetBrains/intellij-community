@@ -10,11 +10,13 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
@@ -32,10 +34,10 @@ class KotlinRainbowVisitor : RainbowVisitor() {
     override fun clone() = KotlinRainbowVisitor()
 
     override fun visit(element: PsiElement) {
+        val parent = element.parent
         when {
-            element.isRainbowDeclaration() -> {
-                val rainbowElement = (element as KtNamedDeclaration).nameIdentifier ?: return
-                addRainbowHighlight(element, rainbowElement)
+            element.elementType == KtTokens.IDENTIFIER && (parent as? KtNamedDeclaration)?.nameIdentifier == element && parent.isRainbowDeclaration()-> {
+                addRainbowHighlight(parent, element)
             }
 
             element is KtSimpleNameExpression -> {

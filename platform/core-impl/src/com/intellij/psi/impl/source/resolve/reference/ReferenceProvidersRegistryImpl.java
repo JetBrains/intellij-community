@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -72,7 +71,12 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
         @Override
         public void extensionRemoved(@NotNull KeyedLazyInstance<PsiReferenceContributor> extension,
                                      @NotNull PluginDescriptor pluginDescriptor) {
-          Disposer.dispose(extension.getInstance());
+          // it is much easier to just initialize everything next time from scratch
+          for (PsiReferenceRegistrarImpl registrar : myRegistrars.values()) {
+            registrar.cleanup();
+            registrar.clearBindingsCache();
+          }
+          myRegistrars.clear();
         }
       }, null);
     }
@@ -112,8 +116,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
 
   private static void registerContributedReferenceProviders(@NotNull PsiReferenceRegistrarImpl registrar,
                                                             @NotNull PsiReferenceContributor contributor) {
-    contributor.registerReferenceProviders(new TrackingReferenceRegistrar(registrar, contributor));
-    Disposer.register(ApplicationManager.getApplication(), contributor);
+    contributor.registerReferenceProviders(registrar);
   }
 
   @Override

@@ -1090,17 +1090,22 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void test_file_increases_beyond_too_large_limit() throws IOException {
+    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     final String item = createLongSequenceOfCharacterConstants();
     final String fileText = "class Bar { char[] item = { " + item + "};\n }";
     final VirtualFile file = myFixture.addFileToProject("foo/Bar.java", fileText).getVirtualFile();
+    int fileId = ((VirtualFileWithId)file).getId();
     assertNotNull(findClass("Bar"));
+    assertNotNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
 
     for (int i = 0; i < 2; ++i) {
-      WriteAction.run(() -> VfsUtil.saveText(file, item + item));
+      WriteAction.run(() -> VfsUtil.saveText(file, "class Bar { char[] item = { " + item + item + "};\n }"));
       assertNull(findClass("Bar"));
+      assertNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
 
       WriteAction.run(() -> VfsUtil.saveText(file, fileText));
       assertNotNull(findClass("Bar"));
+      assertNotNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
     }
   }
 
@@ -1313,7 +1318,6 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   private boolean findWordInDumbMode(String word, final VirtualFile file, boolean inDumbMode) {
     assertEquals(inDumbMode, DumbService.isDumb(getProject()));
-    assertTrue(FileBasedIndex.isIndexAccessDuringDumbModeEnabled());
 
     final IdIndexEntry wordHash = new IdIndexEntry(word, true);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());

@@ -11,6 +11,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
@@ -26,13 +27,15 @@ class IdeScriptReportSink(
         // TODO: persist errors between launches?
         scriptFile.scriptDiagnostics = reports
 
-        coroutineScope.launch {
-            readAction {
-                PsiManager.getInstance(project).findFile(scriptFile)?.let {
-                    DaemonCodeAnalyzer.getInstance(project).restart(it)
-                }
+        if (scriptingEnabled && KotlinPluginModeProvider.isK1Mode()) {
+            coroutineScope.launch {
+                readAction {
+                    PsiManager.getInstance(project).findFile(scriptFile)?.let {
+                        DaemonCodeAnalyzer.getInstance(project).restart(it)
+                    }
 
-                EditorNotifications.getInstance(project).updateAllNotifications()
+                    EditorNotifications.getInstance(project).updateAllNotifications()
+                }
             }
         }
     }

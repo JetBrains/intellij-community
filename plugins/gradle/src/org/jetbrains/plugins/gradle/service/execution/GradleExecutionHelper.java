@@ -756,7 +756,7 @@ public class GradleExecutionHelper {
     @NotNull ExternalSystemTaskNotificationListener listener,
     @Nullable GradleExecutionSettings settings
   ) {
-    return getBuildEnvironment(connection, taskId, listener, (CancellationToken)null, settings);
+    return getBuildEnvironment(connection, taskId, listener, null, settings);
   }
 
   @Nullable

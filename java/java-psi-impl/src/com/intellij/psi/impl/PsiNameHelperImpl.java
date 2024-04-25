@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
-import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,12 +28,14 @@ public class PsiNameHelperImpl extends PsiNameHelper {
 
   @Override
   public boolean isIdentifier(@Nullable String text, @NotNull LanguageLevel languageLevel) {
-    return text != null && StringUtil.isJavaIdentifier(text) && !JavaLexer.isKeyword(text, languageLevel);
+    return text != null && StringUtil.isJavaIdentifier(text) && !PsiUtil.isKeyword(text, languageLevel);
   }
 
   @Override
   public boolean isKeyword(@Nullable String text) {
-    return text != null && JavaLexer.isKeyword(text, getLanguageLevel());
+    if (text == null) return false;
+    @NotNull LanguageLevel level = getLanguageLevel();
+    return PsiUtil.isKeyword(text, level);
   }
 
   @Override

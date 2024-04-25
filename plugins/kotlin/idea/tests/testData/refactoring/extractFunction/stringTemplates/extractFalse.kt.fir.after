@@ -2,7 +2,7 @@
 fun foo(param: Int): String {
     val x = "xyfalsez"
     val y = "xyFalsez"
-    val z = false
+    val z = bool()
     return "ab${bool()}def"
 }
 

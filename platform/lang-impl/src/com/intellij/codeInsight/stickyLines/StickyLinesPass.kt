@@ -49,7 +49,7 @@ internal class StickyLinesPass(
     ): CachedValueProvider<Runnable> {
       return CachedValueProvider {
         val collector = StickyLinesCollector(project, document)
-        val infos: MutableSet<StickyLineInfo> = collector.collectLines(vFile)
+        val infos: Set<StickyLineInfo> = collector.collectLines(vFile)
         val alreadyApplied = AtomicBoolean()
         val applier = Runnable {
           if (alreadyApplied.compareAndSet(false, true)) {

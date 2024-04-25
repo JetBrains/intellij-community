@@ -2,7 +2,8 @@
 package com.intellij.collaboration.ui.codereview.timeline
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
+import com.intellij.collaboration.ui.ClippingRoundedPanel
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
@@ -221,7 +222,7 @@ object TimelineDiffComponentFactory {
 
 
 
-    return RoundedPanel(ListLayout.vertical(0), 8).apply {
+    return ClippingRoundedPanel(8, CodeReviewCommentUIUtil.COMMENT_BUBBLE_BORDER_COLOR, ListLayout.vertical(0)).apply {
       background = JBColor.lazy {
         val scheme = EditorColorsManager.getInstance().globalScheme
         scheme.defaultBackground
@@ -241,7 +242,7 @@ object TimelineDiffComponentFactory {
                            filePath: @NlsSafe String,
                            fileNameClickListener: Flow<ActionListener?>,
                            diffComponent: JComponent): JComponent {
-    return RoundedPanel(ListLayout.vertical(0), 8).apply {
+    return ClippingRoundedPanel(8, CodeReviewCommentUIUtil.COMMENT_BUBBLE_BORDER_COLOR).apply {
       background = JBColor.lazy {
         val scheme = EditorColorsManager.getInstance().globalScheme
         scheme.defaultBackground

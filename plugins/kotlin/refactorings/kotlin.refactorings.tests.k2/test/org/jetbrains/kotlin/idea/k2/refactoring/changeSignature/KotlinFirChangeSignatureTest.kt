@@ -60,7 +60,7 @@ class KotlinFirChangeSignatureTest :
     override fun createChangeInfo(): KotlinChangeInfo {
         val element = findTargetElement()?.unwrapped as KtElement
         val targetElement = KotlinChangeSignatureHandler.findDeclaration(element, element, project, editor) as KtNamedDeclaration
-        val superMethod = checkSuperMethods(targetElement, emptyList(), RefactoringBundle.message("to.refactor")).first() as KtNamedDeclaration
+        val superMethod = (checkSuperMethods(targetElement, emptyList(), RefactoringBundle.message("to.refactor")).first() as KtNamedDeclaration).takeIf { !file.name.contains("OverriderOnly") } ?: targetElement
         return KotlinChangeInfo(KotlinMethodDescriptor(superMethod))
     }
 
@@ -117,5 +117,17 @@ class KotlinFirChangeSignatureTest :
 
     fun testInterface() {
         doTestConflict("interface <caret>A {}", "Cannot perform refactoring.\nThe caret should be positioned at the name of the function or constructor to be refactored.")
+    }
+
+    override fun testRemoveDataClassParameter() {
+        runAndCheckConflicts {
+            super.testRemoveDataClassParameter()
+        }
+    }
+
+    override fun testRemoveAllOriginalDataClassParameters() {
+        runAndCheckConflicts {
+            super.testRemoveAllOriginalDataClassParameters()
+        }
     }
 }

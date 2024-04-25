@@ -182,7 +182,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     synchronized(issuedScanningTokens) {
       // ignore repeated "complete" calls
       val removed = issuedScanningTokens.remove(token)
-      if (removed && issuedScanningTokens.isEmpty()) {
+      if (removed && issuedScanningTokens.isEmpty() && storage.isOpen) {
         storage.writeIncompleteScanningMark(false)
         if (lastAppIndexingRequestId != null) {
           storage.writeAppIndexingRequestIdOfLastScanning(lastAppIndexingRequestId.toInt())

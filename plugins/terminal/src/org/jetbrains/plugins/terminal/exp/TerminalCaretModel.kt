@@ -10,7 +10,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
-class TerminalCaretModel(
+internal class TerminalCaretModel(
   private val session: BlockTerminalSession,
   private val outputModel: TerminalOutputModel,
   private val editor: EditorEx,

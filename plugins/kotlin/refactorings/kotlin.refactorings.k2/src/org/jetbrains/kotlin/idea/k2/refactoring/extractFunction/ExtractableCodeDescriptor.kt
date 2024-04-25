@@ -48,7 +48,7 @@ data class ExtractableCodeDescriptor(
 ) : IExtractableCodeDescriptor<KtType> {
     override val name: String get() = suggestedNames.firstOrNull() ?: ""
 
-    override val duplicates: List<DuplicateInfo<KtType>> = emptyList()
+    override val duplicates: List<DuplicateInfo<KtType>> by lazy { findDuplicates() }
 
     private val isUnitReturn: Boolean = analyze(context) { returnType.isUnit }
 
@@ -62,15 +62,18 @@ data class ExtractableCodeDescriptor(
             return analyze(container) {
                 val filteredRenderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.annotationRenderer.with {
                     annotationFilter = annotationFilter.and(object : KtRendererAnnotationsFilter {
-                        context(KtAnalysisSession)
                         override fun filter(
-                            annotation: KtAnnotationApplication, owner: KtAnnotated
-                        ): Boolean = annotation.classId in classIds
+                            analysisSession: KtAnalysisSession,
+                            annotation: KtAnnotationApplication,
+                            owner: KtAnnotated
+                        ): Boolean {
+                            return annotation.classId in classIds
+                        }
                     })
 
                 }
                 val printer = PrettyPrinter()
-                filteredRenderer.renderAnnotations(container.getSymbol(), printer)
+                filteredRenderer.renderAnnotations(analysisSession, container.getSymbol(), printer)
                 printer.toString() + "\n"
             }
         }

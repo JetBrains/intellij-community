@@ -22,17 +22,18 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.references.MavenModulePsiReference;
 
 public class MavenModuleConverter extends MavenReferenceConverter<PsiFile> {
   @Override
-  public PsiFile fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public PsiFile fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public String toString(@Nullable PsiFile psiFile, ConvertContext context) {
+  public String toString(@Nullable PsiFile psiFile, @NotNull ConvertContext context) {
     VirtualFile file = context.getFile().getOriginalFile().getVirtualFile();
     return MavenModulePsiReference.calcRelativeModulePath(file, psiFile.getVirtualFile());
   }

@@ -44,7 +44,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
   @NotNull
   @Override
-  public Collection<? extends ActionOrGroup> getVariants(ConvertContext context) {
+  public Collection<? extends ActionOrGroup> getVariants(@NotNull ConvertContext context) {
     final List<ActionOrGroup> variants = new ArrayList<>();
     final Set<String> processedVariants = new HashSet<>();
 
@@ -70,7 +70,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
   @Nullable
   @Override
-  public ActionOrGroup fromString(@Nullable @NonNls final String value, ConvertContext context) {
+  public ActionOrGroup fromString(@Nullable @NonNls final String value, @NotNull ConvertContext context) {
     if (StringUtil.isEmptyOrSpaces(value)) return null;
 
     final Project project = context.getProject();
@@ -89,12 +89,12 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
   @Nullable
   @Override
-  public String toString(@Nullable ActionOrGroup actionGroup, ConvertContext context) {
+  public String toString(@Nullable ActionOrGroup actionGroup, @NotNull ConvertContext context) {
     return actionGroup == null ? null : getName(actionGroup);
   }
 
   @Override
-  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+  public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
     return DevKitBundle.message("plugin.xml.convert.action.or.group.cannot.resolve", getResultTypes(), s);
   }
 

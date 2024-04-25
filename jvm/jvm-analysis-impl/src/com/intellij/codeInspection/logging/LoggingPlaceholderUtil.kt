@@ -124,6 +124,37 @@ internal enum class PlaceholdersStatus {
   EXACTLY, PARTIAL, ERROR_TO_PARSE_STRING, EMPTY
 }
 
+internal interface PlaceholderCountIndexStrategy {
+  fun shiftAfterEscapeChar(text: String, index: Int): Int {
+    assert(index in text.indices && text[index] == '\\')
+    return index
+  }
+}
+
+internal abstract class RawStringPlaceholderCountStrategy : PlaceholderCountIndexStrategy {
+  protected abstract val escapeSymbols: Set<Char>
+
+  override fun shiftAfterEscapeChar(text: String, index: Int): Int {
+    assert(index in text.indices && text[index] == '\\')
+    if (index + 1 !in text.indices || isEscapeSymbol(text[index + 1])) return index
+    return index + 1
+  }
+
+  private fun isEscapeSymbol(char: Char): Boolean = char in escapeSymbols
+}
+
+internal val UAST_STRING = object : PlaceholderCountIndexStrategy {}
+
+internal val KOTLIN_MULTILINE_RAW_STRING = object : PlaceholderCountIndexStrategy {}
+
+internal val KOTLIN_RAW_STRING = object : RawStringPlaceholderCountStrategy() {
+  override val escapeSymbols: Set<Char> = setOf('t', 'b', 'n', 'r', '$', '\'', '\"')
+}
+
+internal val JAVA_RAW_STRING = object : RawStringPlaceholderCountStrategy() {
+  override val escapeSymbols: Set<Char> = setOf('t', 'b', 'n', 'r', 'f', '\'', '\"')
+}
+
 
 internal class LoggerContext(val log4jAsImplementationForSlf4j: Boolean)
 
@@ -300,6 +331,7 @@ internal fun findAdditionalArguments(node: UCallExpression,
  * @param loggerType The type of the logger used.
  * @param argumentCount The number of arguments that the logger is expected to handle.
  * @param holders The list of PartHolder objects representing logging string parts.
+ * @param placeholderCountShiftIndexStrategy The strategy of shifting index for escape backslash during parsing SLF4J placeholders. It is different for regular string and psi text
  *
  * @return PlaceholderCountResult returns the result of either countFormattedPlaceholders or countBracesPlaceholders based on the type of the logger.
  */
@@ -307,12 +339,13 @@ internal fun solvePlaceholderCount(
   loggerType: PlaceholderLoggerType,
   argumentCount: Int,
   holders: List<LoggingStringPartEvaluator.PartHolder>,
+  placeholderCountShiftIndexStrategy: PlaceholderCountIndexStrategy
 ): PlaceholderCountResult {
   return if (loggerType == PlaceholderLoggerType.LOG4J_FORMATTED_STYLE) {
     countFormattedBasedPlaceholders(holders, argumentCount)
   }
   else {
-    countBracesBasedPlaceholders(holders, loggerType)
+    countBracesBasedPlaceholders(holders, loggerType, placeholderCountShiftIndexStrategy)
   }
 }
 
@@ -434,7 +467,9 @@ internal fun hasThrowableType(lastArgument: UExpression): Boolean {
   return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE)
 }
 
-private fun countBracesBasedPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>, loggerType: PlaceholderLoggerType): PlaceholderCountResult {
+private fun countBracesBasedPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>,
+                                         loggerType: PlaceholderLoggerType,
+                                         placeholderCountShiftIndexStrategy: PlaceholderCountIndexStrategy): PlaceholderCountResult {
   var count = 0
   var full = true
   val placeholderRangeList: MutableList<PlaceholderRanges> = mutableListOf()
@@ -444,18 +479,21 @@ private fun countBracesBasedPlaceholders(holders: List<LoggingStringPartEvaluato
       full = false
       continue
     }
-    val string = partHolder.text ?: continue
-    val length = string.length
+    val text = partHolder.text ?: continue
+    val length = text.length
     var escaped = false
     var lastPlaceholderIndex = -1
-    for (i in 0 until length) {
-      val c = string[i]
+    var i = 0
+    while (i < length) {
+      val c = text[i]
       if (c == '\\' &&
           (loggerType == PlaceholderLoggerType.SLF4J_EQUAL_PLACEHOLDERS || loggerType == PlaceholderLoggerType.SLF4J)) {
         escaped = !escaped
+        i = placeholderCountShiftIndexStrategy.shiftAfterEscapeChar(text, i)
       }
       else if (c == '{') {
         if (holderIndex != 0 && i == 0 && !holders[holderIndex - 1].isConstant) {
+          i += 1
           continue
         }
         if (!escaped) {
@@ -477,6 +515,7 @@ private fun countBracesBasedPlaceholders(holders: List<LoggingStringPartEvaluato
         escaped = false
         lastPlaceholderIndex = -1
       }
+      i += 1
     }
   }
   return PlaceholderCountResult(placeholderRangeList, if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)

@@ -364,7 +364,7 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
     add(InlineCompletionElementDescriptor(text, InlineCompletionSkipTextElement.Presentable::class))
   }
 
-  private class ExpectedInlineCompletionElementsBuilderImpl() : ExpectedInlineCompletionElementsBuilder {
+  private class ExpectedInlineCompletionElementsBuilderImpl : ExpectedInlineCompletionElementsBuilder {
 
     private val elements = mutableListOf<InlineCompletionElementPredicate>()
 

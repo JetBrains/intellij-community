@@ -3,7 +3,6 @@ package com.intellij.build.output
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.BuildEvent
-import com.intellij.concurrency.captureThreadContext
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.diagnostic.logger

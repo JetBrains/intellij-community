@@ -9,6 +9,7 @@ interface TypeDescriptor<KotlinType> {
     fun KotlinType.isError(): Boolean
     val booleanType: KotlinType
     val unitType: KotlinType
+    val nothingType: KotlinType
     val nullableAnyType: KotlinType
     fun createListType(argTypes: List<KotlinType>): KotlinType
     fun createTuple(outputValues: List<OutputValue<KotlinType>>): KotlinType

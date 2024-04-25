@@ -1,0 +1,12 @@
+// WITH_DEFAULT_VALUE: false
+
+fun p2() {
+    p(get42() + 1)
+}
+fun p(n: Int) {
+    println(n)
+}
+
+fun get42(): Int = 42
+
+// IGNORE_K1

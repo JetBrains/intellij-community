@@ -34,3 +34,4 @@ suspend fun endMethod(i: Int) {
 
 // STEP_OVER: 4
 // REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
+// REGISTRY: debugger.always.suspend.thread.before.switch=true

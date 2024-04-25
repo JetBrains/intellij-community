@@ -94,6 +94,8 @@
     <fileEditorProvider id="VcsLogEditor" implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider" fileType="VcsLog"/>
     <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>
     <openTelemetryExporterProvider implementation="com.intellij.vcs.log.statistics.VcsLogTelemetryExporter"/>
+
+    <bookmarkProvider implementation="com.intellij.vcs.log.ui.VcsLogBookmarkProvider"/>
   </extensions>
 
   <projectListeners>
@@ -168,9 +170,6 @@
         <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="after" relative-to-action="Vcs.CopyRevisionNumberAction"/>
       </action>
     </group>
-
-    <group id="Vcs.Log.GraphOptionsGroup" class="com.intellij.vcs.log.ui.actions.VcsLogGraphOptionsChooserGroup" popup="true"
-           icon="com.intellij.vcs.log.impl.VcsLogIcons.IntelliSort"/>
 
     <group id="Vcs.Log.BranchActionsGroup" popup="false">
       <separator key="action.vcs.log.branches.separator"/>

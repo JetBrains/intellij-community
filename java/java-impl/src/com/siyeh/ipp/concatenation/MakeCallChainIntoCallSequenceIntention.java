@@ -96,7 +96,7 @@ public final class MakeCallChainIntoCallSequenceIntention extends MCIntention {
       introduceVariable = false;
     }
     else if (parent instanceof PsiAssignmentExpression assignment && parent.getParent() instanceof PsiExpressionStatement &&
-             ((PsiAssignmentExpression)parent).getOperationTokenType().equals(JavaTokenType.EQ)) {
+             assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
       if (lhs instanceof PsiReferenceExpression expression) {
         final PsiElement target = expression.resolve();

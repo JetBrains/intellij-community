@@ -31,7 +31,7 @@ public final class IdeaPluginConverter extends IdeaPluginConverterBase {
 
   @Override
   @NotNull
-  public Collection<? extends IdeaPlugin> getVariants(final ConvertContext context) {
+  public Collection<? extends IdeaPlugin> getVariants(final @NotNull ConvertContext context) {
     Collection<IdeaPlugin> plugins = getAllPluginsWithoutSelf(context);
     return ContainerUtil.filter(plugins, NON_CORE_PLUGINS);
   }
@@ -49,7 +49,7 @@ public final class IdeaPluginConverter extends IdeaPluginConverterBase {
   }
 
   @Override
-  public IdeaPlugin fromString(@Nullable @NonNls final String s, final ConvertContext context) {
+  public IdeaPlugin fromString(@Nullable @NonNls final String s, final @NotNull ConvertContext context) {
     return s == null ? null : ContainerUtil.getFirstItem(PluginIdModuleIndex.findPlugins(context.getInvocationElement(), s));
   }
 

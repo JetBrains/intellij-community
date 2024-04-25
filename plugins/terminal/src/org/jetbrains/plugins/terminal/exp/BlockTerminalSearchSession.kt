@@ -38,7 +38,7 @@ import java.awt.Point
 import java.util.regex.PatternSyntaxException
 import javax.swing.JTextArea
 
-class BlockTerminalSearchSession(
+internal class BlockTerminalSearchSession(
   private val project: Project,
   private val editor: EditorEx,
   private val model: FindModel,

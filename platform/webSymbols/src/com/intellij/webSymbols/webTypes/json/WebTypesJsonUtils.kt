@@ -26,6 +26,8 @@ import com.intellij.webSymbols.WebSymbol.Companion.PROP_KIND
 import com.intellij.webSymbols.WebSymbol.Companion.PROP_READ_ONLY
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.context.WebSymbolsContext
+import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_RUBY_GEMS
+import com.intellij.webSymbols.context.WebSymbolsContext.Companion.PKG_MANAGER_NODE_PACKAGES
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.js.WebSymbolJsKind
@@ -279,7 +281,7 @@ internal fun Reference.codeCompletion(name: String,
 
 internal fun EnablementRules.wrap(): WebSymbolsContextKindRules.EnablementRules =
   WebSymbolsContextKindRules.EnablementRules(
-    nodePackages,
+    mapOf(PKG_MANAGER_NODE_PACKAGES to nodePackages, PKG_MANAGER_RUBY_GEMS to rubyGems) + additionalProperties,
     projectToolExecutables,
     fileExtensions,
     ideLibraries,

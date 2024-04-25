@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -56,6 +58,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   private final @NotNull SingleTaskController<RefreshRequest, DataPack> mySingleTaskController;
 
   private volatile @NotNull DataPack myDataPack = DataPack.EMPTY;
+  private final @NotNull AtomicBoolean myInitialized = new AtomicBoolean();
 
   private final @NotNull Tracer myTracer = TelemetryManager.getInstance().getTracer(VcsScope);
 
@@ -88,6 +91,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     }) {
       @Override
       protected @NotNull SingleTask startNewBackgroundTask() {
+        if (myInitialized.compareAndSet(false, true)) {
+          return VcsLogRefresherImpl.this.startNewBackgroundTask(new MyInitializationTask());
+        }
         return VcsLogRefresherImpl.this.startNewBackgroundTask(new MyRefreshTask(myDataPack));
       }
     };
@@ -106,25 +112,28 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     return myDataPack;
   }
 
-  @Override
-  public void readFirstBlock() {
+  private @NotNull DataPack readFirstBlock() {
     try {
-      myDataPack =
-        buildMultiRepoDataPack(new CommitCountRequirements(myRecentCommitCount).asMap(myProviders.keySet()), myRecentCommitCount, false);
+      DataPack dataPack = computeWithSpanThrows(myTracer, LogData.Initializing.getName(), span -> {
+        return loadRecentData(new CommitCountRequirements(myRecentCommitCount).asMap(myProviders.keySet()),
+                              myRecentCommitCount, false);
+      });
       mySingleTaskController.request(RefreshRequest.RELOAD_ALL); // build/rebuild the full log in background
+      return dataPack;
     }
     catch (ProcessCanceledException e) {
+      myInitialized.compareAndSet(true, false);
       throw e;
     }
     catch (Exception e) {
       LOG.info(e);
-      myDataPack = new DataPack.ErrorDataPack(e);
+      return new DataPack.ErrorDataPack(e);
     }
   }
 
   @NotNull
-  private DataPack buildMultiRepoDataPack(@NotNull Map<VirtualFile, VcsLogProvider.Requirements> requirements,
-                                          int commitCount, boolean isSmallPack) throws VcsException {
+  private DataPack loadRecentData(@NotNull Map<VirtualFile, VcsLogProvider.Requirements> requirements,
+                                  int commitCount, boolean isSmallPack) throws VcsException {
     LogInfo data = loadRecentData(requirements);
     Collection<List<GraphCommit<Integer>>> commits = data.getCommits();
     Map<VirtualFile, CompressedRefs> refs = data.getRefs();
@@ -158,6 +167,11 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
   private @NotNull Map<VirtualFile, VcsLogProvider> getProvidersForRoots(@NotNull Set<? extends VirtualFile> roots) {
     return ContainerUtil.map2Map(roots, root -> Pair.create(root, myProviders.get(root)));
+  }
+
+  @Override
+  public void initialize() {
+    mySingleTaskController.request(RefreshRequest.INITIALIZE);
   }
 
   @Override
@@ -222,6 +236,25 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   public void dispose() {
   }
 
+  private class MyInitializationTask extends Task.Backgroundable {
+    private MyInitializationTask() {
+      super(VcsLogRefresherImpl.this.myProject, VcsLogBundle.message("vcs.log.initial.loading.process"), false);
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      mySingleTaskController.removeRequests(Collections.singletonList(RefreshRequest.INITIALIZE));
+      try {
+        DataPack result = readFirstBlock();
+        mySingleTaskController.taskCompleted(result);
+      }
+      catch (ProcessCanceledException e) {
+        mySingleTaskController.taskCompleted(null);
+        throw e;
+      }
+    }
+  }
+
   private class MyRefreshTask extends Task.Backgroundable {
 
     private @NotNull DataPack myCurrentDataPack;
@@ -254,7 +287,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
             return VcsLogProperties.SUPPORTS_INCREMENTAL_REFRESH.getOrDefault(provider);
           });
 
-          smallDataPack = optimize && supportsIncrementalRefresh && SMALL_DATA_PACK_COMMITS_COUNT > 0
+          smallDataPack = optimize && supportsIncrementalRefresh && isSmallDataPackEnabled()
                           ? buildSmallDataPack() : DataPack.EMPTY;
 
           if (smallDataPack != DataPack.EMPTY) {
@@ -268,6 +301,10 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
           throw e;
         }
       }
+    }
+
+    private static boolean isSmallDataPackEnabled() {
+      return SMALL_DATA_PACK_COMMITS_COUNT > 0 && !ApplicationManager.getApplication().isUnitTestMode();
     }
 
     private @NotNull Collection<VirtualFile> getRootsToRefresh(@NotNull List<? extends RefreshRequest> requests) {
@@ -419,7 +456,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
         try {
           int commitCount = SMALL_DATA_PACK_COMMITS_COUNT;
           Map<VirtualFile, VcsLogProvider.Requirements> requirements = prepareRequirements(myProviders.keySet(), commitCount, null);
-          return buildMultiRepoDataPack(requirements, commitCount, true);
+          return loadRecentData(requirements, commitCount, true);
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -438,6 +475,12 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
       @Override
       public @NonNls String toString() {
         return "RELOAD_ALL";
+      }
+    };
+    private static final RefreshRequest INITIALIZE = new RefreshRequest(Collections.emptyList(), false) {
+      @Override
+      public @NonNls String toString() {
+        return "INITIALIZE";
       }
     };
     private final Collection<VirtualFile> myRootsToRefresh;

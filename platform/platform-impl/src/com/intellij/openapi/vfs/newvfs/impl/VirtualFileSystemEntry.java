@@ -103,7 +103,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     if (!owningPersistentFS.isOwnData(data)) {
       //PersistentFSImpl re-creates VfsData on (re-)connect
       throw new AssertionError("'Alien' file object: was created before PersistentFS (re-)connected " +
-                               "(id=" + myId + ", parent=" + myParent + ")");
+                               "(id=" + myId + ", parent=" + myParent + "), " +
+                               "owningData: " + data + ", pFS: " + owningPersistentFS);
     }
     return data;
   }

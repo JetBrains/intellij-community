@@ -9,6 +9,7 @@ import com.intellij.diff.util.CombinedDiffToggle
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -21,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.ui.BadgeIcon
+import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.JBUI
@@ -77,7 +79,10 @@ class SetEditorSettingsAction(
   private inner class MyPopup(
     group: ActionGroup,
     context: DataContext
-  ) : PopupFactoryImpl.ActionGroupPopup(null, group, context, false, false, true, true, null, -1, null, null, presentationFactory, false) {
+  ) : PopupFactoryImpl.ActionGroupPopup(
+    null, null, group, context,
+    ActionPlaces.getPopupPlace("SetEditorSettingsAction"), presentationFactory,
+    ActionPopupOptions.mnemonicsAndDisabled(), null) {
 
     override fun getListElementRenderer(): ListCellRenderer<*> {
       return MyRenderer(presentationFactory, this)

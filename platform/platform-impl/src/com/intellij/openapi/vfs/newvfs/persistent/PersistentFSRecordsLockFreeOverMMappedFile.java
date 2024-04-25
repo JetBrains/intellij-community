@@ -4,8 +4,8 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.Unmappable;
-import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
-import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage.Page;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -32,13 +32,16 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
                                                                          Unmappable {
 
   /**
-   * How many un-allocated records (i.e. after {@link #maxAllocatedID()}) to check to be empty (all-zero).
+   * How many un-allocated records (i.e. after {@link #maxAllocatedID()}) to check to be empty (all-zero)
+   * by default, if wasClosedProperly=true.
    * Everything in the file after {@link #maxAllocatedID()} should be 0 -- but EA-984945 shows sometimes it
    * is not 0, so this self-check was introduced: scan first N records in yet-un-allocated region, and check
    * all the bytes are 0.
    * Set value to 0 to disable the check altogether.
    */
-  private static final int UNALLOCATED_RECORDS_TO_CHECK_ZEROED = getIntProperty("vfs.check-unallocated-records-zeroed", 4);
+  private static final int UNALLOCATED_RECORDS_TO_CHECK_ZEROED_REGULAR = getIntProperty("vfs.check-unallocated-records-zeroed", 4);
+  /** How many records to check if wasClosedProperly=false (i.e. app likely was crashed/killed) */
+  private static final int UNALLOCATED_RECORDS_TO_CHECK_ZEROED_CRASHED = UNALLOCATED_RECORDS_TO_CHECK_ZEROED_REGULAR * 100;
 
   @VisibleForTesting
   static final class FileHeader {
@@ -73,10 +76,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
 
-
-
   public static final int NULL_OWNER_PID = 0;
-
 
 
   @VisibleForTesting
@@ -171,16 +171,33 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     int modCount = getIntHeaderField(FileHeader.GLOBAL_MOD_COUNT_OFFSET);
     globalModCount.set(modCount);
 
-    if (UNALLOCATED_RECORDS_TO_CHECK_ZEROED > 0) {
-      //MAYBE RC: make method public, and instead of ctor -- call it explicitly in NotClosedProperlyRecoverer, or
-      //          even during quick self-check?
-      checkUnAllocatedRegionIsZeroed(UNALLOCATED_RECORDS_TO_CHECK_ZEROED);
-    }
-
     cachedMaxAllocatedId = maxAllocatedID();
 
     int ownerProcessId = getIntHeaderField(FileHeader.OWNER_PROCESS_ID_OFFSET);
     wasClosedProperly = (ownerProcessId == NULL_OWNER_PID);
+
+
+    //MAYBE RC: make checkUnAllocatedRegionIsZeroed() public, and instead of ctor -- call it explicitly in NotClosedProperlyRecoverer,
+    //          or even during quick self-check?
+    //          The issue is: we want to check _some_ records even if wasClosedProperly=true, but NotClosedProperlyRecoverer
+    //          is not triggered in this case.
+    //          If wasClosedProperly=false, we want not only to check, but maybe even to 'fix' -- i.e. invalidate all fileIds
+    //          that are found to be allocated beyond maxAllocatedID -- this is there NotClosedProperlyRecoverer comes handy.
+    //          I postpone the decision: right now I think the reason for the non-zero records in >maxAllocateID region is OS
+    //          crash. If that is true (will be checked by EA reports in a few months) => better to avoid trying to recover
+    //          after these cases since:
+    //          a) these cases are too rare
+    //          b) too risky to recover: too many invariants are not guaranteed to hold after OS crash
+    if (wasClosedProperly) {
+      if (UNALLOCATED_RECORDS_TO_CHECK_ZEROED_REGULAR > 0) {
+        checkUnAllocatedRegionIsZeroed(UNALLOCATED_RECORDS_TO_CHECK_ZEROED_REGULAR);
+      }
+    }
+    else {
+      if (UNALLOCATED_RECORDS_TO_CHECK_ZEROED_CRASHED > 0) {
+        checkUnAllocatedRegionIsZeroed(UNALLOCATED_RECORDS_TO_CHECK_ZEROED_CRASHED);
+      }
+    }
   }
 
   @Override
@@ -1071,7 +1088,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
         "\tcontent beyond allocated region(" + recordsToCheck + " records max): \n" +
         dumpRecordsAsHex(firstUnAllocatedId, firstUnAllocatedId + recordsToCheck) + "\n" +
         "=" + nonZeroedRecordsCount + " total non-zero records on the page, in range " +
-        "[" + unallocatedRegionStartingOffsetInFile + ".." + (unallocatedRegionStartingOffsetInFile + nonZeroBytesBeyondEOF) + ")"
+        "[" + unallocatedRegionStartingOffsetInFile + ".." + (unallocatedRegionStartingOffsetInFile + nonZeroBytesBeyondEOF) + "), " +
+        "wasClosedProperly=" + wasClosedProperly
       );
     }
   }

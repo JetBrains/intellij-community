@@ -1,6 +1,7 @@
 protected fun foo(x1: Int = 1, x2: Float, x3: ((Int) -> Int)?) {
     foo(<caret>2, 3.5, null);
     foo(x3 = null, x2 = 5.5, x1 = 4);
+    val p = x3
 }
 
 fun bar() {

@@ -18,7 +18,7 @@ import kotlin.time.Duration.Companion.minutes
  * Syntax: %startProfile &lt;activityName&gt; [parameters]
  * Example: %startProfile magento_inspection event=alloc
  */
-internal class StartProfileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+class StartProfileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX = "${CMD_PREFIX}startProfile"
   }

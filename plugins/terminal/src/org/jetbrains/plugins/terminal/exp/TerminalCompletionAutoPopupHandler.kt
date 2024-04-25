@@ -18,7 +18,7 @@ import java.io.File
  * Added additional characters to trigger auto popup ('-', '/').
  * Allowed to reopen the popup automatically in the [EmptyAutoPopup] phase.
  */
-class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
+internal class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
   override fun checkAutoPopup(charTyped: Char, project: Project, editor: Editor, file: PsiFile): Result {
     if (!editor.isPromptEditor) {
       return Result.CONTINUE

@@ -2,8 +2,8 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -17,7 +17,6 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
-import org.jetbrains.intellij.build.impl.withTrailingSlash
 import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.moveFile
 import org.jetbrains.intellij.build.io.zipWithCompression
@@ -185,7 +184,7 @@ internal class PortableCompilationCacheUploader(
 }
 
 private class Uploader(serverUrl: String, val authHeader: String) {
-  private val serverUrl = serverUrl.withTrailingSlash()
+  private val serverUrl = serverUrl.trimEnd('/')
 
   fun upload(path: String, file: Path) {
     val url = pathToUrl(path)
@@ -240,5 +239,5 @@ private class Uploader(serverUrl: String, val authHeader: String) {
     httpClient.get(pathToUrl(path), authHeader) { it.body.string() }
   }
 
-  private fun pathToUrl(path: String) = "$serverUrl${path.trimStart('/')}"
+  private fun pathToUrl(path: String) = "$serverUrl/${path.trimStart('/')}"
 }

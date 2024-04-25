@@ -4373,6 +4373,7 @@ a:com.intellij.openapi.vcs.changes.savedPatches.AbstractShowDiffForSavedPatchesA
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - a:getDiffRequestProducer(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser,java.lang.Object):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 - isActive(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- p:isVisible(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.vcs.changes.savedPatches.ApplyShelfAction
 - com.intellij.openapi.vcs.changes.savedPatches.ShelfAction
@@ -4408,7 +4409,7 @@ f:com.intellij.openapi.vcs.changes.savedPatches.PopShelfAction
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser
 - com.intellij.openapi.vcs.changes.ui.AsyncChangesBrowserBase
 - com.intellij.openapi.Disposable
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0,com.intellij.openapi.Disposable):V
 - dispose():V
 - f:getChanges():java.util.Collection
 - f:getCurrentPatchObject():com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider$PatchObject
@@ -4418,16 +4419,16 @@ f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser
 - f:selectPatchObject(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider$PatchObject):V
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesDiffPreviewHandler
 - com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
-- sf:INSTANCE:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesDiffPreviewHandler
+- <init>(kotlin.jvm.functions.Function0):V
 - iterateAllChanges(com.intellij.openapi.vcs.changes.ui.ChangesTree):com.intellij.util.containers.JBIterable
 - iterateSelectedChanges(com.intellij.openapi.vcs.changes.ui.ChangesTree):com.intellij.util.containers.JBIterable
 - selectChange(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesDiffProcessor
 - com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
-- <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,Z):V
+- <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,Z,kotlin.jvm.functions.Function0):V
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesEditorDiffPreview
 - com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
-- <init>(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser,kotlin.jvm.functions.Function1):V
+- <init>(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0):V
 - dispose():V
 - getEditorTabName(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):java.lang.String
 - openPreview(Z):Z
@@ -4490,7 +4491,7 @@ c:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi
 - com.intellij.openapi.actionSystem.DataProvider
 - sf:Companion:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi$Companion
 - sf:SAVED_PATCHES_UI_PLACE:java.lang.String
-- <init>(com.intellij.openapi.project.Project,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.openapi.project.Project,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,com.intellij.openapi.Disposable):V
 - dispose():V
 - f:expandPatchesByProvider(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider):V
 - getData(java.lang.String):java.lang.Object
@@ -4660,18 +4661,17 @@ c:com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryContentRevision
 - <init>(com.intellij.openapi.vcs.FilePath,java.lang.String):V
 - getBinaryContent():B[]
 f:com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile
-- com.intellij.openapi.util.JDOMExternalizable
-- AFTER_PATH:java.lang.String
-- BEFORE_PATH:java.lang.String
-- SHELVED_PATH:java.lang.String
+- f:AFTER_PATH:java.lang.String
+- f:BEFORE_PATH:java.lang.String
+- f:SHELVED_PATH:java.lang.String
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
 - createChange(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.Change
 - equals(java.lang.Object):Z
 - getFileStatus():com.intellij.openapi.vcs.FileStatus
 - hashCode():I
-- readExternal(org.jdom.Element):V
+- s:readExternal(org.jdom.Element,com.intellij.openapi.components.PathMacroSubstitutor):com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile
 - toString():java.lang.String
-- writeExternal(org.jdom.Element):V
+- writeExternal(org.jdom.Element,com.intellij.openapi.components.PathMacroSubstitutor):V
 f:com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch
 - com.intellij.openapi.diff.impl.patch.FilePatch
 - <init>(com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile):V
@@ -4696,29 +4696,29 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelvedChange
 - toString():java.lang.String
 f:com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 - com.intellij.openapi.options.ExternalizableScheme
-- com.intellij.openapi.util.JDOMExternalizable
-- DATE:java.util.Date
-- DESCRIPTION:java.lang.String
-- path:java.nio.file.Path
 - <init>(java.nio.file.Path,java.lang.String,java.util.List,java.util.List):V
 - getBinaryFiles():java.util.List
 - getChanges():java.util.List
 - getChanges(com.intellij.openapi.project.Project):java.util.List
 - getChangesLoadingError():java.lang.String
+- getDate():java.util.Date
+- getDescription():java.lang.String
 - getName():java.lang.String
+- getPath():java.nio.file.Path
 - isDeleted():Z
 - isMarkedToDelete():Z
 - isRecycled():Z
 - isValid():Z
 - loadChangesIfNeeded(com.intellij.openapi.project.Project):V
 - markToDelete(Z):V
-- readExternal(org.jdom.Element):V
+- s:readExternal(org.jdom.Element,com.intellij.openapi.components.PathMacroSubstitutor):com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
+- setDate(java.util.Date):V
 - setDeleted(Z):V
 - setName(java.lang.String):V
 - setRecycled(Z):V
 - toString():java.lang.String
 - updateDate():V
-- writeExternal(org.jdom.Element):V
+- s:writeExternal(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList,org.jdom.Element,com.intellij.openapi.components.PathMacroSubstitutor):V
 c:com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 - com.intellij.openapi.Disposable
 - sf:SHELVED_BINARY_FILE_KEY:com.intellij.openapi.actionSystem.DataKey
@@ -5993,23 +5993,6 @@ f:com.intellij.openapi.vcs.changes.ui.NullInclusionModel
 - removeInclusionListener(com.intellij.openapi.vcs.changes.InclusionListener):V
 - retainInclusion(java.util.Collection):V
 - setInclusion(java.util.Collection):V
-a:com.intellij.openapi.vcs.changes.ui.PartiallyExcludedFilesStateHolder
-- com.intellij.openapi.Disposable
-- <init>(com.intellij.openapi.project.Project,com.intellij.util.containers.HashingStrategy):V
-- b:<init>(com.intellij.openapi.project.Project,com.intellij.util.containers.HashingStrategy,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- dispose():V
-- f:excludeElements(java.util.Collection):V
-- pa:findElementFor(com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker,java.lang.String):java.lang.Object
-- pa:findTrackerFor(java.lang.Object):com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
-- pa:getChangeListId(java.lang.Object):java.lang.String
-- f:getExclusionState(java.lang.Object):com.intellij.openapi.vcs.ex.ExclusionState
-- f:getIncludedSet():java.util.Set
-- pf:getMyUpdateQueue():com.intellij.util.ui.update.MergingUpdateQueue
-- pa:getTrackableElements():kotlin.sequences.Sequence
-- f:includeElements(java.util.Collection):V
-- f:retainElements(java.util.Collection):V
-- f:setIncludedElements(java.util.Collection):V
-- updateExclusionStates():V
 com.intellij.openapi.vcs.changes.ui.PlusMinus
 - a:minus(java.lang.Object):V
 - a:plus(java.lang.Object):V

@@ -1,14 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.diff.DiffTool;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventId2;
-import com.intellij.internal.statistic.eventLog.events.EventId3;
-import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -21,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
-  private final static EventLogGroup GROUP = new EventLogGroup("vcs.diff.trigger", 4);
+  private final static EventLogGroup GROUP = new EventLogGroup("vcs.diff.trigger", 5);
   private static final StringEventField DIFF_PLACE_FIELD = EventFields.String("diff_place",
                                                                              List.of("Default", "ChangesView", "VcsLogView", "CommitDialog",
                                                                                      "TestsFiledAssertions", "Merge", "DirDiff", "External",
@@ -40,6 +37,8 @@ public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
   private final static EventId3<PluginInfo, String, String> TOGGLE_DIFF_TOOL =
     GROUP.registerEvent("toggle.diff.tool", EventFields.PluginInfo, DIFF_TOOL_NAME, DIFF_PLACE_FIELD);
 
+  private final static EventId TOGGLE_COMBINED_DIFF_BLOCK_COLLAPSE = GROUP.registerEvent("toggle.combined.diff.block.collapse");
+
   @Override
   public EventLogGroup getGroup() {
     return GROUP;
@@ -57,6 +56,10 @@ public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
                                        @NotNull DiffTool diffTool,
                                        @Nullable @NonNls String place) {
     TOGGLE_DIFF_TOOL.log(project, PluginInfoDetectorKt.getPluginInfo(diffTool.getClass()), diffTool.getName(), getPlaceName(place));
+  }
+
+  public static void logToggleCombinedDiffBlockCollapse(@Nullable Project project) {
+    TOGGLE_COMBINED_DIFF_BLOCK_COLLAPSE.log(project);
   }
 
   @NotNull

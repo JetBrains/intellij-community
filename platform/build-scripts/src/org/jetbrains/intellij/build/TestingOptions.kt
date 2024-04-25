@@ -163,4 +163,10 @@ open class TestingOptions {
    * @see [com.intellij.TestCaseLoader.matchesCurrentBucket]
    */
   var bucketIndex: Int = SystemProperties.getIntProperty(TestCaseLoader.TEST_RUNNER_INDEX_FLAG, 0)
+
+  /**
+   * Whether to use jars instead of directories with classes.
+   * Better together with [BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK]
+   */
+  val useArchivedCompiledClasses: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.use.compiled.classes.archives", false)
 }

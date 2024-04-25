@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
+import org.jetbrains.kotlin.j2k.PostProcessingApplier
 import org.jetbrains.kotlin.nj2k.JKImportStorage
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtFile
@@ -38,5 +40,15 @@ internal class ShortenReferenceProcessing : FileBasedPostProcessing() {
         } else {
             ShortenReferences.DEFAULT.process(file, filter, runImmediately = false)
         }
+    }
+
+    context(KtAnalysisSession)
+    override fun computeApplier(
+        file: KtFile,
+        allFiles: List<KtFile>,
+        rangeMarker: RangeMarker?,
+        converterContext: NewJ2kConverterContext
+    ): PostProcessingApplier {
+        error("Not supported in K1 J2K")
     }
 }

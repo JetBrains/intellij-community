@@ -10,6 +10,7 @@ import com.intellij.ui.NewUiValue
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.AlphaComposite
 import java.awt.Cursor
 import java.awt.Graphics
@@ -18,13 +19,9 @@ import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
-
-/**
- * @See com.intellij.bigdatatools.visualization.inlays.components.FadingToolbar
- * PY-66455
- */
-class JupyterToolbar(actionGroup: ActionGroup, target: JComponent) :
-  ActionToolbarImpl(ActionPlaces.EDITOR_INLAY, actionGroup, true)
+@ApiStatus.Internal
+class JupyterToolbar(actionGroup: ActionGroup, target: JComponent, place: String = ActionPlaces.EDITOR_INLAY) :
+  ActionToolbarImpl(place, actionGroup, true)  // PY-66455
 {
   init {
     val borderColor = when (NewUiValue.isEnabled()) {
@@ -60,7 +57,7 @@ class JupyterToolbar(actionGroup: ActionGroup, target: JComponent) :
   }
 
   fun getRespectiveLineNumberInEditor(editor: Editor): Int? {
-    val point = SwingUtilities.convertPoint(this, 0, this.height, editor.contentComponent)
+    val point = SwingUtilities.convertPoint(this, 0, this.height * 2, editor.contentComponent)
     return point.y
       .takeIf { it >= 0 }
       ?.let { editor.xyToLogicalPosition(point).line }
@@ -70,6 +67,6 @@ class JupyterToolbar(actionGroup: ActionGroup, target: JComponent) :
     private const val ALPHA = 1.0f
     private val TOOLBAR_ARC_SIZE = JBUI.scale(14)
     private val TOOLBAR_BORDER_THICKNESS = JBUI.scale(1)
-    private val OUTER_PADDING = JBUI.scale(3)
+    private val OUTER_PADDING = JBUI.scale(1)
   }
 }

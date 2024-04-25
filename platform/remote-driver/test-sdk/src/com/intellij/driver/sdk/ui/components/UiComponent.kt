@@ -13,6 +13,7 @@ import com.intellij.driver.sdk.ui.remote.RobotService
 import com.intellij.driver.sdk.ui.remote.RobotServiceProvider
 import com.intellij.driver.sdk.ui.remote.SearchService
 import com.intellij.driver.sdk.waitFor
+import java.awt.Color
 import java.awt.Point
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -193,4 +194,8 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       releaseMouse(RemoteMouseButton.LEFT)
     }
   }
+
+  fun getBackgroundColor() = Color(component.getBackground().getRGB())
+
+  fun getForegroundColor() = Color(component.getForeground().getRGB())
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.BlobStorageTestBase;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
@@ -111,7 +111,7 @@ public class FSRecordsImplTest {
   public void fileRecordModCountChanges_onlyIfFileContentActuallyChanges() throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     String[] randomContents = Stream.generate(
-        () -> BlobStorageTestBase.randomString(rnd, rnd.nextInt(0, 1024))
+        () -> StorageTestingUtils.randomString(rnd, rnd.nextInt(0, 1024))
       )
       .limit(1024)
       .toArray(String[]::new);

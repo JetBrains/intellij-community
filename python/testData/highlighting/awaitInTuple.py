@@ -1,5 +1,5 @@
 async def f51():
-    await<error descr="Expression expected"> </error>= 5  # fail
+    <error descr="Cannot assign to await expression">await</error><error descr="Expression expected"> </error>= 5  # fail
     return (await<error descr="Expression expected">)</error>  # fail
 
 
@@ -9,7 +9,7 @@ def f52():
 
 
 async def f61():
-    await<error descr="Expression expected"> </error>= 5  # fail
+    <error descr="Cannot assign to await expression">await</error><error descr="Expression expected"> </error>= 5  # fail
     return ("a", await<error descr="Expression expected">,</error> "b")  # fail
 
 

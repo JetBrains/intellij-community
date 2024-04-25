@@ -30,7 +30,7 @@ class RenameFeature : EvaluableFeatureBase<RenameStrategy>("rename") {
                                             createBaseCompletionMetrics(showByDefault = false) +
                                             listOf(SessionsCountMetric())
 
-  override fun getEvaluationSteps(language: Language, strategy: RenameStrategy): List<EvaluationStep> = listOf(
-    SetupCloudStep()
-  )
+  override fun getEvaluationSteps(language: Language, strategy: RenameStrategy): List<EvaluationStep> = emptyList()
+
+  override fun getPreliminaryEvaluationSteps(): List<EvaluationStep> = listOf(SetupCloudStep())
 }

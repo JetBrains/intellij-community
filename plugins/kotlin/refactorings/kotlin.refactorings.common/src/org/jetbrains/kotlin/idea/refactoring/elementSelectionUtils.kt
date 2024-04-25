@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComme
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import java.util.concurrent.Callable
 
-@Deprecated("Don't perform resolve on EDT")
+@Deprecated("If called on EDT, callback is called on EDT. Use overload, passing `failOnEmptySuggestion = false` instead")
 fun selectElement(
     editor: Editor,
     file: KtFile,
@@ -40,6 +40,9 @@ fun selectElement(
     callback: (PsiElement?) -> Unit
 ) = selectElement(editor, file, true, listOf(elementKind), callback)
 
+/**
+ * @param failOnEmptySuggestion if true, then callback is invoked in the same thread, otherwise in pooled thread
+ */
 fun selectElement(
     editor: Editor,
     file: KtFile,

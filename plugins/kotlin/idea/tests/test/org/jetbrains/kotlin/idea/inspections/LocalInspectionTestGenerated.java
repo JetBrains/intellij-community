@@ -887,6 +887,204 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/canBeParameter")
+    public static class CanBeParameter extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("modifiedInInit.kt")
+        public void testModifiedInInit() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/modifiedInInit.kt");
+        }
+
+        @TestMetadata("nonUsed.kt")
+        public void testNonUsed() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/nonUsed.kt");
+        }
+
+        @TestMetadata("similarPropNameUsedInDelegate.kt")
+        public void testSimilarPropNameUsedInDelegate() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/similarPropNameUsedInDelegate.kt");
+        }
+
+        @TestMetadata("similarPropNameUsedInInitializer.kt")
+        public void testSimilarPropNameUsedInInitializer() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/similarPropNameUsedInInitializer.kt");
+        }
+
+        @TestMetadata("similarPropNameUsedInPropertyInitializer.kt")
+        public void testSimilarPropNameUsedInPropertyInitializer() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/similarPropNameUsedInPropertyInitializer.kt");
+        }
+
+        @TestMetadata("usedActualModifier.kt")
+        public void testUsedActualModifier() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedActualModifier.kt");
+        }
+
+        @TestMetadata("usedAsReference.kt")
+        public void testUsedAsReference() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedAsReference.kt");
+        }
+
+        @TestMetadata("usedFromJava.kt")
+        public void testUsedFromJava() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedFromJava.kt");
+        }
+
+        @TestMetadata("usedInConstructor.kt")
+        public void testUsedInConstructor() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInConstructor.kt");
+        }
+
+        @TestMetadata("usedInDataClass.kt")
+        public void testUsedInDataClass() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInDataClass.kt");
+        }
+
+        @TestMetadata("usedInDelegate.kt")
+        public void testUsedInDelegate() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInDelegate.kt");
+        }
+
+        @TestMetadata("usedInDerivedClass.kt")
+        public void testUsedInDerivedClass() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInDerivedClass.kt");
+        }
+
+        @TestMetadata("usedInFunction.kt")
+        public void testUsedInFunction() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInFunction.kt");
+        }
+
+        @TestMetadata("usedInFunctionProperty.kt")
+        public void testUsedInFunctionProperty() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInFunctionProperty.kt");
+        }
+
+        @TestMetadata("usedInGetter.kt")
+        public void testUsedInGetter() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInGetter.kt");
+        }
+
+        @TestMetadata("usedInInitializer.kt")
+        public void testUsedInInitializer() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInInitializer.kt");
+        }
+
+        @TestMetadata("usedInInnerClass.kt")
+        public void testUsedInInnerClass() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInInnerClass.kt");
+        }
+
+        @TestMetadata("usedInLambda.kt")
+        public void testUsedInLambda() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInLambda.kt");
+        }
+
+        @TestMetadata("usedInLocalFunction.kt")
+        public void testUsedInLocalFunction() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInLocalFunction.kt");
+        }
+
+        @TestMetadata("usedInLocalSuper.kt")
+        public void testUsedInLocalSuper() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInLocalSuper.kt");
+        }
+
+        @TestMetadata("usedInObjectLiteral.kt")
+        public void testUsedInObjectLiteral() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInObjectLiteral.kt");
+        }
+
+        @TestMetadata("usedInObjectSuper.kt")
+        public void testUsedInObjectSuper() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInObjectSuper.kt");
+        }
+
+        @TestMetadata("usedInOpenClassProtectedOpen.kt")
+        public void testUsedInOpenClassProtectedOpen() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInOpenClassProtectedOpen.kt");
+        }
+
+        @TestMetadata("usedInOverride.kt")
+        public void testUsedInOverride() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInOverride.kt");
+        }
+
+        @TestMetadata("usedInParent.kt")
+        public void testUsedInParent() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInParent.kt");
+        }
+
+        @TestMetadata("usedInPrivateProperty.kt")
+        public void testUsedInPrivateProperty() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInPrivateProperty.kt");
+        }
+
+        @TestMetadata("usedInProperty.kt")
+        public void testUsedInProperty() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInProperty.kt");
+        }
+
+        @TestMetadata("usedInPropertyAnnotated.kt")
+        public void testUsedInPropertyAnnotated() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInPropertyAnnotated.kt");
+        }
+
+        @TestMetadata("usedInPropertyVar.kt")
+        public void testUsedInPropertyVar() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInPropertyVar.kt");
+        }
+
+        @TestMetadata("usedInSetter.kt")
+        public void testUsedInSetter() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInSetter.kt");
+        }
+
+        @TestMetadata("usedInSuper.kt")
+        public void testUsedInSuper() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedInSuper.kt");
+        }
+
+        @TestMetadata("usedOutside.kt")
+        public void testUsedOutside() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedOutside.kt");
+        }
+
+        @TestMetadata("usedOverridden.kt")
+        public void testUsedOverridden() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedOverridden.kt");
+        }
+
+        @TestMetadata("usedPrivateInInitializer.kt")
+        public void testUsedPrivateInInitializer() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedPrivateInInitializer.kt");
+        }
+
+        @TestMetadata("usedVarArg.kt")
+        public void testUsedVarArg() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedVarArg.kt");
+        }
+
+        @TestMetadata("usedWithLabeledThisInInitProperty.kt")
+        public void testUsedWithLabeledThisInInitProperty() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedWithLabeledThisInInitProperty.kt");
+        }
+
+        @TestMetadata("usedWithThisInInitProperty.kt")
+        public void testUsedWithThisInInitProperty() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedWithThisInInitProperty.kt");
+        }
+
+        @TestMetadata("usedWithoutThisInInitProperty.kt")
+        public void testUsedWithoutThisInInitProperty() throws Exception {
+            runTest("testData/inspectionsLocal/canBeParameter/usedWithoutThisInInitProperty.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/canBeVal")
     public static class CanBeVal extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

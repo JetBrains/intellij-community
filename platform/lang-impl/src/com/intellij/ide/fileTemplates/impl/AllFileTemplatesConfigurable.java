@@ -361,7 +361,7 @@ public final class AllFileTemplatesConfigurable implements SearchableConfigurabl
     group.add(cloneAction);
     group.add(resetAction);
 
-    addAction.registerCustomShortcutSet(CommonShortcuts.INSERT, currentTab.getComponent());
+    addAction.registerCustomShortcutSet(CommonShortcuts.getInsert(), currentTab.getComponent());
     removeAction.registerCustomShortcutSet(CommonShortcuts.getDelete(),
                                            currentTab.getComponent());
 

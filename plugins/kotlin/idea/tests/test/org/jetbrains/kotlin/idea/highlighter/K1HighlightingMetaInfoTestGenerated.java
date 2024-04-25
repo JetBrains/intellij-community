@@ -154,6 +154,16 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         public void testInvokes() throws Exception {
             runTest("testData/highlighterMetaInfo/smartCasts/Invokes.kt");
         }
+
+        @TestMetadata("Unstable_explicitReceiver.kt")
+        public void testUnstable_explicitReceiver() throws Exception {
+            runTest("testData/highlighterMetaInfo/smartCasts/Unstable_explicitReceiver.kt");
+        }
+
+        @TestMetadata("Unstable_implicitReceiver.kt")
+        public void testUnstable_implicitReceiver() throws Exception {
+            runTest("testData/highlighterMetaInfo/smartCasts/Unstable_implicitReceiver.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

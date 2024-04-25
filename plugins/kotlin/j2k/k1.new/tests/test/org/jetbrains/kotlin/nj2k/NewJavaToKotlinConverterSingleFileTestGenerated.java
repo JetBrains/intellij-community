@@ -5241,6 +5241,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/postProcessing/RedundantTypeCastAndProhibitedInline.java");
         }
 
+        @TestMetadata("SmartcastImpossible.java")
+        public void testSmartcastImpossible() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/postProcessing/SmartcastImpossible.java");
+        }
+
         @TestMetadata("SortModifiers.java")
         public void testSortModifiers() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/postProcessing/SortModifiers.java");

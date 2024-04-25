@@ -85,7 +85,7 @@ enum class TestPlatform(val jsonName: String, val targetPlatform: TargetPlatform
     JVM("jvm", JvmPlatforms.defaultJvmPlatform),
     JS("js", JsPlatforms.defaultJsPlatform),
     NATIVE("native", NativePlatforms.unspecifiedNativePlatform),
-    WASM("wasm", WasmPlatforms.Default),
+    WASM("wasm", WasmPlatforms.unspecifiedWasmPlatform),
     COMMON("common", CommonPlatforms.defaultCommonPlatform),
 }
 

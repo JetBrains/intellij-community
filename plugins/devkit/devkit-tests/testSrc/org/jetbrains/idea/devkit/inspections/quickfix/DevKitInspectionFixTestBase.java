@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -11,6 +11,9 @@ import java.nio.file.Path;
 
 /**
  * Prefer {@link LightDevKitInspectionFixTestBase} if possible.
+ * <p>
+ * If a test or context preparation triggers indexing,
+ * wait for it with one of methods from {@link com.intellij.testFramework.IndexingTestUtil}.
  */
 public abstract class DevKitInspectionFixTestBase extends JavaCodeInsightFixtureTestCase {
 

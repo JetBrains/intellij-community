@@ -253,7 +253,7 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
         .nonBlocking<FileIndexesValuesApplier> {
           myIndexingAttemptCount.incrementAndGet()
           val fileType = if (fileTypeChangeChecker.get()) type else null
-          myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent, fileType, indexingStamp)
+          myFileBasedIndex.indexFileContent(indexingJob.myProject, fileContent, false, fileType, indexingStamp)
         }
         .expireWith(indexingJob.myProject)
         .executeSynchronously()

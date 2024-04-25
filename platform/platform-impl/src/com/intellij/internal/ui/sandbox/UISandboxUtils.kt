@@ -3,9 +3,7 @@ package com.intellij.internal.ui.sandbox
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.ui.SearchTextField
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.Nls
 import javax.swing.*
@@ -74,4 +72,16 @@ internal fun <T : JComponent> Panel.withStateLabel(vararg additionalStates: @Nls
     val cell = init()
     label.text = getStateText(cell.component, *additionalStates) + ":"
   }
+}
+
+internal fun <T : JTextArea> Cell<T>.initWithText(): Cell<T> {
+  align(AlignX.FILL)
+  rows(5)
+  component.addText()
+
+  return this
+}
+
+internal fun <T : JTextArea> T.addText() {
+  text = (1..20).joinToString(separator = "\n") { "Line $it" }
 }

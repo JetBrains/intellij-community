@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.fe10
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -181,7 +182,7 @@ internal class KtLifetimeTokenForKtSymbolBasedWrappersFactory(
 ) : KtLifetimeTokenFactory() {
     override val identifier = KtLifetimeTokenForKtSymbolBasedWrappers::class
 
-    override fun create(project: Project): KtLifetimeTokenForKtSymbolBasedWrappers = token
+    override fun create(project: Project, modificationTracker: ModificationTracker): KtLifetimeTokenForKtSymbolBasedWrappers = token
 }
 
 private class KtSymbolBasedModuleDescriptorImpl(

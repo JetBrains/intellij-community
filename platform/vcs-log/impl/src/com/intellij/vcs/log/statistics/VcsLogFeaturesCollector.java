@@ -36,7 +36,7 @@ import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.getColumns
 import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
 public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 4);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 5);
   private static final EventId UI_INITIALIZED = GROUP.registerEvent("uiInitialized");
   private static final VarargEventId DETAILS = GROUP.registerVarargEvent("details", EventFields.Enabled);
   private static final VarargEventId DIFF_PREVIEW = GROUP.registerVarargEvent("diffPreview", EventFields.Enabled);

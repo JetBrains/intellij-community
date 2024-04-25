@@ -58,7 +58,10 @@ public class YAMLElementGenerator {
     Collection<YAMLValue> values = PsiTreeUtil.collectElementsOfType(tempValueFile, YAMLValue.class);
 
     String text;
-    if (!values.isEmpty() && values.iterator().next() instanceof YAMLScalar && !valueText.contains("\n")) {
+    if (values.isEmpty()) {
+      text = keyName + ":";
+    }
+    else if (values.iterator().next() instanceof YAMLScalar && !valueText.contains("\n")) {
       text = keyName + ": " + valueText;
     }
     else {
@@ -102,6 +105,14 @@ public class YAMLElementGenerator {
     assert at != null && at.getNode().getElementType() == YAMLTokenTypes.COLON;
     return at;
   }
+
+  public @NotNull PsiElement createComma() {
+    final YAMLFile file = createDummyYamlWithText("[1,2]");
+    final PsiElement comma = file.findElementAt("[1".length());
+    assert comma != null && comma.getNode().getElementType() == YAMLTokenTypes.COMMA;
+    return comma;
+  }
+
   public @NotNull PsiElement createDocumentMarker() {
     final YAMLFile file = createDummyYamlWithText("---");
     PsiElement at = file.findElementAt(0);
@@ -116,6 +127,12 @@ public class YAMLElementGenerator {
     return sequence;
   }
 
+  public @NotNull YAMLSequence createEmptyArray() {
+    YAMLSequence sequence = PsiTreeUtil.findChildOfType(createDummyYamlWithText("[]"), YAMLSequence.class);
+    assert sequence != null;
+    return sequence;
+  }
+
   public @NotNull YAMLSequenceItem createEmptySequenceItem() {
     YAMLSequenceItem sequenceItem = PsiTreeUtil.findChildOfType(createDummyYamlWithText("- dummy"), YAMLSequenceItem.class);
     assert sequenceItem != null;
@@ -127,6 +144,14 @@ public class YAMLElementGenerator {
 
   public @NotNull YAMLSequenceItem createSequenceItem(String text) {
     YAMLSequenceItem sequenceItem = PsiTreeUtil.findChildOfType(createDummyYamlWithText("- " + text), YAMLSequenceItem.class);
+    assert sequenceItem != null;
+    YAMLValue value = sequenceItem.getValue();
+    assert value != null;
+    return sequenceItem;
+  }
+
+  public @NotNull YAMLSequenceItem createArrayItem(String text) {
+    YAMLSequenceItem sequenceItem = PsiTreeUtil.findChildOfType(createDummyYamlWithText("[" + text + "]"), YAMLSequenceItem.class);
     assert sequenceItem != null;
     YAMLValue value = sequenceItem.getValue();
     assert value != null;

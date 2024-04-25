@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -6,7 +6,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.jvm.JvmMetaLanguage;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.util.JvmInheritanceUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
@@ -140,7 +139,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         if (uMethod.isConstructor()) {
           constructorSeen = true;
           final List<UParameter> parameters = uMethod.getUastParameters();
-          if (!parameters.isEmpty()|| uMethod.getVisibility() != UastVisibility.PRIVATE) {
+          if (!parameters.isEmpty() || uMethod.getVisibility() != UastVisibility.PRIVATE) {
             utilityClass = false;
           }
 
@@ -312,8 +311,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   public void accept(final @NotNull RefVisitor visitor) {
-    if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitClass(this));
+    if (visitor instanceof RefJavaVisitor javaVisitor) {
+      ReadAction.run(() -> javaVisitor.visitClass(this));
     }
     else {
       super.accept(visitor);
@@ -440,11 +439,6 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
-  public boolean isSuspicious() {
-    return !(isUtilityClass() && getOutReferences().isEmpty()) && super.isSuspicious();
-  }
-
-  @Override
   public boolean isUtilityClass() {
     return checkFlag(IS_UTILITY_MASK);
   }
@@ -527,10 +521,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (super.isReferenced()) return true;
 
     if (isInterface()) {
-      if (!getDerivedReferences().isEmpty()) return true;
+      return !getDerivedReferences().isEmpty();
     }
     else if (isAbstract()) {
-      if (!getSubClasses().isEmpty()) return true;
+      return !getSubClasses().isEmpty();
     }
 
     return false;
@@ -541,10 +535,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (super.hasSuspiciousCallers()) return true;
 
     if (isInterface()) {
-      if (!getDerivedReferences().isEmpty()) return true;
+      return !getDerivedReferences().isEmpty();
     }
     else if (isAbstract()) {
-      if (!getSubClasses().isEmpty()) return true;
+      return !getSubClasses().isEmpty();
     }
 
     return false;

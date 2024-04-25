@@ -62,7 +62,9 @@ class GitLabNoteViewModelImpl(
     if (note is GitLabMergeRequestNote && note.canReact) GitLabReactionsViewModelImpl(cs, projectData, note, currentUser) else null
 
   override val body: Flow<String> = note.body
-  override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, projectData.projectMapping.gitRepository, it) }.modelFlow(cs, LOG)
+  override val bodyHtml: Flow<String> = body.map {
+    GitLabUIUtil.convertToHtml(project, projectData.projectMapping.gitRepository, projectData.projectMapping.repository.projectPath, it)
+  }.modelFlow(cs, LOG)
 
   override val discussionState: Flow<GitLabDiscussionStateContainer> = isMainNote.map {
     if (it) {

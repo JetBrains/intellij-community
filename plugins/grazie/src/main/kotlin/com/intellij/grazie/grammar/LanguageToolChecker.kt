@@ -24,6 +24,7 @@ import org.languagetool.Languages
 import org.languagetool.markup.AnnotatedTextBuilder
 import org.languagetool.rules.GenericUnpairedBracketsRule
 import org.languagetool.rules.RuleMatch
+import org.languagetool.rules.en.EnglishUnpairedQuotesRule
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.function.Predicate
@@ -199,13 +200,13 @@ internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRul
  * So we ignore this pattern in commit messages and literals (which might be used for parsing git output)
  */
 private fun isGitCherryPickedFrom(match: RuleMatch, text: TextContent): Boolean {
-  return match.rule.id == "EN_COMPOUNDS" && match.fromPos > 0 && text.startsWith("(cherry picked from", match.fromPos - 1) &&
+  return match.rule.id == "EN_COMPOUNDS_CHERRY_PICKED" && match.fromPos > 0 && text.startsWith("(cherry picked from", match.fromPos - 1) &&
          (text.domain == TextContent.TextDomain.LITERALS ||
           text.domain == TextContent.TextDomain.PLAIN_TEXT && runReadAction { CommitMessage.isCommitMessage(text.containingFile) })
 }
 
 private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
-  if (match.rule is GenericUnpairedBracketsRule) {
+  if (match.rule is EnglishUnpairedQuotesRule) {
     if (match.fromPos > 0 &&
         (text.startsWith("\")", match.fromPos - 1) || text.subSequence(0, match.fromPos).contains("(\""))) {
       return true //https://github.com/languagetool-org/languagetool/issues/5269
@@ -216,6 +217,9 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
     if (text.substring(match.fromPos, match.toPos) == "\"" && text.subSequence(0, match.fromPos).contains("\"")) {
       return true // e.g. commented raise ValueError(f"a very long text so that the vicinity of the error doesn't seem like code")
     }
+  }
+
+  if (match.rule is GenericUnpairedBracketsRule) {
     if (couldBeOpenClosedRange(text, match.fromPos)) {
       return true
     }

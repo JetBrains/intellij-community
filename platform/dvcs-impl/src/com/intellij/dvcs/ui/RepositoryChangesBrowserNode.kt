@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
@@ -15,13 +15,13 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.STYLE_OPAQUE
 import com.intellij.util.FontUtil.spaceAndThinSpace
+import com.intellij.util.ui.CheckboxIcon
 import com.intellij.util.ui.JBUI.insets
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.vcs.branch.BranchPresentation.getPresentableText
 import com.intellij.vcs.branch.BranchPresentation.getSingleTooltip
 import com.intellij.vcs.log.impl.VcsLogManager.findLogProviders
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.ui.RootIcon
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory
 import com.intellij.vcsUtil.VcsUtil
@@ -77,6 +77,6 @@ open class RepositoryChangesBrowserNode(repository: Repository,
     }
 
     fun getRepositoryIcon(repository: Repository, colorManager: VcsLogColorManager = getColorManager(repository.project)) =
-      RootIcon.createAndScale(colorManager.getRootColor(repository.root))
+      CheckboxIcon.createAndScale(colorManager.getRootColor(repository.root))
   }
 }

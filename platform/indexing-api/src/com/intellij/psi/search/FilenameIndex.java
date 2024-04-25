@@ -35,7 +35,7 @@ public final class FilenameIndex {
 
     public void checkCancelled() throws ProcessCanceledException{
       checkCancelled(iterationNo++);
-    };
+    }
 
     private static final int CHECK_CANCELLED_EACH = 16;
 

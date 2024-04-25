@@ -333,7 +333,7 @@ public class ShelvedChangesViewManager implements Disposable {
     updateTreeIfShown(tree -> {
       DefaultMutableTreeNode treeNode = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)tree.getModel().getRoot(), list);
       if (treeNode == null) {
-        LOG.warn(VcsBundle.message("shelve.changelist.not.found", list.DESCRIPTION));
+        LOG.warn(VcsBundle.message("shelve.changelist.not.found", list.getDescription()));
         return;
       }
       TreeUtil.selectNode(tree, treeNode);
@@ -372,7 +372,7 @@ public class ShelvedChangesViewManager implements Disposable {
     if (shelvedListsToDeleteSize > 0) {
       ShelvedChangeList singleDeletedList = getOnlyItem(shelvedListsToDelete);
       if (singleDeletedList != null) {
-        listsMessage = VcsBundle.message("shelve.delete.changelist.name.message", singleDeletedList.DESCRIPTION);
+        listsMessage = VcsBundle.message("shelve.delete.changelist.name.message", singleDeletedList.getDescription());
       } else {
         listsMessage = VcsBundle.message("shelve.delete.changelists.count.message", shelvedListsToDeleteSize);
       }
@@ -431,7 +431,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public int compare(ShelvedChangeList o1, ShelvedChangeList o2) {
-      return o2.DATE.compareTo(o1.DATE);
+      return o2.getDate().compareTo(o1.getDate());
     }
   }
 
@@ -1059,7 +1059,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-      String listName = myList.DESCRIPTION;
+      String listName = myList.getDescription();
       if (StringUtil.isEmptyOrSpaces(listName)) listName = VcsBundle.message("changes.nodetitle.empty.changelist.name");
 
       if (myList.isRecycled() || myList.isDeleted()) {
@@ -1070,7 +1070,7 @@ public class ShelvedChangesViewManager implements Disposable {
       }
 
       appendCount(renderer);
-      String date = DateFormatUtil.formatPrettyDateTime(myList.DATE);
+      String date = DateFormatUtil.formatPrettyDateTime(myList.getDate());
       renderer.append(", " + date, SimpleTextAttributes.GRAYED_ATTRIBUTES);
 
       String loadingError = myList.getChangesLoadingError();

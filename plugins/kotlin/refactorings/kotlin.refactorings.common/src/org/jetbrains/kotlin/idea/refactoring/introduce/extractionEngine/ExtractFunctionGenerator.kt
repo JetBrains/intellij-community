@@ -252,7 +252,7 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
 
             when {
                 defaultValue == null -> body.appendElement(returnExpression)
-                !defaultValue.callSiteReturn -> lastExpression!!.replaceWithReturn(returnExpression)
+                !defaultValue.callSiteReturn || defaultValue.hasImplicitReturn -> lastExpression!!.replaceWithReturn(returnExpression)
             }
 
             if (generatorOptions.allowExpressionBody) {
@@ -404,7 +404,10 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
                     is Jump -> {
                         val elementToInsertAfterCall = outputValue.elementToInsertAfterCall
                         when {
-                            elementToInsertAfterCall == null -> Collections.singletonList(psiFactory.createExpression(callText))
+                            elementToInsertAfterCall == null -> listOf(
+                                newLine,
+                                psiFactory.createExpression(callText)
+                            )
                             outputValue.conditional -> Collections.singletonList(
                                 psiFactory.createExpression("if ($callText) ${elementToInsertAfterCall.text}")
                             )

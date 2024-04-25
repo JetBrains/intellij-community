@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaLineBreakpointProperties> {
   // TODO: rework encoding of inline position, introduce enum/class-based external API
 
-  // null - stop at line and all lambdas
+  // null - stop at all available positions (line, all lambdas, anonymous classes, ...)
   // -1 - stop only at the base position (first on the line)
   // 0 or more - index of the lambda on the line to stop at
   // -10 or less - stop only at single conditional return statement (-10 at the base method, (-10-i) at the i-th lambda)
@@ -75,7 +75,7 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
     return lambdaOrdinal != null && lambdaOrdinal != NO_LAMBDA;
   }
 
-  public boolean isLineAndLambdas() {
+  public boolean isAllPositions() {
     return encodedInlinePosition == null;
   }
 
@@ -107,9 +107,6 @@ public class JavaLineBreakpointProperties extends JavaBreakpointProperties<JavaL
       }
       if (props.isInLambda()) {
         return JavaDebuggerBundle.message("line.breakpoint.description.lambda");
-      }
-      if (props.isLineAndLambdas()) {
-        return JavaDebuggerBundle.message("line.breakpoint.description.line.and.lambdas");
       }
     }
     return JavaDebuggerBundle.message("line.breakpoint.description.basic.line");

@@ -5,13 +5,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHealthCheck;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.util.indexing.UnindexedFilesScannerStartupKt.setProjectFilterIsInvalidated;
+
+@ApiStatus.Internal
 public interface FilesFilterScanningHandler {
   void addFileId(@NotNull Project project, int fileId);
 
   default void scanningCompleted(@NotNull Project project) {
-
+    setProjectFilterIsInvalidated(project, false);
+    ProjectIndexableFilesFilterHealthCheck healthCheck = project.getService(ProjectIndexableFilesFilterHealthCheck.class);
+    if (healthCheck != null) {
+      healthCheck.launchHealthCheck();
+    }
   }
 
   void scanningStarted(@NotNull Project project, boolean update);
@@ -38,22 +46,9 @@ public interface FilesFilterScanningHandler {
 
   class IdleFilesFilterScanningHandler implements FilesFilterScanningHandler {
     private static final Logger LOG = Logger.getInstance(IdleFilesFilterScanningHandler.class);
-    private final ProjectIndexableFilesFilterHolder myFilterHolder;
-
-    public IdleFilesFilterScanningHandler(@NotNull ProjectIndexableFilesFilterHolder filterHolder) {
-      myFilterHolder = filterHolder;
-    }
 
     @Override
     public void addFileId(@NotNull Project project, int fileId) {
-    }
-
-    @Override
-    public void scanningCompleted(@NotNull Project project) {
-      ProjectIndexableFilesFilterHealthCheck healthCheck = project.getService(ProjectIndexableFilesFilterHealthCheck.class);
-      if (healthCheck != null) {
-        healthCheck.launchHealthCheck();
-      }
     }
 
     @Override

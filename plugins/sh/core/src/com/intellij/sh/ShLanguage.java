@@ -8,7 +8,7 @@ import com.intellij.notification.NotificationGroupManager;
 public final class ShLanguage extends Language {
   public static final Language INSTANCE = new ShLanguage();
 
-  public ShLanguage() {
+  private ShLanguage() {
     super("Shell Script", "application/x-bsh", "application/x-sh", "text/x-script.sh");
   }
 }

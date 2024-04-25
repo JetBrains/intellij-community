@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty
 
 import com.intellij.codeInsight.template.TemplateBuilderImpl
+import com.intellij.codeInsight.template.TemplateEditingListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -10,15 +11,19 @@ import com.intellij.psi.PsiElement
 import com.intellij.ui.NonFocusableCheckBox
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
+import org.jetbrains.kotlin.idea.refactoring.introduce.TYPE_REFERENCE_VARIABLE_NAME
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionResult
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionTarget
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.generateDeclaration
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processDuplicatesSilently
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinInplaceVariableIntroducer
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.AbstractKotlinInplaceVariableIntroducer
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.types.KotlinType
@@ -37,11 +42,15 @@ class KotlinInplacePropertyIntroducer(
     exprType: KotlinType?,
     private var extractionResult: ExtractionResult,
     private val availableTargets: List<ExtractionTarget>
-) : KotlinInplaceVariableIntroducer<KtProperty>(
+) : AbstractKotlinInplaceVariableIntroducer<KtProperty, KotlinType>(
     property, editor, project, title, KtExpression.EMPTY_ARRAY, null, false, property, false, doNotChangeVar, exprType, false
 ) {
     init {
         assert(availableTargets.isNotEmpty()) { "No targets available: ${property.getElementTextWithContext()}" }
+    }
+
+    override fun renderType(kotlinType: KotlinType): String {
+        return IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(kotlinType)
     }
 
     private var currentTarget: ExtractionTarget = extractionResult.config.generatorOptions.target
@@ -132,7 +141,18 @@ class KotlinInplacePropertyIntroducer(
 
     override fun addTypeReferenceVariable(builder: TemplateBuilderImpl) {
         if (!isInitializer()) return
-        super.addTypeReferenceVariable(builder)
+        val typeReference = myDeclaration.getTypeReference();
+        val exprType = myExprType
+        if (exprType != null) {
+            val expression = SpecifyTypeExplicitlyIntention.Companion.createTypeExpressionForTemplate(exprType, myDeclaration, false);
+            if (typeReference != null && expression != null) {
+                builder.replaceElement(typeReference, TYPE_REFERENCE_VARIABLE_NAME, expression, false);
+            }
+        }
+    }
+
+    override fun createTypeReferencePostprocessor(): TemplateEditingListener {
+        return SpecifyTypeExplicitlyIntention.Companion.createTypeReferencePostprocessor(myDeclaration)
     }
 
     override fun checkLocalScope(): PsiElement {

@@ -26,6 +26,7 @@ import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository
 import javax.swing.tree.TreePath
 
 private typealias PathAndBranch = Pair<List<String>, GitBranch>
+private typealias BranchSubtree = Any /* GitBranch | Map<String, BranchSubtree> */
 
 internal class MatchResult<Node>(val matchedNodes: Collection<Node>, val topMatch: Node?)
 
@@ -311,18 +312,22 @@ internal class LazyBranchesSubtreeHolder(
   val topMatch: GitBranch?
     get() = matchingResult.topMatch
 
-  private fun buildSubTree(prevLevel: List<PathAndBranch>): Map<String, Any> {
-    val result = LinkedHashMap<String, Any>()
-    val groups = LinkedHashMap<String, List<PathAndBranch>>()
+  private fun buildSubTree(prevLevel: List<PathAndBranch>): Map<String, BranchSubtree> {
+    val result = LinkedHashMap<String, BranchSubtree>()
+    val groups = LinkedHashMap<String, MutableList<PathAndBranch>>()
     for ((pathParts, branch) in prevLevel) {
       val (firstPathPart, restOfThePath) = pathParts.headTail()
       if (restOfThePath.isEmpty()) {
         result[firstPathPart] = branch
       }
       else {
-        groups.compute(firstPathPart) { _, currentList ->
-          (currentList ?: mutableListOf()) + (restOfThePath to branch)
-        }?.let { group -> result[firstPathPart] = group }
+        val groupChildren = groups.computeIfAbsent(firstPathPart) {
+          mutableListOf<PathAndBranch>().also {
+            // Preserve the order in he LinkedHashMap, it will be overwritten below.
+            result[firstPathPart] = emptyMap<String, Any>() // empty BranchSubtree
+          }
+        }
+        groupChildren += (restOfThePath to branch)
       }
     }
 

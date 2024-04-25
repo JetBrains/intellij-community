@@ -36,6 +36,12 @@ interface WebSymbolsContext {
     @JvmField
     val WEB_SYMBOLS_CONTEXT_FILE = ".ws-context"
 
+    @JvmField
+    val PKG_MANAGER_NODE_PACKAGES = "node-packages"
+
+    @JvmField
+    val PKG_MANAGER_RUBY_GEMS = "ruby-gems"
+
     @JvmStatic
     fun get(kind: ContextKind, location: VirtualFile, project: Project): ContextName? =
       findWebSymbolsContext(kind, location, project)

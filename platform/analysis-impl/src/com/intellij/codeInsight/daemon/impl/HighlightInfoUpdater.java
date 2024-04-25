@@ -279,6 +279,11 @@ final class HighlightInfoUpdater implements Disposable {
   /**
    * Tool {@code toolId} has generated (maybe empty) {@code newInfos} highlights during visiting PsiElement {@code visitedPsiElement}.
    * Remove all highlights that this tool had generated earlier during visiting this psi element, and replace them with {@code newInfosGenerated}
+   * Do not read below, it's very private and just for me
+   * @param toolId one of
+   *               {@code String}: the tool is a {@link LocalInspectionTool} with its {@link LocalInspectionTool#getShortName()}==toolId
+   *               {@code Class<? extends Annotator>}: the tool is an {@link com.intellij.lang.annotation.Annotator} of the corresponding class
+   *               {@code Class<? extends HighlightVisitor>}: the tool is a {@link HighlightVisitor} of the corresponding class
    */
   void psiElementVisited(@NotNull Object toolId,
                          @NotNull PsiElement visitedPsiElement,

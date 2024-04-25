@@ -83,6 +83,10 @@ var ContentRootEntity.Builder.sourceRootOrder: @Child SourceRootOrderEntity.Buil
 val ExcludeUrlEntity.contentRoot: ContentRootEntity? by WorkspaceEntity.extension()
 
 
+/**
+ * Provides an ID of a source root type (`java-source`, `java-resources`, etc.). 
+ * Use [com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry] to get a descriptor by this ID.
+ */
 data class SourceRootTypeId(val name: @NonNls String)
 
 /**

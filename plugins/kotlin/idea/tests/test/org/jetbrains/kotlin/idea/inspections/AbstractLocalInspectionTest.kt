@@ -52,6 +52,8 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
     private val fixTextDirectiveName: String = "FIX"
 
+    private val noFixTextDirectiveName: String = "NO_FIX"
+
     private fun createInspection(testDataFile: File): LocalInspectionTool {
         val candidateFiles = mutableListOf<File>()
 
@@ -161,7 +163,8 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         expectedProblemString: String?,
         expectedHighlightString: String?,
         localFixTextString: String?,
-        inspectionSettings: Element? = null
+        inspectionSettings: Element?,
+        noLocalFixTextStrings: List<String> = emptyList(),
     ): Boolean {
         val problemExpected = expectedProblemString == null || expectedProblemString != "none"
         // use Class instead of `inspection` as an argument to correctly calculate LocalInspectionToolWrapper.getID()
@@ -216,6 +219,16 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             info.findRegisteredQuickFix<Any?> { desc, _ ->
                 allLocalFixActions.add(desc.action)
                 null
+            }
+        }
+
+        if (allLocalFixActions.isNotEmpty()) {
+            val actions = allLocalFixActions.map { it.text }
+            noLocalFixTextStrings.forEach {
+                assertTrue(
+                    "Expected no `$it` fix action",
+                    it !in actions
+                )
             }
         }
 
@@ -314,6 +327,9 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         val localFixTextString = InTextDirectivesUtils.findStringWithPrefixes(
             fileText, "// $fixTextDirectiveName: "
         )
+        val noLocalFixTextStrings = InTextDirectivesUtils.findListWithPrefixes(
+            fileText, "// $noFixTextDirectiveName: "
+        )
 
         val inspectionSettings = loadInspectionSettings(mainFile)
         val afterFileAbsolutePath = getAfterTestDataAbsolutePath(mainFileName)
@@ -323,7 +339,8 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 expectedProblemString,
                 expectedHighlightString,
                 localFixTextString,
-                inspectionSettings
+                inspectionSettings,
+                noLocalFixTextStrings,
             )
         ) {
             assertFalse("${afterFileAbsolutePath.fileName} should not exist as no action could be applied", Files.exists(afterFileAbsolutePath))

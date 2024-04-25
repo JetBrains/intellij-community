@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.execution.process.*;
@@ -32,7 +32,7 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -741,16 +741,19 @@ public class ExternalJavacManager extends ProcessAdapter {
   }
 
   private static final class WslToLinuxPathConverter implements ExternalJavacMessageHandler.WslSupport {
-    private static final String WSL_PATH_PREFIX = "//wsl$/";
+    private static final List<String> WSL_PATH_PREFIXES = List.of("//wsl$/", "//wsl.localhost/");
     private static final String MNT_PREFIX = "/mnt/";
     private static final int MNT_PATTERN_LENGTH = MNT_PREFIX.length() + 2;
-    private final String myDistributionId;
 
-    WslToLinuxPathConverter(String distributionId) {
+    private final @NotNull String myDistributionId;
+    private final @NotNull String myWslPathPrefix;
+
+    WslToLinuxPathConverter(@NotNull String distributionId, @NotNull String wslPathPrefix) {
       myDistributionId = distributionId;
+      myWslPathPrefix = wslPathPrefix;
     }
 
-    public String getDistributionId() {
+    public @NotNull String getDistributionId() {
       return myDistributionId;
     }
 
@@ -758,8 +761,8 @@ public class ExternalJavacManager extends ProcessAdapter {
     public String convertPath(String path) {
       final String normalized = FileUtilRt.toSystemIndependentName(path);
       if (isWslPath(normalized)) {
-        final int distrSeparatorIndex = normalized.indexOf('/', WSL_PATH_PREFIX.length());
-        return distrSeparatorIndex > WSL_PATH_PREFIX.length()? normalized.substring(distrSeparatorIndex) : normalized;
+        final int distrSeparatorIndex = normalized.indexOf('/', myWslPathPrefix.length());
+        return distrSeparatorIndex > myWslPathPrefix.length()? normalized.substring(distrSeparatorIndex) : normalized;
       }
       if (isWinPath(normalized)) {
         return MNT_PREFIX + Character.toLowerCase(normalized.charAt(0)) + normalized.substring(2);
@@ -768,7 +771,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
 
     public ExternalJavacMessageHandler.WslSupport reverseConverter() {
-      final String prefix = WSL_PATH_PREFIX + myDistributionId;
+      final String prefix = myWslPathPrefix + myDistributionId;
       return path -> {
         if (path.startsWith(MNT_PREFIX) && path.length() >= MNT_PATTERN_LENGTH) {
           final char driveLetter = path.charAt(MNT_PREFIX.length());
@@ -783,10 +786,12 @@ public class ExternalJavacManager extends ProcessAdapter {
     static @Nullable ExternalJavacManager.WslToLinuxPathConverter createFrom(String path) {
       if (SystemInfo.isWin10OrNewer) {
         path = FileUtilRt.toSystemIndependentName(path);
-        if (path.startsWith(WSL_PATH_PREFIX)) {
-          final int distrSeparatorIndex = path.indexOf('/', WSL_PATH_PREFIX.length());
-          if (distrSeparatorIndex > WSL_PATH_PREFIX.length()) {
-            return new WslToLinuxPathConverter(path.substring(WSL_PATH_PREFIX.length(), distrSeparatorIndex));
+        for (String wslPathPrefix : WSL_PATH_PREFIXES) {
+          if (path.startsWith(wslPathPrefix)) {
+            final int distrSeparatorIndex = path.indexOf('/', wslPathPrefix.length());
+            if (distrSeparatorIndex > wslPathPrefix.length()) {
+              return new WslToLinuxPathConverter(path.substring(wslPathPrefix.length(), distrSeparatorIndex), wslPathPrefix);
+            }
           }
         }
       }
@@ -798,7 +803,12 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
 
     static boolean isWslPath(String path) {
-      return path.startsWith(WSL_PATH_PREFIX);
+      for (String wslPathPrefix : WSL_PATH_PREFIXES) {
+        if (path.startsWith(wslPathPrefix)) {
+          return true;
+        }
+      }
+      return false;
     }
 
     static boolean isWinPath(String path) {

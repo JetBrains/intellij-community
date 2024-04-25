@@ -47,22 +47,23 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     super.setUp()
   }
 
-  fun testAllFilesWithMemberNameReported() {
+  fun testStressAllFilesWithMemberNameReported() {
     TestModeFlags.set(CodeVisionHost.isCodeVisionTestKey, true, testRootDisposable)
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)
+    val filesGenerator = psiJavaFiles()
     PropertyChecker.customized()
-      .withIterationCount(50)
-      .checkScenarios { ImperativeCommand(this::doTestAllFilesWithMemberNameReported) }
+      .withIterationCount(30)
+      .checkScenarios { ImperativeCommand { this.doTestAllFilesWithMemberNameReported(it, filesGenerator) } }
   }
 
-  private fun doTestAllFilesWithMemberNameReported(env: ImperativeCommand.Environment) {
+  private fun doTestAllFilesWithMemberNameReported(env: ImperativeCommand.Environment, filesGenerator: Generator<PsiJavaFile>) {
     val changedFiles = mutableMapOf<VirtualFile, Set<VirtualFile>>()
 
     MadTestingUtil.changeAndRevert(myProject) {
       val nFilesToChange = env.generateValue(Generator.integers(1, 3), "Files to change: %s")
       var i = 0
       while (i < nFilesToChange) {
-        val fileToChange = env.generateValue(psiJavaFiles(), null)
+        val fileToChange = env.generateValue(filesGenerator, null)
         val relatedFiles = findRelatedFiles(fileToChange)
         if (relatedFiles.isEmpty()) continue
 

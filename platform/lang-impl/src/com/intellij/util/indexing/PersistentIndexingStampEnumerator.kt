@@ -1,15 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory
-import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumeratorFactory
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory
+import com.intellij.platform.util.io.storages.DataExternalizerEx
+import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory
+import com.intellij.platform.util.io.storages.KeyDescriptorEx
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.DurableDataEnumerator
-import com.intellij.util.io.IOUtil
-import com.intellij.util.io.KeyDescriptor
-import com.intellij.util.io.PersistentEnumerator
-import com.intellij.util.io.dev.enumerator.DataExternalizerEx
-import com.intellij.util.io.dev.enumerator.KeyDescriptorEx
+import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 import java.io.DataInput
@@ -21,10 +18,7 @@ import java.nio.file.Path
 
 private val USE_MAPPED_ENUMERATOR = SystemProperties.getBooleanProperty("idea.use-mapped-index-stamps-enumerator", true)
 
-class DurableTimestampsEnumerator(path: Path) : DurableDataEnumerator<TimestampsImmutable>
-                                                by createTimestampsEnumerator(path)
-
-private fun createTimestampsEnumerator(path: Path): DurableDataEnumerator<TimestampsImmutable> {
+fun createTimestampsEnumerator(path: Path): DurableDataEnumerator<TimestampsImmutable> {
   return if (!USE_MAPPED_ENUMERATOR) {
     PersistentEnumerator(path, TimestampsKeyDescriptor(), 1024, null, 1)
   }
@@ -37,7 +31,8 @@ private fun createTimestampsEnumerator(path: Path): DurableDataEnumerator<Timest
         AppendOnlyLogFactory.withDefaults()
           .pageSize(256 * IOUtil.KiB) //use small page size: we expect only (100..1000)s records in the enumerator
       ).open(pathWithNewFileName)
-    return object : DurableDataEnumerator<TimestampsImmutable> by durableEnumerator {
+    return object : DurableDataEnumerator<TimestampsImmutable> by durableEnumerator,
+                    Unmappable by durableEnumerator {
       //TODO RC: general DataEnumerator contract states .valueOf(unknownId) == null.
       //         DurableEnumerator violates this contract and throws Exception for unknownId.
       //         This was done intentionally, because I believe supplying the unknownId to enumerator is almost always

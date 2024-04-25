@@ -41,7 +41,8 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
                         if (primaryConstructor?.matchesWithExpect(declaration) == true) {
                             primaryConstructor
                         } else {
-                            targetDeclaration.secondaryConstructors.find { it.matchesWithExpect(declaration) }
+                            val secondaryConstructor = targetDeclaration.secondaryConstructors.find { it.matchesWithExpect(declaration) }
+                            if (secondaryConstructor != null) secondaryConstructor else if (declaration.valueParameters.isEmpty()) targetDeclaration else null
                         }
                     } else null
                 }

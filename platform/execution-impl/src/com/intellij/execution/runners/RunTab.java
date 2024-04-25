@@ -160,12 +160,13 @@ public abstract class RunTab implements DataProvider, Disposable {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         RunnerContentUi contentUi = RunnerContentUi.KEY.getData((DataProvider)myUi);
-        return Objects.requireNonNull(contentUi).getViewActions();
+        return contentUi == null ? EMPTY_ARRAY : contentUi.getViewActions();
       }
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(getChildren(null).length > 0);
+        RunnerContentUi contentUi = RunnerContentUi.KEY.getData((DataProvider)myUi);
+        e.getPresentation().setEnabledAndVisible(contentUi != null && contentUi.getViewActions().length > 0);
       }
 
       @Override

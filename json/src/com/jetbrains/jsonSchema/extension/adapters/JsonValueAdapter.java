@@ -29,6 +29,15 @@ public interface JsonValueAdapter {
   boolean isBooleanLiteral();
   boolean isNull();
 
+  /**
+   * Returns whether this adapter represents just empty text.
+   * <p>
+   * In languages where empty objects or values are not denotable easily (e.g. YAML), it is sometimes necessary to know the difference.
+   * For instance, an empty YAML document is considered an empty object, but is not exactly an object (inserting elements inside requires
+   * some extra plumbing).
+   */
+  default boolean isEmptyAdapter() { return false; }
+
   @NotNull PsiElement getDelegate();
 
   @Nullable JsonObjectValueAdapter getAsObject();

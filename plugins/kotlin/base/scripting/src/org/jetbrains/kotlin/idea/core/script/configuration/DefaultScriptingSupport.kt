@@ -165,7 +165,7 @@ class DefaultScriptingSupport(manager: CompositeScriptConfigurationManager) : De
         val (async, sync) = loaders.partition { it.shouldRunInBackground(scriptDefinition) }
 
         val syncLoader =
-            sync.filter { it.loadDependencies(isFirstLoad, file, scriptDefinition, loadingContext) }.firstOrNull()
+            sync.firstOrNull { it.loadDependencies(isFirstLoad, file, scriptDefinition, loadingContext) }
 
         return if (syncLoader == null) {
             if (!fromCacheOnly) {

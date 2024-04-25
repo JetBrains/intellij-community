@@ -10,6 +10,9 @@ import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateEntry
 
+/**
+ * If `isStr` is not provided, analysis session is started in init to determine the type of the expression.
+ */
 class K2ExtractableSubstringInfo(
     startEntry: KtStringTemplateEntry,
     endEntry: KtStringTemplateEntry,

@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
@@ -22,7 +23,6 @@ import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.FontUtil;
 import com.intellij.util.JavaCoroutines;
@@ -157,7 +157,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       private static @Nullable String getShortcut() {
         if (ourDoubleCtrlRegistered) {
           return IdeBundle.message("double.ctrl.or.shift.shortcut",
-                                   SystemInfoRt.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : "Ctrl"); //NON-NLS
+                                   ClientSystemInfo.isMac() ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : "Ctrl"); //NON-NLS
         }
         //keymap shortcut is added automatically
         return null;

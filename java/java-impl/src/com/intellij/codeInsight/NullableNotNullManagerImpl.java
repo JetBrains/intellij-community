@@ -12,6 +12,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -26,10 +27,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -278,7 +277,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       for (PsiClass tqNick : nickDeclarations) {
         result.addAll(ContainerUtil.findAll(MetaAnnotationUtil.getChildren(tqNick, scope), Jsr305Support::isNullabilityNickName));
       }
-      return CachedValueProvider.Result.create(new ArrayList<>(result), PsiModificationTracker.MODIFICATION_COUNT);
+      return Result.create(new ArrayList<>(result), PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -345,14 +344,14 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @Override
   protected @NotNull List<String> getNullablesWithNickNames() {
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
-      CachedValueProvider.Result.create(StreamEx.of(getNullables(), filterNickNames(Nullability.NULLABLE)).toFlatList(Function.identity()),
+      Result.create(StreamEx.of(getNullables(), filterNickNames(Nullability.NULLABLE)).toFlatList(Function.identity()),
                                         PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override
   protected @NotNull List<String> getNotNullsWithNickNames() {
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () ->
-      CachedValueProvider.Result.create(StreamEx.of(getNotNulls(), filterNickNames(Nullability.NOT_NULL)).toFlatList(Function.identity()),
+      Result.create(StreamEx.of(getNotNulls(), filterNickNames(Nullability.NOT_NULL)).toFlatList(Function.identity()),
                                         PsiModificationTracker.MODIFICATION_COUNT));
   }
 
@@ -389,7 +388,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
           return result.get(annotation);
         }
       };
-      return CachedValueProvider.Result.create(holder, PsiModificationTracker.MODIFICATION_COUNT);
+      return Result.create(holder, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -432,6 +431,26 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
               stringList("myNotNulls", JavaBundle.message("nullable.notnull.annotations.panel.title", "NotNull"),
                          new JavaClassValidator().annotationsOnly())
           ))));
+  }
+
+  @Override
+  public final @Nullable NullabilityAnnotationInfo findEffectiveNullabilityInfo(@NotNull PsiModifierListOwner owner) {
+    PsiType type = PsiUtil.getTypeByPsiElement(owner);
+    if (type == null || TypeConversionUtil.isPrimitiveAndNotNull(type)) return null;
+
+    return CachedValuesManager.getCachedValue(owner, () -> {
+      NullabilityAnnotationInfo info = doFindEffectiveNullabilityAnnotation(owner);
+
+      PsiFile file = owner.getContainingFile();
+      if (file != null
+          && file.getVirtualFile() != null
+          && ProjectFileIndex.getInstance(owner.getProject()).isInLibrary(file.getVirtualFile())) {
+        // there is no need to recompute info on changes in the project code
+        return Result.create(info, JavaLibraryModificationTracker.getInstance(owner.getProject()));
+      }
+
+      return Result.create(info, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   /**

@@ -121,7 +121,7 @@ public final class NonAtomicOperationOnVolatileFieldInspection extends BaseInspe
       if (SynchronizationUtil.isInSynchronizedContext(reference)) {
         return null;
       }
-      return (PsiReferenceExpression)expression;
+      return reference;
     }
   }
 }

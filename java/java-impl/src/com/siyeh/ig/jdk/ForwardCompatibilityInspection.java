@@ -7,7 +7,6 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -40,7 +39,7 @@ public final class ForwardCompatibilityInspection extends AbstractBaseJavaLocalI
       private @Nullable @InspectionMessage String getIdentifierWarning(PsiIdentifier identifier) {
         String name = identifier.getText();
         PsiElement parent = identifier.getParent();
-        JavaFeature feature = JavaLexer.softKeywordFeature(name);
+        JavaFeature feature = PsiUtil.softKeywordFeature(name);
         if (feature != null && 
             feature != JavaFeature.MODULES && !name.equals(PsiKeyword.WHEN) && // Keywords from module-info and 'when' still can be used as class names
             !feature.isSufficient(languageLevel) && parent instanceof PsiClass) {

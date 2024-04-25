@@ -17,4 +17,13 @@ object ResultUtil {
     catch (e: Exception) {
       Result.failure(e)
     }
+
+  /**
+   * Allows processing the error before re-throwing it
+   * Will silently re-throw cancellation and JVM errors
+   */
+  inline fun <T> Result<T>.processErrorAndGet(handler: (e: Throwable) -> Unit): T =
+    onFailure {
+      if (it !is CancellationException && it !is Error) handler(it)
+    }.getOrThrow()
 }

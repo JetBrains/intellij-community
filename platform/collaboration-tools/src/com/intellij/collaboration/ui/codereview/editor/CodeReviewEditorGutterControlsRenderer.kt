@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.CustomFoldRegion
@@ -24,6 +25,8 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.scale.JBUIScale
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -58,9 +61,11 @@ private constructor(cs: CoroutineScope,
 
   init {
     val areaDisposable = Disposer.newDisposable()
-    editor.gutterComponentEx.reserveLeftFreePaintersAreaWidth(areaDisposable, ICON_AREA_WIDTH)
-    editor.addEditorMouseListener(hoverHandler)
-    editor.addEditorMouseMotionListener(hoverHandler)
+    cs.launch(Dispatchers.EDT) {
+      editor.gutterComponentEx.reserveLeftFreePaintersAreaWidth(areaDisposable, ICON_AREA_WIDTH)
+      editor.addEditorMouseListener(hoverHandler)
+      editor.addEditorMouseMotionListener(hoverHandler)
+    }
 
     cs.launchNow {
       model.gutterControlsState.collect {
@@ -244,14 +249,19 @@ private constructor(cs: CoroutineScope,
 
     private fun getIconColumnXRange(editor: EditorEx): IntRange {
       val gutter = editor.gutterComponentEx
-      val iconAreaWidth = if (editor is EditorImpl) EditorUIUtil.scaleWidth(ICON_AREA_WIDTH, editor) else ICON_AREA_WIDTH
+      val uiScaledIconAreaWidth = JBUIScale.scale(ICON_AREA_WIDTH)
+      val iconAreaWidth =
+        // Same calculation as within com.intellij.openapi.editor.impl.EditorGutterComponentImpl#getLeftFreePaintersAreaWidth
+        if (editor is EditorImpl && ExperimentalUI.isNewUI()) EditorUIUtil.scaleWidth(uiScaledIconAreaWidth, editor) + 2
+        else uiScaledIconAreaWidth
       val iconStart = if (editor.verticalScrollbarOrientation == EditorEx.VERTICAL_SCROLLBAR_RIGHT) {
         gutter.lineMarkerAreaOffset
       }
       else {
         gutter.width - gutter.lineMarkerAreaOffset - iconAreaWidth
       }
-      val iconEnd = iconStart + iconAreaWidth
+      // Correct for inclusive range with -1
+      val iconEnd = iconStart + iconAreaWidth - 1
       return iconStart..iconEnd
     }
 

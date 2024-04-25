@@ -25,5 +25,10 @@
     <line>25</line>
     <description>Interface is not implemented.</description>
   </problem>
+  <problem>
+    <file>RepeatableAnnotation.java</file>
+    <line>41</line>
+    <description>Method is never used.</description>
+  </problem>
 </problems>
 

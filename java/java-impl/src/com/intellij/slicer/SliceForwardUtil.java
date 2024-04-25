@@ -84,7 +84,7 @@ final class SliceForwardUtil {
     if (from instanceof PsiParameter parameter) {
       PsiElement scope = parameter.getDeclarationScope();
       Collection<PsiParameter> parametersToAnalyze = new HashSet<>();
-      if (scope instanceof PsiMethod method && ((PsiMethod)scope).hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (scope instanceof PsiMethod method && method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         int index = method.getParameterList().getParameterIndex(parameter);
         final Set<PsiMethod> implementors = new HashSet<>();
 

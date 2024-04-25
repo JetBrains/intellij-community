@@ -757,6 +757,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/delegationToVarProperty/parameter.kt");
         }
 
+        @TestMetadata("usedAsPropertyInitializer.kt")
+        public void testUsedAsPropertyInitializer() throws Exception {
+            runTest("../testData/inspectionsLocal/delegationToVarProperty/usedAsPropertyInitializer.kt");
+        }
+
+        @TestMetadata("usedAsPropertyInitializer2.kt")
+        public void testUsedAsPropertyInitializer2() throws Exception {
+            runTest("../testData/inspectionsLocal/delegationToVarProperty/usedAsPropertyInitializer2.kt");
+        }
+
         @TestMetadata("usedForOtherClass.kt")
         public void testUsedForOtherClass() throws Exception {
             runTest("../testData/inspectionsLocal/delegationToVarProperty/usedForOtherClass.kt");
@@ -765,6 +775,11 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("usedInFunction.kt")
         public void testUsedInFunction() throws Exception {
             runTest("../testData/inspectionsLocal/delegationToVarProperty/usedInFunction.kt");
+        }
+
+        @TestMetadata("usedInFunctionWithAssignment.kt")
+        public void testUsedInFunctionWithAssignment() throws Exception {
+            runTest("../testData/inspectionsLocal/delegationToVarProperty/usedInFunctionWithAssignment.kt");
         }
 
         @TestMetadata("valParameter.kt")

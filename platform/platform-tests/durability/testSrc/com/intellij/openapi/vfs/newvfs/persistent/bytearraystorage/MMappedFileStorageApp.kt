@@ -3,8 +3,8 @@ package com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage
 
 import com.intellij.openapi.vfs.newvfs.persistent.App
 import com.intellij.openapi.vfs.newvfs.persistent.AppAgent
-import com.intellij.util.io.dev.mmapped.MMappedFileStorage
-import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorage
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory
 import java.nio.file.Path
 import kotlin.math.min
 

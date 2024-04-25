@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.high-level-api-fir-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-fir-tests-for-ide:2.0.20-dev-1117">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-fir-tests-for-ide:2.0.20-dev-2192">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fir-tests-for-ide/2.0.20-dev-1117/high-level-api-fir-tests-for-ide-2.0.20-dev-1117.jar">
-          <sha256sum>076739d0e0ca023623005cbe57bf40e88335f434d9c619ecfeedf752b9608c81</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fir-tests-for-ide/2.0.20-dev-2192/high-level-api-fir-tests-for-ide-2.0.20-dev-2192.jar">
+          <sha256sum>5d5fdde8b0816ce4b10a24fab4d727a8b8d2bb099d7a876293ce868f20c9bd08</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fir-tests-for-ide/2.0.20-dev-1117/high-level-api-fir-tests-for-ide-2.0.20-dev-1117.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fir-tests-for-ide/2.0.20-dev-2192/high-level-api-fir-tests-for-ide-2.0.20-dev-2192.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fir-tests-for-ide/2.0.20-dev-1117/high-level-api-fir-tests-for-ide-2.0.20-dev-1117-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fir-tests-for-ide/2.0.20-dev-2192/high-level-api-fir-tests-for-ide-2.0.20-dev-2192-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<problems>  
+<problems>
+  <problem>
+    <file>B.java</file>
+    <line>1</line>
+    <offset>6</offset>
+    <length>1</length>
+    <description>Class has one instantiation, but it is not reachable from entry points.</description>
+  </problem>
 </problems>
 

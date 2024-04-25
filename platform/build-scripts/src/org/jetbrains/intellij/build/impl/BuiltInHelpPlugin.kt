@@ -8,6 +8,7 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.impl.productRunner.runJavaForIntellijModule
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.archiveDir
 import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
@@ -90,11 +91,11 @@ private val helpIndexerMutex = Mutex()
 private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, context: CompilationContext) {
   spanBuilder("index help topics").use {
     helpIndexerMutex.withLock {
-      runIdea(context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
-              args = listOf(resourceRoot.resolve("search").toString(),
+      runJavaForIntellijModule(context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
+                               args = listOf(resourceRoot.resolve("search").toString(),
                             resourceRoot.resolve("topics").toString()),
-              jvmArgs = emptyList(),
-              classPath = classPath)
+                               jvmArgs = emptyList(),
+                               classPath = classPath)
     }
     writeNewZipWithoutIndex(assetJar, compress = true) { zipCreator ->
       val archiver = ZipArchiver(zipCreator)

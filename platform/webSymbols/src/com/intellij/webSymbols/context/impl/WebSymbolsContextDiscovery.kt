@@ -12,6 +12,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
@@ -32,12 +33,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.lazyUnsafe
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
 import com.intellij.webSymbols.context.WebSymbolContextChangeListener
@@ -62,109 +63,93 @@ private val reloadMonitor = Any()
 private val LOG = Logger.getInstance(WebSymbolsContext::class.java)
 
 @RequiresReadLock
-internal fun findWebSymbolsContext(kind: ContextKind, location: PsiElement): ContextName? {
-  ProgressManager.checkCanceled()
-  if (!location.isValid) {
-    return null
+internal fun findWebSymbolsContext(kind: ContextKind, location: PsiElement): ContextName? =
+  forPsiLocation(location) {
+    findWebSymbolsContext(kind, it)
   }
-  if (location is PsiDirectory) {
-    val dir = location.virtualFile
-    val project = location.project
-    val contextInfo = project.contextInfo
-    return withContextChangeCheck(kind, project, contextInfo, dir, null,
-                                  getContextRulesConfigInDir(contextInfo, dir),
-                                  getContextFileConfigInDir(contextInfo, dir))
-  }
-  val psiFile = InjectedLanguageManager.getInstance(location.project).getTopLevelFile(location) ?: return null
-  findEnabledFromProviders(kind, psiFile)?.let { return it }
-
-  val file = findOriginalFile(psiFile.originalFile.virtualFile)
-  @Suppress("DEPRECATION")
-  return findWebSymbolsContext(
-    kind,
-    (if (file != null && file.isInLocalFileSystem) file
-    else psiFile.project.baseDir) ?: return null,
-    psiFile.project)
-}
 
 @RequiresReadLock
-internal fun findWebSymbolsContext(kind: ContextKind, location: VirtualFile, project: Project): ContextName? {
-  if (project.isDisposed) return null
-  val dirContext = location.isDirectory
-  val file: VirtualFile? = findOriginalFile(location)
-  if (file?.isDirectory == false) {
-    findEnabledFromProviders(kind, file, project)
-      ?.let { return it }
+internal fun findWebSymbolsContext(kind: ContextKind, location: VirtualFile, project: Project): ContextName? =
+  forVfsLocation(project, location) {
+    findWebSymbolsContext(kind, it)
   }
-  val dir = (if (dirContext) file else file?.parent)?.takeIf { it.isValid }
-            ?: return null
-  val contextInfo = project.contextInfo
-  return withContextChangeCheck(kind, project, contextInfo, dir, file, getContextRulesConfigInDir(contextInfo, dir),
-                                getContextFileConfigInDir(contextInfo, dir))
-}
 
 @RequiresReadLock
-internal fun buildWebSymbolsContext(location: PsiElement): WebSymbolsContext {
-  if (!location.isValid) {
-    return WebSymbolsContext.empty()
-  }
+internal fun buildWebSymbolsContext(location: PsiElement): WebSymbolsContext =
+  forPsiLocation(location) { locationInfo ->
+    allKinds(locationInfo.rulesConfigInDir, locationInfo.fileConfigInDir)
+      .asSequence()
+      .mapNotNull { kind -> findWebSymbolsContext(kind, locationInfo)?.let { Pair(kind, it) } }
+      .toMap()
+      .let { WebSymbolsContext.create(it) }
+  } ?: WebSymbolsContext.empty()
+
+private fun findWebSymbolsContext(kind: ContextKind, locationInfo: LocationInfo): ContextName? =
+  locationInfo.psiFile
+    ?.let { findEnabledFromProviders(kind, it) }
+  ?: locationInfo.file
+    ?.let { findEnabledFromProviders(kind, it, locationInfo.project) }
+  ?: withContextChangeCheck(kind, locationInfo)
+
+private fun <T> forPsiLocation(location: PsiElement, action: (LocationInfo) -> T): T? {
+  if (!location.isValid) return null
   val project = location.project
-  val contextInfo = project.contextInfo
+  val psiFile = location.takeIf { it !is PsiDirectory }
+    ?.let { InjectedLanguageManager.getInstance(project).getTopLevelFile(it) }
 
-  val contextMap = if (location is PsiDirectory) {
-    val rulesConfigInDir = getContextRulesConfigInDir(contextInfo, location.virtualFile)
-    val fileConfigInDir = getContextFileConfigInDir(contextInfo, location.virtualFile)
-    allKinds(rulesConfigInDir, fileConfigInDir).mapNotNull { kind ->
-      withContextChangeCheck(kind, project, contextInfo, location.virtualFile, null, rulesConfigInDir, fileConfigInDir)
-        ?.let { Pair(kind, it) }
-    }
-  }
-  else {
-    val psiFile = InjectedLanguageManager.getInstance(project)
-      .getTopLevelFile(location)
+  return forVfsLocation(
+    project,
+    if (location is PsiDirectory)
+      location.virtualFile
+    else
+      location.containingFile?.originalFile?.viewProvider?.virtualFile ?: return null,
+    psiFile, action
+  )
+}
 
-    val virtualFile = findOriginalFile(psiFile.originalFile.virtualFile)
+private fun <T> forVfsLocation(
+  project: Project,
+  location: VirtualFile,
+  psiFile: PsiFile? = null,
+  action: (LocationInfo) -> T
+): T? {
+  ProgressManager.checkCanceled()
+  if (project.isDisposed) return null
+  val virtualFile = findOriginalFile(location)?.takeIf { it.isInLocalFileSystem }
 
-    val psiDir = virtualFile
-      ?.parent
-      ?.takeIf { it.isValid }
-      ?.let { PsiManager.getInstance(project).findDirectory(it) }
+  val dir =
+    when {
+      virtualFile == null -> @Suppress("DEPRECATION") project.baseDir
+      virtualFile.isDirectory -> virtualFile
+      else -> virtualFile.parent?.takeIf { it.isValid }
+    } ?: return null
 
-    val rulesConfigInDir = psiDir?.let { getContextRulesConfigInDir(contextInfo, psiDir.virtualFile) }
-    val fileConfigInDir = psiDir?.let { getContextFileConfigInDir(contextInfo, psiDir.virtualFile) }
+  return action(LocationInfo(project, dir, psiFile, virtualFile?.takeIf { !it.isDirectory }))
+}
 
-    @Suppress("DEPRECATION")
-    val checkLocation = if (virtualFile != null && virtualFile.isInLocalFileSystem) virtualFile else project.baseDir
-
-    allKinds(rulesConfigInDir, fileConfigInDir).mapNotNull { kind ->
-      findEnabledFromProviders(kind, psiFile)
-        ?.let { return@mapNotNull Pair(kind, it) }
-
-      if (checkLocation?.isDirectory == false) {
-        findEnabledFromProviders(kind, checkLocation, project)
-          ?.let { return@mapNotNull Pair(kind, it) }
-      }
-
-      if (checkLocation == null || psiDir == null || rulesConfigInDir == null || fileConfigInDir == null)
-        return@mapNotNull null
-
-      withContextChangeCheck(kind, project, contextInfo, psiDir.virtualFile, checkLocation, rulesConfigInDir, fileConfigInDir)
-        ?.let { Pair(kind, it) }
-    }
-  }
-  return WebSymbolsContext.create(contextMap.toMap())
+private class LocationInfo(
+  val project: Project,
+  val dir: VirtualFile,
+  val psiFile: PsiFile?,
+  val file: VirtualFile?,
+) {
+  val contextInfo: WebSymbolsContextDiscoveryInfo = project.contextInfo
+  val rulesConfigInDir: ContextRulesConfigInDir by lazyUnsafe { contextInfo.getContextRulesConfigInDir(dir) }
+  val fileConfigInDir: ContextFileConfigInDir by lazyUnsafe { contextInfo.getContextFileConfigInDir(dir) }
 }
 
 private fun allKinds(rulesConfigInDir: ContextRulesConfigInDir?, fileConfigInDir: ContextFileConfigInDir?): Set<String> =
   (rulesConfigInDir?.kinds ?: emptySet()) + (fileConfigInDir?.kinds ?: emptySet()) + WEB_SYMBOLS_CONTEXT_EP.allKinds()
 
-private fun findContextInDirOrFileCached(kind: ContextKind,
-                                         project: Project,
-                                         contextInfo: WebSymbolsContextDiscoveryInfo,
-                                         dir: VirtualFile,
-                                         file: VirtualFile?,
-                                         rulesConfigInDir: ContextRulesConfigInDir,
-                                         fileConfigInDir: ContextFileConfigInDir): ContextName? {
+private fun findContextInDirOrFileCached(kind: ContextKind, locationInfo: LocationInfo): ContextName? {
+  val project = locationInfo.project
+  val contextInfo = locationInfo.contextInfo
+  val dir = locationInfo.dir
+  val file = locationInfo.file
+  val rulesConfigInDir = locationInfo.rulesConfigInDir
+  val fileConfigInDir = locationInfo.fileConfigInDir
+
+  assert(file == null || !file.isDirectory) { "\'${file?.path}\' is not a file." }
   // File config overrides any automatic detection
   fileConfigInDir
     .findByFileName(kind, file?.name)
@@ -201,12 +186,6 @@ private fun findContextInDirOrFileCached(kind: ContextKind,
     ?.takeIf { file == null || !isAnyForbidden(kind, file, project) }
 }
 
-private fun getContextRulesConfigInDir(contextInfo: WebSymbolsContextDiscoveryInfo, dir: VirtualFile): ContextRulesConfigInDir =
-  contextInfo.getContextRulesConfigInDir(dir)
-
-private fun getContextFileConfigInDir(contextInfo: WebSymbolsContextDiscoveryInfo, dir: VirtualFile): ContextFileConfigInDir =
-  contextInfo.getContextFileConfigInDir(dir)
-
 private fun calcProximityPerContextFromRules(project: Project,
                                              directory: VirtualFile,
                                              enableWhen: Map<ContextKind, Map<ContextName, List<EnablementRules>>>)
@@ -215,15 +194,29 @@ private fun calcProximityPerContextFromRules(project: Project,
   val result = mutableMapOf<ContextKind, MutableMap<String, Double>>()
   val modificationTrackers = mutableSetOf<ModificationTracker>()
 
-  fun calculateProximity(listAccessor: (EnablementRules) -> List<String>, sourceKind: SourceKind) {
-    val depsToContext = enableWhen
-      .flatMap { (contextKind, map) ->
-        map.entries.flatMap { (contextName, value) ->
-          value.asSequence().flatMap(listAccessor).map { Pair(it, Pair(contextKind, contextName)) }
-        }
+  val sourceKindToDepsToContext = enableWhen
+    .flatMap { (contextKind, map) ->
+      map.entries.flatMap { (contextName, value) ->
+        value.asSequence().flatMap { rule ->
+          // Check enabled IDE libraries
+          rule.ideLibraries.asSequence()
+            .map { Pair(SourceKind.IdeLibrary, it) } +
+          // Check project tool executables
+          rule.projectToolExecutables.asSequence()
+            .map { Pair(SourceKind.ProjectToolExecutable, it) } +
+          // Check package manager dependencies
+          rule.pkgManagerDependencies.asSequence()
+            .flatMap { dep ->
+              val pkgManagerSourceKind = SourceKind.PackageManagerDependency(dep.key)
+              dep.value.asSequence().map { Pair(pkgManagerSourceKind, it) }
+            }
+        }.map { Triple(it.first, it.second, Pair(contextKind, contextName)) }
       }
-      .groupBy({ it.first }, { it.second })
+    }
+    .groupBy({ it.first }, { Pair(it.second, it.third) })
+    .mapValues { perSourceKind -> perSourceKind.value.groupBy({ it.first }, { it.second }) }
 
+  sourceKindToDepsToContext.forEach { (sourceKind, depsToContext) ->
     WebSymbolsContextSourceProximityProvider.calculateProximity(project, directory, depsToContext.keys, sourceKind)
       .let {
         it.dependency2proximity.forEach { (lib, proximity) ->
@@ -236,15 +229,6 @@ private fun calcProximityPerContextFromRules(project: Project,
         modificationTrackers.addAll(it.modificationTrackers)
       }
   }
-
-  // Check enabled IDE libraries
-  calculateProximity({ it.ideLibraries }, SourceKind.IdeLibrary)
-
-  // Check packages by `package.json` entries
-  calculateProximity({ it.pkgManagerDependencies }, SourceKind.PackageManagerDependency)
-
-  // Check project tool executables
-  calculateProximity({ it.projectToolExecutables }, SourceKind.ProjectToolExecutable)
 
   return Pair(result.mapValues { (_, map) -> map.toMap() }, modificationTrackers)
 }
@@ -282,7 +266,7 @@ private class ContextRulesConfigInDir(val project: Project,
 
   private val proximityCache = CachedValuesManager.getManager(project).createCachedValue {
     val result = calcProximityPerContextFromRules(project, directory, rules.mapValues { it.value.enable })
-    CachedValueProvider.Result.create(result.first, dependencies + result.second)
+    CachedValueProvider.Result.create(result.first, result.second + dependencies)
   }
 
   val kinds: Set<ContextKind> get() = rules.keys
@@ -383,20 +367,15 @@ private fun webContextProximityFromProviders(kind: ContextKind,
 
 private const val EMPTY_CONTEXT = "%EMPTY%"
 
-private fun withContextChangeCheck(kind: ContextKind,
-                                   project: Project,
-                                   contextInfo: WebSymbolsContextDiscoveryInfo,
-                                   dir: VirtualFile,
-                                   file: VirtualFile?,
-                                   rulesConfigInDir: ContextRulesConfigInDir,
-                                   fileConfigInDir: ContextFileConfigInDir): ContextName? {
-  val currentState = findContextInDirOrFileCached(kind, project, contextInfo, dir, file, rulesConfigInDir, fileConfigInDir)
+private fun withContextChangeCheck(kind: ContextKind, locationInfo: LocationInfo): ContextName? {
+  val currentState = findContextInDirOrFileCached(kind, locationInfo)
     ?.takeIf { it != WebSymbolsContext.VALUE_NONE }
 
-  val contextFile = file ?: dir
-  val prevState = contextInfo.updateContext(contextFile, kind, currentState ?: EMPTY_CONTEXT)
+  val contextFile = locationInfo.file ?: locationInfo.dir
+  val prevState = locationInfo.contextInfo.updateContext(contextFile, kind, currentState ?: EMPTY_CONTEXT)
   if (prevState != null && prevState != (currentState ?: EMPTY_CONTEXT)) {
-    reloadProject(kind, prevState.takeIf { it != EMPTY_CONTEXT } ?: "none", currentState ?: "none", project, contextFile)
+    reloadProject(kind, prevState.takeIf { it != EMPTY_CONTEXT } ?: "none",
+                  currentState ?: "none", locationInfo.project, contextFile)
   }
   return currentState
 }
@@ -421,9 +400,13 @@ private fun reloadProject(kind: ContextKind, prevState: ContextName, newState: C
   ApplicationManager.getApplication().invokeLater(
     Runnable {
       WriteAction.run<RuntimeException> {
-        ProjectRootManagerEx.getInstanceEx(project)
-          .makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED)
-        project.putUserData(CONTEXT_RELOAD_MARKER_KEY, null)
+        try {
+          ProjectRootManagerEx.getInstanceEx(project)
+            .makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED)
+        }
+        finally {
+          project.putUserData(CONTEXT_RELOAD_MARKER_KEY, null)
+        }
       }
     },
     ModalityState.nonModal(),
@@ -450,6 +433,7 @@ private class WebSymbolsContextDiscoveryInfo(private val project: Project, priva
       override fun rootsChanged(event: ModuleRootEvent) {
         previousContext.clear()
         cachedData.clear()
+        thisLogger().info("Notifying that Web Symbol context may have changed due to roots changes.")
         project.messageBus.syncPublisher(WebSymbolContextChangeListener.TOPIC).contextMayHaveChanged()
       }
     })
@@ -458,7 +442,9 @@ private class WebSymbolsContextDiscoveryInfo(private val project: Project, priva
     })
     messageBus.subscribe(VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
-        if (events.any { it.file?.name == WebSymbolsContext.WEB_SYMBOLS_CONTEXT_FILE }) {
+        val wsFile = events.find { it.file?.name == WebSymbolsContext.WEB_SYMBOLS_CONTEXT_FILE }
+        if (wsFile != null) {
+          thisLogger().info("Notifying that Web Symbol context may have changed due to changes in ${wsFile.path}.")
           cs.launch {
             project.messageBus.syncPublisher(WebSymbolContextChangeListener.TOPIC).contextMayHaveChanged()
           }

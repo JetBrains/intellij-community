@@ -16,5 +16,3 @@ private fun b(a: Int, b: Int): Boolean {
     println(a - b)
     return false
 }
-
-// IGNORE_K2

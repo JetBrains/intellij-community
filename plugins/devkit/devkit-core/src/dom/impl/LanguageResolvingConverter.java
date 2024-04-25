@@ -18,7 +18,7 @@ class LanguageResolvingConverter extends ResolvingConverter<LanguageResolvingUti
 
   @NotNull
   @Override
-  public Collection<LanguageResolvingUtil.LanguageDefinition> getVariants(final ConvertContext context) {
+  public Collection<LanguageResolvingUtil.LanguageDefinition> getVariants(final @NotNull ConvertContext context) {
     return LanguageResolvingUtil.getAllLanguageDefinitions(context);
   }
 
@@ -34,7 +34,7 @@ class LanguageResolvingConverter extends ResolvingConverter<LanguageResolvingUti
 
   @Nullable
   @Override
-  public LanguageResolvingUtil.LanguageDefinition fromString(@Nullable @NonNls final String s, ConvertContext context) {
+  public LanguageResolvingUtil.LanguageDefinition fromString(@Nullable @NonNls final String s, @NotNull ConvertContext context) {
     Ref<LanguageResolvingUtil.LanguageDefinition> result = new Ref<>();
     LanguageResolvingUtil.processAllLanguageDefinitions(context, definition -> {
       if (definition.id.equals(s)) {
@@ -54,12 +54,12 @@ class LanguageResolvingConverter extends ResolvingConverter<LanguageResolvingUti
 
   @Nullable
   @Override
-  public String toString(@Nullable LanguageResolvingUtil.LanguageDefinition o, ConvertContext context) {
+  public String toString(@Nullable LanguageResolvingUtil.LanguageDefinition o, @NotNull ConvertContext context) {
     return o != null ? o.id : null;
   }
 
   @Override
-  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+  public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
     return DevKitBundle.message("plugin.xml.convert.language.id.cannot.resolve", s);
   }
 }

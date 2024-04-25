@@ -351,8 +351,8 @@ class JarPackager private constructor(
     val patchedDirs = moduleOutputPatcher.getPatchedDir(moduleName)
     val patchedContent = moduleOutputPatcher.getPatchedContent(moduleName)
 
-    val searchableOptionsModuleDir = if (moduleWithSearchableOptions.contains(moduleName)) {
-      context.paths.searchableOptionDir.resolve(moduleName)
+    val searchableOptionsModuleDir = if (moduleWithSearchableOptions.contains(item.relativeOutputFile)) {
+      context.paths.searchableOptionDir.resolve(item.relativeOutputFile)
     }
     else {
       null

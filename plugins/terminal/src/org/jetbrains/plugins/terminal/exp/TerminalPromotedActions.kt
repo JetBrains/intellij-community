@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.actionSystem.ActionPromoter
@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 abstract class TerminalPromotedDumbAwareAction : DumbAwareAction(), ActionPromoter {
   /**
    * Prioritize terminal actions if there are actions with the same shortcuts.
@@ -18,7 +20,7 @@ abstract class TerminalPromotedDumbAwareAction : DumbAwareAction(), ActionPromot
   }
 }
 
-abstract class TerminalPromotedEditorAction(handler: EditorActionHandler) : EditorAction(handler), ActionPromoter {
+internal abstract class TerminalPromotedEditorAction(handler: EditorActionHandler) : EditorAction(handler), ActionPromoter {
   /**
    * Prioritize terminal actions if there are actions with the same shortcuts.
    * It's safe because terminal actions are enabled only in the terminal.

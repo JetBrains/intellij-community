@@ -83,6 +83,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("../../idea/tests/testData/editor/quickDoc/ConstructorVarParameter.kt");
     }
 
+    @TestMetadata("DataClass.kt")
+    public void testDataClass() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/DataClass.kt");
+    }
+
     @TestMetadata("DefinitelyNonNullType.kt")
     public void testDefinitelyNonNullType() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/DefinitelyNonNullType.kt");
@@ -371,6 +376,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
     @TestMetadata("Tailrec.kt")
     public void testTailrec() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/Tailrec.kt");
+    }
+
+    @TestMetadata("TailrecFunction.kt")
+    public void testTailrecFunction() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/TailrecFunction.kt");
     }
 
     @TestMetadata("TailrecName.kt")

@@ -13,7 +13,7 @@ import com.intellij.terminal.TerminalColorPalette
 import com.jediterm.terminal.TextStyle
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toTextAttributes
 
-data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributesProvider: TextAttributesProvider) {
+internal data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributesProvider: TextAttributesProvider) {
   init {
     check(startOffset <= endOffset)
   }
@@ -21,24 +21,44 @@ data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAt
     get() = endOffset - startOffset
 }
 
-interface TextAttributesProvider {
+internal data class TextWithHighlightings(val text: String, val highlightings: List<HighlightingInfo>)
+
+internal data class TextWithAttributes(val text: String, val attributes: TextAttributesProvider)
+
+internal interface TextAttributesProvider {
   fun getTextAttributes(): TextAttributes
 }
 
-object EmptyTextAttributesProvider : TextAttributesProvider {
+internal object EmptyTextAttributesProvider : TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes = TextAttributes.ERASE_MARKER
 }
 
-class TextStyleAdapter(private val style: TextStyle,
+internal class TextStyleAdapter(private val style: TextStyle,
                        private val colorPalette: TerminalColorPalette): TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes = style.toTextAttributes(colorPalette)
 }
 
-class TextAttributesKeyAdapter(private val editor: Editor, private val textAttributesKey: TextAttributesKey) : TextAttributesProvider {
+internal class TextAttributesKeyAdapter(private val editor: Editor, private val textAttributesKey: TextAttributesKey) : TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes = editor.colorsScheme.getAttributes(textAttributesKey)
 }
 
-class TerminalTextHighlighter private constructor(
+internal fun List<TextWithAttributes>.toTextWithHighlightings(): TextWithHighlightings {
+  val builder = StringBuilder()
+  val highlightings = mutableListOf<HighlightingInfo>()
+  for (component in this) {
+    val startOffset = builder.length
+    builder.append(component.text)
+    highlightings.add(HighlightingInfo(startOffset, builder.length, component.attributes))
+  }
+  return TextWithHighlightings(builder.toString(), highlightings)
+}
+
+/** Returns a new list where an [adjustmentValue] added to the start and end offsets of each highlighting */
+internal fun List<HighlightingInfo>.rebase(adjustmentValue: Int): List<HighlightingInfo> {
+  return map { HighlightingInfo(adjustmentValue + it.startOffset, adjustmentValue + it.endOffset, it.textAttributesProvider) }
+}
+
+internal class TerminalTextHighlighter private constructor(
   private val allHighlightingsSnapshotProvider: () -> AllHighlightingsSnapshot
 ) : EditorHighlighter {
   private var editor: HighlighterClient? = null

@@ -8,12 +8,12 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.refactoring.suggested.range
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -153,7 +153,7 @@ class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcesso
     }
 
     private fun analyzeFileRange(file: KtFile, rangeMarker: RangeMarker?): Diagnostics {
-        val range = rangeMarker?.range
+        val range = rangeMarker?.asTextRange
         val elements = if (range == null)
             listOf(file)
         else

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,23 @@ public final class GitRefUtil {
       return REFS_HEADS_PREFIX + branchName;
     }
     return branchName;
+  }
+
+  /**
+   * @return only branches
+   * @see #parseRefsLine
+   */
+  @ApiStatus.Internal
+  public static @Nullable Pair<String, String> parseBranchesLine(@NotNull String line) {
+    var parsedRef = parseRefsLine(line);
+    if (parsedRef == null) {
+      return null;
+    }
+    var branch = parsedRef.first;
+    if (!branch.startsWith(REFS_HEADS_PREFIX) && !branch.startsWith(REFS_REMOTES_PREFIX)) {
+      return null;
+    }
+    return parsedRef;
   }
 
   /**
@@ -76,7 +94,7 @@ public final class GitRefUtil {
       branch = line.substring(start, i);
     }
 
-    if (branch == null || !branch.startsWith(REFS_HEADS_PREFIX) && !branch.startsWith(REFS_REMOTES_PREFIX)) {
+    if (branch == null) {
       return null;
     }
     return Pair.create(branch, hash.trim());

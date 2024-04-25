@@ -194,7 +194,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor {
             group.addAction(createAction(selected, o));
           }
         });
-        button.setOptions(Arrays.asList(group.getChildren(null)));
+        button.setOptions(Arrays.asList(group.getChildren(ActionManager.getInstance())));
         button.setToolTipText(UIUtil.removeMnemonic(executor.getStartActionText(selected.getName())) + " (" + KeymapUtil.getFirstKeyboardShortcutText(action) + ")");
       }
     }

@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SealedUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -814,7 +815,14 @@ public class JavaKeywordCompletion {
     if (!(file instanceof PsiExpressionCodeFragment) &&
         !(file instanceof PsiJavaCodeReferenceCodeFragment) &&
         !(file instanceof PsiTypeCodeFragment)) {
-      if (myPrevLeaf == null) {
+      PsiMember parentMember = PsiTreeUtil.getParentOfType(myPosition, PsiMember.class);
+      boolean bogusDeclarationInImplicitClass =
+        parentMember instanceof PsiField field &&
+        field.getParent() instanceof PsiImplicitClass implicitClass &&
+        StreamEx.of(implicitClass.getChildren()).select(PsiMember.class).findFirst().orElse(null) == field;
+      if (myPrevLeaf == null ||
+          bogusDeclarationInImplicitClass && file instanceof PsiJavaFile javaFile && javaFile.getPackageStatement() == null &&
+          javaFile.getImportList() != null && javaFile.getImportList().getAllImportStatements().length == 0) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.PACKAGE), TailTypes.humbleSpaceBeforeWordType()));
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
       }
@@ -822,7 +830,7 @@ public class JavaKeywordCompletion {
                && PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.PACKAGE), TailTypes.humbleSpaceBeforeWordType()));
       }
-      else if (isEndOfBlock(myPosition) && PsiTreeUtil.getParentOfType(myPosition, PsiMember.class) == null) {
+      else if (isEndOfBlock(myPosition) && (parentMember == null || bogusDeclarationInImplicitClass)) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
       }
     }
@@ -1156,6 +1164,10 @@ public class JavaKeywordCompletion {
     if (AFTER_DOT.accepts(position) ||
         psiElement().inside(psiAnnotation()).accepts(position) && !expectsClassLiteral(position)) {
       return;
+    }
+
+    if (JavaPatternCompletionUtil.insideDeconstructionList(position)) {
+      JavaPatternCompletionUtil.suggestPrimitivesInsideDeconstructionListPattern(position, result);
     }
 
     boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position) &&

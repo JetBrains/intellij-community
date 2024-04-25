@@ -5,10 +5,10 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorFactory
@@ -139,14 +139,16 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean = super.isExecutorEnabled(executor) && isReady()
 
   private fun createPrimaryCommitActions(): List<AnAction> {
-    val group = ActionManager.getInstance().getAction(VcsActions.PRIMARY_COMMIT_EXECUTORS_GROUP) as ActionGroup
-    return group.getChildren(null).toList()
+    val actionManager = ActionManager.getInstance()
+    val group = actionManager.getAction(VcsActions.PRIMARY_COMMIT_EXECUTORS_GROUP) as DefaultActionGroup
+    return group.getChildren(actionManager).toList()
   }
 
   private fun createCommitExecutorActions(): List<AnAction> {
-    val group = ActionManager.getInstance().getAction(VcsActions.COMMIT_EXECUTORS_GROUP) as ActionGroup
+    val actionManager = ActionManager.getInstance()
+    val group = actionManager.getAction(VcsActions.COMMIT_EXECUTORS_GROUP) as DefaultActionGroup
     val executors = workflow.commitExecutors.filter { it.useDefaultAction() }
-    return group.getChildren(null).toList() +
+    return group.getChildren(actionManager).toList() +
            executors.map { DefaultCommitExecutorAction(it) }
   }
 

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
+import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
@@ -30,6 +31,7 @@ internal class InlineCompletionShowTracker(
   private var showLogSent = false
   private var showStartTime = 0L
   private val variantStates = mutableListOf<VariantState>()
+  private var lastOffset = request.endOffset
   private var switchingVariantsTimes = 0
   private var potentiallySelectedIndex: Int? = null
 
@@ -61,16 +63,19 @@ internal class InlineCompletionShowTracker(
       "Call firstComputed firstly"
     }
     state.lines += (element.text.lines().size - 1).coerceAtLeast(0)
-    if (state.suggestion.isEmpty() && element.text.isNotEmpty()) {
+    if (state.initialSuggestion.isEmpty() && element.text.isNotEmpty()) {
       state.lines++ // first line
     }
-    state.suggestion += element.text
+    state.append(element.text)
     assert(!showLogSent)
   }
 
   // Usually, only typings (if providers don't override behaviour)
-  fun lengthChanged(variantIndex: Int, change: Int) {
-    variantStates[variantIndex].lengthChange += change
+  fun suggestionChanged(variantIndex: Int, change: Int, newText: String) {
+    val state = variantStates[variantIndex]
+    state.lengthChange += change
+    state.finalSuggestion = newText
+    lastOffset = InlineCompletionContext.getOrNull(request.editor)!!.expectedStartOffset // TODO should not depend on context
     assert(!showLogSent)
   }
 
@@ -91,8 +96,9 @@ internal class InlineCompletionShowTracker(
                                             language,
                                             fileLanguage,
                                             request.editor,
-                                            request.endOffset,
-                                            variantStates[it].suggestion,
+                                            initialOffset = request.endOffset,
+                                            insertOffset = lastOffset,
+                                            variantStates[it].finalSuggestion,
                                             getDuration(),
       )
     }
@@ -108,7 +114,7 @@ internal class InlineCompletionShowTracker(
     }
     showLogSent = true
     data.add(ShownEvents.LINES.with(variantStates.map { it.lines }))
-    data.add(ShownEvents.LENGTH.with(variantStates.map { it.suggestion.length }))
+    data.add(ShownEvents.LENGTH.with(variantStates.map { it.initialSuggestion.length }))
     data.add(ShownEvents.LENGTH_CHANGE_DURING_SHOW.with(variantStates.maxOf { it.lengthChange }))
     data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
     data.add(ShownEvents.FINISH_TYPE.with(finishType))
@@ -132,16 +138,22 @@ internal class InlineCompletionShowTracker(
 
   private fun extendVariantsNumber(atLeast: Int) {
     while (variantStates.size < atLeast) {
-      variantStates += VariantState("", 0, 0, false)
+      variantStates += VariantState("", "", 0, 0, false)
     }
   }
 
   private data class VariantState(
-    var suggestion: String,
+    var initialSuggestion: String,
+    var finalSuggestion: String,
     var lines: Int,
     var lengthChange: Int,
     var firstComputed: Boolean
-  )
+  ) {
+    fun append(text: String) {
+      initialSuggestion += text
+      finalSuggestion += text
+    }
+  }
 }
 
 

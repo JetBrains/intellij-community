@@ -21,6 +21,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -156,6 +157,7 @@ class InlineCompletionHandler(
     editor.caretModel.moveToOffset(insertEnvironment.insertedRange.endOffset)
     PsiDocumentManager.getInstance(session.request.file.project).commitDocument(editor.document)
     session.provider.insertHandler.afterInsertion(insertEnvironment, elements)
+    editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
     traceBlocking(InlineCompletionEventType.AfterInsert)
 
     LookupManager.getActiveLookup(editor)?.hideLookup(false) //TODO: remove this
@@ -418,9 +420,11 @@ class InlineCompletionHandler(
         traceBlocking(InlineCompletionEventType.VariantSwitched(fromVariantIndex, toVariantIndex, explicit))
       }
 
-      override fun variantChanged(variantIndex: Int, oldText: String, newText: String) {
+      override fun variantChanged(variantIndex: Int, old: List<InlineCompletionElement>, new: List<InlineCompletionElement>) {
         ThreadingAssertions.assertEventDispatchThread()
-        traceBlocking(InlineCompletionEventType.Change(variantIndex, oldText.length - newText.length))
+        val oldText = old.joinToString("") { it.text }
+        val newText = new.joinToString("") { it.text }
+        traceBlocking(InlineCompletionEventType.Change(variantIndex, new, oldText.length - newText.length))
       }
 
       override fun variantInvalidated(variantIndex: Int) {

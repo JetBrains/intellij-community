@@ -12,8 +12,8 @@ class MyTest1 {
     fun start() = runBlocking {
         launch {
             for (i in 1 .. 10) {
-                launch { 
-                    worker(i) 
+                launch {
+                    worker(i)
                 }
             }
         }
@@ -35,3 +35,4 @@ class MyTest1 {
 }
 
 // REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
+// REGISTRY: debugger.always.suspend.thread.before.switch=true

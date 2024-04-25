@@ -22,6 +22,7 @@ internal class GHPRDataContext(val scope: CoroutineScope,
                                val repositoryDataService: GHPRRepositoryDataService,
                                val creationService: GHPRCreationService,
                                val detailsService: GHPRDetailsService,
+                               val changesService: GHPRChangesService,
                                val reactionsService: GHReactionsService,
                                val htmlImageLoader: AsyncHtmlImageLoader,
                                val avatarIconsProvider: GHAvatarIconsProvider,
@@ -55,7 +56,6 @@ internal class GHPRDataContext(val scope: CoroutineScope,
         Disposer.dispose(dataProviderRepository)
         Disposer.dispose(listLoader)
         Disposer.dispose(listUpdatesChecker)
-        Disposer.dispose(repositoryDataService)
       }
     }
   }

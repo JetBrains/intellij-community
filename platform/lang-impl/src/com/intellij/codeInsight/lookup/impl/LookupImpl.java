@@ -294,7 +294,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   // Used by external plugins
   @SuppressWarnings("unused")
   public void scheduleItemUpdate(@NotNull LookupElement item) {
-    LOG.assertTrue(getItems().contains(item), "Item isn't present in lookup");
+    // this check significantly affects perfomance with enabled assertions
+    if (LOG.isTraceEnabled()){
+      LOG.assertTrue(getItems().contains(item), "Item isn't present in lookup");
+    }
     myCellRenderer.updateItemPresentation(item);
   }
 

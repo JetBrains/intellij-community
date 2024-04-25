@@ -342,7 +342,7 @@ public final class AddImportHelper {
       if (fromImportStatement.getRelativeLevel() > 0) {
         return new ImportPriorityChoice(ImportPriority.PROJECT, "explicit relative import");
       }
-      resolveAnchor = ((PyFromImportStatement)importStatement).getImportSource();
+      resolveAnchor = fromImportStatement.getImportSource();
       resolved = fromImportStatement.resolveImportSource();
     }
     else {

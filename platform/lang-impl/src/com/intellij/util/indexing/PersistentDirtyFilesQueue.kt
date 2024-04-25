@@ -37,26 +37,14 @@ object PersistentDirtyFilesQueue {
   fun Project.getQueueFile(): Path = getQueuesDir() / locationHash
 
   @JvmStatic
-  fun removeCurrentFile(queueFile: Path) {
-    if (isUnittestMode) {
-      thisLogger().info("removing ${queueFile.absolutePathString()}")
-    }
-    try {
-      queueFile.deleteIfExists()
-    }
-    catch (ignored: IOException) {
-    }
-  }
-
-  @JvmStatic
-  fun readProjectDirtyFilesQueue(queueFile: Path, currentVfsVersion: Long?): ProjectDirtyFilesQueue {
-    val (fileIds, index) = readIndexingQueue(queueFile, currentVfsVersion)
+  fun readProjectDirtyFilesQueue(queueFile: Path, wasCorrupted: Boolean, currentVfsVersion: Long?): ProjectDirtyFilesQueue {
+    val (fileIds, index) = readIndexingQueue(queueFile, wasCorrupted, currentVfsVersion)
     return ProjectDirtyFilesQueue(fileIds, index ?: 0L)
   }
 
   @JvmStatic
-  fun readOrphanDirtyFilesQueue(queueFile: Path, currentVfsVersion: Long?): OrphanDirtyFilesQueue {
-    val (fileIds, index) = readIndexingQueue(queueFile, currentVfsVersion)
+  fun readOrphanDirtyFilesQueue(queueFile: Path, wasCorrupted: Boolean, currentVfsVersion: Long?): OrphanDirtyFilesQueue {
+    val (fileIds, index) = readIndexingQueue(queueFile, wasCorrupted, currentVfsVersion)
     return OrphanDirtyFilesQueue(fileIds, index ?: fileIds.size.toLong())
   }
 
@@ -66,8 +54,11 @@ object PersistentDirtyFilesQueue {
    * Orphan queue: [version, vfs version, last index in queue, ids...]
    */
   @JvmStatic
-  fun readIndexingQueue(queueFile: Path, currentVfsVersion: Long?): Pair<List<Int>, Long?> {
+  fun readIndexingQueue(queueFile: Path, wasCorrupted: Boolean, currentVfsVersion: Long?): Pair<List<Int>, Long?> {
     try {
+      if (wasCorrupted && queueFile.exists()) {
+        thisLogger().error("Queue file must not exist because caches were invalidated. File=$queueFile")
+      }
       DataInputStream(queueFile.inputStream().buffered()).use {
         val fileIds = IntArrayList()
         val version = it.readLong()

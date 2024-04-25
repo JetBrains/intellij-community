@@ -164,11 +164,12 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     fillActionGroup(false, toolbarGroup);
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, toolbarGroup,
-                                                                            isStaticEmbedded);
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, toolbarGroup,
+                                                              isStaticEmbedded);
     JComponent centerPanel = createCenterPanel();
     toolbar.setTargetComponent(centerPanel);
-    for (AnAction action : toolbarGroup.getChildren(null)) {
+    for (AnAction action : toolbarGroup.getChildren(actionManager)) {
       action.registerCustomShortcutSet(action.getShortcutSet(), centerPanel);
     }
 

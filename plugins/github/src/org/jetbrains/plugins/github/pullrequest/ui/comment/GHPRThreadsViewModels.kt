@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui.comment
 
 import com.intellij.collaboration.async.classAsCoroutineName
-import com.intellij.collaboration.async.computationState
 import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.util.getOrNull
@@ -13,7 +12,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModelImpl
 
@@ -27,8 +26,7 @@ internal class GHPRThreadsViewModels(
   val canComment: Boolean = dataProvider.reviewData.canComment()
 
   val compactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>> =
-    dataProvider.reviewData.createThreadsRequestsFlow()
-      .computationState()
+    dataProvider.reviewData.threadsComputationFlow
       .transformConsecutiveSuccesses(false) {
         mapDataToModel(GHPullRequestReviewThread::id,
                        { createThread(it) },

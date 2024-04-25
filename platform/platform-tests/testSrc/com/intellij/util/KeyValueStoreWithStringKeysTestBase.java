@@ -2,7 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.util.io.KeyValueStore;
-import com.intellij.util.io.KeyValueStoreTestBase;
+import com.intellij.platform.util.io.storages.KeyValueStoreTestBase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 

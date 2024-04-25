@@ -9,7 +9,9 @@ f:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentKt
 - sf:getABExperimentInstance():com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption
 - com.intellij.openapi.extensions.PluginAware
-- a:getGroupSizeForIde(Z):com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
+- a:checkIdeIsSuitable():Z
+- a:checkIdeVersionIsSuitable():Z
+- a:getGroupSizeForIde-VJBkicw(Z):I
 - a:getId-d3vBMqI():java.lang.String
 - a:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 a:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionBase
@@ -29,17 +31,22 @@ f:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
 - toString():java.lang.String
 - s:toString-impl(java.lang.String):java.lang.String
 - bf:unbox-impl():java.lang.String
+f:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionKt
+- sf:isEnabled(com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption):Z
 f:com.intellij.platform.experiment.ab.impl.option.ABExperimentControlOptionKt
 - sf:isControlOptionEnabled():Z
-e:com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
-- java.lang.Enum
-- sf:BIG:com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
-- sf:MEDIUM:com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
-- sf:SMALL:com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
-- f:getCount():I
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
-- s:values():com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize[]
+f:com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
+- bsf:box-impl(I):com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
+- s:constructor-impl(I):I
+- equals(java.lang.Object):Z
+- s:equals-impl(I,java.lang.Object):Z
+- sf:equals-impl0(I,I):Z
+- f:getGroupCount():I
+- hashCode():I
+- s:hashCode-impl(I):I
+- toString():java.lang.String
+- s:toString-impl(I):java.lang.String
+- bf:unbox-impl():I
 f:com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector
 - sf:INSTANCE:com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector
 - getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup

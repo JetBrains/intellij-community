@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
-import com.intellij.collaboration.async.values
 import com.intellij.collaboration.ui.codereview.details.model.*
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -12,13 +12,14 @@ import com.intellij.vcsUtil.VcsFileUtil.relativePath
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
-import org.jetbrains.plugins.github.pullrequest.data.provider.createViewedStateRequestsFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputationState
 
 @ApiStatus.Experimental
 interface GHPRChangeListViewModel : CodeReviewChangeListViewModel.WithDetails, CodeReviewChangeListViewModel.WithGrouping {
@@ -78,14 +79,10 @@ internal class GHPRChangeListViewModelImpl(
 
   @RequiresEdt
   override fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean) {
-    //TODO: check API for batch update
-    val state = viewedStateData.getViewedState() ?: return
-    changes.asSequence().map {
-      relativePath(repository.root, it.filePath)
-    }.filter {
-      state[it]?.isViewed() != viewed
-    }.forEach {
-      viewedStateData.updateViewedState(it, viewed)
+    cs.launch {
+      val paths = changes.map { relativePath(repository.root, it.filePath) }
+      // TODO: handle error
+      viewedStateData.updateViewedState(paths, viewed)
     }
   }
 
@@ -94,8 +91,10 @@ internal class GHPRChangeListViewModelImpl(
   }
 
   private fun createDetailsByChangeFlow(): Flow<Map<RefComparisonChange, CodeReviewChangeDetails>> {
-    val threadsFlow = dataProvider.reviewData.createThreadsRequestsFlow().values()
-    val viewedStateFlow = viewedStateData.createViewedStateRequestsFlow().values()
+    val threadsFlow = dataProvider.reviewData.threadsComputationFlow
+      .filter { !it.isInProgress }.map { it.getOrNull().orEmpty() }
+    val viewedStateFlow = viewedStateData.viewedStateComputationState
+      .filter { !it.isInProgress }.map { it.getOrNull().orEmpty() }
     return combine(threadsFlow, viewedStateFlow) { threads, viewedStateByPath ->
       val unresolvedThreadsByPath = threads.asSequence().filter { !it.isResolved }.groupingBy { it.path }.eachCount()
       changes.associateWith { change ->

@@ -25,7 +25,8 @@
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.projectModelContributor" interface="org.jetbrains.plugins.gradle.service.project.ProjectModelContributor"
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.syncContributor"
+                    interface="org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor"
                     dynamic="true"/>
     <extensionPoint qualifiedName= "org.jetbrains.plugins.gradle.taskManager" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension"
                     dynamic="true"/>
@@ -61,7 +62,7 @@
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.telemetry.GradleOpenTelemetryResolverExtension"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.UnsupportedGradleVersionIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmByIdeaIssueChecker"/>
-    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmByGradleIssueChecker"/>
+    <issueChecker implementation="org.jetbrains.plugins.gradle.issue.IncompatibleGradleJvmAndGradleIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleDaemonStartupIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleBuildCancelledIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleOutOfMemoryIssueChecker"/>

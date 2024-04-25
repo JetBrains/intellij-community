@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager
 import org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider
 import org.jetbrains.kotlin.idea.configuration.isProjectSyncPendingOrInProgress
+import org.jetbrains.kotlin.idea.configuration.withScope
 
 /**
  * A quick fix provider allowing for Kotlin libraries to be added when an unresolved element was detected.
@@ -60,19 +61,10 @@ abstract class AddKotlinLibraryQuickFixProvider(
             DependencyScope.COMPILE
         }
 
-        val scopedLibraryDescriptor = ExternalLibraryDescriptor(
-            libraryVersionToUse.libraryGroupId,
-            libraryVersionToUse.libraryArtifactId,
-            libraryVersionToUse.minVersion,
-            libraryVersionToUse.maxVersion,
-            libraryVersionToUse.preferredVersion,
-            scope
-        )
-
         registrar.register(
             AddKotlinLibraryQuickFix(
                 dependencyManager = dependencyManager,
-                libraryDescriptor = scopedLibraryDescriptor,
+                libraryDescriptor = libraryVersionToUse.withScope(scope),
                 quickFixText = KotlinBundle.message("add.kotlin.coroutines")
             )
         )

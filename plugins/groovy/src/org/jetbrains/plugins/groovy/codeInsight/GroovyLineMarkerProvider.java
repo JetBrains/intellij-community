@@ -22,6 +22,7 @@ import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.FunctionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
@@ -162,6 +163,8 @@ final class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
 
   @Override
   public void collectSlowLineMarkers(final @NotNull List<? extends PsiElement> elements, final @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    PsiElement first = ContainerUtil.getFirstItem(elements);
+    if (first != null && DumbService.isDumb(first.getProject())) return;
     Set<PsiMethod> methods = new HashSet<>();
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();

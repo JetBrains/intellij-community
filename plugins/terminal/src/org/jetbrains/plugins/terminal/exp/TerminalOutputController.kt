@@ -10,16 +10,16 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TextStyle
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.exp.hyperlinks.TerminalHyperlinkHighlighter
+import org.jetbrains.plugins.terminal.exp.prompt.PromptRenderingInfo
 import java.util.*
 
-class TerminalOutputController(
+internal class TerminalOutputController(
   project: Project,
   private val editor: EditorEx,
   private val session: BlockTerminalSession,
@@ -73,7 +73,8 @@ class TerminalOutputController(
     val createBlockRequest: () -> Unit = {
       doWithScrollingAware {
         val context = runningCommandContext ?: error("No running command context")
-        createNewBlock(context)
+        val terminalWidth = session.model.withContentLock { session.model.width }
+        createNewBlock(context, terminalWidth)
       }
     }
     blockCreationAlarm.addRequest(createBlockRequest, 200)
@@ -94,9 +95,10 @@ class TerminalOutputController(
 
   fun finishCommandBlock(exitCode: Int) {
     val output = scraper.scrapeOutput()
+    val terminalWidth = session.model.withContentLock { session.model.width }
     invokeLater(editor.getDisposed(), ModalityState.any()) {
       val block = doWithScrollingAware {
-        updateCommandOutput(output)
+        updateCommandOutput(TerminalOutputSnapshot(terminalWidth, output))
       }
       disposeRunningCommandInteractivity()
       val document = editor.document
@@ -162,10 +164,11 @@ class TerminalOutputController(
   private fun setupContentListener(disposable: Disposable) {
     scraper.addListener(object : ShellCommandOutputListener {
       override fun commandOutputChanged(output: StyledCommandOutput) {
+        val terminalWidth = session.model.withContentLock { session.model.width }
         invokeLater(editor.getDisposed(), ModalityState.any()) {
           if (runningCommandContext != null) {
             doWithScrollingAware {
-              updateCommandOutput(output)
+              updateCommandOutput(TerminalOutputSnapshot(terminalWidth, output))
             }
           }
         }
@@ -174,53 +177,39 @@ class TerminalOutputController(
   }
 
   @RequiresEdt(generateAssertion = false)
-  private fun updateCommandOutput(output: StyledCommandOutput): CommandBlock {
+  private fun updateCommandOutput(snapshot: TerminalOutputSnapshot): CommandBlock {
     val activeBlock = outputModel.getActiveBlock() ?: run {
       // If there is no active block, it means that it is the first content update. Create the new block here.
       blockCreationAlarm.cancelAllRequests()
       val context = runningCommandContext ?: error("No running command context")
-      createNewBlock(context)
+      createNewBlock(context, snapshot.width)
     }
-    updateBlock(activeBlock, toHighlightedCommandOutput(output, baseOffset = activeBlock.outputStartOffset))
+    updateBlock(activeBlock, toHighlightedCommandOutput(snapshot.output, baseOffset = activeBlock.outputStartOffset))
     return activeBlock
   }
 
-  private fun createNewBlock(context: RunningCommandContext): CommandBlock {
-    val block = outputModel.createBlock(context.command, context.prompt)
-    if (block.withPrompt) {
-      val highlightings = adjustHighlightings(block.prompt!!.highlightings, block.startOffset)
-      appendLineToBlock(block, block.prompt.text, highlightings, block.withCommand)
-    }
-    if (block.withCommand) {
-      appendLineToBlock(block, context.command!!, listOf(createCommandHighlighting(block)), false)
-    }
-    if (block.withPrompt || block.withCommand) {
+  private fun createNewBlock(context: RunningCommandContext, terminalWidth: Int): CommandBlock {
+    val block = outputModel.createBlock(context.command, context.prompt, terminalWidth)
+    if (!block.textRange.isEmpty) {
       blocksDecorator.installDecoration(block)
     }
     return block
   }
 
-  private fun toHighlightedCommandOutput(output: StyledCommandOutput, baseOffset: Int): CommandOutput {
-    return CommandOutput(output.text, output.styleRanges.map {
+  private fun toHighlightedCommandOutput(output: StyledCommandOutput, baseOffset: Int): TextWithHighlightings {
+    return TextWithHighlightings(output.text, output.styleRanges.map {
       HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.style.toTextAttributesProvider())
     })
   }
 
-  private fun updateBlock(block: CommandBlock, output: CommandOutput) {
+  private fun updateBlock(block: CommandBlock, output: TextWithHighlightings) {
     // highlightings are collected only for output, so add prompt and command highlightings to the first place
-    val highlightings = if (block.withPrompt || block.withCommand) {
-      output.highlightings.toMutableList().also { highlightings ->
-        if (block.withCommand) {
-          highlightings.add(0, createCommandHighlighting(block))
-        }
-        if (block.withPrompt) {
-          highlightings.addAll(0, adjustHighlightings(block.prompt!!.highlightings, block.startOffset))
-        }
-      }
-    }
-    else output.highlightings
-
+    val highlightings = outputModel.getHighlightings(block).asSequence()
+      .filter { it.endOffset <= block.outputStartOffset }
+      .plus(output.highlightings)
+      .toList()
     outputModel.putHighlightings(block, highlightings)
+
     // add leading \n here, because \n is not added after command in `startCommandBlock`
     val prefix = "\n".takeIf { block.withPrompt || block.withCommand }.orEmpty()
     editor.document.replaceString(block.outputStartOffset - prefix.length, block.endOffset, prefix + output.text)
@@ -257,24 +246,6 @@ class TerminalOutputController(
 
   private fun TextStyle.toTextAttributesProvider(): TextAttributesProvider = TextStyleAdapter(this, session.colorPalette)
 
-  private fun appendLineToBlock(block: CommandBlock, text: String, highlightings: List<HighlightingInfo>, addTrailingNewLine: Boolean) {
-    val existingHighlightings = outputModel.getHighlightings(block) ?: emptyList()
-    outputModel.putHighlightings(block, existingHighlightings + highlightings)
-    editor.document.insertString(block.endOffset, if (addTrailingNewLine) text + "\n" else text)
-  }
-
-  /** It is implied that [CommandBlock.command] is not null */
-  private fun createCommandHighlighting(block: CommandBlock): HighlightingInfo {
-    return HighlightingInfo(block.commandStartOffset, block.commandStartOffset + block.command!!.length,
-                            TextAttributesKeyAdapter(editor, BlockTerminalColors.COMMAND))
-  }
-
-  private fun adjustHighlightings(highlightings: List<HighlightingInfo>, baseOffset: Int): List<HighlightingInfo> {
-    return highlightings.map {
-      HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.textAttributesProvider)
-    }
-  }
-
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
     if (disposable != null) {
       editor.document.addDocumentListener(listener, disposable)
@@ -292,7 +263,7 @@ class TerminalOutputController(
     }
   }
 
-  private data class CommandOutput(val text: String, val highlightings: List<HighlightingInfo>)
+  private data class TerminalOutputSnapshot(val width: Int, val output: StyledCommandOutput)
 
   private data class RunningCommandContext(val command: String?, val prompt: PromptRenderingInfo?)
 

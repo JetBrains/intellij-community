@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ClientProperty
 import com.intellij.util.SVGLoader
 import com.intellij.util.ui.JBInsets
@@ -22,6 +23,7 @@ abstract class OnboardingBackgroundImageProviderBase : OnboardingBackgroundImage
 
   override fun getImage(isDark: Boolean): Image? {
     val imageUrl = getImageUrl(isDark)?.takeIf { isAvailable && it.path.endsWith(".svg"); } ?: return null
+    val timeout = if (USE_LONG_TIMEOUT) 30000 else LOADING_TIMEOUT_MILLIS
 
     val image: Image? = BackgroundTaskUtil.tryComputeFast(
       { progressIndicator ->
@@ -34,10 +36,10 @@ abstract class OnboardingBackgroundImageProviderBase : OnboardingBackgroundImage
         }
         finally {
           if (progressIndicator.isCanceled) {
-            LOG.warn("Onboarding image loading failed: it took longer than $LOADING_TIMEOUT_MILLIS ms")
+            LOG.warn("Onboarding image loading failed: it took longer than $timeout ms")
           }
         }
-      }, LOADING_TIMEOUT_MILLIS)
+      }, timeout)
 
     return image
   }
@@ -78,6 +80,7 @@ abstract class OnboardingBackgroundImageProviderBase : OnboardingBackgroundImage
   companion object {
     private val BACKGROUND_IMAGE_DISPOSABLE_KEY: Key<Disposable> = Key.create("ide.background.image.provider.background.image")
     private const val LOADING_TIMEOUT_MILLIS: Long = 300
+    private val USE_LONG_TIMEOUT: Boolean get() = Registry.`is`("ide.onboarding.background.use.long.timeout", true)
     private val LOG = Logger.getInstance(OnboardingBackgroundImageProviderBase::class.java)
   }
 }

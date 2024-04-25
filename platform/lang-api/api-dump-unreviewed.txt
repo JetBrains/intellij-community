@@ -635,7 +635,6 @@ a:com.intellij.codeInsight.daemon.MergeableLineMarkerInfo
 - getCommonIconAlignment(java.util.List):com.intellij.openapi.editor.markup.GutterIconRenderer$Alignment
 - getCommonTooltip(java.util.List):com.intellij.util.Function
 - getElementPresentation(com.intellij.psi.PsiElement):java.lang.String
-- s:getMergedLineMarkerInfos(com.intellij.codeInsight.daemon.GutterIconNavigationHandler):java.util.List
 - s:getMergedMarkers(com.intellij.codeInsight.daemon.LineMarkerInfo):java.util.List
 - p:getNavigateAction():com.intellij.openapi.actionSystem.AnAction
 - s:merge(java.util.List,I):java.util.List
@@ -699,6 +698,13 @@ a:com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate
 a:com.intellij.codeInsight.editorActions.BackspaceModeOverride
 - <init>():V
 - a:getBackspaceMode(com.intellij.codeInsight.editorActions.SmartBackspaceMode):com.intellij.codeInsight.editorActions.SmartBackspaceMode
+a:com.intellij.codeInsight.editorActions.CopyPastePostProcessor
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- a:collectTransferableData(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I[],I[]):java.util.List
+- extractTransferableData(java.awt.datatransfer.Transferable):java.util.List
+- processTransferableData(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.RangeMarker,I,com.intellij.openapi.util.Ref,java.util.List):V
+- requiresAllDocumentsToBeCommitted(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
 com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:canSelect(com.intellij.psi.PsiElement):Z
@@ -713,6 +719,7 @@ com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 f:com.intellij.codeInsight.editorActions.LanguageBackspaceModeOverride
 - com.intellij.lang.LanguageExtension
 - sf:INSTANCE:com.intellij.codeInsight.editorActions.LanguageBackspaceModeOverride
+com.intellij.codeInsight.editorActions.ReferenceCopyPasteProcessor
 c:com.intellij.codeInsight.editorActions.SmartBackspaceDisabler
 - com.intellij.codeInsight.editorActions.BackspaceModeOverride
 - <init>():V
@@ -3351,6 +3358,14 @@ com.intellij.lang.PsiElementExternalizer
 com.intellij.lang.WordCompletionElementFilter
 - a:isWordCompletionEnabledIn(com.intellij.psi.tree.IElementType):Z
 - isWordCompletionInDumbModeEnabled():Z
+com.intellij.lang.imports.ImportBlockRangeProvider
+- sf:Companion:com.intellij.lang.imports.ImportBlockRangeProvider$Companion
+- s:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- a:getImportBlockRange(com.intellij.psi.PsiFile):com.intellij.openapi.util.TextRange
+- s:getRange(com.intellij.psi.PsiFile):com.intellij.openapi.util.TextRange
+f:com.intellij.lang.imports.ImportBlockRangeProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:getRange(com.intellij.psi.PsiFile):com.intellij.openapi.util.TextRange
 com.intellij.lang.injection.ConcatenationAwareInjector
 - a:getLanguagesToInject(com.intellij.lang.injection.MultiHostRegistrar,com.intellij.psi.PsiElement[]):V
 f:com.intellij.lang.injection.MultiHostRegistrarPlaceholderHelper

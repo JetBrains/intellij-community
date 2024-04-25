@@ -8,12 +8,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.KtModuleByModuleInfoBase
-import org.jetbrains.kotlin.idea.base.projectStructure.KtModuleFactory
-import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
-import org.jetbrains.kotlin.idea.base.projectStructure.toKtModuleOfType
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Path
@@ -78,19 +74,11 @@ private class KtScriptDependencyModuleByModuleInfo(
     override val librarySources: KtLibrarySourceModule?
         get() = moduleInfo.sourcesModuleInfo?.toKtModuleOfType<KtLibrarySourceModule>()
 
-    override fun getBinaryRoots(): Collection<Path> {
-        when (moduleInfo) {
-            is ScriptDependenciesInfo.ForProject -> {
-                return ScriptConfigurationManager.getInstance(project)
-                    .getAllScriptsDependenciesClassFiles()
-                    .map { it.toNioPath() }
-            }
-            is ScriptDependenciesInfo.ForFile -> {
-                return ScriptConfigurationManager.getInstance(project)
-                    .getScriptDependenciesClassFiles(moduleInfo.scriptFile)
-                    .map { it.toNioPath() }
-            }
-        }
+    override fun getBinaryRoots(): Collection<Path> = when (moduleInfo) {
+        is ScriptDependenciesInfo.ForProject -> ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFiles().map { it.toNioPath() }
+
+        is ScriptDependenciesInfo.ForFile -> ScriptDependencyAware.getInstance(project)
+            .getScriptDependenciesClassFiles(moduleInfo.scriptFile).map { it.toNioPath() }
     }
 
     override val file: KtFile?
@@ -110,7 +98,7 @@ private class KtScriptDependencyModuleByModuleInfo(
         // 'equals()' for 'ScriptDependenciesInfo.ForFile' doesn't include the script file
         if (moduleInfo is ScriptDependenciesInfo.ForFile) {
             return other.moduleInfo is ScriptDependenciesInfo.ForFile
-                   && moduleInfo.scriptFile == other.moduleInfo.scriptFile
+                    && moduleInfo.scriptFile == other.moduleInfo.scriptFile
         }
 
         return true
@@ -118,7 +106,7 @@ private class KtScriptDependencyModuleByModuleInfo(
 }
 
 private class KtScriptDependencySourceModuleByModuleInfo(
-  private val moduleInfo: ScriptDependenciesSourceInfo
+    private val moduleInfo: ScriptDependenciesSourceInfo
 ) : KtModuleByModuleInfoBase(moduleInfo), KtLibrarySourceModule, KtScriptDependencyModule {
     override val project: Project
         get() = moduleInfo.project

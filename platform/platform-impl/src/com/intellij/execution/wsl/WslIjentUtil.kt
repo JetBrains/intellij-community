@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.platform.ijent.IjentExecApi
+import com.intellij.platform.ijent.IjentId
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.suspendingLazy
@@ -136,15 +137,15 @@ fun runProcessBlocking(
     .workingDirectory(workingDirectory)
     .execute()
   ) {
-    is IjentExecApi.ExecuteProcessResult.Success -> processResult.process.toProcess(scope, pty != null)
+    is IjentExecApi.ExecuteProcessResult.Success -> processResult.process.toProcess(scope, ijentApi.id, pty != null)
     is IjentExecApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
   }
 }
 
-private fun IjentChildProcess.toProcess(coroutineScope: CoroutineScope, isPty: Boolean): Process =
+private fun IjentChildProcess.toProcess(coroutineScope: CoroutineScope, ijentId: IjentId, isPty: Boolean): Process =
   if (isPty)
-    IjentChildPtyProcessAdapter(coroutineScope, this)
+    IjentChildPtyProcessAdapter(coroutineScope, ijentId, this)
   else
-    IjentChildProcessAdapter(coroutineScope, this)
+    IjentChildProcessAdapter(coroutineScope,ijentId, this)
 
 private val LOG by lazy { Logger.getInstance("com.intellij.execution.wsl.WslIjentUtil") }

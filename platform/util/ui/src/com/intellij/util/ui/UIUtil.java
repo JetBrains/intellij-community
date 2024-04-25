@@ -1425,7 +1425,7 @@ public final class UIUtil {
   }
 
   public static void addAwtListener(@NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
-    StartupUiUtil.addAwtListener(listener, mask, parent);
+    StartupUiUtil.addAwtListener(mask, parent, listener);
   }
 
   public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {

@@ -6,8 +6,7 @@ import com.intellij.openapi.util.NlsContexts.DetailedDescription
 
 internal class KotlinPluginKindAboutPopupDescriptionProvider : AboutPopupDescriptionProvider {
     override fun getDescription(): @DetailedDescription String? {
-        val pluginKind = KotlinPluginModeProvider.currentPluginMode
-        return when (pluginKind) {
+        return when (val pluginKind = KotlinPluginModeProvider.currentPluginMode) {
             KotlinPluginMode.K2 -> {
                 KotlinBasePluginBundle.message("kotlin.plugin.kind.text", pluginKind.getPluginModeDescription())
             }

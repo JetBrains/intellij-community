@@ -262,7 +262,7 @@ com.intellij.vcs.log.data.VcsLogProgress$ProgressListener
 - a:progressStopped():V
 com.intellij.vcs.log.data.VcsLogRefresher
 - a:getCurrentDataPack():com.intellij.vcs.log.data.DataPack
-- a:readFirstBlock():V
+- a:initialize():V
 - a:refresh(java.util.Collection,Z):V
 c:com.intellij.vcs.log.data.VcsLogRefresherImpl
 - com.intellij.openapi.Disposable
@@ -271,7 +271,7 @@ c:com.intellij.vcs.log.data.VcsLogRefresherImpl
 - dispose():V
 - getCurrentDataPack():com.intellij.vcs.log.data.DataPack
 - getProgress():com.intellij.vcs.log.data.VcsLogProgress
-- readFirstBlock():V
+- initialize():V
 - refresh(java.util.Collection,Z):V
 - p:startNewBackgroundTask(com.intellij.openapi.progress.Task$Backgroundable):com.intellij.vcs.log.data.SingleTaskController$SingleTask
 f:com.intellij.vcs.log.data.VcsLogSorter
@@ -1033,13 +1033,14 @@ f:com.intellij.vcs.log.impl.VcsLogSharedSettings$State
 - f:findLogUi(com.intellij.vcs.log.impl.VcsLogManager,com.intellij.vcs.log.impl.VcsLogTabLocation,java.lang.Class,Z,kotlin.jvm.functions.Function1):com.intellij.vcs.log.VcsLogUi
 f:com.intellij.vcs.log.impl.VcsLogTabsManager
 - sf:Companion:com.intellij.vcs.log.impl.VcsLogTabsManager$Companion
-- sf:generateDisplayName(com.intellij.vcs.log.VcsLogUi):java.lang.String
+- sf:generateDisplayName(com.intellij.vcs.log.ui.VcsLogUiEx):java.lang.String
 - f:getTabs():java.util.Collection
 - f:openAnotherLogTab(com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.impl.VcsLogTabLocation):com.intellij.vcs.log.ui.MainVcsLogUi
 f:com.intellij.vcs.log.impl.VcsLogTabsManager$Companion
-- f:generateDisplayName(com.intellij.vcs.log.VcsLogUi):java.lang.String
+- f:generateDisplayName(com.intellij.vcs.log.ui.VcsLogUiEx):java.lang.String
 - f:getFullName(java.lang.String):java.lang.String
 - f:getTAB_GROUP_ID():com.intellij.ui.content.TabGroupId
+- f:onDisplayNameChange(com.intellij.vcs.log.ui.MainVcsLogUi,kotlin.jvm.functions.Function0):V
 com.intellij.vcs.log.impl.VcsLogTabsProperties
 - a:createProperties(java.lang.String):com.intellij.vcs.log.impl.MainVcsLogUiProperties
 f:com.intellij.vcs.log.impl.VcsLogToolwindowManagerListener
@@ -1106,6 +1107,7 @@ f:com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl$TextFilterSettings
 - f:setMatchCase(Z):V
 - f:setRegex(Z):V
 f:com.intellij.vcs.log.impl.VcsLogUiPropertiesKt
+- sf:getOrNull(com.intellij.vcs.log.impl.VcsLogUiProperties,com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty):java.lang.Object
 - sf:onPropertyChange(com.intellij.vcs.log.impl.VcsLogUiProperties,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 f:com.intellij.vcs.log.impl.VcsProjectLog
 - sf:Companion:com.intellij.vcs.log.impl.VcsProjectLog$Companion
@@ -1303,24 +1305,12 @@ c:com.intellij.vcs.log.ui.MainVcsLogUiDataRule
 - com.intellij.ide.impl.dataRules.GetDataRule
 - <init>():V
 - getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
-f:com.intellij.vcs.log.ui.RootIcon
-- sf:INSTANCE:com.intellij.vcs.log.ui.RootIcon
-- sf:create(java.awt.Color):com.intellij.util.ui.ColorIcon
-- sf:createAndScale(java.awt.Color):com.intellij.util.ui.ColorIcon
-- sf:createAndScaleCheckbox(java.awt.Color):com.intellij.vcs.log.ui.RootIcon$CheckboxColorIcon
-f:com.intellij.vcs.log.ui.RootIcon$CheckboxColorIcon
-- com.intellij.util.ui.ColorIcon
-- <init>(I,java.awt.Color,I):V
-- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
-- f:prepare(Z):V
-- withIconPreScaled(Z):com.intellij.vcs.log.ui.RootIcon$CheckboxColorIcon
 f:com.intellij.vcs.log.ui.VcsLogActionIds
 - sf:BRANCH_ACTIONS_GROUP:java.lang.String
 - sf:CHANGES_BROWSER_POPUP_ACTION_GROUP:java.lang.String
 - sf:CHANGES_BROWSER_TOOLBAR_ACTION_GROUP:java.lang.String
 - sf:FILE_HISTORY_TOOLBAR_ACTION_GROUP:java.lang.String
 - sf:FILE_HISTORY_TOOLBAR_RIGHT_CORNER_ACTION_GROUP:java.lang.String
-- sf:GRAPH_OPTIONS_GROUP:java.lang.String
 - sf:HISTORY_POPUP_ACTION_GROUP:java.lang.String
 - sf:POPUP_ACTION_GROUP:java.lang.String
 - sf:TEXT_FILTER_SETTINGS_ACTION_GROUP:java.lang.String
@@ -1329,6 +1319,7 @@ f:com.intellij.vcs.log.ui.VcsLogActionIds
 - sf:VCS_LOG_FOCUS_TEXT_FILTER:java.lang.String
 - sf:VCS_LOG_SHOW_DIFF_ACTION:java.lang.String
 - <init>():V
+f:com.intellij.vcs.log.ui.VcsLogBookmarkProviderKt
 com.intellij.vcs.log.ui.VcsLogColorManager
 - sf:DEFAULT_COLOR_MODE:java.lang.String
 - getLongName(com.intellij.openapi.vcs.FilePath):java.lang.String
@@ -1702,13 +1693,6 @@ c:com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider$Clipboard
 c:com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider$Dialog
 - com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider
 - <init>():V
-c:com.intellij.vcs.log.ui.actions.VcsLogGraphOptionsChooserGroup
-- com.intellij.openapi.actionSystem.DefaultActionGroup
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup
 - com.intellij.openapi.actionSystem.DefaultActionGroup
 - com.intellij.openapi.project.DumbAware
@@ -1946,7 +1930,6 @@ f:com.intellij.vcs.log.ui.filter.BranchFilterModel
 - f:getRangeFilter():com.intellij.vcs.log.VcsLogRangeFilter
 - f:getRevisionFilter():com.intellij.vcs.log.VcsLogRevisionFilter
 - f:getVisibleRoots():java.util.Collection
-- f:onStructureFilterChanged(com.intellij.vcs.log.VcsLogRootFilter,com.intellij.vcs.log.VcsLogStructureFilter):V
 - f:setBranchFilter(com.intellij.vcs.log.VcsLogBranchFilter):V
 - f:setRangeFilter(com.intellij.vcs.log.VcsLogRangeFilter):V
 - f:setRevisionFilter(com.intellij.vcs.log.VcsLogRevisionFilter):V
@@ -2047,6 +2030,19 @@ a:com.intellij.vcs.log.ui.filter.FilterModel$SingleFilterModel
 - pa:getFilterValues(com.intellij.vcs.log.VcsLogFilter):java.util.List
 - p:saveFilterToProperties(com.intellij.vcs.log.VcsLogFilter):V
 - setFilter(com.intellij.vcs.log.VcsLogFilter):V
+f:com.intellij.vcs.log.ui.filter.NoMergesFilterAction
+- com.intellij.openapi.project.DumbAwareToggleAction
+- <init>(com.intellij.vcs.log.ui.filter.ParentFilterModel):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.vcs.log.ui.filter.ParentFilterModel
+- com.intellij.vcs.log.ui.filter.FilterModel$SingleFilterModel
+- <init>(com.intellij.vcs.log.impl.MainVcsLogUiProperties,java.util.Map,kotlin.jvm.functions.Function0,com.intellij.vcs.log.VcsLogFilterCollection):V
+- b:<init>(com.intellij.vcs.log.impl.MainVcsLogUiProperties,java.util.Map,kotlin.jvm.functions.Function0,com.intellij.vcs.log.VcsLogFilterCollection,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:isEnabled():Z
+- f:isVisible():Z
 c:com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
 - com.intellij.util.ui.FilterComponent
 - psf:ALL_ACTION_TEXT:java.util.function.Supplier
@@ -2121,6 +2117,7 @@ c:com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 - pf:getBranchFilterModel():com.intellij.vcs.log.ui.filter.BranchFilterModel
 - pf:getDateFilterModel():com.intellij.vcs.log.ui.filter.DateFilterModel
 - getFilters():com.intellij.vcs.log.VcsLogFilterCollection
+- pf:getParentFilterModel():com.intellij.vcs.log.ui.filter.ParentFilterModel
 - pf:getStructureFilterModel():com.intellij.vcs.log.ui.filter.FileFilterModel
 - getTextFilterComponent():com.intellij.vcs.log.ui.filter.VcsLogTextFilterField
 - pf:getTextFilterModel():com.intellij.vcs.log.ui.filter.TextFilterModel
@@ -2144,6 +2141,13 @@ pf:com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi$MainUiActionComponent
 *:com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx$VcsLogFilterListener
 - java.util.EventListener
 - a:onFiltersChanged():V
+c:com.intellij.vcs.log.ui.filter.VcsLogGraphOptionsChooserGroup
+- com.intellij.openapi.actionSystem.DefaultActionGroup
+- com.intellij.openapi.project.DumbAware
+- <init>(com.intellij.vcs.log.ui.filter.ParentFilterModel):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.vcs.log.ui.filter.VcsLogPopupComponentAction
 - com.intellij.openapi.project.DumbAwareAction
 - com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -2655,6 +2659,7 @@ f:com.intellij.vcs.log.util.GraphOptionsUtil
 - sf:getLocalizedName(com.intellij.vcs.log.graph.PermanentGraph$Options):java.lang.String
 - sf:getLocalizedName(com.intellij.vcs.log.graph.PermanentGraph$SortType):java.lang.String
 - sf:getOptionKindNames():java.util.List
+- sf:getPresentationForTabTitle(com.intellij.vcs.log.graph.PermanentGraph$Options):java.lang.String
 f:com.intellij.vcs.log.util.IntCollectionUtil
 - <init>():V
 - s:add(java.util.Map,java.lang.Object,I):V
@@ -2673,9 +2678,10 @@ f:com.intellij.vcs.log.util.PersistentUtil
 - sf:getCorruptionMarkerFile():java.nio.file.Path
 - sf:getProjectLogDataDirectoryName(java.lang.String,java.lang.String):java.lang.String
 a:com.intellij.vcs.log.util.RevisionCollectorTask
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.progress.ProgressIndicator):V
 - f:cancel(Z):V
 - a:collectRevisions(kotlin.jvm.functions.Function1):V
+- a:collectRevisionsFast(kotlin.jvm.functions.Function1):V
 - pf:getProject():com.intellij.openapi.project.Project
 - pf:getRevisionsCount():I
 - f:isCancelled():Z
@@ -2864,6 +2870,8 @@ f:com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 - sf:fromDates(java.util.Date,java.util.Date):com.intellij.vcs.log.VcsLogDateFilter
 - sf:fromHash(java.lang.String):com.intellij.vcs.log.VcsLogHashFilter
 - sf:fromHashes(java.util.Collection):com.intellij.vcs.log.VcsLogHashFilter
+- sf:fromParentCount(java.lang.Integer,java.lang.Integer):com.intellij.vcs.log.VcsLogParentFilter
+- bs:fromParentCount$default(java.lang.Integer,java.lang.Integer,I,java.lang.Object):com.intellij.vcs.log.VcsLogParentFilter
 - sf:fromPaths(java.util.Collection):com.intellij.vcs.log.VcsLogStructureFilter
 - sf:fromPattern(java.lang.String,Z,Z):com.intellij.vcs.log.VcsLogTextFilter
 - bs:fromPattern$default(java.lang.String,Z,Z,I,java.lang.Object):com.intellij.vcs.log.VcsLogTextFilter
@@ -2878,15 +2886,22 @@ f:com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 - sf:fromUserNames(java.util.Collection,com.intellij.vcs.log.data.VcsLogData):com.intellij.vcs.log.VcsLogUserFilter
 - sf:fromUserNames(java.util.Collection,java.util.Map,java.util.Set):com.intellij.vcs.log.VcsLogUserFilter
 - sf:fromVirtualFiles(java.util.Collection):com.intellij.vcs.log.VcsLogStructureFilter
+- sf:noMerges():com.intellij.vcs.log.VcsLogParentFilter
 f:com.intellij.vcs.log.visible.filters.VcsLogFiltersKt
 - sf:getKeysToSet(com.intellij.vcs.log.VcsLogFilterCollection):java.util.Set
-- sf:getPresentation(com.intellij.vcs.log.VcsLogFilterCollection):java.lang.String
+- sf:getPresentation(com.intellij.vcs.log.VcsLogFilterCollection,Z):java.lang.String
+- bs:getPresentation$default(com.intellij.vcs.log.VcsLogFilterCollection,Z,I,java.lang.Object):java.lang.String
 - sf:matches(com.intellij.vcs.log.VcsLogFilterCollection,java.util.Set):Z
 - sf:matches(com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.VcsLogFilterCollection$FilterKey[]):Z
 - sf:with(com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.VcsLogFilter):com.intellij.vcs.log.VcsLogFilterCollection
 - sf:without(com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.VcsLogFilterCollection$FilterKey):com.intellij.vcs.log.VcsLogFilterCollection
 - sf:without(com.intellij.vcs.log.VcsLogFilterCollection,java.lang.Class):com.intellij.vcs.log.VcsLogFilterCollection
 - sf:without(com.intellij.vcs.log.VcsLogFilterCollection,kotlin.jvm.functions.Function1):com.intellij.vcs.log.VcsLogFilterCollection
+f:com.intellij.vcs.log.visible.filters.VcsLogParentFilterImplKt
+- sf:getHasLowerBound(com.intellij.vcs.log.VcsLogParentFilter):Z
+- sf:getHasUpperBound(com.intellij.vcs.log.VcsLogParentFilter):Z
+- sf:getMatchesAll(com.intellij.vcs.log.VcsLogParentFilter):Z
+- sf:isNoMerges(com.intellij.vcs.log.VcsLogParentFilter):Z
 *:com.intellij.vcs.log.visible.filters.VcsLogTextFilterWithMatches
 - com.intellij.vcs.log.VcsLogTextFilter
 - matches(java.lang.String):Z

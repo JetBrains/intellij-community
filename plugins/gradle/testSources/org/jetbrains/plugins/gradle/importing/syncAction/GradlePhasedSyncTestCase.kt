@@ -1,12 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing.syncAction
 
-import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class GradlePhasedSyncTestCase : GradleProjectResolverTestCase() {
@@ -56,20 +54,5 @@ abstract class GradlePhasedSyncTestCase : GradleProjectResolverTestCase() {
   fun addModelProviders(parentDisposable: Disposable, modelProviders: Collection<ProjectImportModelProvider>) {
     TestProjectResolverService.getInstance(myProject)
       .addModelProviders(parentDisposable, modelProviders)
-  }
-
-  fun whenPhaseCompleted(parentDisposable: Disposable, action: (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
-    TestProjectResolverService.getInstance(myProject)
-      .whenPhaseCompleted(parentDisposable, action)
-  }
-
-  fun whenProjectLoaded(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
-    TestProjectResolverService.getInstance(myProject)
-      .whenProjectLoaded(parentDisposable, action)
-  }
-
-  fun whenBuildCompleted(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
-    TestProjectResolverService.getInstance(myProject)
-      .whenBuildCompleted(parentDisposable, action)
   }
 }

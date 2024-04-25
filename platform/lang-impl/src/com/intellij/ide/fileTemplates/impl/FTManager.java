@@ -223,7 +223,7 @@ final class FTManager {
     Set<String> processedNames = new HashSet<>();
     List<FileTemplateBase> children = new ArrayList<>();
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    if (!processTemplates((fileName, stream, aBoolean) -> {
+    if (!processLocal((fileName, stream, aBoolean) -> {
       // check it here and not in filter to reuse fileName
       if (fileTypeManager.isFileIgnored(fileName)) {
         return true;
@@ -273,13 +273,6 @@ final class FTManager {
     }
   }
 
-  private boolean processTemplates(Function3<String, InputStream, Boolean, Boolean> processor) {
-    if (!streamProvider.processChildren(getSpec(""), RoamingType.DEFAULT, s -> true, processor)) {
-      if (processLocal(processor)) return false;
-    }
-    return true;
-  }
-
   private boolean processLocal(Function3<String, InputStream, Boolean, Boolean> processor) {
     try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(templateDir,
                                                                  file -> !Files.isDirectory(file) && !Files.isHidden(file))) {
@@ -321,15 +314,6 @@ final class FTManager {
   }
 
   private String readFile(@NotNull String fileName) {
-    Ref<String> ref = Ref.create();
-    if (streamProvider.read(getSpec(fileName), RoamingType.DEFAULT, inputStream -> {
-      if (inputStream != null) {
-        ref.set(readText(inputStream));
-      }
-      return null;
-    })) {
-      return ref.get();
-    }
     try {
       return Files.readString(templateDir.resolve(fileName));
     }

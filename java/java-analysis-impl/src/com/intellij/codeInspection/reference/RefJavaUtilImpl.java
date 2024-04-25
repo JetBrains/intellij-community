@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
@@ -48,6 +48,23 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
                        @Override
                        public boolean visitEnumConstant(@NotNull UEnumConstant node) {
                          processNewLikeConstruct(node.resolve(), node);
+                         return false;
+                       }
+
+                       @Override
+                       public boolean visitNamedExpression(@NotNull UNamedExpression node) {
+                         PsiElement source = node.getSourcePsi();
+                         if (source instanceof PsiNameValuePair pair) {
+                           PsiReference reference = pair.getReference();
+                           if (reference != null) {
+                             PsiElement target = reference.resolve();
+                             final RefElement refElement = refManager.getReference(target);
+                             if (refElement != null) {
+                               refElement.initializeIfNeeded();
+                               refFrom.addReference(refElement, target, decl, false, true, node);
+                             }
+                           }
+                         }
                          return false;
                        }
 
@@ -678,26 +695,22 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
 
   @Override
   public void addTypeReference(UElement uElement, PsiType psiType, RefManager refManager, @Nullable RefJavaElement refMethod) {
-    if (psiType != null) {
-      final RefClass ownerClass = getOwnerClass(refManager, uElement);
-      if (ownerClass != null) {
-        psiType = psiType.getDeepComponentType();
-        if (psiType instanceof PsiClassType) {
-          PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-          if (psiClass != null && refManager.belongsToScope(psiClass)) {
-            RefClassImpl refClass = (RefClassImpl)refManager.getReference(psiClass);
-            if (refClass != null) {
-              refClass.addTypeReference(ownerClass);
-              if (refMethod != null) {
-                refClass.addClassExporter(refMethod);
-              }
-            }
-          }
-          else {
-            ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, uElement.getSourcePsi());
-          }
+    if (!(psiType instanceof PsiClassType)) return;
+    final RefClass ownerClass = getOwnerClass(refManager, uElement);
+    if (ownerClass == null) return;
+    psiType = psiType.getDeepComponentType();
+    PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
+    if (psiClass != null && refManager.belongsToScope(psiClass)) {
+      RefClassImpl refClass = (RefClassImpl)refManager.getReference(psiClass);
+      if (refClass != null) {
+        refClass.addTypeReference(ownerClass);
+        if (refMethod != null) {
+          refClass.addClassExporter(refMethod);
         }
       }
+    }
+    else {
+      ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, uElement.getSourcePsi());
     }
   }
 

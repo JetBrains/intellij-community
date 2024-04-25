@@ -196,9 +196,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   @Nullable
   public EventSet getEventSet() {
-    if (myEventSet != null && myEventSet.suspendPolicy() != mySuspendPolicy) {
-      return null;
-    }
     return myEventSet;
   }
 

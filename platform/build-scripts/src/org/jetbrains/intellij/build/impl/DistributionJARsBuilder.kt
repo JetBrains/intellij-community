@@ -23,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
+import org.jetbrains.intellij.build.impl.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.jps.model.artifact.JpsArtifact
@@ -62,10 +63,10 @@ internal suspend fun buildDistribution(
   context.productProperties.validateLayout(state.platform, context)
   createBuildBrokenPluginListJob(context)
 
-  val ide = createDevIdeBuild(context)
+  val productRunner = IntellijProductRunner.createRunner(context)
   if (context.productProperties.buildDocAuthoringAssets) {
     launch {
-      buildAdditionalAuthoringArtifacts(ide = ide, context = context)
+      buildAdditionalAuthoringArtifacts(productRunner = productRunner, context = context)
     }
   }
 
@@ -73,7 +74,7 @@ internal suspend fun buildDistribution(
   val entries = coroutineScope {
     // must be completed before plugin building
     context.executeStep(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP) {
-      buildSearchableOptions(ide = ide, context = context)
+      buildSearchableOptions(productRunner = productRunner, context = context)
     }
 
     val pluginLayouts = getPluginLayoutsByJpsModuleNames(
@@ -1348,10 +1349,10 @@ suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext):
 
 suspend fun buildSearchableOptions(
   context: BuildContext,
-  systemProperties: Map<String, Any> = emptyMap(),
+  systemProperties: Map<String, String> = emptyMap(),
 ): Path? {
   return buildSearchableOptions(
-    ide = createDevIdeBuild(context),
+    productRunner = IntellijProductRunner.createRunner(context),
     context = context,
     systemProperties = systemProperties,
   )
@@ -1361,9 +1362,9 @@ suspend fun buildSearchableOptions(
  * Build index which is used to search options in the Settings dialog.
  */
 private suspend fun buildSearchableOptions(
-  ide: DevIdeBuild,
+  productRunner: IntellijProductRunner,
   context: BuildContext,
-  systemProperties: Map<String, Any> = emptyMap(),
+  systemProperties: Map<String, String> = emptyMap(),
 ): Path? {
   val span = Span.current()
   if (context.isStepSkipped(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
@@ -1393,10 +1394,9 @@ private suspend fun buildSearchableOptions(
     }
     // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
     // It'll process all UI elements in the `Settings` dialog and build an index for them.
-    ide.runProduct(
-      tempDir = context.paths.tempDir.resolve("searchableOptions"),
+    productRunner.runProduct(
       arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
-      systemProperties = systemProperties,
+      additionalSystemProperties = systemProperties,
       isLongRunning = true,
     )
     check(Files.isDirectory(targetDirectory)) {

@@ -72,8 +72,8 @@ object GitStashOperations {
 
   @JvmStatic
   fun dropStashWithConfirmation(project: Project, parentComponent: Component?, stash: StashInfo): Boolean {
-    val dialogBuilder = MessageDialogBuilder.yesNo(GitBundle.message("git.unstash.drop.confirmation.title", stash.stash),
-                                                   GitBundle.message("git.unstash.drop.confirmation.message", stash.stash,
+    val dialogBuilder = MessageDialogBuilder.yesNo(GitBundle.message("unstash.drop.confirmation.title", stash.stash),
+                                                   GitBundle.message("unstash.drop.confirmation.message", stash.stash,
                                                                      stash.message)).icon(Messages.getQuestionIcon())
     val confirmed = if (parentComponent != null) dialogBuilder.ask(parentComponent) else dialogBuilder.ask(project)
     if (!confirmed) return false
@@ -97,8 +97,8 @@ object GitStashOperations {
 
   @JvmStatic
   fun clearStashesWithConfirmation(project: Project, root: VirtualFile, parentComponent: Component?): Boolean {
-    val dialogBuilder = MessageDialogBuilder.yesNo(GitBundle.message("git.unstash.clear.confirmation.title"),
-                                                   GitBundle.message("git.unstash.clear.confirmation.message")).icon(Messages.getWarningIcon())
+    val dialogBuilder = MessageDialogBuilder.yesNo(GitBundle.message("unstash.clear.confirmation.title"),
+                                                   GitBundle.message("unstash.clear.confirmation.message")).icon(Messages.getWarningIcon())
     val confirmed = if (parentComponent != null) dialogBuilder.ask(parentComponent) else dialogBuilder.ask(project)
     if (!confirmed) return false
 
@@ -162,7 +162,7 @@ object GitStashOperations {
     if (!completed) return false
 
     VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.UNSTASH_PATCH_APPLIED, "",
-                                                   VcsBundle.message("patch.apply.success.applied.text"))
+                                                   GitBundle.message("unstash.stash.applied"))
     return true
   }
 

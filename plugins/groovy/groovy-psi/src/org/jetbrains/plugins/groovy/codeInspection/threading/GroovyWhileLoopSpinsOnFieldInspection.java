@@ -86,7 +86,7 @@ public final class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection 
         return true;
       }
 
-      if (condition instanceof GrUnaryExpression postfixExpression && ((GrUnaryExpression)condition).isPostfix()) {
+      if (condition instanceof GrUnaryExpression postfixExpression && postfixExpression.isPostfix()) {
         final GrExpression operand =
             postfixExpression.getOperand();
         return isSimpleFieldComparison(operand);

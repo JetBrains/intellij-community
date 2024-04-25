@@ -47,7 +47,7 @@ import java.util.Set;
 
 public abstract class MavenArtifactCoordinatesConverter extends ResolvingConverter<String> implements MavenDomSoftAwareConverter {
   @Override
-  public String fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public String fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     if (s == null) return null;
 
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
@@ -72,13 +72,13 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   protected abstract boolean doIsValid(MavenId id, MavenIndicesManager manager, ConvertContext context);
 
   @Override
-  public String toString(@Nullable String s, ConvertContext context) {
+  public String toString(@Nullable String s, @NotNull ConvertContext context) {
     return s;
   }
 
   @Override
   @NotNull
-  public Collection<String> getVariants(ConvertContext context) {
+  public Collection<String> getVariants(@NotNull ConvertContext context) {
     DependencySearchService searchService = DependencySearchService.getInstance(context.getProject());
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
@@ -90,7 +90,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   protected abstract Set<String> doGetVariants(MavenId id, DependencySearchService searchService);
 
   @Override
-  public PsiElement resolve(String o, ConvertContext context) {
+  public PsiElement resolve(String o, @NotNull ConvertContext context) {
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
     PsiFile result = selectStrategy(context).resolve(id, context);
@@ -98,7 +98,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   @Override
-  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+  public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
     return selectStrategy(context).getErrorMessage(s, context);
   }
 

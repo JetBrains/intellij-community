@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "DeprecatedCallableAddReplaceWith", "LiftReturnOrAssignment")
 
 package com.intellij.openapi.util
@@ -50,7 +50,7 @@ internal val fakeComponent: JComponent by lazy { object : JComponent() {} }
 
 /**
  * Provides access to icons used in the UI.
- * Please see [Working with Icons and Images](http://www.jetbrains.org/intellij/sdk/docs/reference_guide/work_with_icons_and_images.html)
+ * Please see [Icons](https://plugins.jetbrains.com/docs/intellij/icons.html)
  * about supported formats, organization, and accessing icons in plugins.
  *
  * @see com.intellij.util.IconUtil

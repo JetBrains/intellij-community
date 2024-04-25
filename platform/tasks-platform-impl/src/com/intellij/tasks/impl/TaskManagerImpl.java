@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -436,7 +436,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     if (name != null) {
       ShelveChangesManager manager = ShelveChangesManager.getInstance(myProject);
       for (ShelvedChangeList list : manager.getShelvedChangeLists()) {
-        if (name.equals(list.DESCRIPTION)) {
+        if (name.equals(list.getDescription())) {
           manager.unshelveChangeList(list, null, list.getBinaryFiles(), null, true);
           return;
         }

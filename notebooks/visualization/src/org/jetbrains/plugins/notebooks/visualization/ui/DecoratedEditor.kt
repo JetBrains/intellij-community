@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
@@ -24,7 +25,7 @@ private class DecoratedEditor(private val original: TextEditor) : TextEditor by 
 
   private var mouseOverCell: EditorCellView? = null
 
-  private val component = createLayer(original.component)
+  private val component = addNestedScrollingSupport(createLayer(original.component))
 
   init {
     if (!GraphicsEnvironment.isHeadless()) {
@@ -104,7 +105,7 @@ private class DecoratedEditor(private val original: TextEditor) : TextEditor by 
           null
         }
         if (component != null) {
-          updateMouseOverCell(component, Point(SwingUtilities.convertPoint(e.component, e.point, component)))
+          updateMouseOverCell(component, SwingUtilities.convertPoint(e.component, e.point, component))
         }
       }
     }
@@ -134,9 +135,11 @@ fun decorateTextEditor(textEditor: TextEditor): TextEditor {
 }
 
 internal fun keepScrollingPositionWhile(editor: Editor, task: Runnable) {
-  EditorScrollingPositionKeeper(editor).use { keeper ->
-    keeper.savePosition()
-    task.run()
-    keeper.restorePosition(false)
+  ReadAction.run<Nothing> {
+    EditorScrollingPositionKeeper(editor).use { keeper ->
+      keeper.savePosition()
+      task.run()
+      keeper.restorePosition(false)
+    }
   }
 }

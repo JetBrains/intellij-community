@@ -122,6 +122,8 @@ public abstract class ActionGroup extends AnAction {
   @ApiStatus.OverrideOnly
   public abstract AnAction @NotNull [] getChildren(@Nullable AnActionEvent e);
 
+  /** @deprecated Use {@link DefaultActionGroup#getChildren(ActionManager)} instead or avoid altogether */
+  @Deprecated(forRemoval = true)
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
     return getChildren(null);
   }

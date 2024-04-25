@@ -1,32 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.SelectionAwareListCellRenderer;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
-import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -177,7 +166,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       //noinspection ConstantConditions
       super(template.getElement(), getCommonTextRange(markers), template.getCommonIcon(markers),
             getCommonAccessibleNameProvider(markers), template.getCommonTooltip(markers),
-            getCommonNavigationHandler(markers), template.getCommonIconAlignment(markers));
+            null, template.getCommonIconAlignment(markers));
       myMarkers = markers;
       myGroups = ContainerUtil.map(markers, info -> info.createGutterRenderer().getPopupMenuActions());
       updatePass = passId;
@@ -212,10 +201,6 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       return TextRange.create(startOffset, endOffset);
     }
 
-    private static @NotNull GutterIconNavigationHandler<PsiElement> getCommonNavigationHandler(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
-      return new MergedGutterIconNavigationHandler(markers);
-    }
-
     @Override
     public GutterIconRenderer createGutterRenderer() {
       return new LineMarkerGutterIconRenderer<>(this) {
@@ -234,66 +219,6 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
           return getCommonActionGroup();
         }
       };
-    }
-  }
-
-  @TestOnly
-  public static @Nullable List<LineMarkerInfo<?>> getMergedLineMarkerInfos(@NotNull GutterIconNavigationHandler<?> handler) {
-    if (handler instanceof MergedGutterIconNavigationHandler mergedGutterIconNavigationHandler) {
-      return mergedGutterIconNavigationHandler.getMergedLineMarkersInfos();
-    }
-    return null;
-  }
-
-  private static class MergedGutterIconNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
-    private final List<LineMarkerInfo<?>> myInfos;
-
-    private MergedGutterIconNavigationHandler(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
-      List<LineMarkerInfo<?>> infos = new ArrayList<>(markers);
-      infos.sort(Comparator.comparingInt(o -> o.startOffset));
-      myInfos = Collections.unmodifiableList(infos);
-    }
-
-    private @NotNull List<LineMarkerInfo<?>> getMergedLineMarkersInfos() {
-      return myInfos;
-    }
-
-    @Override
-    public void navigate(MouseEvent e, PsiElement __) {
-      //list.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT); // TODO[jetzajac]: do we need it?
-      IPopupChooserBuilder<LineMarkerInfo<?>> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(myInfos);
-      builder.setRenderer(new SelectionAwareListCellRenderer<>(dom -> {
-        Icon icon = null;
-        GutterIconRenderer renderer = dom.createGutterRenderer();
-        if (renderer != null) {
-          Icon originalIcon = renderer.getIcon();
-          icon = IconUtil.scale(originalIcon, null, JBUIScale.scale(16.0f) / originalIcon.getIconWidth());
-        }
-        var elementPresentation = ReadAction.compute(() -> {
-          PsiElement element = dom.getElement();
-          if (element == null) {
-            return IdeBundle.message("node.structureview.invalid");
-          }
-          else if (dom instanceof MergeableLineMarkerInfo) {
-            return ((MergeableLineMarkerInfo<?>)dom).getElementPresentation(element);
-          }
-          else {
-            return element.getText();
-          }
-        });
-        String text = StringUtil.first(elementPresentation, 100, true).replace('\n', ' ');
-
-        JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
-        label.setBorder(JBUI.Borders.empty(2));
-        return label;
-      }));
-      builder.setItemChosenCallback(value -> {
-        //noinspection unchecked
-        GutterIconNavigationHandler<PsiElement> handler = (GutterIconNavigationHandler<PsiElement>)value.getNavigationHandler();
-        if (handler != null) {
-          handler.navigate(e, value.getElement());
-        }
-      }).createPopup().show(new RelativePoint(e));
     }
   }
 

@@ -15,7 +15,7 @@ import org.jetbrains.terminal.completion.ShellCommand
 import java.io.IOException
 import java.time.Duration
 
-class IJCommandSpecManager : CommandSpecManager {
+internal class IJCommandSpecManager : CommandSpecManager {
   private val commandsInfoCache: Cache<String, ShellCommandInfo> = Caffeine.newBuilder()
     .expireAfterAccess(Duration.ofMinutes(5))
     .scheduler(Scheduler.systemScheduler())

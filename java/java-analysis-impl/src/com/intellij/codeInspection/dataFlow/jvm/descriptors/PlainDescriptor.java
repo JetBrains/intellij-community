@@ -18,6 +18,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
@@ -159,16 +161,20 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     if (!placeMethod.hasModifierProperty(PsiModifier.STATIC) && target.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!target.hasModifierProperty(PsiModifier.STATIC) &&
         !placeMethod.hasModifierProperty(PsiModifier.STATIC) &&
-        (isReadResolveMethod(placeMethod, placeClass) ||
+        (isReadResolveMethodWithoutReadObject(placeMethod, placeClass) ||
          methodCanBeCalledFromConstructorBeforeFieldInitializing(target, placeMethod, placeClass))) {
       return true;
     }
     return getAccessOffset(placeMethod) < getWriteOffset(target);
   }
 
-  private static boolean isReadResolveMethod(@NotNull PsiMethod method, @NotNull PsiClass aClass) {
+  private static final CallMatcher READ_OBJECT = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "readObject")
+    .parameterTypes("java.io.ObjectInputStream");  
+
+  private static boolean isReadResolveMethodWithoutReadObject(@NotNull PsiMethod method, @NotNull PsiClass aClass) {
     return "readResolve".equals(method.getName()) && method.getParameterList().isEmpty() &&
-           InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_IO_SERIALIZABLE);
+           !aClass.isRecord() && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_IO_SERIALIZABLE) &&
+           !ContainerUtil.exists(aClass.findMethodsByName("readObject", false), READ_OBJECT::methodMatches);
    }
 
   private record TargetCallInfo(@NotNull PsiMethod constructor,

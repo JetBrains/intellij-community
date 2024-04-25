@@ -40,8 +40,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.ObjectUtils.chooseNotNull;
-
 public final class PushController implements Disposable {
   private static final Logger LOG = Logger.getInstance(PushController.class);
 
@@ -607,8 +605,14 @@ public final class PushController implements Disposable {
   @ApiStatus.Experimental
   public Map<String, VcsPushOptionsPanel> createCustomPanels(Collection<? extends Repository> repos) {
     return ContainerUtil.map2MapNotNull(CustomPushOptionsPanelFactory.EP_NAME.getExtensionList(), panelProvider -> {
-      VcsPushOptionsPanel panel = panelProvider.createOptionsPanel(this, repos);
-      return panel != null ? Pair.pair(panelProvider.getId(), panel) : null;
+      try {
+        VcsPushOptionsPanel panel = panelProvider.createOptionsPanel(this, repos);
+        return panel != null ? Pair.pair(panelProvider.getId(), panel) : null;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        return null;
+      }
     });
   }
 

@@ -102,10 +102,12 @@ sealed class InlineCompletionEventType {
 
   /**
    * This event is triggered when a variant is updated upon some event.
-   * [lengthChange] indicates the difference between the new length of text and the old length.
+   * * [lengthChange] indicates the difference between the new length of text and the old length.
+   * * [elements] indicates the list of new elements after update.
    */
   class Change @ApiStatus.Internal constructor(
     override val variantIndex: Int,
+    @ApiStatus.Internal val elements: List<InlineCompletionElement>,
     val lengthChange: Int
   ) : PerVariantEventType() {
 

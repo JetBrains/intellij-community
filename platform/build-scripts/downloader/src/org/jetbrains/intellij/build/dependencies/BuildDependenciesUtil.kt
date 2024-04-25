@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
-import com.google.common.io.MoreFiles
-import com.google.common.io.RecursiveDeleteOption
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
@@ -14,6 +12,7 @@ import org.w3c.dom.Element
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
+import java.io.StringWriter
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -23,8 +22,16 @@ import java.util.*
 import java.util.logging.Logger
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.transform.OutputKeys
+import javax.xml.transform.Transformer
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.stream.StreamResult
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.listDirectoryEntries
 
+@OptIn(ExperimentalPathApi::class)
 @ApiStatus.Internal
 object BuildDependenciesUtil {
   private val LOG = Logger.getLogger(BuildDependenciesUtil::class.java.name)
@@ -33,7 +40,6 @@ object BuildDependenciesUtil {
   val isWindows = System.getProperty("os.name").lowercase().startsWith("windows")
 
   @Suppress("HttpUrlsUsage")
-  @JvmStatic
   fun createDocumentBuilder(): DocumentBuilder {
     // from https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html#jaxp-documentbuilderfactory-saxparserfactory-and-dom4j
     val dbf = DocumentBuilderFactory.newDefaultInstance()
@@ -78,9 +84,8 @@ object BuildDependenciesUtil {
     }
   }
 
-  @JvmStatic
-  fun getChildElements(parent: Element, tagName: String): List<Element> {
-    val childNodes = parent.childNodes
+  fun Element.getChildElements(tagName: String): List<Element> {
+    val childNodes = childNodes
     val result = ArrayList<Element>()
     for (i in 0 until childNodes.length) {
       val node = childNodes.item(i)
@@ -91,20 +96,30 @@ object BuildDependenciesUtil {
     return result
   }
 
-  fun getComponentElement(root: Element, componentName: String): Element {
-    val elements = getChildElements(root, "component").filter { x -> componentName == x.getAttribute("name") }
+  fun Element.getComponentElement(componentName: String): Element {
+    val elements = this.getChildElements("component").filter { x -> componentName == x.getAttribute("name") }
     check(elements.size == 1) { "Expected one and only one component with name '$componentName'" }
     return elements[0]
   }
 
-  fun getSingleChildElement(parent: Element, tagName: String): Element {
-    val result = getChildElements(parent, tagName)
+  val Element.asText: String
+    get() {
+      val transFactory = TransformerFactory.newInstance()
+      val transformer: Transformer = transFactory.newTransformer()
+      val buffer = StringWriter()
+      transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
+      transformer.transform(DOMSource(this), StreamResult(buffer))
+      return buffer.toString().replace("\r", "")
+    }
+
+  fun Element.getSingleChildElement(tagName: String): Element {
+    val result = this.getChildElements(tagName)
     check(result.size == 1) { "Expected one and only one element by tag '$tagName'" }
     return result[0]
   }
 
-  fun tryGetSingleChildElement(parent: Element, tagName: String): Element? {
-    val result = getChildElements(parent, tagName)
+  fun Element.tryGetSingleChildElement(tagName: String): Element? {
+    val result = this.getChildElements(tagName)
     return if (result.size == 1) result[0] else null
   }
 
@@ -112,8 +127,8 @@ object BuildDependenciesUtil {
     return try {
       val documentBuilder = createDocumentBuilder()
       val document = documentBuilder.parse(libraryXml.toFile())
-      val libraryElement = getSingleChildElement(document.documentElement, "library")
-      val propertiesElement = getSingleChildElement(libraryElement, "properties")
+      val libraryElement = document.documentElement.getSingleChildElement("library")
+      val propertiesElement = libraryElement.getSingleChildElement("properties")
       val mavenId = propertiesElement.getAttribute("maven-id")
       check(!mavenId.isBlank()) { "Invalid maven-id" }
       mavenId
@@ -123,20 +138,19 @@ object BuildDependenciesUtil {
     }
   }
 
-  fun getLibraryElement(root: Element, libraryName: String, iml: Path): Element {
-    val rootManager = getComponentElement(root, "NewModuleRootManager")
-    val library = getChildElements(rootManager, "orderEntry")
+  fun Element.getLibraryElement(libraryName: String, iml: Path): Element {
+    val rootManager = this.getComponentElement("NewModuleRootManager")
+    val library = rootManager.getChildElements("orderEntry")
                     .filter { it.getAttribute("type") == "module-library" }
-                    .map { getSingleChildElement(it, "library") }
+                    .map { it.getSingleChildElement("library") }
                     .singleOrNull { it.getAttribute("name") == libraryName }
                   ?: error("Library '$libraryName' was not found in '$iml'")
 
     return library
   }
 
-  @Throws(IOException::class)
   fun extractZip(archiveFile: Path, target: Path, stripRoot: Boolean) {
-    ZipFile(FileChannel.open(archiveFile)).use { zipFile ->
+    ZipFile.Builder().setSeekableByteChannel(FileChannel.open(archiveFile)).get().use { zipFile ->
       val entries = zipFile.entries
       genericExtract(archiveFile, object : ArchiveContent {
         override val nextEntry: Entry?
@@ -168,24 +182,21 @@ object BuildDependenciesUtil {
     }
   }
 
-  @Throws(IOException::class)
   fun extractTarBz2(archiveFile: Path, target: Path, stripRoot: Boolean) {
     extractTarBasedArchive(archiveFile, target, stripRoot) { BZip2CompressorInputStream(it) }
   }
 
-  @Throws(IOException::class)
   fun extractTarGz(archiveFile: Path, target: Path, stripRoot: Boolean) {
     extractTarBasedArchive(archiveFile, target, stripRoot) { GzipCompressorInputStream(it) }
   }
 
-  @Throws(IOException::class)
   private fun extractTarBasedArchive(archiveFile: Path, target: Path, stripRoot: Boolean, decompressor: (InputStream) -> InputStream) {
     TarArchiveInputStream(decompressor(BufferedInputStream(Files.newInputStream(archiveFile)))).use { archive ->
       genericExtract(archiveFile, object : ArchiveContent {
         @get:Throws(IOException::class)
         override val nextEntry: Entry?
           get() {
-            val entry = archive.nextTarEntry ?: return null
+            val entry = archive.nextEntry ?: return null
             return object : Entry {
               override val type: Entry.Type
                 get() = when {
@@ -280,8 +291,7 @@ object BuildDependenciesUtil {
   }
 
   fun deleteFileOrFolder(file: Path) {
-    @Suppress("UnstableApiUsage")
-    MoreFiles.deleteRecursively(file, RecursiveDeleteOption.ALLOW_INSECURE)
+    file.deleteRecursively()
   }
 
   fun cleanDirectory(directory: Path) {

@@ -32,7 +32,7 @@ class JavaSupportTest : GrazieTestBase() {
 
   fun `test split line quick fix`() {
     runHighlightTestForFile("ide/language/java/SplitLine.java")
-    myFixture.launchAction(myFixture.findSingleIntention(", so"))
+    myFixture.launchAction(myFixture.findSingleIntention(", but"))
     myFixture.checkResultByFile("ide/language/java/SplitLine_after.java")
   }
 

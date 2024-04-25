@@ -135,7 +135,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
                                    SvnBundle.messagePointer("action.DumbAware.SvnConfigureProxiesComponent.description.add"),
                                    IconUtil.getAddIcon()) {
         {
-            registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
+            registerCustomShortcutSet(CommonShortcuts.getInsert(), myTree);
         }
         @Override
         public void actionPerformed(@NotNull AnActionEvent event) {

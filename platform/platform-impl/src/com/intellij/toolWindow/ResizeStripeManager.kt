@@ -6,6 +6,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.ToolWindowShowNamesAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionHolder
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -21,6 +22,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.PopupFactoryImpl.ActionGroupPopup
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.JBUI
@@ -273,8 +275,10 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
 
     fun showPopup(group: ActionGroup, component: Component, x: Int, y: Int) {
       val dataContext = DataManager.getInstance().getDataContext(component)
-      val factory = PresentationFactory()
-      val popup = object : ActionGroupPopup(null, group, dataContext, false, false, true, true, null, -1, null, null, factory, false) {
+      val popup = object : ActionGroupPopup(
+        null, null, group, dataContext,
+        ActionPlaces.getPopupPlace("ResizeStripeManager"), PresentationFactory(),
+        ActionPopupOptions.mnemonicsAndDisabled(), null) {
         override fun afterShowSync() {
           super.afterShowSync()
           list.clearSelection()

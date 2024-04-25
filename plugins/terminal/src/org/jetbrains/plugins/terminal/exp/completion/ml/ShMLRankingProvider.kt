@@ -5,7 +5,7 @@ import com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 import com.intellij.lang.Language
 import org.jetbrains.plugins.terminal.TerminalBundle
 
-class ShMLRankingProvider: CatBoostJarCompletionModelProvider(
+internal class ShMLRankingProvider : CatBoostJarCompletionModelProvider(
   TerminalBundle.message("settings.shell.language"), "sh_features", "sh_model") {
 
   override fun isEnabledByDefault(): Boolean = true

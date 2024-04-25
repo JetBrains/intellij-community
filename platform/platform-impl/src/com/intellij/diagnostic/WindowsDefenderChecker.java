@@ -233,11 +233,13 @@ public class WindowsDefenderChecker {
       }
 
       var psh = PathEnvironmentVariableUtil.findInPath("powershell.exe");
+      if (psh == null) psh = PathEnvironmentVariableUtil.findInPath("pwsh.exe");
       if (psh == null) {
-        LOG.info("no 'powershell.exe' on " + PathEnvironmentVariableUtil.getPathVariableValue());
+        LOG.info("no 'powershell.exe' or 'pwsh.exe' on " + PathEnvironmentVariableUtil.getPathVariableValue());
         return false;
       }
-      var sane = Stream.of("SystemRoot", "ProgramFiles").map(System::getenv).anyMatch(val -> val != null && psh.toPath().startsWith(val));
+      var pshPath = psh.toPath();
+      var sane = Stream.of("SystemRoot", "ProgramFiles").map(System::getenv).anyMatch(val -> val != null && pshPath.startsWith(val));
       if (!sane) {
         LOG.info("suspicious 'powershell.exe' location: " + psh);
         return false;

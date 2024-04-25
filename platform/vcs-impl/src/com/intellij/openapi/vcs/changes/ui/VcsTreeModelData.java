@@ -50,7 +50,9 @@ public abstract class VcsTreeModelData {
   @NotNull
   public static VcsTreeModelData included(@NotNull ChangesTree tree) {
     assert tree.getModel().getRoot() instanceof ChangesBrowserNode;
-    return new IncludedUnderData(tree, getRoot(tree));
+
+    Set<Object> includedSet = tree.getIncludedSet();
+    return new IncludedUnderData(includedSet, getRoot(tree));
   }
 
   @NotNull
@@ -80,7 +82,8 @@ public abstract class VcsTreeModelData {
     ChangesBrowserNode<?> tagNode = findTagNode(tree, tag);
     if (tagNode == null) return new EmptyData();
 
-    return new IncludedUnderData(tree, tagNode);
+    Set<Object> includedSet = tree.getIncludedSet();
+    return new IncludedUnderData(includedSet, tagNode);
   }
 
 
@@ -238,9 +241,9 @@ public abstract class VcsTreeModelData {
     private final ChangesBrowserNode<?> myNode;
     private final Set<Object> myIncluded;
 
-    IncludedUnderData(@NotNull ChangesTree tree, @NotNull ChangesBrowserNode<?> node) {
+    IncludedUnderData(@NotNull Set<Object> includedSet, @NotNull ChangesBrowserNode<?> node) {
       myNode = node;
-      myIncluded = tree.getIncludedSet();
+      myIncluded = includedSet;
     }
 
     @NotNull

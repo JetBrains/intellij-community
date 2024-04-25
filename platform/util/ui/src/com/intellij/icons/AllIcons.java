@@ -630,6 +630,7 @@ public class AllIcons {
     /** 20x20 */ public static final @NotNull Icon DislikeSelected = load("ide/dislikeSelected.svg", 843594024, 2);
     /** 6x6 */ public static final @NotNull Icon ErrorPoint = load("ide/errorPoint.svg", 1599629614, 2);
     /** 14x14 */ public static final @NotNull Icon External_link_arrow = load("ide/external_link_arrow.svg", -1698491733, 0);
+    /** 14x14 */ public static final @NotNull Icon ExternalLinkArrowWhite = load("ide/externalLinkArrowWhite.svg", 555726287, 0);
     /** 16x16 */ public static final @NotNull Icon FatalErrorRead = load("ide/fatalError-read.svg", -2061937514, 2);
     /** 16x16 */ public static final @NotNull Icon FatalError = load("ide/fatalError.svg", -1290263519, 2);
     /** 32x32 */ public static final @NotNull Icon FeedbackRating = load("ide/feedbackRating.svg", 2100656760, 2);
@@ -741,7 +742,7 @@ public class AllIcons {
   public static final class Language {
     /** 16x16 */ public static final @NotNull Icon GO = load("language/go.svg", 683936688, 2);
     /** 16x16 */ public static final @NotNull Icon Php = load("language/php.svg", 185644961, 0);
-    /** 16x16 */ public static final @NotNull Icon Python = load("language/python.svg", 2024105733, 2);
+    /** 16x16 */ public static final @NotNull Icon Python = load("language/python.svg", -543505712, 2);
     /** 16x16 */ public static final @NotNull Icon Ruby = load("language/ruby.svg", -1736610380, 2);
     /** 16x16 */ public static final @NotNull Icon Rust = load("language/rust.svg", 1109219129, 2);
     /** 16x16 */ public static final @NotNull Icon Scala = load("language/scala.svg", -2014474853, 2);

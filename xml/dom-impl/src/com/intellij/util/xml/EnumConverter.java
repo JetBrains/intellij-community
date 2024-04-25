@@ -29,22 +29,22 @@ public final class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
   }
 
   @Override
-  public T fromString(final String s, final ConvertContext context) {
+  public T fromString(final String s, final @NotNull ConvertContext context) {
     return s==null?null:(T)NamedEnumUtil.getEnumElementByValue((Class)myType, s);
   }
 
   @Override
-  public String toString(final T t, final ConvertContext context) {
+  public String toString(final T t, final @NotNull ConvertContext context) {
     return t == null? null:getStringValue(t);
   }
 
   @Override
-  public String getErrorMessage(final @Nullable String s, final ConvertContext context) {
+  public String getErrorMessage(final @Nullable String s, final @NotNull ConvertContext context) {
     return XmlDomBundle.message("dom.converter.unknown.enum.value", s);
   }
 
   @Override
-  public @NotNull Collection<? extends T> getVariants(final ConvertContext context) {
+  public @NotNull Collection<? extends T> getVariants(final @NotNull ConvertContext context) {
     final XmlElement element = context.getXmlElement();
     if (element instanceof XmlTag) {
       final XmlTag simpleContent = XmlUtil.getSchemaSimpleContent((XmlTag)element);

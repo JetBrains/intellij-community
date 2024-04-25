@@ -47,7 +47,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   }
 
   private boolean isContextValid(SelectInContext context) {
-    if (myProject.isDisposed()) return false;
+    if (myProject.isDisposed() || !myProject.isInitialized()) return false;
 
     VirtualFile virtualFile = context.getVirtualFile();
     boolean valid = virtualFile.isValid();

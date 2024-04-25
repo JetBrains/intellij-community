@@ -33,6 +33,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.intellij.lang.annotations.MagicConstant;
@@ -45,6 +46,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import static com.intellij.psi.PsiKeyword.*;
+
 public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance(PsiUtil.class);
 
@@ -55,6 +58,27 @@ public final class PsiUtil extends PsiUtilCore {
   public static final Key<Boolean> VALID_VOID_TYPE_IN_CODE_FRAGMENT = Key.create("VALID_VOID_TYPE_IN_CODE_FRAGMENT");
 
   private static final Pattern IGNORED_NAMES = Pattern.compile("ignored?[A-Za-z\\d]*");
+
+  private static final @NotNull Map<CharSequence, JavaFeature> SOFT_KEYWORDS = CollectionFactory.createCharSequenceMap(true);
+
+  static {
+    SOFT_KEYWORDS.put(VAR, JavaFeature.LVTI);
+    SOFT_KEYWORDS.put(RECORD, JavaFeature.RECORDS);
+    SOFT_KEYWORDS.put(YIELD, JavaFeature.SWITCH_EXPRESSION);
+    SOFT_KEYWORDS.put(SEALED, JavaFeature.SEALED_CLASSES);
+    SOFT_KEYWORDS.put(PERMITS, JavaFeature.SEALED_CLASSES);
+    SOFT_KEYWORDS.put(WHEN, JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS);
+    SOFT_KEYWORDS.put(OPEN, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(MODULE, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(REQUIRES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(EXPORTS, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(OPENS, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(USES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(PROVIDES, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(TRANSITIVE, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(TO, JavaFeature.MODULES);
+    SOFT_KEYWORDS.put(WITH, JavaFeature.MODULES);
+  }
 
   private PsiUtil() {}
 
@@ -1504,6 +1528,41 @@ public final class PsiUtil extends PsiUtilCore {
       return imports[imports.length - 1].getStartOffsetInParent() > element.getStartOffsetInParent();
     }
     return false;
+  }
+
+  private static final Set<String> KEYWORDS = ContainerUtil.immutableSet(
+    ABSTRACT, BOOLEAN, BREAK, BYTE, CASE, CATCH, CHAR, CLASS, CONST, CONTINUE, DEFAULT, DO, DOUBLE, ELSE, EXTENDS, FINAL, FINALLY,
+    FLOAT, FOR, GOTO, IF, IMPLEMENTS, IMPORT, INSTANCEOF, INT, INTERFACE, LONG, NATIVE, NEW, PACKAGE, PRIVATE, PROTECTED, PUBLIC,
+    RETURN, SHORT, STATIC, STRICTFP, SUPER, SWITCH, SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT, TRY, VOID, VOLATILE, WHILE,
+    TRUE, FALSE, NULL, NON_SEALED);
+
+  /**
+   * @param id word to check
+   * @param level language level
+   * @return true if the given word is a keyword at a given level
+   */
+  public static boolean isKeyword(@NotNull String id, @NotNull LanguageLevel level) {
+    return KEYWORDS.contains(id) ||
+           JavaFeature.ASSERTIONS.isSufficient(level) && ASSERT.equals(id) ||
+           JavaFeature.ENUMS.isSufficient(level) && ENUM.equals(id);
+  }
+
+  /**
+   * @param id keyword candidate
+   * @param level current language level
+   * @return true if given id is a soft (restricted) keyword at a given language level
+   */
+  public static boolean isSoftKeyword(@NotNull CharSequence id, @NotNull LanguageLevel level) {
+    JavaFeature feature = softKeywordFeature(id);
+    return feature != null && feature.isSufficient(level);
+  }
+
+  /**
+   * @param keyword soft keyword
+   * @return JavaFeature, which introduced a given keyword; null if the supplied string is not a soft keyword 
+   */
+  public static @Nullable JavaFeature softKeywordFeature(@NotNull CharSequence keyword) {
+    return SOFT_KEYWORDS.get(keyword);
   }
 
   //<editor-fold desc="Deprecated stuff">

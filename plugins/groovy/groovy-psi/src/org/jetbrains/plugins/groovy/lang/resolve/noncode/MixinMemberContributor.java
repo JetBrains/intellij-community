@@ -137,7 +137,7 @@ public final class MixinMemberContributor {
 
     @Override
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-      if (element instanceof PsiMethod method && GdkMethodUtil.isCategoryMethod((PsiMethod)element, myType, myPlace, state.get(PsiSubstitutor.KEY))) {
+      if (element instanceof PsiMethod method && GdkMethodUtil.isCategoryMethod(method, myType, myPlace, state.get(PsiSubstitutor.KEY))) {
         String originInfo = getOriginInfoForCategory(method);
         return super.execute(GrGdkMethodImpl.createGdkMethod(method, false, originInfo), state);
       }

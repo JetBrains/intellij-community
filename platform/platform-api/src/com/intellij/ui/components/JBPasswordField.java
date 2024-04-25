@@ -5,8 +5,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 
@@ -34,6 +36,30 @@ public class JBPasswordField extends JPasswordField implements ComponentWithEmpt
     }
     else {
       myEmptyText.clear();
+    }
+  }
+
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJBPasswordField();
+    }
+    return accessibleContext;
+  }
+
+  private class AccessibleJBPasswordField extends AccessibleJPasswordField {
+    @Override
+    public String getAccessibleDescription() {
+      String description = super.getAccessibleDescription();
+      if (description == null) {
+        //noinspection HardCodedStringLiteral
+        String emptyText = myEmptyText.toString();
+        if (!emptyText.isEmpty()) {
+          return AccessibleContextUtil.getUniqueDescription(this, emptyText);
+        }
+      }
+      return description;
     }
   }
 }

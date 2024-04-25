@@ -25,3 +25,5 @@ fun bar() {
 }
 
 private fun i(a: Int, b: Int) = a + b * a
+
+// IGNORE_K2

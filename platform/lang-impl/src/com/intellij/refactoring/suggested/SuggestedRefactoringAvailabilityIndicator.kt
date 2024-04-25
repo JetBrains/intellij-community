@@ -36,8 +36,8 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
     override fun equals(other: Any?): Boolean {
       return other is Data
              && other.document == document
-             && other.highlighterRangeMarker.range == highlighterRangeMarker.range
-             && other.availabilityRangeMarker.range == availabilityRangeMarker.range
+             && other.highlighterRangeMarker.asTextRange == highlighterRangeMarker.asTextRange
+             && other.availabilityRangeMarker.asTextRange == availabilityRangeMarker.asTextRange
              && other.refactoringEnabled == refactoringEnabled
              && other.tooltip == tooltip
     }
@@ -110,8 +110,8 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
     if (data.refactoringEnabled) {
       show(
         data.document,
-        data.highlighterRangeMarker.range ?: return,
-        data.availabilityRangeMarker.range ?: return,
+        data.highlighterRangeMarker.asTextRange ?: return,
+        data.availabilityRangeMarker.asTextRange ?: return,
         false,
         data.tooltip
       )
@@ -138,9 +138,9 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
       editorsAndHighlighters.remove(editor)
     }
 
-    val range = data?.availabilityRangeMarker?.range ?: return
+    val range = data?.availabilityRangeMarker?.asTextRange ?: return
     if (!range.containsOffset(editor.caretModel.offset)) return
-    val highlighterRange = data!!.highlighterRangeMarker.range ?: return
+    val highlighterRange = data!!.highlighterRangeMarker.asTextRange ?: return
 
     val highlighter = editor.markupModel.addRangeHighlighter(
       highlighterRange.startOffset,

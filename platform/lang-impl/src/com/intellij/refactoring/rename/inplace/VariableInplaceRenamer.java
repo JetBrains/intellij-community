@@ -73,7 +73,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   protected @Nullable SuggestedNameInfo mySuggestedNameInfo;
   private int myOrigOffset;
   private ModUpdateFileText myRevertCommand;
-  private PsiNamedElement myElementInCopy;
+  private @Nullable PsiNamedElement myElementInCopy;
 
   public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename,
                                 @NotNull Editor editor) {
@@ -292,9 +292,13 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                             CommonBundle.getCancelButtonText(),
                             () -> {
                               startDumbIfPossible();
-                              rollBack();
-                              createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions);
-                              stopDumbLaterIfPossible();
+                              try {
+                                rollBack();
+                                createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions);
+                              }
+                              finally {
+                                stopDumbLaterIfPossible();
+                              }
                             },
                             () -> rollBack(), 0).showInBestPositionFor(myEditor);
     }
@@ -344,8 +348,11 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     public void showUI() {
       RangeHighlighter highlighter = highlightConflictingElement(collision.getElement());
       String description = StringUtil.stripHtml(collision.getDescription(), false);
-      final int offset = myElementInCopy.getTextOffset();
-      restoreCaretOffset(offset);
+      PsiNamedElement copyVariable = myElementInCopy;
+      if (copyVariable != null) {
+        final int offset = copyVariable.getTextOffset();
+        restoreCaretOffset(offset);
+      }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw new BaseRefactoringProcessor.ConflictsInTestsException(List.of(description));
       }
@@ -363,12 +370,16 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
               highlighter.dispose();
             }
             startDumbIfPossible();
-            rollBack();
-            PsiNamedElement var = getVariable();
-            if (var != null) {
-              createInplaceRenamerToRestart(var, myEditor, myInsertedName).performInplaceRefactoring(myNameSuggestions);
+            try {
+              rollBack();
+              PsiNamedElement var = getVariable();
+              if (var != null) {
+                createInplaceRenamerToRestart(var, myEditor, myInsertedName).performInplaceRefactoring(myNameSuggestions);
+              }
             }
-            stopDumbLaterIfPossible();
+            finally {
+              stopDumbLaterIfPossible();
+            }
           },
           0)
         .showInBestPositionFor(myEditor);

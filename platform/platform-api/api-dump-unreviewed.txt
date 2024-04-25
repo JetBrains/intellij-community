@@ -9,6 +9,13 @@ a:com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
 - s:findBreadcrumbsCollector(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
 - a:handlesFile(com.intellij.openapi.vfs.VirtualFile):Z
 - a:watchForChanges(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.Disposable,java.lang.Runnable):V
+com.intellij.codeInsight.editorActions.TextBlockTransferableData
+- sf:PLAIN_TEXT_PRIORITY:I
+- a:getFlavor():java.awt.datatransfer.DataFlavor
+- getOffsetCount():I
+- getOffsets(I[],I):I
+- getPriority():I
+- setOffsets(I[],I):I
 a:com.intellij.codeInsight.highlighting.TooltipLinkHandler
 - <init>():V
 - getDescription(java.lang.String,com.intellij.openapi.editor.Editor):java.lang.String
@@ -1698,6 +1705,7 @@ f:com.intellij.openapi.actionSystem.CommonShortcuts
 - s:getDuplicate():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getEditSource():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getFind():com.intellij.openapi.actionSystem.ShortcutSet
+- s:getInsert():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getInsertKeystroke():javax.swing.KeyStroke
 - s:getMove():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getMoveDown():com.intellij.openapi.actionSystem.ShortcutSet
@@ -1765,6 +1773,7 @@ c:com.intellij.openapi.actionSystem.DefaultActionGroup
 - s:createPopupGroup(java.util.function.Supplier):com.intellij.openapi.actionSystem.DefaultActionGroup
 - s:createPopupGroupWithEmptyText():com.intellij.openapi.actionSystem.DefaultActionGroup
 - f:getChildActionsOrStubs():com.intellij.openapi.actionSystem.AnAction[]
+- f:getChildren(com.intellij.openapi.actionSystem.ActionManager):com.intellij.openapi.actionSystem.AnAction[]
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
 - f:getChildren(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.ActionManager):com.intellij.openapi.actionSystem.AnAction[]
 - f:getChildrenCount():I
@@ -2252,6 +2261,7 @@ a:com.intellij.openapi.editor.actionSystem.EditorAction
 - update(com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.DataContext):V
 - updateForKeyboardAccess(com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.DataContext):V
 a:com.intellij.openapi.editor.actionSystem.EditorActionHandler
+- psf:LOG:com.intellij.openapi.diagnostic.Logger
 - p:<init>():V
 - p:<init>(Z):V
 - p:doExecute(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
@@ -8330,6 +8340,7 @@ c:com.intellij.ui.components.JBPasswordField
 - javax.swing.JPasswordField
 - com.intellij.util.ui.ComponentWithEmptyText
 - <init>():V
+- getAccessibleContext():javax.accessibility.AccessibleContext
 - getEmptyText():com.intellij.util.ui.StatusText
 - p:paintComponent(java.awt.Graphics):V
 - setPasswordIsStored(Z):V
@@ -8396,6 +8407,9 @@ c:com.intellij.ui.components.JBScrollPane
 - isOptimizedDrawingEnabled():Z
 - isOverlappingScrollBar():Z
 - s:isScrollEvent(java.awt.event.MouseWheelEvent):Z
+- paint(java.awt.Graphics):V
+- p:paintBorder(java.awt.Graphics):V
+- p:paintChildren(java.awt.Graphics):V
 - p:processMouseWheelEvent(java.awt.event.MouseWheelEvent):V
 - setOverlappingScrollBar(Z):V
 - setStatusComponent(javax.swing.JComponent):V
@@ -8472,6 +8486,7 @@ c:com.intellij.ui.components.JBTextArea
 - <init>(java.lang.String,I,I):V
 - <init>(javax.swing.text.Document):V
 - <init>(javax.swing.text.Document,java.lang.String,I,I):V
+- getAccessibleContext():javax.accessibility.AccessibleContext
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - getEmptyText():com.intellij.util.ui.StatusText
 - getPreferredSize():java.awt.Dimension
@@ -8486,6 +8501,7 @@ c:com.intellij.ui.components.JBTextField
 - <init>(I):V
 - <init>(java.lang.String):V
 - <init>(java.lang.String,I):V
+- getAccessibleContext():javax.accessibility.AccessibleContext
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - getEmptyText():com.intellij.util.ui.StatusText
 - p:getEmptyTextComponentBounds(java.awt.Rectangle):java.awt.Rectangle
@@ -8904,10 +8920,6 @@ c:com.intellij.ui.components.labels.SwingActionLink
 - com.intellij.ui.components.labels.LinkListener
 - <init>(javax.swing.Action):V
 - linkSelected(com.intellij.ui.components.labels.LinkLabel,javax.swing.Action):V
-c:com.intellij.ui.components.panels.BackgroundRoundedPanel
-- javax.swing.JPanel
-- <init>(I):V
-- p:paintComponent(java.awt.Graphics):V
 c:com.intellij.ui.components.panels.FlowLayoutWrapper
 - com.intellij.ui.components.panels.NonOpaquePanel
 - <init>(javax.swing.JComponent):V
@@ -11751,12 +11763,12 @@ c:com.intellij.ui.treeStructure.SimpleTreeStructure$Impl
 - <init>(com.intellij.ui.treeStructure.SimpleNode):V
 - getRootElement():java.lang.Object
 c:com.intellij.ui.treeStructure.Tree
-- javax.swing.JTree
 - com.intellij.openapi.ui.Queryable
 - com.intellij.ui.ComponentWithExpandableItems
 - com.intellij.ui.ComponentWithFileColors
 - com.intellij.ui.tree.TreePathBackgroundSupplier
 - com.intellij.util.ui.ComponentWithEmptyText
+- javax.swing.JTree
 - <init>():V
 - <init>(javax.swing.tree.TreeModel):V
 - <init>(javax.swing.tree.TreeNode):V

@@ -4,16 +4,14 @@ package git4idea.ui.branch;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
-import git4idea.GitReference;
 import git4idea.GitRemoteBranch;
+import git4idea.GitUtil;
 import git4idea.actions.GitSingleCommitActionGroup;
 import git4idea.branch.GitBranchUtil;
-import git4idea.branch.GitBranchesCollection;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.log.GitRefManager;
@@ -22,6 +20,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchPopupActions.LocalBranchActions;
 import git4idea.ui.branch.GitBranchPopupActions.RemoteBranchActions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -71,17 +70,14 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
       GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
       List<GitRepository> allRepositories = repositoryManager.getRepositories();
 
-      Set<String> commonBranches = CollectionFactory.createCustomHashingStrategySet(GitReference.BRANCH_NAME_HASHING_STRATEGY);
-      for (GitLocalBranch branch : GitBranchUtil.getCommonLocalBranches(allRepositories)) {
-        commonBranches.add(branch.getName());
-      }
-      for (GitRemoteBranch branch : GitBranchUtil.getCommonRemoteBranches(allRepositories)) {
-        commonBranches.add(branch.getName());
-      }
+      Set<GitBranch> commonBranches = new HashSet<>();
+      commonBranches.addAll(GitBranchUtil.getCommonLocalBranches(allRepositories));
+      commonBranches.addAll(GitBranchUtil.getCommonRemoteBranches(allRepositories));
 
       List<AnAction> branchActionGroups = new ArrayList<>();
       for (VcsRef ref : branchRefs) {
-        branchActionGroups.add(createBranchGroup(project, ref, root, allRepositories, commonBranches, settings, showBranchesPopup));
+        AnAction group = createBranchGroup(project, ref, root, allRepositories, commonBranches, settings, showBranchesPopup);
+        ContainerUtil.addIfNotNull(branchActionGroups, group);
       }
 
       DefaultActionGroup branchesGroup = new DefaultActionGroup(GitBundle.message("branches.branches"), branchActionGroups);
@@ -105,28 +101,35 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     return groups.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  private static @NotNull AnAction createBranchGroup(@NotNull Project project,
-                                                     @NotNull VcsRef ref,
-                                                     @NotNull GitRepository repository,
-                                                     @NotNull List<? extends GitRepository> allRepositories,
-                                                     @NotNull Set<String> commonBranches,
-                                                     @NotNull GitVcsSettings settings,
-                                                     boolean showBranchesPopup) {
-    boolean isSyncBranch = settings.getSyncSetting() != DvcsSyncSettings.Value.DONT_SYNC &&
-                           allRepositories.size() > 1 && commonBranches.contains(ref.getName());
-    boolean isLocal = ref.getType() == GitRefManager.LOCAL_BRANCH;
+  private static @Nullable AnAction createBranchGroup(@NotNull Project project,
+                                                      @NotNull VcsRef ref,
+                                                      @NotNull GitRepository repository,
+                                                      @NotNull List<? extends GitRepository> allRepositories,
+                                                      @NotNull Set<GitBranch> commonBranches,
+                                                      @NotNull GitVcsSettings settings,
+                                                      boolean showBranchesPopup) {
+    // ref.getName() for GitRefManager.REMOTE_BRANCH is GitRemoteBranch.getNameForLocalOperations
+    GitBranch branch = ref.getType() == GitRefManager.LOCAL_BRANCH
+                       ? new GitLocalBranch(ref.getName())
+                       : GitUtil.parseRemoteBranch(ref.getName(), repository.getRemotes());
 
     List<AnAction> actions = new ArrayList<>(3);
 
+    boolean isSyncBranch = settings.getSyncSetting() != DvcsSyncSettings.Value.DONT_SYNC &&
+                           allRepositories.size() > 1 &&
+                           commonBranches.contains(branch);
     if (isSyncBranch) {
-      ActionGroup allReposActions = createBranchActions(project, allRepositories, ref, repository, isLocal);
-      allReposActions.getTemplatePresentation().setText(GitBundle.message("in.branches.all.repositories"));
-      allReposActions.setPopup(true);
-      actions.add(allReposActions);
-      actions.add(Separator.getInstance());
+      ActionGroup allReposActions = createBranchActions(project, allRepositories, branch, repository);
+      if (allReposActions != null) {
+        allReposActions.getTemplatePresentation().setText(GitBundle.message("in.branches.all.repositories"));
+        allReposActions.setPopup(true);
+        actions.add(allReposActions);
+        actions.add(Separator.getInstance());
+      }
     }
 
-    ActionGroup singleRepoActions = createBranchActions(project, Collections.singletonList(repository), ref, repository, isLocal);
+    ActionGroup singleRepoActions = createBranchActions(project, Collections.singletonList(repository), branch, repository);
+    if (singleRepoActions == null) return null;
     singleRepoActions.setPopup(false);
     actions.add(singleRepoActions);
 
@@ -151,24 +154,27 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     return group;
   }
 
-  private static @NotNull ActionGroup createBranchActions(@NotNull Project project,
-                                                          @NotNull List<? extends GitRepository> repositories,
-                                                          @NotNull VcsRef ref,
-                                                          @NotNull GitRepository selectedRepository,
-                                                          boolean isLocal) {
-
-    for (GitRepository repository : repositories) {
-      GitBranchesCollection branches = repository.getBranches();
-      GitBranch branch =
-        ContainerUtil.find(isLocal ? branches.getLocalBranches() : branches.getRemoteBranches(), b -> b.getName().equals(ref.getName()));
-      if (branch != null) {
-        return isLocal
-               ? new LocalBranchActions(project, repositories, (GitLocalBranch)branch, selectedRepository)
-               : new RemoteBranchActions(project, repositories, (GitRemoteBranch)branch, selectedRepository);
+  private static @Nullable ActionGroup createBranchActions(@NotNull Project project,
+                                                           @NotNull List<? extends GitRepository> repositories,
+                                                           @NotNull GitBranch branch,
+                                                           @NotNull GitRepository selectedRepository) {
+    if (branch instanceof GitLocalBranch) {
+      for (GitRepository repository : repositories) {
+        if (!repository.getBranches().getLocalBranches().contains(branch)) return null;
       }
-    }
 
-    throw new IllegalArgumentException("Cannot find branch by ref=" + ref);
+      return new LocalBranchActions(project, repositories, (GitLocalBranch)branch, selectedRepository);
+    }
+    else if (branch instanceof GitRemoteBranch) {
+      for (GitRepository repository : repositories) {
+        if (!repository.getBranches().getRemoteBranches().contains(branch)) return null;
+      }
+
+      return new RemoteBranchActions(project, repositories, (GitRemoteBranch)branch, selectedRepository);
+    }
+    else {
+      return null;
+    }
   }
 
   private static @NotNull ActionGroup createTagActions(@NotNull Project project,

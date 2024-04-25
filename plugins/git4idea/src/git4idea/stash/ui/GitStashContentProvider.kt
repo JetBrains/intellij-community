@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
 import com.intellij.icons.AllIcons
@@ -60,7 +60,7 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
   private inner class GitSavedPatchesUi(private val stashProvider: GitStashProvider, private val shelfProvider: ShelfProvider,
                                         parentDisposable: Disposable) :
     SavedPatchesUi(project, listOf(stashProvider, shelfProvider), isVertical = ::isVertical, isEditorDiffPreview = ::isEditorDiffPreview,
-                   focusMainUi = ::returnFocusToToolWindow, parentDisposable) {
+                   isShowDiffWithLocal = ::isShowDiffWithLocal, focusMainUi = ::returnFocusToToolWindow, parentDisposable) {
 
     init {
       patchesTree.emptyText
@@ -105,6 +105,10 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
     toolWindow.activate({
                           IdeFocusManager.getInstance(project).requestFocus(componentToFocus, true)
                         }, false)
+  }
+
+  private fun isShowDiffWithLocal(): Boolean {
+    return GitVcsApplicationSettings.getInstance().isCompareWithLocalInStashesEnabled
   }
 
   companion object {

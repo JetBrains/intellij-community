@@ -132,7 +132,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   public PersistentFSImpl(@NotNull Application app) {
     this.app = app;
-    myVfsData = new VfsData(app, this);
     myRoots = SystemInfoRt.isFileSystemCaseSensitive
               ? new ConcurrentHashMap<>(10, 0.4f, JobSchedulerImpl.getCPUCoresCount())
               : ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(),
@@ -178,9 +177,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @ApiStatus.Internal
   synchronized public void connect() {
+    LOG.assertTrue(!myConnected.get());// vfsPeer could be !=null after disconnect
     myIdToDirCache.clear();
     myVfsData = new VfsData(app, this);
-    LOG.assertTrue(!myConnected.get());// vfsPeer could be !=null after disconnect
     doConnect();
     PersistentFsConnectionListener.EP_NAME.getExtensionList().forEach(PersistentFsConnectionListener::connectionOpen);
   }
@@ -2165,7 +2164,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public String toString() {
-    return "PersistentFS";
+    return "PersistentFS[connected: " + isConnected() + ", ownData: " + myVfsData + "]";
   }
 
   private void executeCreateChild(@NotNull VirtualFile parent,

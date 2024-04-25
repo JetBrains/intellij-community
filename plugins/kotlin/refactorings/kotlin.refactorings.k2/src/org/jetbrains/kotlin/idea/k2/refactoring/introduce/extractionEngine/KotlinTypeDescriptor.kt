@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
@@ -44,6 +45,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
     override val booleanType: KtType = analyze(data.commonParent) { builtinTypes.BOOLEAN }
 
     override val unitType: KtType = analyze(data.commonParent) { builtinTypes.UNIT }
+    override val nothingType: KtType = analyze(data.commonParent) { builtinTypes.NOTHING }
     override val nullableAnyType: KtType = analyze(data.commonParent) { builtinTypes.NULLABLE_ANY }
 
     override fun createListType(argTypes: List<KtType>): KtType {
@@ -158,4 +160,16 @@ fun isResolvableInScope(typeToCheck: KtType, scope: KtElement, typeParameters: M
         return false
     }
     return true
+}
+
+
+context(KtAnalysisSession)
+fun approximateWithResolvableType(type: KtType?, scope: KtElement): KtType? {
+    if (type == null) return null
+    if (!(type is KtNonErrorClassType && type.classSymbol is KtAnonymousObjectSymbol)
+        && isResolvableInScope(type, scope, mutableSetOf())
+    ) return type
+    return type.getAllSuperTypes().firstOrNull {
+        isResolvableInScope(it, scope, mutableSetOf())
+    }
 }

@@ -140,7 +140,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
       if (isInitializeStarted.get()) {
         clearOldBuilds(runOnEdt, startBuildEvent);
       }
-      buildInfo = new AbstractViewManager.BuildInfo(((StartBuildEvent)event).getBuildDescriptor());
+      buildInfo = new AbstractViewManager.BuildInfo(startBuildEvent.getBuildDescriptor());
       myBuildsMap.put(buildId, buildInfo);
     }
     else {

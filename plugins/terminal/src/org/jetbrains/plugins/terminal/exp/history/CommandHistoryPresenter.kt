@@ -12,16 +12,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import org.jetbrains.plugins.terminal.exp.TerminalCommandExecutor
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 import org.jetbrains.plugins.terminal.exp.getDisposed
 import org.jetbrains.plugins.terminal.exp.invokeLater
 
 internal class CommandHistoryPresenter(private val project: Project,
                                        private val editor: Editor,
+                                       private val promptModel: TerminalPromptModel,
                                        private val commandExecutor: TerminalCommandExecutor) {
   private var initialCommand: String? = null
 
   fun showCommandHistory(history: List<String>) {
-    val command = editor.document.text
+    val command = promptModel.commandText
     initialCommand = command
     // Reverse the history to move the most recent values to the top.
     // It will be reversed again internally to show them at the bottom.
@@ -35,8 +37,8 @@ internal class CommandHistoryPresenter(private val project: Project,
           if (!lookup.isLookupDisposed) {
             runWriteAction {
               lookup.performGuardedChange {
-                editor.document.setText(selectedCommand)
-                editor.caretModel.moveToOffset(selectedCommand.length)
+                promptModel.commandText = selectedCommand
+                editor.caretModel.moveToOffset(editor.document.textLength)
               }
             }
           }
@@ -51,7 +53,7 @@ internal class CommandHistoryPresenter(private val project: Project,
       override fun itemSelected(event: LookupEvent) {
         initialCommand = null
         if (event.completionChar == '\n') {
-          commandExecutor.startCommandExecution(editor.document.text)
+          commandExecutor.startCommandExecution(promptModel.commandText)
         }
       }
 
@@ -75,10 +77,8 @@ internal class CommandHistoryPresenter(private val project: Project,
     if (commandToRestore != null) {
       initialCommand = null
       invokeLater(editor.getDisposed()) {
-        runWriteAction {
-          editor.document.setText(commandToRestore)
-          editor.caretModel.moveToOffset(commandToRestore.length)
-        }
+        promptModel.commandText = commandToRestore
+        editor.caretModel.moveToOffset(editor.document.textLength)
       }
     }
   }

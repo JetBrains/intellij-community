@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
@@ -132,7 +133,7 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
       try {
         targetFileTimestamp = Files.getLastModifiedTime(targetFile);
       }
-      catch (FileNotFoundException ignored) {
+      catch (FileNotFoundException | NoSuchFileException ignored) {
         targetFileTimestamp = null;
       }
       if (targetFileTimestamp == null || targetFileTimestamp.compareTo(originalFileTimestamp) < 0) {

@@ -74,7 +74,7 @@ class KotlinLineBreakpointType :
         if (properties == null || properties is JavaLineBreakpointProperties) {
             if (position is KotlinReentrantSourcePosition) {
                 return false
-            } else if (properties != null && (properties as JavaLineBreakpointProperties).lambdaOrdinal == null) {
+            } else if (properties != null && (properties as JavaLineBreakpointProperties).isAllPositions) {
                 return true
             }
 

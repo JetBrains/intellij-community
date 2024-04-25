@@ -21,7 +21,6 @@ abstract class JetBrainsProductProperties : ProductProperties() {
     scrambleMainJar = true
     includeIntoSourcesArchiveFilter = BiPredicate(::isCommunityModule)
     sbomOptions.creator = "Organization: ${Suppliers.JETBRAINS}"
-    sbomOptions.copyrightText = "Copyright 2000-2023 ${Suppliers.JETBRAINS} and contributors"
     sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense.JETBRAINS
   }
 

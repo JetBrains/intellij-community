@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
@@ -31,7 +32,12 @@ import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.org.objectweb.asm.MethodVisitor
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.Type
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -230,7 +236,31 @@ private fun getFirstMethodLocation(location: Location): Location? {
 
 fun isOnSuspendReturnOrReenter(location: Location): Boolean {
     val firstLocation = getFirstMethodLocation(location) ?: return false
-    return firstLocation.safeLineNumber() == location.safeLineNumber()
+    val isAtFirstLine = firstLocation.safeLineNumber() == location.safeLineNumber()
+    if (isAtFirstLine) {
+        return doesMethodHaveSwitcher(location)
+    }
+    return false
+}
+
+private fun doesMethodHaveSwitcher(location: Location): Boolean {
+    var result = false
+    MethodBytecodeUtil.visit(location.method(), object : MethodVisitor(Opcodes.API_VERSION) {
+        override fun visitFieldInsn(opcode: Int, owner: String, name: String, descriptor: String) {
+            if (!result && name == "label" && descriptor == "I") {
+                val className = Type.getObjectType(owner).className
+
+                val methodClassName = location.method().declaringType().name()
+                val methodName = location.method().name()
+
+                if ((methodName == "invokeSuspend" && className == methodClassName) || // check in suspend lambda
+                    className.startsWith("$methodClassName\$$methodName")) { // check in suspend method
+                    result = true
+                }
+            }
+        }
+    }, false)
+    return result
 }
 
 fun findElementAtLine(file: KtFile, line: Int): PsiElement? {

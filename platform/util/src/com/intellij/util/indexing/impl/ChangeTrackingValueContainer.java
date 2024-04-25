@@ -148,14 +148,19 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
            needsCompacting();
   }
 
-  boolean containsOnlyInvalidatedChange() {
+  public boolean containsOnlyInvalidatedChange() {
     return myInvalidated != null &&
            !myInvalidated.isEmpty() &&
            (myAdded == null || myAdded.size() == 0);
   }
 
-  boolean containsCachedMergedData() {
+  public boolean containsCachedMergedData() {
     return myMergedSnapshot != null;
+  }
+
+  @Override
+  public void setNeedsCompacting(boolean value) {
+    super.setNeedsCompacting(value);
   }
 
   @Override

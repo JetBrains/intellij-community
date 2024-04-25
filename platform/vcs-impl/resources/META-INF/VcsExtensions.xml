@@ -252,6 +252,7 @@
     <pathMacroFilter implementation="com.intellij.openapi.vcs.VcsPathMacroFilter"/>
     <search.topHitProvider implementation="com.intellij.openapi.vcs.actions.VcsTopHitProvider"/>
     <actionPromoter implementation="com.intellij.openapi.vcs.actions.VcsActionPromoter"/>
+    <actionPromoter implementation="com.intellij.diff.tools.combined.CombinedDiffActionPromoter"/>
     <projectSetProcessor implementation="com.intellij.openapi.vcs.VcsProjectSetProcessor"/>
     <projectSetProcessor implementation="com.intellij.openapi.vcs.OpenProjectSetProcessor"/>
 

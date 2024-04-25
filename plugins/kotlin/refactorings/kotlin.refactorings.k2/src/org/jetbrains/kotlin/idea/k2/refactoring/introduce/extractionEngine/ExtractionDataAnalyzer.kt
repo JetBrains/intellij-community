@@ -19,15 +19,14 @@ import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KtDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractFunctionDescriptorModifier
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptorWithConflicts
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionData
@@ -39,6 +38,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.targetKey
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AbstractExtractionDataAnalyzer
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ControlFlow
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionTarget
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractableCodeDescriptor
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionData
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IReplacement
@@ -55,13 +55,17 @@ import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtContinueExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
@@ -166,23 +170,16 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
                 !extractionData.options.inferUnitTypeForUnusedValues || defaultExpressionInfo.expression.isUsedAsExpression()
             }
 
-            fun approximate(type: KtType?): KtType? {
-                if (type == null) return null
-                if (!(type is KtNonErrorClassType && type.classSymbol is KtAnonymousObjectSymbol)
-                    && typeDescriptor.isResolvableInScope(type, mutableSetOf())
-                ) return type
-                return type.getAllSuperTypes().firstOrNull {
-                    typeDescriptor.isResolvableInScope(it, mutableSetOf())
-                }
-            }
-
+            val scope = extractionData.targetSibling as KtElement
             return OutputDescriptor(
                 defaultResultExpression = defaultExpressionInfo?.expression,
-                typeOfDefaultFlow = approximate(typeOfDefaultFlow) ?: builtinTypes.UNIT,
-                valuedReturnExpressions = exitSnapshot.valuedReturnExpressions,
-                returnValueType = approximate(exitSnapshot.returnValueType) ?: builtinTypes.UNIT,
-                jumpExpressions = exitSnapshot.loopJumpExpressions,
-                hasSingleTarget = !exitSnapshot.hasMultipleJumpTargets && !exitSnapshot.hasMultipleJumpKinds,
+                typeOfDefaultFlow = approximateWithResolvableType(typeOfDefaultFlow, scope) ?: builtinTypes.UNIT,
+                implicitReturn = exitSnapshot.valuedReturnExpressions.filter { it !is KtReturnExpression }.singleOrNull(),
+                lastExpressionHasNothingType = extractionData.expressions.lastOrNull()?.getKtType()?.isNothing == true,
+                valuedReturnExpressions = exitSnapshot.valuedReturnExpressions.filter { it is KtReturnExpression },
+                returnValueType = approximateWithResolvableType(exitSnapshot.returnValueType, scope) ?: builtinTypes.UNIT,
+                jumpExpressions = exitSnapshot.jumpExpressions.filter { it is KtBreakExpression || it is KtContinueExpression || it is KtReturnExpression && it.returnedExpression == null},
+                hasSingleTarget = !exitSnapshot.hasMultipleJumpTargets,
                 sameExitForDefaultAndJump = if (exitSnapshot.hasJumps) !exitSnapshot.hasEscapingJumps && defaultExpressionInfo != null else defaultExpressionInfo == null
             )
         }
@@ -216,7 +213,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         returnType: KtType
     ): IExtractableCodeDescriptor<KtType> {
         val experimentalMarkers = analyze(extractionData.commonParent) { extractionData.getExperimentalMarkers() }
-        val descriptor = ExtractableCodeDescriptor(
+        var descriptor = ExtractableCodeDescriptor(
             context = extractionData.commonParent,
             extractionData = extractionData,
             suggestedNames = suggestedFunctionNames,
@@ -231,6 +228,9 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
             optInMarkers = experimentalMarkers.optInMarkers,
             annotations = experimentalMarkers.propagatingMarkerDescriptors
         )
+        for (analyser in ExtractFunctionDescriptorModifier.EP_NAME.extensionList) {
+            descriptor = analyser.modifyDescriptor(descriptor)
+        }
         return descriptor
     }
 
@@ -314,12 +314,13 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
     )
 }
 
-fun ExtractableCodeDescriptor.validate(): ExtractableCodeDescriptorWithConflicts {
+fun ExtractableCodeDescriptor.validate(target: ExtractionTarget = ExtractionTarget.FUNCTION): ExtractableCodeDescriptorWithConflicts {
     val config = ExtractionGeneratorConfiguration(
         this,
         ExtractionGeneratorOptions(
             inTempFile = true,
-            allowExpressionBody = false
+            allowExpressionBody = false,
+            target = target
         )
     )
     val result = Generator.generateDeclaration(config, null)

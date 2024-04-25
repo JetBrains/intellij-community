@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -11,6 +11,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,8 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class HTMLComposerImpl extends HTMLComposer {
-  private final int[] myListStack;
-  private int myListStackTop;
   private final Map<Key, HTMLComposerExtension> myExtensions = new HashMap<>();
   private final Map<Language, HTMLComposerExtension> myLanguageExtensions = new HashMap<>();
   protected static final @NonNls String BR = "<br>";
@@ -35,12 +34,10 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   public static final @NonNls String B_CLOSING = "</b>";
 
   protected static final @NonNls String CLOSE_TAG = "\">";
-  public static final @NonNls String A_HREF_OPENING = "<a HREF=\"";
+  public static final @NonNls String A_HREF_OPENING = "<a href=\"";
   public static final @NonNls String A_CLOSING = "</a>";
 
   protected HTMLComposerImpl() {
-    myListStack = new int[5];
-    myListStackTop = -1;
     for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
       final HTMLComposerExtension<?> extension = factory.createHTMLComposerExtension(this);
       if (extension != null) {
@@ -114,7 +111,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     StringBuilder qName = new StringBuilder();
 
     while (!(refEntity instanceof RefProject)) {
-      if (qName.length() > 0) qName.insert(0, ".");
+      if (!qName.isEmpty()) qName.insert(0, ".");
 
       String name = null;
       if (refEntity instanceof RefElement) {
@@ -130,13 +127,13 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
       qName.insert(0, name);
       if (Comparing.strEqual(refEntity.getName(), refEntity.getQualifiedName())) {
-        buf.append(qName);
+        buf.append(StringUtil.escapeXmlEntities(qName.toString()));
         return;
       }
       refEntity = refEntity.getOwner();
     }
 
-    buf.append(qName);
+    buf.append(StringUtil.escapeXmlEntities(qName.toString()));
   }
 
   @Override
@@ -178,11 +175,8 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     if (extension != null) {
       extension.appendReferencePresentation(refElement, buf, isPackageIncluded);
     } else if (refElement instanceof RefFile || refElement instanceof RefDirectory) {
-      buf.append(A_HREF_OPENING);
+      buf.append(A_HREF_OPENING).append(((RefElementImpl)refElement).getURL()).append("\">");
 
-      buf.append(((RefElementImpl)refElement).getURL());
-
-      buf.append("\">");
       String refElementName = refElement.getName();
       final PsiElement element = refElement.getPsiElement();
       if (element != null) {
@@ -214,7 +208,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public void appendElementInReferences(@NotNull StringBuilder buf, RefElement refElement) {
-    if (refElement.getInReferences().size() > 0) {
+    if (!refElement.getInReferences().isEmpty()) {
       appendHeading(buf, AnalysisBundle.message("inspection.export.results.used.from"));
       startList(buf);
       for (RefElement refCaller : refElement.getInReferences()) {
@@ -226,7 +220,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public void appendElementOutReferences(@NotNull StringBuilder buf, RefElement refElement) {
-    if (refElement.getOutReferences().size() > 0) {
+    if (!refElement.getOutReferences().isEmpty()) {
       appendHeading(buf, AnalysisBundle.message("inspection.export.results.uses"));
       startList(buf);
       for (RefElement refCallee : refElement.getOutReferences()) {
@@ -270,38 +264,22 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     }
   }
 
-
   @Override
   public void startList(@NotNull StringBuilder buf) {
-    if (myListStackTop == -1) {
-      buf.append("<div class=\"problem-description\">");
-    }
-    buf.append("<ul>");
-    myListStackTop++;
-    myListStack[myListStackTop] = 0;
+    buf.append("\n<ul>");
   }
 
   @Override
   public void doneList(@NotNull StringBuilder buf) {
-    buf.append("</ul>");
-    if (myListStack[myListStackTop] != 0) {
-      buf.append("<table cellpadding=\"0\" border=\"0\" cellspacing=\"0\"><tr><td>&nbsp;</td></tr></table>");
-    }
-    if (myListStackTop == 0) {
-      buf.append("</div>");
-    }
-    myListStackTop--;
+    buf.append("\n</ul>");
   }
 
   @Override
   public void startListItem(@NotNull StringBuilder buf) {
-    myListStack[myListStackTop]++;
-    buf.append("<li>");
+    buf.append("\n<li>");
   }
 
-  public static void doneListItem(@NotNull StringBuilder buf) {
-    buf.append("</li>");
-  }
+  public static void doneListItem(@NotNull StringBuilder buf) {}
 
   @Override
   public void appendNoProblems(@NotNull StringBuilder buf) {

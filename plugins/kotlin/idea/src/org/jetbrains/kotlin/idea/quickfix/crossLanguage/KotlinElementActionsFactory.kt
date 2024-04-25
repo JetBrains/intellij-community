@@ -51,7 +51,6 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
@@ -476,15 +475,13 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             val argumentList = annotationEntry.valueArgumentList
             if (argumentList == null) {
                 annotationEntry.add(dummyArgumentList)
-            }
-            else {
+            } else {
                 val dummyArgument = dummyArgumentList.arguments[0]
                 val attribute = findAttribute(annotationEntry, request.name, attributeIndex)
                 if (attribute != null) {
                     argumentList.addArgumentBefore(dummyArgument, attribute.value)
                     argumentList.removeArgument(attribute.index + 1)
-                }
-                else {
+                } else {
                     argumentList.addArgument(dummyArgument)
                 }
             }

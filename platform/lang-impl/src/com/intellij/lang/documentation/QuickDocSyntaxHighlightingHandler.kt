@@ -41,10 +41,10 @@ interface QuickDocSyntaxHighlightingHandler {
    * Allows to perform additional, semantic syntax highlighting,
    * like semantic keywords or method calls.
    */
-  fun performSemanticHighlighting(file: PsiFile): List<HighlightInfo> =
+  fun performSemanticHighlighting(file: PsiFile): List<QuickDocHighlightInfo> =
     emptyList()
 
-  interface HighlightInfo {
+  interface QuickDocHighlightInfo {
 
     val startOffset: Int
 

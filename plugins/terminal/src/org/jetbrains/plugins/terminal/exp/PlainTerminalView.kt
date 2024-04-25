@@ -17,7 +17,7 @@ import javax.swing.JComponent
  * Once it's feature-rich and stable enough, it will replace [OldPlainTerminalView].
  */
 @Suppress("unused")
-class PlainTerminalView(
+internal class PlainTerminalView(
   project: Project,
   private val session: BlockTerminalSession,
   settings: JBTerminalSystemSettingsProviderBase

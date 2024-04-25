@@ -16,14 +16,13 @@ import com.intellij.util.ui.ImageUtil
 import git4idea.remote.GitRemoteUrlCoordinates
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
+import org.jetbrains.plugins.github.authentication.accounts.GHCachingAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModelImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
@@ -77,13 +76,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
     : Deferred<GHPRDataContext> {
     val cs = this
     return async {
-      val accountDetails = withContext(Dispatchers.IO) {
-        coroutineToIndicator {
-          val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
-          GithubAccountInformationProvider.getInstance().getInformation(requestExecutor, indicator, account)
-        }
-      }
-
+      val accountDetails = GHCachingAccountInformationProvider.getInstance().loadInformation(requestExecutor, account)
       val ghostUserDetails = requestExecutor.executeSuspend(GHGQLRequests.User.find(account.server, "ghost"))
                              ?: error("Couldn't load ghost user details")
 
@@ -101,10 +94,8 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val iconsScope = cs.childScope(Dispatchers.Main)
       val imageLoader = AsyncHtmlImageLoader { _, src ->
         withContext(cs.coroutineContext + IMAGES_DISPATCHER) {
-          coroutineToIndicator {
-            val bytes = requestExecutor.execute(ProgressManager.getInstance().progressIndicator, GithubApiRequests.getBytes(src))
-            Toolkit.getDefaultToolkit().createImage(bytes)
-          }
+          val bytes = requestExecutor.executeSuspend(GithubApiRequests.getBytes(src))
+          Toolkit.getDefaultToolkit().createImage(bytes)
         }
       }
       val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, AvatarLoader(requestExecutor)))
@@ -115,7 +106,8 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val apiRepositoryPath = repositoryInfo.path
       val apiRepositoryCoordinates = GHRepositoryCoordinates(account.server, apiRepositoryPath)
 
-      val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor,
+      val repoDataService = GHPRRepositoryDataServiceImpl(cs,
+                                                          requestExecutor,
                                                           remoteCoordinates, apiRepositoryCoordinates,
                                                           repositoryInfo.owner,
                                                           repositoryInfo.id, repositoryInfo.defaultBranch, repositoryInfo.isFork)
@@ -123,14 +115,13 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                                                     ghostUserDetails,
                                                     account, currentUser,
                                                     repositoryInfo)
-      val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
-      val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), project, securityService,
-                                              requestExecutor, account.server, apiRepositoryPath)
-      val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
-      val changesService = GHPRChangesServiceImpl(ProgressManager.getInstance(), project, requestExecutor,
+      val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), project, securityService,
+                                                  requestExecutor, apiRepositoryCoordinates)
+      val commentService = GHPRCommentServiceImpl(requestExecutor, apiRepositoryCoordinates)
+      val changesService = GHPRChangesServiceImpl(cs, project, requestExecutor,
                                                   remoteCoordinates, apiRepositoryCoordinates)
-      val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), securityService, requestExecutor, apiRepositoryCoordinates)
-      val filesService = GHPRFilesServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
+      val reviewService = GHPRReviewServiceImpl(securityService, requestExecutor, apiRepositoryCoordinates)
+      val filesService = GHPRFilesServiceImpl(requestExecutor, apiRepositoryCoordinates)
       val reactionsService = GHReactionsServiceImpl(requestExecutor, apiRepositoryCoordinates)
 
       val listLoader = GHPRListLoader(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
@@ -138,9 +129,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
 
       val dataProviderRepository = GHPRDataProviderRepositoryImpl(project,
                                                                   cs,
-                                                                  repoDataService,
                                                                   detailsService,
-                                                                  stateService,
                                                                   reviewService,
                                                                   filesService,
                                                                   commentService,
@@ -159,7 +148,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
       ensureActive()
       GHPRDataContext(cs, listLoader, listUpdatesChecker, dataProviderRepository,
-                      securityService, repoDataService, creationService, detailsService, reactionsService,
+                      securityService, repoDataService, creationService, detailsService, changesService, reactionsService,
                       imageLoader, avatarIconsProvider, reactionIconsProvider,
                       filesManager, interactionState,
                       GHPRDiffRequestModelImpl())
@@ -172,7 +161,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
     private val avatarsLoader = CachingGHUserAvatarLoader.getInstance()
 
     override suspend fun load(key: String): Image? =
-      avatarsLoader.requestAvatar(requestExecutor, key).asDeferred().await()
+      avatarsLoader.loadAvatar(requestExecutor, key)
 
     override fun createBaseIcon(key: String?, iconSize: Int): Icon =
       IconUtil.resizeSquared(CollaborationToolsIcons.Review.DefaultAvatar, iconSize)

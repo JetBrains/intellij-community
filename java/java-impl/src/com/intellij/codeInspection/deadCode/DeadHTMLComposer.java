@@ -168,7 +168,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
               buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis29.method", nRefs) );
             }
           }
-        } else if (refClass instanceof RefClassImpl && ((RefClassImpl)refClass).isSuspicious()) {
+        } else if (refClass instanceof RefClassImpl && ((RefClassImpl)refClass).isSuspicious() && !refClass.isUtilityClass()) {
           if (method.isAbstract() && !refClass.isInterface()) {
             buf.append(AnalysisBundle.message("inspection.dead.code.problem.synopsis14"));
           } else {

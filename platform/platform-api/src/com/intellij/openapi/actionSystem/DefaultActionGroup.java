@@ -363,16 +363,20 @@ public class DefaultActionGroup extends ActionGroup {
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    return getChildren(e, e != null ? e.getActionManager() : ActionManager.getInstance());
+    return getChildren(e != null ? e.getActionManager() : ActionManager.getInstance());
+  }
+
+  @Override
+  public final AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
+    return getChildren(actionManager);
   }
 
   /**
-   * Returns the group's actions in the order determined by the constraints.
+   * Returns the group's unstubbed actions in the order determined by the constraints.
    *
-   * @param e not used
+   * @see DefaultActionGroup#getChildActionsOrStubs()
    */
-  @Override
-  public final AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
+  public final AnAction @NotNull [] getChildren(@NotNull ActionManager actionManager) {
     int modCount;
     AnAction[] actionOrStubs;
     synchronized (this) {
@@ -463,6 +467,9 @@ public class DefaultActionGroup extends ActionGroup {
     return mySortedChildren.size() + myPendingActions.size();
   }
 
+  /**
+   * @see DefaultActionGroup#getChildren(ActionManager)
+   */
   public final synchronized AnAction @NotNull [] getChildActionsOrStubs() {
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();

@@ -21,7 +21,7 @@ import java.util.Arrays;
 public class PsiClassConverter extends Converter<PsiClass> implements CustomReferenceConverter<PsiClass> {
 
   @Override
-  public PsiClass fromString(final String s, final ConvertContext context) {
+  public PsiClass fromString(final String s, final @NotNull ConvertContext context) {
     if (StringUtil.isEmptyOrSpaces(s)) return null;
 
     final DomElement element = context.getInvocationElement();
@@ -30,12 +30,12 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
   }
 
   @Override
-  public @Nullable String getErrorMessage(final @Nullable String s, final ConvertContext context) {
+  public @Nullable String getErrorMessage(final @Nullable String s, final @NotNull ConvertContext context) {
     return null;
   }
 
   @Override
-  public String toString(final PsiClass t, final ConvertContext context) {
+  public String toString(final PsiClass t, final @NotNull ConvertContext context) {
     return t == null ? null : t.getQualifiedName();
   }
 

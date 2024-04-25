@@ -18,7 +18,10 @@ import java.util.Set;
 public abstract class DataViewStrategy {
   private static class StrategyHolder {
     private static final Set<DataViewStrategy> STRATEGIES = ImmutableSet.of(
-      new ArrayViewStrategy(),
+      ArrayViewStrategy.createInstanceForNumpyArray(),
+      ArrayViewStrategy.createInstanceForEagerTensor(),
+      ArrayViewStrategy.createInstanceForResourceVariable(),
+      ArrayViewStrategy.createInstanceForTensor(),
       DataFrameViewStrategy.createInstanceForDataFrame(),
       DataFrameViewStrategy.createInstanceForGeoDataFrame(),
       SeriesViewStrategy.createInstanceForSeries(),

@@ -369,7 +369,7 @@ final class FindInProjectTask {
         if (ignoreExcluded && myProjectFileIndex.isExcluded(file)) {
           return true;
         }
-        if (((VirtualFile)obj).isDirectory()) {
+        if (file.isDirectory()) {
           if (withSubdirs) {
             ContainerUtil.addAll(deque, ((VirtualFile)obj).getChildren());
           }

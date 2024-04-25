@@ -42,6 +42,14 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
         else -> project.getBaseDirectories().firstNotNullOfOrNull { it.findFileByRelativePath(filePath) }
       }
     }
+
+    public fun getOptions(arguments: String): OpenFileCommandOptions? {
+      val myOptions = runCatching {
+        OpenFileCommandOptions().apply { Args.parse(this, arguments.split(" ").toTypedArray()) }
+      }.getOrNull()
+      return myOptions
+    }
+
   }
   
   override fun getName(): String {
@@ -49,9 +57,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val myOptions = runCatching {
-      OpenFileCommandOptions().apply { Args.parse(this, extractCommandArgument(PREFIX).split(" ").toTypedArray()) }
-    }.getOrNull()
+    val myOptions = getOptions(extractCommandArgument(PREFIX))
     val filePath = myOptions?.file ?: text.split(' ', limit = 4)[1]
     val timeout = myOptions?.timeout ?: 0
     val suppressErrors = myOptions?.suppressErrors ?: false

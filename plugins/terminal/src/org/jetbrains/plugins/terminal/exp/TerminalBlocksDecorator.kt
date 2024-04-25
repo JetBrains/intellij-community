@@ -26,11 +26,13 @@ import java.awt.Font
 import java.awt.Graphics
 import java.awt.Rectangle
 
-class TerminalBlocksDecorator(private val colorPalette: TerminalColorPalette,
-                              private val outputModel: TerminalOutputModel,
-                              private val focusModel: TerminalFocusModel,
-                              private val selectionModel: TerminalSelectionModel,
-                              private val editor: EditorEx) : TerminalOutputListener {
+internal class TerminalBlocksDecorator(
+  private val colorPalette: TerminalColorPalette,
+  private val outputModel: TerminalOutputModel,
+  private val focusModel: TerminalFocusModel,
+  private val selectionModel: TerminalSelectionModel,
+  private val editor: EditorEx
+) : TerminalOutputListener {
   private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
 
   private val gradientCache: GradientTextureCache = GradientTextureCache(
@@ -84,6 +86,8 @@ class TerminalBlocksDecorator(private val colorPalette: TerminalColorPalette,
         if (newInfo.exitCode != 0) {
           addExitCodeInlay(block, newInfo.exitCode)
         }
+        // It is intended that command is finished now. If it is violated, this call should be performed in the other place.
+        updateCommandToOutputInlay(block)
       }
     })
 
@@ -129,7 +133,7 @@ class TerminalBlocksDecorator(private val colorPalette: TerminalColorPalette,
     val bottomInlay = editor.inlayModel.addBlockElement(block.endOffset, true, false, 0, bottomRenderer)!!
     val commandToOutputInlay = if (block.withCommand) {
       val renderer = EmptyWidthInlayRenderer(TerminalUi.commandToOutputInset)
-      editor.inlayModel.addBlockElement(block.outputStartOffset, false, true, 0, renderer)!!
+      editor.inlayModel.addBlockElement(block.outputStartOffset, false, false, 0, renderer)!!
     }
     else null
 
@@ -192,6 +196,15 @@ class TerminalBlocksDecorator(private val colorPalette: TerminalColorPalette,
     val renderer = ExitCodeRenderer(exitCode, JBFont.label().deriveFont(editor.colorsScheme.editorFontSize2D), colorPalette)
     val inlay = editor.inlayModel.addAfterLineEndElement(block.endOffset, false, renderer)
     decorations[block] = decoration.copy(exitCodeInlay = inlay)
+  }
+
+  /** Remove the inlay if there is no output in the block */
+  private fun updateCommandToOutputInlay(block: CommandBlock) {
+    if (!block.withOutput) {
+      val decoration = decorations[block] ?: return
+      decoration.commandToOutputInlay?.let { Disposer.dispose(it) }
+      decorations[block] = decoration.copy(commandToOutputInlay = null)
+    }
   }
 
   private class ExitCodeRenderer(exitCode: Int,

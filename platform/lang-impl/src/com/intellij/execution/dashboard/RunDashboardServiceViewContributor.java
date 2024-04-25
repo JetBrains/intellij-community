@@ -153,7 +153,7 @@ public final class RunDashboardServiceViewContributor
       content.putUserData(MORE_ACTION_GROUP_KEY, moreGroup);
     }
     moreGroup.removeAll();
-    moreGroup.addAll(contentGroup.getChildren(null));
+    moreGroup.addAll(contentGroup.getChildren(ActionManager.getInstance()));
     return moreGroup;
   }
 
