@@ -122,6 +122,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.matches(JavaAnalysisBundle.message("inspection.redundant.type.remove.quickfix")) ||
                                       intentionText.matches("Remove .+ suppression") ||
                                       familyName.equals("Fix typo") ||
+                                      familyName.equals("Remove annotation") || // may remove comment inside annotation
                                       familyName.equals("Reformat the whole file"); // may update @noinspection lines
     return !isCommentChangingAction;
   }
