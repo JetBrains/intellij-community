@@ -1193,6 +1193,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             runTest("testData/stepping/custom/breakpointInFlowLambda.kt");
         }
 
+        @TestMetadata("breakpointInInlineFunction.kt")
+        public void testBreakpointInInlineFunction() throws Exception {
+            runTest("testData/stepping/custom/breakpointInInlineFunction.kt");
+        }
+
         @TestMetadata("breakpointInInlineLambda.kt")
         public void testBreakpointInInlineLambda() throws Exception {
             runTest("testData/stepping/custom/breakpointInInlineLambda.kt");

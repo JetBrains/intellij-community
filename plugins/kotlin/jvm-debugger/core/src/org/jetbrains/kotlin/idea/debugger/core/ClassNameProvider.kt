@@ -18,6 +18,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -46,16 +47,20 @@ class ClassNameProvider(
         }
     }
 
+    fun getCandidates(position: SourcePosition): List<String> = getCandidatesInfo(position).map { it.name }
+
+    @ApiStatus.Internal
     @RequiresReadLock
-    fun getCandidates(position: SourcePosition): List<String> {
-        val regularClassNames = position.elementAt?.let(::getCandidatesForElement) ?: emptyList()
-        val lambdaClassNames = getLambdasAtLineIfAny(position).flatMap { getCandidatesForElement(it) }
+    fun getCandidatesInfo(position: SourcePosition): List<ClassNameCandidateInfo> {
+        val regularClassNames = position.elementAt?.let(::getCandidatesForElementInternal) ?: emptyList()
+        val lambdaClassNames = getLambdasAtLineIfAny(position).flatMap { getCandidatesForElementInternal(it) }
         return (regularClassNames + lambdaClassNames).distinct()
     }
 
-    fun getCandidatesForElement(element: PsiElement): List<String> {
+    fun getCandidatesForElement(element: PsiElement): List<String> = getCandidatesForElementInternal(element).map { it.name }
+    private fun getCandidatesForElementInternal(element: PsiElement): List<ClassNameCandidateInfo> {
         val cache = CachedValuesManager.getCachedValue(element) {
-            val storage = ConcurrentHashMap<Configuration, List<String>>()
+            val storage = ConcurrentHashMap<Configuration, List<ClassNameCandidateInfo>>()
             CachedValueProvider.Result(ConcurrentFactoryCache(storage), PsiModificationTracker.MODIFICATION_COUNT)
         }
 
@@ -64,14 +69,28 @@ class ClassNameProvider(
         }
     }
 
-    private fun computeCandidatesForElement(element: PsiElement, alreadyVisited: Set<PsiElement>): List<String> {
+    private fun computeCandidatesForElement(element: PsiElement, alreadyVisited: Set<PsiElement>): List<ClassNameCandidateInfo> {
         // 'alreadyVisited' is used in inline callable searcher to prevent infinite recursion.
         // In normal cases we only go from leaves to topmost parents upwards.
 
-        val result = ArrayList<String>()
+        val result = ArrayList<ClassNameCandidateInfo>()
+        var hasInlineElements = false
+
+        fun registerClassName(name: String) {
+            result.add(ClassNameCandidateInfo(name, hasInlineElements))
+        }
 
         fun registerClassName(element: KtElement): String? {
-            return ClassNameCalculator.getClassName(element)?.also { result += it }
+            return ClassNameCalculator.getClassName(element)?.also { registerClassName(it) }
+        }
+        fun processInlinedCalls(declaration: KtDeclaration) {
+            if (configuration.findInlineUseSites) {
+                result += findInlinedCalls(declaration, alreadyVisited)
+            } else {
+                // No need to enable this flag when `findInlineUseSites` is enabled,
+                // as all the inline calls will be found anyway.
+                hasInlineElements = true
+            }
         }
 
         var current = element
@@ -86,7 +105,7 @@ class ClassNameProvider(
                     val className = registerClassName(current)
                     if (className != null) {
                         if (current.isInterfaceClass()) {
-                            result.add(className + JvmAbi.DEFAULT_IMPLS_SUFFIX)
+                            registerClassName(className + JvmAbi.DEFAULT_IMPLS_SUFFIX)
                         }
 
                         // Continue searching if inside an object literal
@@ -94,8 +113,8 @@ class ClassNameProvider(
                     }
                 }
                 is KtProperty -> {
-                    if (configuration.findInlineUseSites && current.hasInlineAccessors) {
-                        result += findInlinedCalls(current, alreadyVisited)
+                    if (current.hasInlineAccessors) {
+                        processInlinedCalls(current)
                     }
 
                     val propertyOwner = current.containingClassOrObject
@@ -106,8 +125,8 @@ class ClassNameProvider(
                     }
                 }
                 is KtNamedFunction -> {
-                    if (configuration.findInlineUseSites && current.hasModifier(KtTokens.INLINE_KEYWORD)) {
-                        result += findInlinedCalls(current, alreadyVisited)
+                    if (current.hasModifier(KtTokens.INLINE_KEYWORD)) {
+                        processInlinedCalls(current)
                     }
 
                     if (current.isLocal) {
@@ -152,7 +171,7 @@ class ClassNameProvider(
         else -> false
     }
 
-    private fun findInlinedCalls(declaration: KtDeclaration, alreadyVisited: Set<PsiElement>): List<String> {
+    private fun findInlinedCalls(declaration: KtDeclaration, alreadyVisited: Set<PsiElement>): List<ClassNameCandidateInfo> {
         val searchResult = hashSetOf<PsiElement>()
         val declarationName = declaration.name ?: "<error>"
 
@@ -236,4 +255,12 @@ class ClassNameProvider(
 
     private val KtProperty.hasInlineAccessors: Boolean
         get() = hasModifier(KtTokens.INLINE_KEYWORD) || accessors.any { it.hasModifier(KtTokens.INLINE_KEYWORD) }
+
+    /**
+     * @param name candidate calculated FQN
+     * @param hasInlineElements marks that this class has inline elements,
+     * so its code may be inlined to other classes
+     */
+    @ApiStatus.Internal
+    data class ClassNameCandidateInfo(val name: String, val hasInlineElements: Boolean)
 }

@@ -97,6 +97,10 @@ fun Location.safeSourceName(stratum: String): String? {
     return wrapIllegalArgumentException { wrapAbsentInformationException { this.sourceName(stratum) } }
 }
 
+fun Location.safeSourcePath(stratum: String): String? {
+    return wrapIllegalArgumentException { wrapAbsentInformationException { this.sourcePath(stratum) } }
+}
+
 fun Location.safeLineNumber(): Int = DebuggerUtilsEx.getLineNumber(this, false)
 
 fun Location.safeLineNumber(stratum: String): Int {
