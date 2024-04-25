@@ -6,9 +6,11 @@ import com.intellij.ide.dnd.TransferableList;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.render.RenderingUtil;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +57,15 @@ public class DnDAwareTree extends Tree implements DnDAware {
     final TreePath path = TreeUtil.getPathForLocation(this, point.x, point.y);
     if (path == null) return false;
     return isPathSelected(path);
+  }
+
+  @ApiStatus.Internal
+  public final boolean isOverExpandControl(final @NotNull Point point) {
+    var ui = getUI();
+    if (ui instanceof DefaultTreeUI treeUI) {
+      return treeUI.isLocationInExpandControl(point);
+    }
+    return false;
   }
 
   @Override

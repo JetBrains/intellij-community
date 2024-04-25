@@ -966,6 +966,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     @Override
     public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       if ((action.getActionId() & DnDConstants.ACTION_COPY_OR_MOVE) == 0) return false;
+      var tree = myTree;
+      if (tree == null) return false;
+      if (tree.isOverExpandControl(dragOrigin)) return false;
       var selectedObjects = getSelectedUserObjects();
       for (Object object : selectedObjects) {
         if (object instanceof AbstractPsiBasedNode<?> || object instanceof AbstractModuleNode) {
