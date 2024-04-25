@@ -15,6 +15,8 @@ import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.util.gist.GistManager
+import com.intellij.util.gist.GistManagerImpl
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
@@ -119,6 +121,10 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
                                                                   IndexingBundle.message("progress.indexing.scanning"),
                                                                   taskIndicator.getPauseReason())
 
+
+        (GistManager.getInstance() as GistManagerImpl).mergeDependentCacheInvalidations().use {
+          task.applyDelayedPushOperations()
+        }
         blockingContext {
           task.perform(taskIndicator, progressReporter)
         }

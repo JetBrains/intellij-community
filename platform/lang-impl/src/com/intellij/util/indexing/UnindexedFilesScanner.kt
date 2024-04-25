@@ -20,6 +20,7 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.FilesFilterScanningHandler.IdleFilesFilterScanningHandler
@@ -203,8 +204,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   private fun scan(indicator: CheckPauseOnlyProgressIndicator,
                    progressReporter: IndexingProgressReporter,
                    markRef: Ref<StatusMark>) {
-    applyDelayedPushOperations()
-
     val orderedProviders: List<IndexableFilesIterator> = getIndexableFilesIterators(markRef)
 
     markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles) {
@@ -241,9 +240,9 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       }
     }
 
-  private fun applyDelayedPushOperations() {
-    markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties) {
-      val pusher = PushedFilePropertiesUpdater.getInstance(myProject)
+  internal suspend fun applyDelayedPushOperations() {
+    markStageSus(ProjectScanningHistoryImpl.Stage.DelayedPushProperties) {
+      val pusher = blockingContext { PushedFilePropertiesUpdater.getInstance(myProject) }
       if (pusher is PushedFilePropertiesUpdaterImpl) {
         pusher.performDelayedPushTasks()
       }
@@ -621,6 +620,23 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     this.flushQueueAfterScanning = flushQueueAfterScanning
   }
 
+  // we declare separate method instead of `inline markStage` to make stacktraces more readable
+  // and avoid warning about ProgressManager.checkCanceled() being called from suspend context
+  private suspend fun <T> markStageSus(scanningStage: ProjectScanningHistoryImpl.Stage, block: suspend () -> T): T {
+    checkCanceled()
+    LOG.info("[${myProject.locationHash}], scanning stage: $scanningStage")
+    val scanningStageTime = Instant.now()
+    try {
+      scanningHistory.startStage(scanningStage, scanningStageTime)
+      return block()
+    }
+    finally {
+      scanningHistory.stopStage(scanningStage, scanningStageTime)
+      checkCanceled()
+    }
+  }
+
+  @RequiresBlockingContext
   private fun <T> markStage(scanningStage: ProjectScanningHistoryImpl.Stage, block: () -> T): T {
     ProgressManager.checkCanceled()
     LOG.info("[${myProject.locationHash}], scanning stage: $scanningStage")

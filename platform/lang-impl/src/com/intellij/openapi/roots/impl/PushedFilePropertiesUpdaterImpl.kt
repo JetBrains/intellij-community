@@ -12,9 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.InternalFileType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.DumbServiceImpl.Companion.isSynchronousTaskExecution
 import com.intellij.openapi.roots.ContentIteratorEx
@@ -52,13 +50,17 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
+import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Function
+import kotlin.coroutines.coroutineContext
 
 @Internal
 class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFilePropertiesUpdater() {
@@ -90,7 +92,6 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     })
   }
 
-  @ApiStatus.Internal
   fun processAfterVfsChanges(events: List<VFileEvent>) {
     val syncTasks = ArrayList<TaskFactory>()
     val delayedTasks: MutableList<TaskFactory> = ArrayList()
@@ -219,30 +220,43 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
     task.queue(myProject)
   }
 
-  fun performDelayedPushTasks() {
+  suspend fun performDelayedPushTasks() {
     performDelayedPushTasks(null)
   }
 
-  private fun performDelayedPushTasks(statistics: ChangedFilesPushingStatistics?) {
+  private suspend fun performDelayedPushTasks(statistics: ChangedFilesPushingStatistics?) {
     var hadTasks = false
     while (true) {
-      ProgressManager.checkCanceled() // give a chance to suspend indexing
-
+      checkCanceled()
       val task = myTasks.poll()
       if (task == null) {
         break
       }
       try {
-        runConcurrentlyIfPossible(task.getTasks()) // TODO (IJPL-426): use dispatcher instead, there will be no progress indicator here soon
+        coroutineScope {
+          task.getTasks().forEach { subtask ->
+            checkCanceled()
+            SCANNING_SEMAPHORE.withPermit {
+              async {
+                blockingContext {
+                  subtask.run()
+                }
+              }
+            }
+          }
+        }
         hadTasks = true
       }
-      catch (e: ProcessCanceledException) {
-        if (statistics != null) {
-          statistics.finished(true)
-          addEvent(myProject, statistics)
+      catch (e: Throwable) {
+        if (!coroutineContext.isActive) {
+          if (statistics != null) {
+            statistics.finished(true)
+            addEvent(myProject, statistics)
+          }
+          queueTasks(listOf(task),
+                     "Rerun pushing tasks after process cancelled") // reschedule dumb mode and ensure the canceled task is enqueued again
         }
-        queueTasks(listOf(task),
-                   "Rerun pushing tasks after process cancelled") // reschedule dumb mode and ensure the canceled task is enqueued again
+
         throw e
       }
     }
@@ -356,7 +370,11 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
         null
       }
       (GistManager.getInstance() as GistManagerImpl).runWithMergingDependentCacheInvalidations {
-        myUpdater.performDelayedPushTasks(statistics)
+        runBlockingCancellable {
+          withContext(Dispatchers.IO) {
+            myUpdater.performDelayedPushTasks(statistics)
+          }
+        }
       }
     }
 
@@ -373,6 +391,9 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
   companion object {
     private val LOG = Logger.getInstance(
       PushedFilePropertiesUpdater::class.java)
+
+    private val SCANNING_PARALLELISM: Int = UnindexedFilesUpdater.getNumberOfScanningThreads()
+    private val SCANNING_SEMAPHORE: Semaphore = Semaphore(SCANNING_PARALLELISM)
 
     private fun getFile(event: VFileEvent): VirtualFile? {
       var file = event.file
