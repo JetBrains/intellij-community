@@ -21,6 +21,8 @@ import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.CancellablePromise
@@ -146,6 +148,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     return null
   }
 
+  @RequiresBackgroundThread
   private fun updateStatus() {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val status = ClientId.withClientId(session.clientId) { ReadAction.compute(ThrowableComputable { getCurrentStatus() })}
@@ -163,6 +166,8 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     }
   }
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
   private fun getCurrentStatus(): Status {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val file = getCurrentFile() ?: return Status(ProblemsViewBundle.message("problems.view.highlighting.no.selected.file"))
