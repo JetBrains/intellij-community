@@ -89,8 +89,7 @@ internal fun readModuleDescriptor(
 ): RawPluginDescriptor {
   try {
     if (reader.eventType != XMLStreamConstants.START_DOCUMENT) {
-      throw XMLStreamException("State ${XMLStreamConstants.START_DOCUMENT} is expected, " +
-                               "but current state is ${getEventTypeString(reader.eventType)}", reader.location)
+      throw XMLStreamException("State ${XMLStreamConstants.START_DOCUMENT} is expected, but current state is ${getEventTypeString(reader.eventType)}", reader.location)
     }
 
     val descriptor = readInto ?: RawPluginDescriptor()

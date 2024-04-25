@@ -690,32 +690,12 @@ private fun loadCoreProductPlugin(
     override fun toString() = "product classpath"
   }
 
-  val raw = readModuleDescriptor(
-    reader,
-    readContext = context,
-    pathResolver = pathResolver,
-    dataLoader = dataLoader,
-    includeBase = null,
-    readInto = null,
-  )
+  val raw = readModuleDescriptor(reader = reader, readContext = context, pathResolver = pathResolver, dataLoader = dataLoader, includeBase = null, readInto = null)
   val libDir = Paths.get(PathManager.getLibPath())
-  val descriptor = IdeaPluginDescriptorImpl(
-    raw = raw,
-    path = libDir,
-    isBundled = true,
-    id = null,
-    moduleName = null,
-    useCoreClassLoader = useCoreClassLoader,
-  )
+  val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = libDir, isBundled = true, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
   context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = path)
 
-  loadModuleDescriptors(
-    descriptor = descriptor,
-    pathResolver = pathResolver,
-    libDir = libDir,
-    context = context,
-    dataLoader = dataLoader,
-  )
+  loadModuleDescriptors(descriptor = descriptor, pathResolver = pathResolver, libDir = libDir, context = context, dataLoader = dataLoader)
   descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
   return descriptor
 }
@@ -788,7 +768,8 @@ private fun loadProductModule(
   else {
     moduleRaw = readModuleDescriptor(
       reader = createXmlStreamReader(requireNotNull(module.descriptorContent) {
-        "Product module ${module.name} descriptor content is not embedded - corrupted distribution"
+        "Product module ${module.name} descriptor content is not embedded - corrupted distribution " +
+        "(jarFile=$jarFile, containerDescriptor=$containerDescriptor, siblings=${containerDescriptor.content.modules.joinToString()})"
       }.reader()),
       readContext = context,
       pathResolver = pathResolver,
