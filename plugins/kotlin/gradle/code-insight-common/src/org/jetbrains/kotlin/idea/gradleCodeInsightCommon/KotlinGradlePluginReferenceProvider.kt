@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gradle.service.resolve.GradlePluginReference
 
 private val GRADLE_DSL_ID: Name = Name.identifier("id")
 
-class KotlinGradlePluginReferenceProvider : KotlinGradleReferenceProvider() {
+class KotlinGradlePluginReferenceProvider : AbstractKotlinGradleReferenceProvider() {
     override fun getImplicitReference(
         element: PsiElement,
         offsetInElement: Int

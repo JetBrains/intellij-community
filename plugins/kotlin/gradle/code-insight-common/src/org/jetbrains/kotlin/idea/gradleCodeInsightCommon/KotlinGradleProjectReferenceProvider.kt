@@ -10,7 +10,7 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleProjectReference
 private const val GRADLE_SEPARATOR = ":"
 private val GRADLE_DSL_PROJECT: Name = Name.identifier("project")
 
-class KotlinGradleProjectReferenceProvider: KotlinGradleReferenceProvider() {
+class KotlinGradleProjectReferenceProvider: AbstractKotlinGradleReferenceProvider() {
     override fun getImplicitReference(
         element: PsiElement,
         offsetInElement: Int

@@ -13,20 +13,16 @@ import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
-abstract class KotlinGradleReferenceProvider: ImplicitReferenceProvider {
+abstract class AbstractKotlinGradleReferenceProvider: ImplicitReferenceProvider {
     companion object {
         @JvmStatic
         protected val GRADLE_DSL_PACKAGE: FqName = FqName("org.gradle.kotlin.dsl")
     }
 
     protected fun getTextFromLiteralEntry(element: PsiElement) : String? {
-        if (element is KtLiteralStringTemplateEntry
-            && element.containingKtFile.isScript()
-        ) {
-            return element.text
-        } else {
-            return null
-        }
+        return (element as? KtLiteralStringTemplateEntry)
+            ?.takeIf { it.containingKtFile.isScript() }
+            ?.text
     }
     
     protected fun analyzeSurroundingCallExpression(element: PsiElement) : CallableId? {
