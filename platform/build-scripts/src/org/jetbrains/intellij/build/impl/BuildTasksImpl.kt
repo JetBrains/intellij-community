@@ -51,6 +51,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.*
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
@@ -181,7 +182,14 @@ private suspend fun localizeModules(context: BuildContext, moduleNames: Collecti
   }
 
   val localizationDir = getLocalizationDir(context) ?: return
-  val modules = if (moduleNames.isEmpty()) context.project.modules else moduleNames.mapNotNull { context.findModule(it) }
+
+  val modules = if (moduleNames.isEmpty()) {
+    context.project.modules
+  } else {
+    moduleNames.asSequence().mapNotNull { context.findModule(it) }.flatMap { m ->
+      m.dependenciesList.dependencies.asSequence().filterIsInstance<JpsModuleDependency>().mapNotNull { it.module } + sequenceOf(m)
+    }.distinctBy { m -> m.name }.toList()
+  }
   spanBuilder("bundle localizations").setAttribute("moduleCount", modules.size.toLong()).useWithScope {
     for (module in modules) {
       launch(Dispatchers.IO) {
