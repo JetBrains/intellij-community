@@ -103,26 +103,28 @@ object ErrorStatusPanelFactory {
 
     private fun <T> updateTextPresenter(error: T, errorPresenter: ErrorStatusPresenter.Text<T>) {
       val errorTextBuilder = HtmlBuilder().apply {
-        appendP(errorPresenter.getErrorTitle(error))
+         appendP(alignment, errorPresenter.getErrorTitle(error))
         val errorTitle = errorPresenter.getErrorDescription(error)
         if (errorTitle != null) {
-          appendP(errorTitle)
+          appendP(alignment, errorTitle)
         }
-      }
+      }    
 
       val errorAction = errorPresenter.getErrorAction(error)
       action = errorAction
       if (errorAction != null) {
-        errorTextBuilder.appendP(HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF, errorAction.name.orEmpty()))
+        errorTextBuilder.appendP(alignment, HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF, errorAction.name.orEmpty()))
       }
 
       htmlEditorPane.text = errorTextBuilder.wrapWithHtmlBody().toString()
     }
 
-    private fun HtmlBuilder.appendP(chunk: HtmlChunk): HtmlBuilder = append(HtmlChunk.p().attr("align", alignment.htmlValue).child(chunk))
-
-    private fun HtmlBuilder.appendP(@Nls text: String): HtmlBuilder = appendP(HtmlChunk.text(text))
   }
+
+  private fun HtmlBuilder.appendP(alignment: Alignment, chunk: HtmlChunk): HtmlBuilder =
+    append(HtmlChunk.p().attr("align", alignment.htmlValue).child(chunk))
+  private fun HtmlBuilder.appendP(alignment: Alignment, @Nls text: String): HtmlBuilder =
+    appendP(alignment, HtmlChunk.text(text))
 
   enum class Alignment(val htmlValue: String) {
     LEFT("left"),
