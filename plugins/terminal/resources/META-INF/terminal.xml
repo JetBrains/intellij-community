@@ -104,8 +104,6 @@
                     interface="com.intellij.terminal.TerminalShellCommandHandler" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.openPredefinedTerminalProvider"
                     interface="org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.commandSpecs"
-                    beanClass="org.jetbrains.plugins.terminal.exp.completion.CommandSpecsBean" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.commandSpecsProvider"
                     interface="org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.shellSupport"

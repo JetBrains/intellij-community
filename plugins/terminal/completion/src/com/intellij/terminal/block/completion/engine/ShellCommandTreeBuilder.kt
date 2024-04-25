@@ -128,14 +128,7 @@ internal class ShellCommandTreeBuilder private constructor(
   }
 
   private suspend fun createSubcommandNode(name: String, subcommand: ShellCommandSpec, parent: ShellCommandTreeNode<*>?): ShellCommandNode {
-    val spec = getLoadedCommandSpec(subcommand)
+    val spec = commandSpecManager.getFullCommandSpec(subcommand)
     return ShellCommandNode(name, spec, parent)
-  }
-
-  private suspend fun getLoadedCommandSpec(spec: ShellCommandSpec): ShellCommandSpec {
-    // TODO: load full spec here if command spec declares `loadSpec` parameter
-    //val specRef = spec.loadSpec ?: return spec
-    //return commandSpecManager.getCommandSpec(specRef) ?: spec
-    return spec
   }
 }

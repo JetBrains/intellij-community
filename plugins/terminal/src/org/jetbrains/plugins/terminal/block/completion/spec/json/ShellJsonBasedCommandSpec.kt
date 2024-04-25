@@ -5,9 +5,6 @@ import com.intellij.terminal.block.completion.spec.*
 import org.jetbrains.terminal.completion.ShellCommand
 
 internal class ShellJsonBasedCommandSpec(private val data: ShellCommand) : ShellCommandSpec {
-  // TODO: It can be a short command description without all data (with ShellCommand.loadSpec property)
-  //  we need to indicate it and provide an ability to load the fill spec
-
   override val names: List<String>
     get() = data.names
 
@@ -33,6 +30,9 @@ internal class ShellJsonBasedCommandSpec(private val data: ShellCommand) : Shell
       data.parserDirectives.optionArgSeparators
     )
   }
+
+  val fullSpecRef: String?
+    get() = data.loadSpec
 
   override val subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>> = ShellRuntimeDataGenerator {
     data.subcommands.map { ShellJsonBasedCommandSpec(it) }

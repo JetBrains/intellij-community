@@ -6,24 +6,12 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface ShellCommandSpecsManager {
-  /**
-   * Returns a short version of the command specification: only names, description
-   * and the loadSpec reference for loading full specification.
-   * Intended that this method should return fast in most of the cases, because it should not load the whole command specification.
-   * See [getCommandSpec] for more info.
-   */
-  fun getShortCommandSpec(commandName: String): ShellCommandSpec?
+  suspend fun getCommandSpec(commandName: String): ShellCommandSpec?
 
   /**
-   * [commandName] can be the main command name or the path of subcommand.
-   * In the latter case, the [commandName] should be represented by the main command name and subcommand name divided by '/'.
-   * For example, 'main/sub'.
-   * The subcommand should be located in the directory named as the main command.
-   * So the expected file structure should look like this:
-   * - main.json
-   * - main
-   *     - sub.json
-   *     - sub2.json
+   * The spec of the command or subcommand can be not fully loaded sometimes.
+   * For example, it can be a light spec with only names and the reference for the full spec.
+   * This method guarantees that returned spec will contain all its content.
    */
-  suspend fun getCommandSpec(commandName: String): ShellCommandSpec?
+  suspend fun getFullCommandSpec(spec: ShellCommandSpec): ShellCommandSpec
 }

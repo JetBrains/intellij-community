@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.plugins.terminal.exp.completion.CommandSpecsBean
 import org.jetbrains.plugins.terminal.exp.completion.IJShellCommandSpecsManager
 import org.junit.Test
 import org.junit.runner.RunWith
