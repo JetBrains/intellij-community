@@ -91,28 +91,27 @@ object ErrorStatusPanelFactory {
 
       htmlEditorPane.text = when (errorPresenter ) {
         is ErrorStatusPresenter.HTML -> errorPresenter.getHTMLBody(error)
-        is ErrorStatusPresenter.Text -> getErrorText(error, errorPresenter)
+        is ErrorStatusPresenter.Text -> getErrorText(alignment, errorAction, error, errorPresenter)
       }
       htmlEditorPane.isVisible = true
     }
 
-    private fun <T> getErrorText(error: T, errorPresenter: ErrorStatusPresenter.Text<T>): String {
-      val errorTextBuilder = HtmlBuilder().apply {
-         appendP(alignment, errorPresenter.getErrorTitle(error))
-        val errorTitle = errorPresenter.getErrorDescription(error)
-        if (errorTitle != null) {
-          appendP(alignment, errorTitle)
-        }
-      }
+  }
 
-      val errorAction = action
-      if (errorAction != null) {
-        errorTextBuilder.appendP(alignment, HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF, errorAction.name.orEmpty()))
+  private fun <T> getErrorText(alignment: Alignment, errorAction: Action?, error: T, errorPresenter: ErrorStatusPresenter.Text<T>): String {
+    val errorTextBuilder = HtmlBuilder().apply {
+      appendP(alignment, errorPresenter.getErrorTitle(error))
+      val errorTitle = errorPresenter.getErrorDescription(error)
+      if (errorTitle != null) {
+        appendP(alignment, errorTitle)
       }
-
-      return errorTextBuilder.wrapWithHtmlBody().toString()
     }
 
+    if (errorAction != null) {
+      errorTextBuilder.appendP(alignment, HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF, errorAction.name.orEmpty()))
+    }
+
+    return errorTextBuilder.wrapWithHtmlBody().toString()
   }
 
   private fun HtmlBuilder.appendP(alignment: Alignment, chunk: HtmlChunk): HtmlBuilder =
