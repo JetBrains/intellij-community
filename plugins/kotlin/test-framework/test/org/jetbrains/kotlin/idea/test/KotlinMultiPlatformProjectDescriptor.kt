@@ -28,11 +28,34 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
     enum class PlatformDescriptor(
         val moduleName: String,
-        val sourceRootName: String? = null
+        val sourceRootName: String? = null,
+        val targetPlatform: TargetPlatform,
+        val isKotlinSdkUsed: Boolean = true,
+        val refinementDependencies: List<PlatformDescriptor> = emptyList(),
     ) {
-        COMMON("Common", sourceRootName = "src_common"),
-        JVM("Jvm", sourceRootName = "src_jvm"),
-        JS("Js", sourceRootName = "src_js");
+        COMMON(
+            moduleName = "Common",
+            sourceRootName = "src_common",
+            targetPlatform = TargetPlatform(
+                setOf(
+                    JvmPlatforms.jvm8.single(),
+                    JsPlatforms.defaultJsPlatform.single()
+                )
+            ),
+        ),
+        JVM(
+            moduleName = "Jvm",
+            sourceRootName = "src_jvm",
+            targetPlatform = JvmPlatforms.jvm8,
+            isKotlinSdkUsed = false,
+            refinementDependencies = listOf(COMMON),
+        ),
+        JS(
+            moduleName = "Js",
+            sourceRootName = "src_js",
+            targetPlatform = JsPlatforms.defaultJsPlatform,
+            refinementDependencies = listOf(COMMON),
+        );
 
         fun sourceRoot(): VirtualFile? = findRoot(sourceRootName)
 
@@ -73,37 +96,23 @@ object KotlinMultiPlatformProjectDescriptor : KotlinLightProjectDescriptor() {
             model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
         }
 
-        val setupKotlinSdk: () -> Unit = {
+        if (descriptor.isKotlinSdkUsed) {
             KotlinSdkType.setUpIfNeeded(module)
             ConfigLibraryUtil.configureSdk(
                 module,
                 runReadAction { ProjectJdkTable.getInstance() }.findMostRecentSdkOfType(KotlinSdkType.INSTANCE)
                     ?: error("Kotlin SDK wasn't created")
             )
+        } else {
+            model.sdk = sdk
         }
-        when (descriptor) {
-            PlatformDescriptor.JVM -> {
-                model.sdk = sdk
-                module.createMultiplatformFacetM3(JvmPlatforms.jvm8, false, listOf("Common"), listOf(descriptor.sourceRoot()!!.path))
-            }
 
-            PlatformDescriptor.JS -> {
-                setupKotlinSdk()
-                module.createMultiplatformFacetM3(JsPlatforms.defaultJsPlatform, false, listOf("Common"), listOf(descriptor.sourceRoot()!!.path))
-            }
-
-            PlatformDescriptor.COMMON -> {
-                setupKotlinSdk()
-                module.createMultiplatformFacetM3(
-                    TargetPlatform(
-                        setOf(
-                            JvmPlatforms.jvm8.single(),
-                            JsPlatforms.defaultJsPlatform.single()
-                        )
-                    ), false, emptyList(), listOf(descriptor.sourceRoot()!!.path)
-                )
-            }
-        }
+        module.createMultiplatformFacetM3(
+            platformKind = descriptor.targetPlatform,
+            useProjectSettings = false,
+            dependsOnModuleNames = descriptor.refinementDependencies.map(PlatformDescriptor::moduleName),
+            pureKotlinSourceFolders = listOf(descriptor.sourceRoot()!!.path),
+        )
     }
 
     fun cleanupSourceRoots() = runWriteAction {
