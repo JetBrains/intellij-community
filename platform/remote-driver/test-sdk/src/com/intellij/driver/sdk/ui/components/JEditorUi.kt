@@ -15,6 +15,10 @@ fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent 
            JEditorUiComponent::class.java)
 }
 
+fun Finder.editor(@Language("xpath") xpath: String? = null, action: JEditorUiComponent.() -> Unit) {
+  x(xpath ?: "//div[@class='EditorComponentImpl']", JEditorUiComponent::class.java).action()
+}
+
 class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   val editor: Editor by lazy { driver.cast(component, EditorComponentImpl::class).getEditor() }
 

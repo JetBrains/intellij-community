@@ -198,4 +198,10 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   fun getBackgroundColor() = Color(component.getBackground().getRGB())
 
   fun getForegroundColor() = Color(component.getForeground().getRGB())
+
+  fun waitIsFocusOwner() {
+    waitFor {
+      component.isFocusOwner()
+    }
+  }
 }
