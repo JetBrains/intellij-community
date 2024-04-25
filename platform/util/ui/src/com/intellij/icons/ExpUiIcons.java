@@ -174,6 +174,7 @@ public final class ExpUiIcons {
 
   public static final class Debugger {
     /** 16x16 */ public static final @NotNull Icon AddToWatch = load("expui/debugger/addToWatch.svg", -2091134385, 2);
+    /** 16x16 */ public static final @NotNull Icon DbArray = load("expui/debugger/dbArray.svg", 479204252, 2);
     /** 16x16 */ public static final @NotNull Icon DbPrimitive = load("expui/debugger/dbPrimitive.svg", 1281239460, 2);
     /** 16x16 */ public static final @NotNull Icon Frame = load("expui/debugger/frame.svg", 1802453349, 2);
     /** 16x16 */ public static final @NotNull Icon SelfReference = load("expui/debugger/selfReference.svg", -911584651, 2);
@@ -375,6 +376,7 @@ public final class ExpUiIcons {
     /** 20x20 */ public static final @NotNull Icon Settings_20x20 = load("expui/general/settings@20x20.svg", -222397207, 2);
     /** 16x16 */ public static final @NotNull Icon Show = load("expui/general/show.svg", 1378226210, 2);
     /** 16x16 */ public static final @NotNull Icon ShowAsTree = load("expui/general/showAsTree.svg", 2039592688, 2);
+    /** 16x16 */ public static final @NotNull Icon ShowToImplement = load("expui/general/showToImplement.svg", -1699774622, 2);
     /** 16x16 */ public static final @NotNull Icon SoftWrap = load("expui/general/softWrap.svg", 1261736010, 2);
     /** 16x16 */ public static final @NotNull Icon SplitHorizontally = load("expui/general/splitHorizontally.svg", -79366107, 2);
     /** 16x16 */ public static final @NotNull Icon SplitVertically = load("expui/general/splitVertically.svg", -61631069, 2);
@@ -551,6 +553,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ProcessMark = load("expui/nodes/processMark.svg", 446056536, 2);
     /** 16x16 */ public static final @NotNull Icon Property = load("expui/nodes/property.svg", -1833703694, 2);
     /** 16x16 */ public static final @NotNull Icon Record = load("expui/nodes/record.svg", -1128300247, 2);
+    /** 16x16 */ public static final @NotNull Icon ResourceBundle = load("expui/nodes/resourceBundle.svg", 153861806, 2);
     /** 16x16 */ public static final @NotNull Icon ResourcesRoot = load("expui/nodes/resourcesRoot.svg", -99603043, 2);
     /** 16x16 */ public static final @NotNull Icon RunnableMark = load("expui/nodes/runnableMark.svg", -1345269063, 2);
     /** 16x16 */ public static final @NotNull Icon Servlet = load("expui/nodes/servlet.svg", -1080030827, 2);

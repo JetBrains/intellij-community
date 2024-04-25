@@ -128,6 +128,7 @@
     },
     "debugger": {
       "addToWatch.svg": "debugger/addToWatch.svg",
+      "dbArray.svg": "debugger/db_array.svg",
       "dbPrimitive.svg": "debugger/db_primitive.svg",
       "frame.svg": "debugger/frame.svg",
       "selfReference.svg": "debugger/selfreference.svg",
@@ -396,6 +397,7 @@
       "projectWideAnalysisOff.svg": "actions/projectWideAnalysisOff.svg",
       "projectWideAnalysisOn.svg": "actions/projectWideAnalysisOn.svg",
       "softWrap.svg": "actions/toggleSoftWrap.svg",
+      "showToImplement.svg": "general/show_to_implement.svg",
       "scrollDown.svg": "runConfigurations/scroll_down.svg",
       "scrollUp.svg": "runConfigurations/scroll_up.svg",
       "projectStructure.svg": "general/projectStructure.svg",
@@ -621,6 +623,7 @@
       ],
       "record.svg": "nodes/record.svg",
       "resourcesRoot.svg": "modules/resourcesRoot.svg",
+      "resourceBundle.svg": "nodes/resourceBundle.svg",
       "servlet.svg": "nodes/servlet.svg",
       "sourceRoot.svg": "modules/sourceRoot.svg",
       "star.svg": "nodes/favorite.svg",
