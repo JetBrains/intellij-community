@@ -93,20 +93,6 @@ internal class WeighingContext private constructor(
     val isPositionSuitableForNull: Boolean = isPositionSuitableForNull(positionInFakeCompletionFile)
     val isPositionInsideImportOrPackageDirective: Boolean = isPositionInsideImportOrPackageDirective(positionInFakeCompletionFile)
 
-    fun withoutExpectedType(): WeighingContext = withValidityAssertion {
-        WeighingContext(
-            token,
-            languageVersionSettings,
-            explicitReceiver,
-            positionInFakeCompletionFile,
-            myExpectedType = null,
-            myImplicitReceivers,
-            contextualSymbolsCache,
-            importableFqNameClassifier,
-            mySymbolsToSkip,
-        )
-    }
-
     companion object {
         context(KaSession)
         fun createWeighingContext(
