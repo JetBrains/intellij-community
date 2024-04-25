@@ -38,46 +38,33 @@ object ErrorStatusPanelFactory {
       isOpaque = false
     }
 
-    Controller(scope, errorState, errorPresenter, htmlEditorPane, alignment)
-
-    return htmlEditorPane
-  }
-
-  private class Controller<T>(
-    scope: CoroutineScope,
-    errorState: Flow<T?>,
-    private val errorPresenter: ErrorStatusPresenter<T>,
-    private val htmlEditorPane: JEditorPane,
-    private val alignment: Alignment
-  ) {
-    private var action: Action? = null
-
-    init {
-      htmlEditorPane.apply {
-        addHyperlinkListener(object : HyperlinkAdapter() {
-          override fun hyperlinkActivated(event: HyperlinkEvent) {
-            if (event.description == ErrorStatusPresenter.ERROR_ACTION_HREF) {
-              val actionEvent = ActionEvent(htmlEditorPane, ActionEvent.ACTION_PERFORMED, "perform")
-              action?.actionPerformed(actionEvent)
-            }
-            else {
-              BrowserUtil.browse(event.description)
-            }
+    var action: Action? = null
+    htmlEditorPane.apply {
+      addHyperlinkListener(object : HyperlinkAdapter() {
+        override fun hyperlinkActivated(event: HyperlinkEvent) {
+          if (event.description == ErrorStatusPresenter.ERROR_ACTION_HREF) {
+            val actionEvent = ActionEvent(htmlEditorPane, ActionEvent.ACTION_PERFORMED, "perform")
+            action?.actionPerformed(actionEvent)
           }
-        })
-        registerKeyboardAction(
-          ActionListener { action?.actionPerformed(it) },
-          KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-          JComponent.WHEN_FOCUSED
-        )
-      }
-
-      scope.launch {
-        errorState.collect { error ->
-          htmlEditorPane.update(alignment, error, errorPresenter) { action = it }
+          else {
+            BrowserUtil.browse(event.description)
+          }
         }
+      })
+      registerKeyboardAction(
+        ActionListener { action?.actionPerformed(it) },
+        KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+        JComponent.WHEN_FOCUSED
+      )
+    }
+
+    scope.launch {
+      errorState.collect { error ->
+        htmlEditorPane.update(alignment, error, errorPresenter) { action = it }
       }
     }
+
+    return htmlEditorPane
   }
 
   private fun <T> JEditorPane.update(alignment: Alignment, error: T?, errorPresenter: ErrorStatusPresenter<T>, setAction: (Action?) -> Unit) {
