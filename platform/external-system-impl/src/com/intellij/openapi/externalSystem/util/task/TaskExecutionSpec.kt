@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.util.task
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.project.Project
@@ -48,6 +49,11 @@ interface TaskExecutionSpec {
    * If operation return code is equal to 0, {@link TaskCallback#onSuccess} will be called, {@link TaskCallback#onFailure} otherwise.
    */
   val callback: TaskCallback?
+
+  /**
+   * Task execution listener with a full task lifecycle.
+   */
+  val listener: ExternalSystemTaskNotificationListener?
 
   /**
    * User data that will be used for task execution.
