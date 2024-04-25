@@ -27,7 +27,6 @@ import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.proxy.PropertiesEncryptionSupport;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -78,11 +77,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public boolean USE_PAC_URL;
   public String PAC_URL;
 
-  /**
-   * Represents whether the default mode was already migrated from USE_NO_PROXY to USE_PROXY_PAC
-   */
-  @Property private boolean DEFAULT_WAS_MIGRATED_FROM_NO_PROXY_TO_PROXY_PAC;
-
   private transient IdeaWideProxySelector mySelector;
   private final transient Object myLock = new Object();
 
@@ -128,7 +122,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   @Override
   public void initializeComponent() {
-    migrateDefaultModeFromNoProxyToProxyPAC();
     mySelector = new IdeaWideProxySelector(this);
     String name = getClass().getName();
     CommonProxy commonProxy = CommonProxy.getInstance();
@@ -157,7 +150,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @Override
   public void loadState(@NotNull HttpConfigurable state) {
     XmlSerializerUtil.copyBean(state, this);
-    migrateDefaultModeFromNoProxyToProxyPAC();
     if (!KEEP_PROXY_PASSWORD) {
       removeSecure("proxy.password");
     }
@@ -613,15 +605,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
     catch (Exception e) {
       LOG.info(e);
-    }
-  }
-
-  private void migrateDefaultModeFromNoProxyToProxyPAC() {
-    if (DEFAULT_WAS_MIGRATED_FROM_NO_PROXY_TO_PROXY_PAC) return;
-    DEFAULT_WAS_MIGRATED_FROM_NO_PROXY_TO_PROXY_PAC = true;
-    if (!USE_HTTP_PROXY && !USE_PROXY_PAC && // == USE_NO_PROXY
-        !USE_PAC_URL && StringUtil.isEmpty(PAC_URL)) {
-      USE_PROXY_PAC = true;
     }
   }
 }
