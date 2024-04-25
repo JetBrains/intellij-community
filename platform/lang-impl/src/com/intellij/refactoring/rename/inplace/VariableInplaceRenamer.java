@@ -386,7 +386,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
   }
 
-  private void rollBack() {
+  final void rollBack() {
     Document document = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor).getDocument();
     PsiFile psiFile = Objects.requireNonNull(PsiDocumentManager.getInstance(myProject).getPsiFile(document));
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
@@ -494,7 +494,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
   }
 
-  private void startDumbIfPossible() {
+  void startDumbIfPossible() {
     if (InjectedLanguageEditorUtil.getTopLevelEditor(myEditor) instanceof EditorImpl editor) {
       editor.startDumb();
     }
