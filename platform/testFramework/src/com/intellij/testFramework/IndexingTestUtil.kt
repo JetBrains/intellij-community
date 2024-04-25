@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
@@ -130,10 +131,16 @@ class IndexingTestUtil(private val project: Project) {
       thisLogger().debug("suspendUntilIndexesAreReady will be waiting, thread=${Thread.currentThread()}")
     }
 
-    withTimeout(600.seconds) {
-      while (shouldWait()) {
-        delay(1)
+    try {
+      withTimeout(600.seconds) {
+        while (shouldWait()) {
+          delay(1)
+        }
       }
+    }
+    catch (e: TimeoutCancellationException) {
+      thisLogger().warn(ThreadDumper.dumpThreadsToString(), e)
+      throw e
     }
   }
 
