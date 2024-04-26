@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Service(Service.Level.PROJECT)
-public final class SelectInManager  {
+public final class SelectInManager {
   private final Project myProject;
   /**
    * @deprecated Use {@link #getProject()} instead
@@ -27,7 +27,6 @@ public final class SelectInManager  {
 
   public @NotNull List<SelectInTarget> getTargetList() {
     List<SelectInTarget> targets = new ArrayList<>(DumbService.getDumbAwareExtensions(myProject, SelectInTarget.EP_NAME));
-    targets.removeIf(target -> !target.isAvailable());
     targets.sort(SelectInTargetComparator.INSTANCE);
     return targets;
   }

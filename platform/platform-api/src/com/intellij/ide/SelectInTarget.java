@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.PossiblyDumbAware;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.*;
 
 public interface SelectInTarget extends PossiblyDumbAware {
@@ -14,7 +15,7 @@ public interface SelectInTarget extends PossiblyDumbAware {
   @Nls
   String toString();
 
-  default boolean isAvailable() {
+  default boolean isAvailable(@NotNull Project project) {
     return true;
   }
 

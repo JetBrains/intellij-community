@@ -728,6 +728,7 @@ com.intellij.ide.SelectInTarget
 - getMinorViewId():java.lang.String
 - getToolWindowId():java.lang.String
 - getWeight():F
+- isAvailable(com.intellij.openapi.project.Project):Z
 - a:selectIn(com.intellij.ide.SelectInContext,Z):V
 - a:toString():java.lang.String
 c:com.intellij.ide.SmartSelectInContext
