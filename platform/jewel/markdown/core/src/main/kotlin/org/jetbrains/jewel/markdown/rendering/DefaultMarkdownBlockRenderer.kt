@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.Layout
@@ -110,7 +111,11 @@ public open class DefaultMarkdownBlockRenderer(
     @Composable
     override fun render(block: Paragraph, styling: MarkdownStyling.Paragraph) {
         val renderedContent = rememberRenderedContent(block, styling.inlinesStyling)
-        SimpleClickableText(text = renderedContent, textStyle = styling.inlinesStyling.textStyle)
+        SimpleClickableText(
+            text = renderedContent,
+            textStyle = styling.inlinesStyling.textStyle,
+            color = styling.inlinesStyling.textStyle.color.takeOrElse { LocalContentColor.current },
+        )
     }
 
     @Composable
@@ -149,7 +154,11 @@ public open class DefaultMarkdownBlockRenderer(
         underlineGap: Dp,
     ) {
         Column(modifier = Modifier.padding(paddingValues)) {
-            SimpleClickableText(text = renderedContent, textStyle = textStyle)
+            SimpleClickableText(
+                text = renderedContent,
+                textStyle = textStyle,
+                color = textStyle.color.takeOrElse { LocalContentColor.current },
+            )
 
             if (underlineWidth > 0.dp && underlineColor.isSpecified) {
                 Spacer(Modifier.height(underlineGap))
@@ -214,6 +223,7 @@ public open class DefaultMarkdownBlockRenderer(
                     Text(
                         text = "$number${block.delimiter}",
                         style = styling.numberStyle,
+                        color = styling.numberStyle.color.takeOrElse { LocalContentColor.current },
                         modifier = Modifier.widthIn(min = styling.numberMinWidth)
                             .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
                         textAlign = styling.numberTextAlign,
@@ -245,6 +255,7 @@ public open class DefaultMarkdownBlockRenderer(
                     Text(
                         text = styling.bullet.toString(),
                         style = styling.bulletStyle,
+                        color = styling.bulletStyle.color.takeOrElse { LocalContentColor.current },
                         modifier = Modifier.pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
                     )
 
@@ -282,6 +293,7 @@ public open class DefaultMarkdownBlockRenderer(
             Text(
                 text = block.content,
                 style = styling.textStyle,
+                color = styling.textStyle.color.takeOrElse { LocalContentColor.current },
                 modifier = Modifier.padding(styling.padding)
                     .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
             )
@@ -310,6 +322,7 @@ public open class DefaultMarkdownBlockRenderer(
                 Text(
                     text = block.content,
                     style = styling.textStyle,
+                    color = styling.textStyle.color.takeOrElse { LocalContentColor.current },
                     modifier = Modifier.pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
                 )
 
@@ -334,7 +347,13 @@ public open class DefaultMarkdownBlockRenderer(
         modifier: Modifier,
     ) {
         Column(modifier, horizontalAlignment = alignment) {
-            DisableSelection { Text(infoText, style = textStyle) }
+            DisableSelection {
+                Text(
+                    text = infoText,
+                    style = textStyle,
+                    color = textStyle.color.takeOrElse { LocalContentColor.current },
+                )
+            }
         }
     }
 
@@ -360,12 +379,17 @@ public open class DefaultMarkdownBlockRenderer(
         text: AnnotatedString,
         textStyle: TextStyle,
         modifier: Modifier = Modifier,
+        color: Color = Color.Unspecified,
     ) {
         var pointerIcon by remember { mutableStateOf(PointerIcon.Default) }
 
+        val textColor = color.takeOrElse { LocalContentColor.current.takeOrElse { textStyle.color } }
+
+        val mergedStyle = textStyle.merge(TextStyle(color = textColor))
+
         ClickableText(
             text = text,
-            style = textStyle.merge(LocalContentColor.current),
+            style = mergedStyle,
             modifier = modifier.pointerHoverIcon(pointerIcon, true),
             onHover = { offset ->
                 pointerIcon =
