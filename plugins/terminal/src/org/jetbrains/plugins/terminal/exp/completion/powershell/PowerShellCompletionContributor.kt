@@ -14,7 +14,6 @@ import com.intellij.util.DocumentUtil
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
-import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutor
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.io.File
@@ -24,11 +23,10 @@ import kotlin.math.min
 internal class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY)
-    val shellCommandExecutor = parameters.editor.getUserData(ShellCommandExecutor.KEY)
     val promptModel = parameters.editor.terminalPromptModel
     if (session == null ||
         session.model.isCommandRunning ||
-        shellCommandExecutor == null || promptModel == null ||
+        promptModel == null ||
         parameters.completionType != CompletionType.BASIC) {
       return
     }
@@ -41,7 +39,9 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
     val command = promptModel.commandText
     val caretPosition = parameters.editor.caretModel.offset - promptModel.commandStartOffset  // relative to command start
     val completionResult: CompletionResult? = runBlockingCancellable {
-      shellCommandExecutor.executeCommand(GetShellCompletionsCommand(command, caretPosition))
+      // TODO: use new API for executing generators
+      //shellCommandExecutor.executeCommand(GetShellCompletionsCommand(command, caretPosition))
+      null
     }
     if (completionResult?.matches?.isNotEmpty() != true) {
       return

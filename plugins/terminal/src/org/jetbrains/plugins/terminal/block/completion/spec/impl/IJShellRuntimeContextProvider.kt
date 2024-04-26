@@ -5,17 +5,24 @@ import com.intellij.openapi.util.Key
 import com.intellij.terminal.block.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.block.completion.spec.ShellRuntimeContext
 import com.intellij.util.PathUtil
+import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
+import org.jetbrains.plugins.terminal.exp.ShellCommandListener
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptState
 
-internal class IJShellRuntimeContextProvider : ShellRuntimeContextProvider {
+internal class IJShellRuntimeContextProvider(private val session: BlockTerminalSession) : ShellRuntimeContextProvider {
   @Volatile
   private var curDirectory: String = ""
 
-  override fun getContext(commandText: String, typedPrefix: String): ShellRuntimeContext {
-    return IJShellRuntimeContext(curDirectory, commandText, typedPrefix)
+  init {
+    session.addCommandListener(object : ShellCommandListener {
+      override fun promptStateUpdated(newState: TerminalPromptState) {
+        curDirectory = PathUtil.toSystemIndependentName(newState.currentDirectory)
+      }
+    })
   }
 
-  fun updateCurrentDirectory(directory: String) {
-    curDirectory = PathUtil.toSystemIndependentName(directory)
+  override fun getContext(commandText: String, typedPrefix: String): ShellRuntimeContext {
+    return IJShellRuntimeContext(curDirectory, commandText, typedPrefix, session)
   }
 
   companion object {

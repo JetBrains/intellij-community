@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.terminal.block.completion.spec.ShellCommandResult
 import com.jediterm.terminal.TerminalCustomCommandListener
 import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.NonNls
@@ -100,14 +101,15 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
   private fun processGeneratorFinishedEvent(event: List<String>) {
     val requestId = Param.REQUEST_ID.getIntValue(event.getOrNull(1))
     val result = Param.RESULT.getDecodedValue(event.getOrNull(2))
+    val exitCode = Param.EXIT_CODE.getIntValue(event.getOrNull(3))
     if (session.commandBlockIntegration.commandEndMarker != null) {
       debug { "Received generator_finished event, waiting for command end marker" }
       ShellCommandEndMarkerListener(session) {
-        fireGeneratorFinished(requestId, result)
+        fireGeneratorFinished(requestId, result, exitCode)
       }
     }
     else {
-      fireGeneratorFinished(requestId, result)
+      fireGeneratorFinished(requestId, result, exitCode)
     }
   }
 
@@ -189,10 +191,10 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
     }
   }
 
-  private fun fireGeneratorFinished(requestId: Int, result: String) {
+  private fun fireGeneratorFinished(requestId: Int, result: String, exitCode: Int) {
     debug { "Shell event: generator_finished with requestId $requestId and result of ${result.length} size" }
     for (listener in listeners) {
-      listener.generatorFinished(requestId, result)
+      listener.generatorFinished(GeneratorFinishedEvent(requestId, result, exitCode))
     }
     clearTerminal()
   }
@@ -210,8 +212,8 @@ internal class ShellCommandManager(private val session: BlockTerminalSession) {
 
   fun sendCommandToExecute(shellCommand: String) = commandExecutionManager.sendCommandToExecute(shellCommand)
 
-  fun runGeneratorAsync(generatorName: String, generatorParameters: List<String>): Deferred<String> {
-    return commandExecutionManager.runGeneratorAsync(generatorName, generatorParameters)
+  fun runGeneratorAsync(shellCommand: String): Deferred<ShellCommandResult> {
+    return commandExecutionManager.runGeneratorAsync(shellCommand)
   }
 
   companion object {
@@ -292,11 +294,13 @@ internal interface ShellCommandListener {
 
   fun shellInfoReceived(rawShellInfo: String) {}
 
-  fun generatorFinished(requestId: Int, result: String) {}
+  fun generatorFinished(event: GeneratorFinishedEvent) {}
 
   fun clearInvoked() {}
 }
 
 internal data class CommandFinishedEvent(val command: String, val exitCode: Int, val duration: Duration)
+
+internal data class GeneratorFinishedEvent(val requestId: Int, val output: String, val exitCode: Int)
 
 private data class StartedCommand(val command: String, val currentDirectory: String, val commandStarted: TimeMark)

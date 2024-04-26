@@ -28,19 +28,25 @@ __jetbrains_intellij_encode_large() {
 }
 
 __jetbrains_intellij_is_generator_command() {
-  [[ "$1" == *"__jetbrains_intellij_get_directory_files"* || "$1" == *"__jetbrains_intellij_get_environment"* ]]
+  [[ "$1" == *"__jetbrains_intellij_run_generator"* ]]
+}
+
+__jetbrains_intellij_run_generator() {
+  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
+  builtin local request_id="$1"
+  builtin local command="$2"
+  builtin local result="$(eval "$command" 2>&1)"
+  builtin local exit_code=$?
+  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s;exit_code=%s\a' "$request_id" \
+    "$(__jetbrains_intellij_encode_large "$result")" \
+    "$exit_code"
 }
 
 __jetbrains_intellij_get_directory_files() {
-  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
-  builtin local request_id="$1"
-  builtin local result="$(ls -1ap "$2")"
-  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s\a' "$request_id" "$(__jetbrains_intellij_encode_large "${result}")"
+  builtin printf '%s' "$(ls -1ap "$1")"
 }
 
 __jetbrains_intellij_get_environment() {
-  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
-  builtin local request_id="$1"
   builtin local env_vars="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)parameters[(R)*export*]})")"
   builtin local keyword_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)reswords})")"
   builtin local builtin_names="$(__jetbrains_intellij_escape_json "$(builtin print -l -- ${(ko)builtins})")"
@@ -49,7 +55,7 @@ __jetbrains_intellij_get_environment() {
   builtin local aliases_mapping="$(__jetbrains_intellij_escape_json "$(alias)")"
 
   builtin local result="{\"envs\": \"$env_vars\", \"keywords\": \"$keyword_names\", \"builtins\": \"$builtin_names\", \"functions\": \"$function_names\", \"commands\": \"$command_names\", \"aliases\": \"$aliases_mapping\"}"
-  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s\a' "$request_id" "$(__jetbrains_intellij_encode_large "${result}")"
+  builtin printf '%s' "$result"
 }
 
 __jetbrains_intellij_escape_json() {

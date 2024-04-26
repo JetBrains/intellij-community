@@ -15,8 +15,6 @@ import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalCommandExecutor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
-import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutor
-import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
 import org.jetbrains.plugins.terminal.exp.history.CommandHistoryManager
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
@@ -48,9 +46,7 @@ internal class TerminalPromptController(
     editor.virtualFile.putUserData(TerminalPromptModel.KEY, model)
     editor.virtualFile.putUserData(ShellType.KEY, session.shellIntegration.shellType)
 
-    val shellCommandExecutor = ShellCommandExecutorImpl(session)
-    editor.putUserData(ShellCommandExecutor.KEY, shellCommandExecutor)
-    val shellRuntimeContextProvider = IJShellRuntimeContextProvider()
+    val shellRuntimeContextProvider = IJShellRuntimeContextProvider(session)
     editor.putUserData(IJShellRuntimeContextProvider.KEY, shellRuntimeContextProvider)
     val shellGeneratorsExecutor = IJShellGeneratorsExecutor()
     editor.putUserData(IJShellGeneratorsExecutor.KEY, shellGeneratorsExecutor)
@@ -61,7 +57,6 @@ internal class TerminalPromptController(
     session.addCommandListener(object : ShellCommandListener {
       override fun promptStateUpdated(newState: TerminalPromptState) {
         model.updatePrompt(newState)
-        shellRuntimeContextProvider.updateCurrentDirectory(newState.currentDirectory)
       }
     })
 
