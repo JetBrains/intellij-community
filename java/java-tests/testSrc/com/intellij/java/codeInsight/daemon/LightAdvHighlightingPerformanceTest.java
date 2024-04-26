@@ -30,6 +30,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -117,7 +118,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
         TimeoutUtil.sleep(100);
       }
     }
-    assertNotNull(ProjectCoreUtil.theOnlyOpenProject());
+    assertNotNull(Arrays.toString(ProjectManagerEx.getInstance().getOpenProjects()), ProjectCoreUtil.theOnlyOpenProject());
     getFile().accept(new PsiRecursiveElementVisitor() {});
     Project myProject = getProject();
     PlatformTestUtil.newPerformanceTest("getProject() for nested elements", () -> {
