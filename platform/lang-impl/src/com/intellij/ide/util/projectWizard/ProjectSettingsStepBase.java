@@ -26,6 +26,7 @@ import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.Consumer;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -200,6 +201,17 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     myLocationField.getTextField().getDocument().addDocumentListener(documentAdapter);
     Disposer.register(this, () -> myLocationField.getTextField().getDocument().removeDocumentListener(documentAdapter));
     checkWebProjectValid();
+  }
+
+  protected void addLocationChangeListener(@NotNull Consumer<? super DocumentEvent> listener) {
+    final TextFieldWithBrowseButton field = myLocationField;
+    if (field == null) return;
+    field.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        listener.consume(e);
+      }
+    });
   }
 
   private void checkWebProjectValid() {
