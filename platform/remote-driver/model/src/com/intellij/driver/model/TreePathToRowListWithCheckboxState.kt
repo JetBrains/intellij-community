@@ -14,4 +14,12 @@ class TreePathToRowListWithCheckboxState(path: List<String>, row: Int, val check
   }
 }
 
-class TreePathToRowListWithCheckboxStateList : ArrayList<TreePathToRowListWithCheckboxState>(), Serializable, PassByValue
+class TreePathToRowListWithCheckboxStateList : ArrayList<TreePathToRowListWithCheckboxState>(), Serializable, PassByValue {
+  fun getCheckboxStateByPath(path: List<String>): Boolean {
+    val checkbox = this.firstOrNull { it.path.equals(path) }
+    if (checkbox == null) {
+      throw IllegalStateException("Can't find checkbox with path: $path")
+    }
+    return checkbox.checkboxState
+  }
+}
